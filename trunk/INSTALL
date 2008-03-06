@@ -1,0 +1,22 @@
+Documentation instructions are also found here:
+
+http://fastphylo.sourceforge.net/index.html#installation
+
+Requirements for fastphylo:
+
+* xmlto ( only for -DBUILD_DOCROOT=ON )
+
+This package uses the program cmake for building and packaging the software.
+To install into the directory $HOME/inst run these commands:
+
+mkdir $HOME/inst
+cd fastphylo
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=$HOME/inst ..
+
+If you want to install the documentation too, you need to add the flag
+
+-DBUILD_DOCBOOK=ON
+
+to the cmake command line.

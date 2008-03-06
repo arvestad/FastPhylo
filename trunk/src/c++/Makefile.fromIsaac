@@ -1,0 +1,323 @@
+#
+# This Makefile handles both c and c++ files.
+#  
+# cvs: $Id: Makefile,v 1.66 2006/12/31 15:39:40 isaac Exp $
+
+#
+# USAGE:
+#
+# 'make' and 'make all' will compile with optimization flags
+# 'make debug' will compile with debug files
+# 'make install' will move programs to the dir INSTALLDIR
+# 'make profile' will compile using profiling flags.
+# 'make clean' removes all targets.
+# 'make depend' to update dependencies
+
+# ************** MODIFY HERE **************************
+
+
+# --------- Source files ----------------
+INSTALLDIR	= ./bin
+
+SOURCES		= DistanceMatrix.cpp Simulator.cpp std_c_utils.c BitVector.cpp Object.cpp arg_utils.c\
+		arg_utils_ext.cpp stl_utils.cpp file_utils.cpp SequenceTree.cpp\
+		InitAndPrintOn_utils.cpp Sequence.cpp Exception.cpp SequenceTree_MostParsimonious.cpp
+
+
+PROG_SOURCES	= 
+
+#DISTANCE METHODS
+DMETHODS	= LeastSquaresFit.cpp NeighborJoining.cpp
+SOURCES		+= $(addprefix distance_methods/, $(DMETHODS))
+
+#SEQ BASED RECONSTRUCTION
+#SEQ_BASED	=  SequenceBasedNJ.cpp
+#SOURCES	+= $(addprefix sequence_based_tree_reconstruction/, $(SEQ_BASED))
+
+#PROGRAMS
+PROGRAMS	=  naivedist.cpp buildtree.cpp fastdist.cpp CreateSimulatedData.cpp RF_dist.cpp Clustal2gaplessPhylip.cpp aml_tree.cpp drawtree.cpp #sequence_nj.cpp 
+PROG_SOURCES	+= $(addprefix programs/, $(PROGRAMS))
+
+#DNA_b128 
+DNA_b128	=   Sequences2DistanceMatrix.cpp DNA_b128_String.cpp 
+SOURCES		+= $(addprefix DNA_b128/, $(DNA_b128))
+
+#Those files for which we use different optimization flags.
+b128_SPECIALS	+= sse2_wrapper.c  computeTAMURANEIDistance_DNA_b128_String.cpp computeDistance_DNA_b128_String.cpp 
+b128_SOURCES	+= $(addprefix DNA_b128/, $(b128_SPECIALS))
+
+# CODE TESTS
+CODE_TESTS	=  Tree_test.cpp LeastSquaresFit_test.cpp ParsimonyTest.cpp Big_AML_test.cpp  DistanceMatrix_test.cpp AML_star_test.cpp sse2_wrapper_test.c DNA_b128_String_test.cpp
+PROG_SOURCES	+= $(addprefix code_tests/, $(CODE_TESTS))
+
+# SEQUENCE LIKELIHOOD
+SEQ_LIKELIHOOD	= ambiguity_nucleotide.cpp string_compare.cpp dna_pairwise_sequence_likelihood.cpp Kimura2parameter.cpp TamuraNei.cpp
+SOURCES	+= $(addprefix sequence_likelihood/, $(SEQ_LIKELIHOOD))
+
+#AML
+AML	= Big_AML.cpp AML_LeafLifting.cpp AML_star.cpp AML_local_improve.cpp AML_given_edge_probabilities.cpp
+SOURCES	+= $(addprefix aml/, $(AML))
+
+#THE LIBRARY
+TARGET_OBJ_LIB	= compbiolib.ar
+
+
+# -------- Compiler Flags ------------------
+
+LOCALINCS	+= -I. -I./aml -I./sequence_likelihood -I./distance_methods -I./DNA_b128 -I./sequence_based_tree_reconstruction
+INCS		+= -I/usr/include $(LOCALINCS)
+LIBS		+= -lm #lp-solve-3.2.orig/liblpk.a 
+
+DEFINES		= -DUSE_DEBUG=0 
+
+
+#CFLAGS INCLUDED IN ALL COMPILATIONS
+CFLAGS          += -march=pentium4 -msse2
+CFLAGS		+=  $(DEFINES) $(INCS) -Wall  # -march=pentium4 -msse2 #-Weffc++
+
+#flags that are combined 
+DEBUGFLAGS	+= -ggdb -g -fno-inline
+
+OPTFLAGS	+= -O1  -falign-functions  -falign-jumps -falign-loops  -falign-labels  -fforce-mem -foptimize-sibling-calls -fstrength-reduce -fdelete-null-pointer-checks -fexpensive-optimizations -fregmove -fpeephole2 -freorder-blocks  -freorder-functions -fstrict-aliasing  -fcse-follow-jumps  -fcse-skip-blocks -frerun-cse-after-loop  -frerun-loop-opt -fgcse   -fgcse-lm   -fgcse-sm  -fschedule-insns  -fschedule-insns2 -fsched-interblock -fsched-spec -fcaller-saves  -fno-default-inline -ffast-math  -finline-functions -frename-registers  -ftracer -funroll-loops -fprefetch-loop-arrays #-O2 -DNDEBUG  -funroll-loops  -finline  
+
+PROFFLAGS	+= -fno-inline -g -pg
+
+b128CFLAGS	+= -march=pentium4 -msse2 $(DEFINES) $(INCS) -Wall
+b128OPTFLAGS	+= -O1 -DNDEBUG  -fforce-addr -fomit-frame-pointer -fno-branch-count-reg -fstrength-reduce  -finline-functions -frename-registers  -falign-functions  -falign-jumps -falign-loops  -falign-labels  -fforce-mem -foptimize-sibling-calls -fdelete-null-pointer-checks -fexpensive-optimizations -fregmove -fpeephole2 -freorder-blocks  -freorder-functions -fstrict-aliasing  -fcse-follow-jumps  -fcse-skip-blocks -frerun-cse-after-loop  -frerun-loop-opt -fgcse   -fgcse-lm   -fgcse-sm
+
+#-O1  -fcse-follow-jumps  -fcse-skip-blocks -frerun-cse-after-loop  -frerun-loop-opt -fgcse   -fgcse-lm   -fgcse-sm -falign-functions -finline-functions -fexpensive-optimizations -fregmove
+
+#denna fungerar bast pa helium
+#-O1  -fcse-follow-jumps  -fcse-skip-blocks -frerun-cse-after-loop  -frerun-loop-opt -fgcse   -fgcse-lm   -fgcse-sm
+# -O1 -DNDEBUG  -fforce-addr -fomit-frame-pointer -fno-branch-count-reg -fstrength-reduce  -finline-functions -frename-registers  -falign-functions  -falign-jumps -falign-loops  -falign-labels  -fforce-mem -foptimize-sibling-calls -fdelete-null-pointer-checks -fexpensive-optimizations -fregmove -fpeephole2 -freorder-blocks  -freorder-functions -fstrict-aliasing  -fcse-follow-jumps  -fcse-skip-blocks -frerun-cse-after-loop  -frerun-loop-opt -fgcse   -fgcse-lm   -fgcse-sm
+
+#CFLAGS_ICC      += -march=pentium4 -03 -tpp7 -xW -Wall  $(DEFINES) $(INCS)
+
+#
+# SETTING UP FLAGS DEPENDING ON GOAL.
+# 
+ifeq ($(MAKECMDGOALS),debug)
+	CFLAGS		+= $(DEBUGFLAGS)
+	b128CFLAGS	+= $(DEBUGFLAGS)
+else 
+ifeq ($(MAKECMDGOALS),profile)
+	CFLAGS		+= $(PROFFLAGS)
+	b128CFLAGS	+= $(PROFFLAGS)
+else
+	b128CFLAGS	+= $(b128OPTFLAGS) 
+	CFLAGS		+= $(OPTFLAGS)
+endif
+endif
+
+# ******* DON'T MODIFY BELOW HERE ***************
+
+# ------------ Programs --------------
+
+CC		= gcc #gcc4 #icc
+CXX		= g++ #g++4 ##icc
+CD		= cd
+AR		= ar -rcs
+RM		= rm -f
+ECHO		= @echo -e
+ETAGS		= etags
+PRINT		= a2ps
+MAKEDEPEND 	= makedepend
+INSTALL		= install
+MAKEDIR		= mkdir -p
+
+# -------- Derieved Parameters ------
+
+C_SOURCES	= $(filter %.c, $(SOURCES))
+CPP_SOURCES	= $(filter %.cpp, $(SOURCES))
+C_PROGS		= $(patsubst %.c, %, $(filter %.c, $(PROG_SOURCES)))
+CPP_PROGS	= $(patsubst %.cpp, %, $(filter %.cpp, $(PROG_SOURCES)))
+WINDOWS_PROGS	= $(addsuffix .exe, $(C_PROGS))
+WINDOWS_PROGS	+= $(addsuffix .exe, $(CPP_PROGS))
+
+#special compilation flags for code using SSE2... needed because the optimal compiler flags are different
+b128_C_SOURCES	= $(filter %.c, $(b128_SOURCES))
+b128_CPP_SOURCES	= $(filter %.cpp, $(b128_SOURCES))
+
+
+C_OBJECTS	= $(C_SOURCES:%.c=%.o)
+CPP_OBJECTS	= $(CPP_SOURCES:%.cpp=%.o) 
+b128_C_OBJECTS	= $(b128_C_SOURCES:%.c=%.o)
+b128_CPP_OBJECTS = $(b128_CPP_SOURCES:%.cpp=%.o)
+OBJECTS		= $(C_OBJECTS) $(CPP_OBJECTS) $(b128_CPP_OBJECTS) $(b128_C_OBJECTS) 
+
+
+
+# -------- Targets -------------------------
+
+
+.PHONY		: all
+all		: cleanprogs $(C_OBJECTS) $(CPP_OBJECTS) target_lib $(C_PROGS) $(CPP_PROGS)
+
+.PHONY		: debug
+debug		: cleanprogs $(C_OBJECTS) $(CPP_OBJECTS) target_lib $(C_PROGS) $(CPP_PROGS)
+
+.PHONY		: profile
+profile		: cleanprogs $(C_OBJECTS) $(CPP_OBJECTS) target_lib $(C_PROGS) $(CPP_PROGS)
+
+.PHONY		: target_lib
+target_lib	: $(C_OBJECTS) $(CPP_OBJECTS)   $(b128_CPP_OBJECTS) $(b128_C_OBJECTS) 
+		$(AR) $(TARGET_OBJ_LIB) $(OBJECTS)
+
+.PHONY		: install
+install		:
+		$(ECHO) Moving programs to $(INSTALLDIR)
+		$(MAKEDIR) $(INSTALLDIR)
+		$(INSTALL) $(C_PROGS) $(CPP_PROGS) $(INSTALLDIR)
+
+$(C_OBJECTS): %.o: %.c
+		$(CC) -c $(CFLAGS) $< -o $@
+$(CPP_OBJECTS): %.o: %.cpp
+		$(CXX) -c $(CFLAGS) $< -o $@
+
+$(C_PROGS):  %: %.c $(TARGET_OBJ_LIB)
+		$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+
+$(CPP_PROGS):  %: %.cpp $(TARGET_OBJ_LIB)
+		$(CXX) $(CFLAGS) -o $@ $^ $(LIBS)
+
+
+
+$(b128_C_OBJECTS): %.o: %.c
+		$(CC) -c $(b128CFLAGS) $< -o $@
+$(b128_CPP_OBJECTS): %.o: %.cpp
+		$(CXX) -c $(b128CFLAGS) $< -o $@
+
+.PHONY		: clean
+clean		: cleanprogs
+		$(RM) $(OBJECTS) $(TARGET_OBJ_LIB) core
+
+.PHONY		: cleanprogs
+cleanprogs	:
+		$(RM) $(C_PROGS) $(CPP_PROGS) $(WINDOWS_PROGS) core
+
+.PHONY		: listvars
+listvars	:
+		$(ECHO) C_SOURCES: $(C_SOURCES)
+		$(ECHO) C_OBJECTS: $(C_OBJECTS)
+		$(ECHO) CPP_SOURCES: $(CPP_SOURCES)
+		$(ECHO) CPP_OBJECTS: $(CPP_OBJECTS)
+		$(ECHO) C_PROGS: $(C_PROGS)
+		$(ECHO) CPP_PROGS: $(CPP_PROGS)
+		$(ECHO) b128_C_OBJECTS: $(b128_C_OBJECTS)
+		$(ECHO) b128_CPP_OBJECTS: $(b128_CPP_OBJECTS)
+
+.PHONY		: depend
+depend		:
+		$(MAKEDEPEND) -- -Y. $(LOCALINCS) -- $(SOURCES)
+
+.PHONY		: etags
+etags		:
+		$(ETAGS) $(SOURCES) $(PROG_SOURCES)
+
+
+
+# DO NOT DELETE
+
+DistanceMatrix.o: log_utils.hpp DistanceMatrix.hpp Object.hpp
+DistanceMatrix.o: InitAndPrintOn_utils.hpp file_utils.hpp Exception.hpp
+DistanceMatrix.o: stl_utils.hpp Sequence.hpp DistanceMatrix_impl.hpp
+Simulator.o: Simulator.hpp stl_utils.hpp file_utils.hpp Exception.hpp
+Simulator.o: Object.hpp log_utils.hpp SequenceTree.hpp Tree.hpp
+Simulator.o: InitAndPrintOn_utils.hpp Sequence.hpp Tree_impl.hpp
+Simulator.o: DistanceMatrix.hpp DistanceMatrix_impl.hpp BitVector.hpp
+Simulator.o: std_c_utils.h
+std_c_utils.o: std_c_utils.h
+BitVector.o: BitVector.hpp Object.hpp log_utils.hpp
+Object.o: Object.hpp log_utils.hpp
+arg_utils.o: arg_utils.h
+arg_utils_ext.o: arg_utils_ext.hpp arg_utils.h
+stl_utils.o: stl_utils.hpp file_utils.hpp Exception.hpp Object.hpp
+stl_utils.o: log_utils.hpp
+file_utils.o: file_utils.hpp Exception.hpp Object.hpp log_utils.hpp
+SequenceTree.o: SequenceTree.hpp Tree.hpp Object.hpp log_utils.hpp
+SequenceTree.o: stl_utils.hpp file_utils.hpp Exception.hpp
+SequenceTree.o: InitAndPrintOn_utils.hpp Sequence.hpp Tree_impl.hpp
+SequenceTree.o: DistanceMatrix.hpp DistanceMatrix_impl.hpp BitVector.hpp
+SequenceTree.o: ./sequence_likelihood/string_compare.hpp
+SequenceTree.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
+SequenceTree.o: nucleotide.hpp
+InitAndPrintOn_utils.o: InitAndPrintOn_utils.hpp file_utils.hpp Exception.hpp
+InitAndPrintOn_utils.o: Object.hpp log_utils.hpp stl_utils.hpp Sequence.hpp
+Sequence.o: Sequence.hpp stl_utils.hpp file_utils.hpp Exception.hpp
+Sequence.o: Object.hpp log_utils.hpp nucleotide.hpp
+Exception.o: Exception.hpp Object.hpp log_utils.hpp
+SequenceTree_MostParsimonious.o: SequenceTree.hpp Tree.hpp Object.hpp
+SequenceTree_MostParsimonious.o: log_utils.hpp stl_utils.hpp file_utils.hpp
+SequenceTree_MostParsimonious.o: Exception.hpp InitAndPrintOn_utils.hpp
+SequenceTree_MostParsimonious.o: Sequence.hpp Tree_impl.hpp
+SequenceTree_MostParsimonious.o: DistanceMatrix.hpp DistanceMatrix_impl.hpp
+SequenceTree_MostParsimonious.o: BitVector.hpp nucleotide.hpp std_c_utils.h
+distance_methods/LeastSquaresFit.o: SequenceTree.hpp Tree.hpp Object.hpp
+distance_methods/LeastSquaresFit.o: log_utils.hpp stl_utils.hpp
+distance_methods/LeastSquaresFit.o: file_utils.hpp Exception.hpp
+distance_methods/LeastSquaresFit.o: InitAndPrintOn_utils.hpp Sequence.hpp
+distance_methods/LeastSquaresFit.o: Tree_impl.hpp DistanceMatrix.hpp
+distance_methods/LeastSquaresFit.o: DistanceMatrix_impl.hpp BitVector.hpp
+distance_methods/LeastSquaresFit.o: distance_methods/LeastSquaresFit.hpp
+distance_methods/NeighborJoining.o: distance_methods/NeighborJoining.hpp
+distance_methods/NeighborJoining.o: DistanceMatrix.hpp Object.hpp
+distance_methods/NeighborJoining.o: log_utils.hpp InitAndPrintOn_utils.hpp
+distance_methods/NeighborJoining.o: file_utils.hpp Exception.hpp
+distance_methods/NeighborJoining.o: stl_utils.hpp Sequence.hpp
+distance_methods/NeighborJoining.o: DistanceMatrix_impl.hpp SequenceTree.hpp
+distance_methods/NeighborJoining.o: Tree.hpp Tree_impl.hpp BitVector.hpp
+sequence_likelihood/ambiguity_nucleotide.o: sequence_likelihood/ambiguity_nucleotide.hpp
+sequence_likelihood/ambiguity_nucleotide.o: nucleotide.hpp
+sequence_likelihood/ambiguity_nucleotide.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
+sequence_likelihood/ambiguity_nucleotide.o: log_utils.hpp
+sequence_likelihood/string_compare.o: ./sequence_likelihood/string_compare.hpp
+sequence_likelihood/string_compare.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
+sequence_likelihood/string_compare.o: nucleotide.hpp
+sequence_likelihood/string_compare.o: sequence_likelihood/ambiguity_nucleotide.hpp
+sequence_likelihood/string_compare.o: log_utils.hpp
+sequence_likelihood/dna_pairwise_sequence_likelihood.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
+sequence_likelihood/Kimura2parameter.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
+sequence_likelihood/TamuraNei.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
+aml/Big_AML.o: aml/Big_AML.hpp
+aml/Big_AML.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
+aml/Big_AML.o: SequenceTree.hpp Tree.hpp Object.hpp log_utils.hpp
+aml/Big_AML.o: stl_utils.hpp file_utils.hpp Exception.hpp
+aml/Big_AML.o: InitAndPrintOn_utils.hpp Sequence.hpp Tree_impl.hpp
+aml/Big_AML.o: DistanceMatrix.hpp DistanceMatrix_impl.hpp BitVector.hpp
+aml/Big_AML.o: ./sequence_likelihood/LikelihoodMatrix.hpp
+aml/Big_AML.o: ./sequence_likelihood/string_compare.hpp
+aml/Big_AML.o: ./sequence_likelihood/DistanceMethodMatrix.hpp
+aml/Big_AML.o: distance_methods/NeighborJoining.hpp aml/AML_local_improve.hpp
+aml/AML_LeafLifting.o: aml/AML_LeafLifting.hpp SequenceTree.hpp Tree.hpp
+aml/AML_LeafLifting.o: Object.hpp log_utils.hpp stl_utils.hpp file_utils.hpp
+aml/AML_LeafLifting.o: Exception.hpp InitAndPrintOn_utils.hpp Sequence.hpp
+aml/AML_LeafLifting.o: Tree_impl.hpp DistanceMatrix.hpp
+aml/AML_LeafLifting.o: DistanceMatrix_impl.hpp BitVector.hpp
+aml/AML_LeafLifting.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
+aml/AML_LeafLifting.o: ./sequence_likelihood/LikelihoodMatrix.hpp
+aml/AML_LeafLifting.o: ./sequence_likelihood/string_compare.hpp
+aml/AML_star.o: aml/AML_star.hpp
+aml/AML_star.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
+aml/AML_star.o: ./sequence_likelihood/string_compare.hpp
+aml/AML_star.o: ./sequence_likelihood/LikelihoodMatrix.hpp DistanceMatrix.hpp
+aml/AML_star.o: Object.hpp log_utils.hpp InitAndPrintOn_utils.hpp
+aml/AML_star.o: file_utils.hpp Exception.hpp stl_utils.hpp Sequence.hpp
+aml/AML_star.o: DistanceMatrix_impl.hpp SequenceTree.hpp Tree.hpp
+aml/AML_star.o: Tree_impl.hpp BitVector.hpp
+aml/AML_local_improve.o: aml/AML_local_improve.hpp SequenceTree.hpp Tree.hpp
+aml/AML_local_improve.o: Object.hpp log_utils.hpp stl_utils.hpp
+aml/AML_local_improve.o: file_utils.hpp Exception.hpp
+aml/AML_local_improve.o: InitAndPrintOn_utils.hpp Sequence.hpp Tree_impl.hpp
+aml/AML_local_improve.o: DistanceMatrix.hpp DistanceMatrix_impl.hpp
+aml/AML_local_improve.o: BitVector.hpp
+aml/AML_local_improve.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
+aml/AML_local_improve.o: aml/AML_star.hpp
+aml/AML_given_edge_probabilities.o: aml/AML_given_edge_probabilities.hpp
+aml/AML_given_edge_probabilities.o: SequenceTree.hpp Tree.hpp Object.hpp
+aml/AML_given_edge_probabilities.o: log_utils.hpp stl_utils.hpp
+aml/AML_given_edge_probabilities.o: file_utils.hpp Exception.hpp
+aml/AML_given_edge_probabilities.o: InitAndPrintOn_utils.hpp Sequence.hpp
+aml/AML_given_edge_probabilities.o: Tree_impl.hpp DistanceMatrix.hpp
+aml/AML_given_edge_probabilities.o: DistanceMatrix_impl.hpp BitVector.hpp
+aml/AML_given_edge_probabilities.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
+aml/AML_given_edge_probabilities.o: nucleotide.hpp
