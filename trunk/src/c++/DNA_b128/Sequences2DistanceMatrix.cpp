@@ -36,7 +36,7 @@ Sequences2DNA_b128(std::vector<Sequence> &seqs, std::vector<DNA_b128_String> &b1
 
 
 void
-DNA_b128_StringsFromPHYLIP(ifstream &fin, std::vector<std::string> &names, std::vector<DNA_b128_String> &b128_strings){
+DNA_b128_StringsFromPHYLIP(istream &fin, std::vector<std::string> &names, std::vector<DNA_b128_String> &b128_strings){
 
   int numSequences;
   int seqlen;

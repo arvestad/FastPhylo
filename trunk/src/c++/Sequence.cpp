@@ -191,7 +191,7 @@ bool Sequence::onlyContains(std::string &chars){
 
 
 void
-Sequence::readSequences(std::vector<Sequence> &seqs, ifstream &fin){
+Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin){
   int numSequences;
   unsigned int seqlen;
   const int MAXLINE = 16384;

@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<root>
+  <runs>
+    <run>
+      <seq name="Alpha" seq="AACGTGGCCACAT"/>
+      <seq name="Beta" seq="AAGGTCGCCACAC"/>
+      <seq name="Gamma" seq="CAGTTCGCCACAA"/>
+      <seq name="Delta" seq="GAGATTTCCGCCT"/>
+      <seq name="Epsilon" seq="GAGATCTCCGCCC"/>
+    </run>
+    <run>
+      <seq name="Alpha" seq="AACGTGGCCACAT"/>
+      <seq name="Beta" seq="AAGGTCGCCACAC"/>
+      <seq name="Gamma" seq="CAGTTCGCCACAA"/>
+      <seq name="Delta" seq="GAGATTTCCGCCT"/>
+      <seq name="Epsilon" seq="GAGATCTCCGCCC"/>
+    </run>
+  </runs>
+</root>
