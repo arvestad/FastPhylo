@@ -1,0 +1,50 @@
+package "fastdist"
+version "0.9"
+description "Computes distance matrices out of multialignments"
+     
+args "--file-name=fastdist_gengetopt --unamed-opts=FILE"
+
+
+text "If FILE is not specified the input is read from stdin "
+
+
+
+option "outfile" o "output filename. If not specifed, output is written to stdout" string typestr="filename" optional
+
+option "input-format" I "input format" values="phylip_multialignment","xml" enum  default="phylip_multialignment" optional
+option "output-format" O  "output format"  values="phylip_dm","xml" enum default="phylip_dm" optional 
+option "distance-function" D "Distance function" values="JC","K2P","FAKE_F84","TN93","HAMMING" enum default="K2P" optional
+
+option "bootstraps" b  "Bootstrap num times and create matrix for each" int default="0" optional
+option "no-incl-orig" k "If the distance matrix from the original sequences should be included" flag off
+option "seed" s "Random seed. If not specified the current timestamp will be used" int optional
+option "no-ambiguities" A "Ignore ambiguities" flag off
+option "no-ambig-resolve" R "Specifies that ambigious symbols should not be resolved by nearest neighbor" flag off
+option "no-transprob" t "Specifies that the transition probabilities should not be used in the ambiguity model" flag off
+option "ambiguity-frequency-model" a "Ambiguity frequency model" values="UNI","BASE" enum default="UNI" optional
+option "tstvratio" T "Transition/transvertion ratio for purine transitions ( for the TN model )" float default="2.0" optional
+option "pyrtvratio" P "Transition/transvertion ratio for  pyrimidines transitions ( for the TN model )" float default="2.0" optional   
+option "no-tstvratio" N "If given fixed ts/tv ratios will not be used" flag off
+option "fixfactor" F "Float specifying what factor to use for saturated data. If not given -1 in the entry." float default="1" optional
+option "datasets" d "nr of datasets in input. Is used if the input format is clustalw" int optional default="1"
+
+# Not implemented yet....
+# option "bootmode" B "Kind of bootstrapping" values="","" default=""
+
+text "Options for tree building:"
+
+option "no-counts" C "Tree file should not contain the counts" flag off
+option "method"  m "reconstruction method to apply" enum values="NJ","FNJ","BIONJ" optional multiple
+
+
+text "Example usage: 
+$ ./fastdist infile.seq
+$ ./fastdist -D JC -o outfile.txt infile.seq 
+
+Creates 10 bootstrapped matrices 
+$./fastdist -o outfile.txt -b 10 --no-incl-orig infile.seq 
+"
+
+
+
+

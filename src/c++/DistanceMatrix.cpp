@@ -4,6 +4,10 @@
 #include "log_utils.hpp"
 #include "DistanceMatrix.hpp"
 
+// writeXml
+#include <libxml/xmlreader.h>
+
+
 
 bool
 applyFixFactor(StrDblMatrix &dm, double fixFactor){
@@ -69,23 +73,46 @@ static const char  TENDIGIT[128] ={
 
 
 void
-printPHYLIPfast(const StrDblMatrix &dm, FILE *out){
+printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
+
   const size_t numNodes = dm.getSize();
-  fprintf(out,"%5lu\n",numNodes);
+
+  xmlNodePtr dmNode;
+  if ( writeXml ) {
+    dmNode = xmlNewNode(0, ( const xmlChar * ) "dm"); 
+  } 
+  else {
+    fprintf(out,"%5lu\n",numNodes); 
+  }
+
 
   char defstr[11];// = "   .      ";
   defstr[0]=' ';
   defstr[3] = '.';
+  defstr[10] = 0;
   //the names PENDING NAME LENGTH
   for ( size_t i = 0 ; i < numNodes ; i++ ){
-    
-    fprintf(out,"%-10s", dm.getIdentifier(i).c_str());
 
+    xmlNodePtr rowNode;
+    if (  writeXml )   { 
+      rowNode = xmlNewChild(dmNode,0, ( const xmlChar * ) "row",0);
+      xmlSetProp(rowNode, ( const xmlChar * ) "species",( const xmlChar * ) dm.getIdentifier(i).c_str() );
+    }
+    else {
+      fprintf(out,"%-10s", dm.getIdentifier(i).c_str());
+    }
+    
     for ( size_t j = 0 ; j < numNodes ; j++ ){
       float f = dm.getDistance(i,j);
       if ( ! isfinite(f) ){
 	USER_WARNING("warning float not finite (use fix factor) " << f );
-        fprintf(out,"        -1");
+
+	if (  writeXml ) { 
+	  xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) "-1" ); 
+	} 
+	else {
+	  fprintf(out,"        -1"); 
+	}
         continue;
       }
       //warning: this isn't enough to get the correct rounding but it is close
@@ -94,10 +121,30 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out){
       int intpart = (int) f;
       if ( intpart > 99 ){
         if ( f-intpart*1.0 <0.000001 ){
-          fprintf(out,"%10d",intpart);
+
+	  if (  writeXml ) { 
+            // I guess 20 should be more than enough. Please lower this number if you know how it all works. /Erik Sjolund
+	    char str[20];   
+	    snprintf(str,20,"%10d",intpart);  
+	    xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) str ); 
+	  }
+	  else {
+	    fprintf(out,"%10d",intpart);
+	  }
+
           continue;
         } 
-        fprintf(out,"%10f",f);
+
+	if (  writeXml ) { 
+          // I guess 20 should be more than enough. Please lower this number if you know how it all works. /Erik Sjolund
+	  char str[20];  
+	  snprintf(str,20,"%10f",f);  
+	  xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) str ); 
+	} 
+	else {
+	  fprintf(out,"%10f",f);
+	}
+
         continue;
       } 
       //      printf("F:%10.6f\n",f);
@@ -124,11 +171,29 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out){
         defstr[deci++] = ONEDIGIT[index];
       }
       //      cout << defstr << endl;
-      fwrite(defstr,sizeof(char),10,out);
+
+      if (  writeXml ) { 
+        // skip leading spaces 
+	int i = 0; 
+	while ( defstr[i] == ' ' ) { 
+	  i++; 
+        }
+	xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) &defstr[i] ); 
+      } 
+      else {
+	fwrite(defstr,sizeof(char),10,out); 
+      }
     }
+    if ( ! writeXml )    {
     fprintf(out,"\n");
   }
-  
+
+  }
+  if (  writeXml ) { 
+    xmlElemDump(out, 0, dmNode);
+    fprintf(out,"\n");
+    xmlFreeNode(dmNode);
+  } 
 }
 
 

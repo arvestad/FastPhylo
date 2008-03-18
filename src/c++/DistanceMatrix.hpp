@@ -129,7 +129,7 @@ applyFixFactor(StrDblMatrix &dm, double fixFactor);
 
 // FAST PRINTING 
 void
-printPHYLIPfast(const StrDblMatrix &dm, FILE *out);
+printPHYLIPfast(const StrDblMatrix &dm, FILE *out,bool writeXml);
 
 #endif // DISTANCEMATRIX_HPP
 

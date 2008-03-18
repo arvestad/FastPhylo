@@ -96,7 +96,7 @@ Sequences2DNA_b128(std::vector<Sequence> &seqs, std::vector<DNA_b128_String> &b1
 //Reads a phylip file and instantiates a vector of b128 strings. The
 //names of the sequences are stored in names s.t. names[i] is the name
 //of b128_strings[i].
-void DNA_b128_StringsFromPHYLIP(std::ifstream &fin, std::vector<std::string> &names, std::vector<DNA_b128_String> &b128_strings);
+void DNA_b128_StringsFromPHYLIP(std::istream &fin, std::vector<std::string> &names, std::vector<DNA_b128_String> &b128_strings);
 
 //
 // Creates a bootstrapped set of b128_strings from the input sequences.

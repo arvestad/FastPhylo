@@ -65,7 +65,7 @@ public:
   //----------------------------
   // READING PHYLIP SEQUENCEFILE
   // The vector is cleared of all sequences and new  sequences are added
-  static void readSequences(std::vector<Sequence> &seqs, std::ifstream &in);
+  static void readSequences(std::vector<Sequence> &seqs, std::istream &in);
   static void printSequences(std::vector<Sequence> &seqs, std::ofstream &out);
 
   //-------------------------------------------
