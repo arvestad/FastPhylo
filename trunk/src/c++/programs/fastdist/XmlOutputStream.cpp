@@ -12,7 +12,7 @@ XmlOutputStream::XmlOutputStream(char * filename = 0 ) : DataOutputStream(filena
 
 XmlOutputStream::~XmlOutputStream() 
 {
-  fprintf(fp,"  </runs>\n <root>\n");
+  fprintf(fp,"  </runs>\n </root>\n");
 };
 
 void

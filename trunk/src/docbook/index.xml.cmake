@@ -17,12 +17,15 @@ fastphylo is software project containing the implementations of the algorithms "
 
 
 
+  <sect1 id="algorithms">
+    <title>Algorithms</title>
 
-  <sect1 id="Fast_Computation_of_Distance Estimators">
+
+  <sect2 id="Fast_Computation_of_Distance Estimators">
     <title>Fast Computation of Distance Estimators</title>
 
 
-  <sect2 id="about_the_article_Fast_Computation_of_Distance Estimators">
+  <sect3 id="about_the_article_Fast_Computation_of_Distance Estimators">
     <title>About the published article</title>
 
 <para>
@@ -46,10 +49,10 @@ Isaac Elias and Jens Lagergren published the algorithm in the journal <ulink url
 
 
 
-  </sect2>
+  </sect3>
 
 
-  <sect2 id="abstract_of_the_article_Fast_Computation_of_Distance Estimators">
+  <sect3 id="abstract_of_the_article_Fast_Computation_of_Distance Estimators">
     <title>Abstract of the published article</title>
 
 <para>
@@ -69,11 +72,11 @@ Isaac Elias and Jens Lagergren published the algorithm in the journal <ulink url
 
 
 
-  </sect2>
+  </sect3>
 
 
 
-  <sect2 id="Supplementary_Material">
+  <sect3 id="Supplementary_Material">
     <title>Supplementary Material</title>
 
 <para>
@@ -103,19 +106,19 @@ Command file used for running Paup
 
 
 
+  </sect3>
+
+
+
+
   </sect2>
 
 
-
-
-  </sect1>
-
-
-  <sect1 id="Fast_Neighbor_Joining">
+  <sect2 id="Fast_Neighbor_Joining">
     <title>Fast Neighbor Joining</title>
 
 
-  <sect2 id="about_the_article_Fast_Neighbor_Joining">
+  <sect3 id="about_the_article_Fast_Neighbor_Joining">
     <title>About the published article</title>
 
 <para>
@@ -143,10 +146,10 @@ Isaac Elias and Jens Lagergren published the algorithm in the book "Proc. of the
 
 
 
-  </sect2>
+  </sect3>
 
 
-  <sect2 id="abstract_of_the_article_Fast_Neighbor_Joining">
+  <sect3 id="abstract_of_the_article_Fast_Neighbor_Joining">
     <title>Abstract of the published article</title>
 
 <para>
@@ -157,11 +160,11 @@ The contribution of this paper is twofold: (1) we present an algorithm called Fa
 
 
 
-  </sect2>
+  </sect3>
 
 
 
-  <sect2 id="Supplementary_Material_Fast_Neighbor_Joining">
+  <sect3 id="Supplementary_Material_Fast_Neighbor_Joining">
     <title>Supplementary Material</title>
 
 <para>
@@ -192,16 +195,20 @@ Slides from presentation at ICALP 2005
 
 <ulink url="http://citeseer.ist.psu.edu/744489.html" >Go Citeseer</ulink> 
       </para>
+  </sect3>
+
+
+
+
   </sect2>
+</sect1>
 
 
+  <sect1 id="software">
+    <title>Software</title>
 
 
-  </sect1>
-
-
-
-  <sect1 id="download">
+  <sect2 id="download">
     <title>Download</title>
     <para>      
        Download the software from the <ulink url="http://sourceforge.net/projects/fastphylo">sourceforge</ulink> project page. 
@@ -210,10 +217,10 @@ Slides from presentation at ICALP 2005
 
 <!-- The latest version of fastphylo is @PACKAGE_VERSION@. -->
     </para>
-  </sect1>
-  <sect1 id="installation">
+  </sect2>
+  <sect2 id="installation">
     <title>Installation</title>
-    <sect2 id="building_from_source">
+    <sect3 id="building_from_source">
       <title>Building from source</title>
       <para>To build fastphylo you need to have this installed
         <itemizedlist mark="bullet">
@@ -222,7 +229,7 @@ Slides from presentation at ICALP 2005
               <ulink url="http://www.cmake.org">cmake</ulink>
             </para>
           </listitem>
-<!--
+
           <listitem>
             <para>
               <ulink url="http://xmlsoft.org/">libxml2</ulink>
@@ -230,7 +237,7 @@ Slides from presentation at ICALP 2005
             </para>
           </listitem>
 
--->
+
 
         </itemizedlist>
       </para>
@@ -292,7 +299,174 @@ Install the project...
 -- Install configuration: ""
 ]]></programlisting>
       </para>
+    </sect3>
+  </sect2>
+
+
+
+  <sect2 id="usage">
+    <title>Usage</title>
+
+
+  <sect3 id="fastdist">
+    <title>fastdist</title>
+
+
+  <sect4 id="fastdist_command_line_options">
+    <title>Command line options</title>
+
+
+<para>
+
+Type <userinput>fastdist --help</userinput> to see the command line options
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_help">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastdist_help">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+</para></sect4>
+
+  <sect4 id="fastdist_examples">
+    <title>Examples</title>
+<para>
+<example id="example_fastdist_seq_small_seqfile"><title>fastdist with sequence file in Phylip multialignment format</title><para>
+Let us use the example input file <ulink url="example_files/seq-small.seqfile">seq-small.seqfile</ulink> that is in the Phylip multialignment format and looks like this
+
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq-small.seqfile">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include></programlisting>
+
+The file has two datasets so we pass the option <userinput>-d 2</userinput> to <application>fastdist</application>. Per default the output is given in the Phylip distance matrix format.
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_seq_small_seqfile">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastdist_seq_small_seqfile">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+</para>
+</example>
+
+<example id="example_fastdist_seq_small_xml"><title>fastdist with sequence file in XML format</title><para>
+
+Let us use the example input file <ulink url="example_files/seq-small.xml">seq-small.xml</ulink> that has this content
+
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq-small.xml">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include></programlisting>
+
+<note><para>The -d option is not available and also not needed when the input is in XML format. <application>fastdist</application> computes all data sets.</para></note>
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_xml_file_xml_output">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastdist_xml_file_xml_output">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+
+</para>
+</example>
+
+<example id="example_fastdist_with_an_xml_stream_on_stdin"><title>fastdist with an XML stream on stdin</title><para>
+
+If you leave out the input filename, the input will be read from stdin. <application>fastdist</application> doesn't wait for the whole xml file to be read before it starts. It starts a computation as soon as an ending <![CDATA[ </run>   ]]>
+has been read. The memory consumption will not grow over time so the input can be arbitrarily large. A never ending input stream only works in the XML input format, because the phylip multialignment input format needs you to specify in advance how many data sets are to be sent to <application>fastdist</application> ( the -d option ).
+
+
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_xml_stdin_xml_output">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastdist_xml_stdin_xml_output">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+</para>
+</example>
+
+
+
+<example id="example_reading_the_fastdist_xml_stream_output_with_python"><title>reading the fastdist XML stream output with python</title><para>
+
+
+If the XML output is very large you might want to use an XML parser that doesn't hold the whole file in memory. This python script is an example of how to do this
+
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/fastdist_lxml.py">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include></programlisting>
+
+
+The scripts counts the number of elements in the distance matrix with a value below 0.1
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_lxml">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastdist_lxml">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+Read more about <ulink url="http://codespeak.net/lxml/parsing.html">lxml</ulink> and <ulink url="http://www.zvon.org/xxl/XPathTutorial/General/examples.html">xpath</ulink>.
+
+
+</para>
+</example>
+
+
+      </para>
+
+    </sect4>
+
+    </sect3>
     </sect2>
   </sect1>
 
+
+
+
+
 </article>
+
+
+
+

@@ -1,0 +1,1 @@
+fastdist -I xml -O xml seq-small.xml
