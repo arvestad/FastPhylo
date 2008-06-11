@@ -132,9 +132,12 @@ main(int argc,
 
       for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
 	//no bootstrapping
+
+
 	if ( !no_incl_orig && numboot == 0){//only need to create one distance matrix
           if ( ! istream->read(names,b128seqs)) break;
 	  fillMatrix(dm, b128seqs, trans_model);
+          ostream->printStartRun(names);
 	  dm.setIdentifiers(names);
 	  if(useFixFactor) applyFixFactor(dm,fixfactor);
 	  //	  output << dm;
@@ -150,8 +153,8 @@ main(int argc,
 	  names.clear();names.reserve(seqs.size());
 	  for( size_t i=0;i<seqs.size();i++)
 	    names.push_back(seqs[i].name);
-
   
+          ostream->printStartRun(names);
 	  if ( !no_incl_orig ){//create the distance matrix for the original sequences
 	    Sequences2DNA_b128(seqs,b128seqs);
 	    fillMatrix(dm, b128seqs, trans_model);
@@ -173,6 +176,7 @@ main(int argc,
             ostream->print(dm);
 	  }
 	}
+        ostream->printEndRun();
       }//end data set loop
 
   //OUTPUT THE TREES

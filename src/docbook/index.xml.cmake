@@ -431,7 +431,7 @@ If the XML output is very large you might want to use an XML parser that doesn't
 </xi:include></programlisting>
 
 
-The scripts counts the number of elements in the distance matrix with a value below 0.1
+For each distance matrix the script counts the number of elements with a value below 0.1
 
 <programlisting><![CDATA[
 [user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_lxml">

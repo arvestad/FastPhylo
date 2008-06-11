@@ -121,8 +121,7 @@ main(int argc, char **argv){
   std::vector<NJ_method> methods;
   std::vector<char*> methodNames;
   if(GET_LIST_OF_ARGS("-methods",methodNames)==false)
-    methods.push_back(NJ);//default
- 
+    methods.push_back(NJ);//defaul
 
   for( size_t i=0 ; i<methodNames.size() ; i++)
     if( STREQ("NJ", methodNames[i]) )

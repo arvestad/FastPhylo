@@ -64,27 +64,27 @@ static __inline ambiguity_nucleotide
 nucleotide2ambiguity_nucleotideUNIFORM(const nucleotide &n){
   
   switch (n){//                                  A     C    G    T
-  case DNA_A_: return (ambiguity_nucleotide){n, 1.0,   0,   0,   0};
-  case DNA_C_: return (ambiguity_nucleotide){n,   0, 1.0,   0,   0};
-  case DNA_G_: return (ambiguity_nucleotide){n,   0,   0, 1.0,   0};
-  case DNA_T_: return (ambiguity_nucleotide){n,   0,   0,   0, 1.0};
-  case DNA_M_: return (ambiguity_nucleotide){n, 0.5, 0.5,   0,   0};
-  case DNA_R_: return (ambiguity_nucleotide){n, 0.5,   0, 0.5,   0};//an.probA = 0.5; an.probG = 0.5; break;
-  case DNA_W_: return (ambiguity_nucleotide){n, 0.5,   0,   0, 0.5};//an.probA = 0.5; an.probT = 0.5; break;
-  case DNA_S_: return (ambiguity_nucleotide){n,   0, 0.5, 0.5,   0};//an.probC = 0.5; an.probG = 0.5; break;
-  case DNA_Y_: return (ambiguity_nucleotide){n,   0, 0.5,   0, 0.5};//an.probC = 0.5; an.probT = 0.5; break;
-  case DNA_K_: return (ambiguity_nucleotide){n,   0,   0, 0.5, 0.5};//an.probG = 0.5; an.probT = 0.5; break;
-  case DNA_V_: return (ambiguity_nucleotide){n,0.333333,0.333333,0.333333, 0};//an.probA = 0.999999/3.0; an.probC = 0.999999/3.0; an.probG = 0.999999/3.0; break;
-  case DNA_H_: return (ambiguity_nucleotide){n, 0.333333, 0.333333, 0, 0.333333};//an.probA = 0.999999/3.0; an.probC = 0.999999/3.0; an.probT = 0.999999/3.0; break;
-  case DNA_D_: return (ambiguity_nucleotide){n, 0.333333, 0, 0.333333, 0.333333};//an.probA = 0.999999/3.0; an.probG = 0.999999/3.0; an.probT = 0.999999/3.0; break;
-  case DNA_B_: return (ambiguity_nucleotide){n, 0, 0.333333, 0.333333, 0.333333};//an.probC = 0.999999/3.0; an.probG = 0.999999/3.0; an.probT = 0.999999/3.0; break;
-  case DNA_N_: return (ambiguity_nucleotide){n, 0.25, 0.25, 0.25, 0.25};//an.probA = 0.25; an.probC = 0.25; an.probG = 0.25; an.probT = 0.25; break;
+  case DNA_A_: { return (ambiguity_nucleotide){n, 1.0,   0,   0,   0}; }
+  case DNA_C_: { return (ambiguity_nucleotide){n,   0, 1.0,   0,   0}; }
+  case DNA_G_: { return (ambiguity_nucleotide){n,   0,   0, 1.0,   0}; }
+  case DNA_T_: { return (ambiguity_nucleotide){n,   0,   0,   0, 1.0}; }
+  case DNA_M_: { return (ambiguity_nucleotide){n, 0.5, 0.5,   0,   0}; }
+  case DNA_R_: { return (ambiguity_nucleotide){n, 0.5,   0, 0.5,   0}; }//an.probA = 0.5; an.probG = 0.5; break;
+  case DNA_W_: { return (ambiguity_nucleotide){n, 0.5,   0,   0, 0.5}; }//an.probA = 0.5; an.probT = 0.5; break;
+  case DNA_S_: { return (ambiguity_nucleotide){n,   0, 0.5, 0.5,   0}; }//an.probC = 0.5; an.probG = 0.5; break;
+  case DNA_Y_: { return (ambiguity_nucleotide){n,   0, 0.5,   0, 0.5}; }//an.probC = 0.5; an.probT = 0.5; break;
+  case DNA_K_: { return (ambiguity_nucleotide){n,   0,   0, 0.5, 0.5}; }//an.probG = 0.5; an.probT = 0.5; break;
+  case DNA_V_: { return (ambiguity_nucleotide){n,0.333333,0.333333,0.333333, 0}; }//an.probA = 0.999999/3.0; an.probC = 0.999999/3.0; an.probG = 0.999999/3.0; break;
+  case DNA_H_: { return (ambiguity_nucleotide){n, 0.333333, 0.333333, 0, 0.333333}; }//an.probA = 0.999999/3.0; an.probC = 0.999999/3.0; an.probT = 0.999999/3.0; break;
+  case DNA_D_: { return (ambiguity_nucleotide){n, 0.333333, 0, 0.333333, 0.333333}; }//an.probA = 0.999999/3.0; an.probG = 0.999999/3.0; an.probT = 0.999999/3.0; break;
+  case DNA_B_: { return (ambiguity_nucleotide){n, 0, 0.333333, 0.333333, 0.333333}; }//an.probC = 0.999999/3.0; an.probG = 0.999999/3.0; an.probT = 0.999999/3.0; break;
+  case DNA_N_: { return (ambiguity_nucleotide){n, 0.25, 0.25, 0.25, 0.25}; }//an.probA = 0.25; an.probC = 0.25; an.probG = 0.25; an.probT = 0.25; break;
   case DNA_NOT_ALLOWED: USER_WARNING( "DNA_NOT_ALLOWED can not be used as input" ); break;
   case DNA_UNKNOWN_: USER_WARNING( "DNA_UNKOWN can not be used as input" ); break; //unkown is not handled
     //  default: USER_WARNING( "AMBIG_X_FLAG can not be used as input: "<<n );
   }
   
-  return (ambiguity_nucleotide){n,0,0,0,0};
+   return (ambiguity_nucleotide){n,0,0,0,0};
 }
 
 //assuming that the nucleotid is a regular
@@ -92,10 +92,10 @@ static __inline ambiguity_nucleotide
 regularnucleotide2ambiguity_nucleotide(const nucleotide &n){
   
   switch (n){
-  case DNA_A_: return (ambiguity_nucleotide){n, 1.0,   0,   0,   0};
-  case DNA_C_: return (ambiguity_nucleotide){n,   0, 1.0,   0,   0};
-  case DNA_G_: return (ambiguity_nucleotide){n,   0,   0, 1.0,   0};
-  case DNA_T_: return (ambiguity_nucleotide){n,   0,   0,   0, 1.0};
+  case DNA_A_: { return (ambiguity_nucleotide){n, 1.0,   0,   0,   0}; }
+  case DNA_C_: { return (ambiguity_nucleotide){n,   0, 1.0,   0,   0}; }
+  case DNA_G_: { return (ambiguity_nucleotide){n,   0,   0, 1.0,   0}; }
+  case DNA_T_: { return (ambiguity_nucleotide){n,   0,   0,   0, 1.0}; }
   default:
     USER_WARNING("Input has to be regular nucleotide"); break;
   }

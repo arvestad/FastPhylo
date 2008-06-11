@@ -7,6 +7,8 @@ ENDIF(NOT CMAKE_COMPILER_IS_GNUCXX)
 
 PROJECT(fastphylo)
 FIND_PACKAGE(LibXml2)
+FIND_PROGRAM(GENGETOPT gengetopt)
+
 
 INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
 LINK_DIRECTORIES(${LIBXML2_LIBRARY})
@@ -18,9 +20,15 @@ INCLUDE_DIRECTORIES(${fastphylo_SOURCE_DIR}/distance_methods)
 INCLUDE_DIRECTORIES(${fastphylo_SOURCE_DIR}/DNA_b128)
 INCLUDE_DIRECTORIES(${fastphylo_SOURCE_DIR}/programs)
 INCLUDE_DIRECTORIES(${fastphylo_SOURCE_DIR}/programs/fastdist)
-INCLUDE_DIRECTORIES(${fastphylo_SOURCE_DIR}/programs/fastdist/gengetopt)
+INCLUDE_DIRECTORIES(${fastphylo_BINARY_DIR}/programs/fastdist/gengetopt)
+INCLUDE_DIRECTORIES(${fastphylo_SOURCE_DIR}/programs/fnj)
+INCLUDE_DIRECTORIES(${fastphylo_BINARY_DIR}/programs/fnj/gengetopt)
 INCLUDE_DIRECTORIES(${fastphylo_SOURCE_DIR}/sequence_likelihood)
 INCLUDE_DIRECTORIES(${fastphylo_SOURCE_DIR}/aml)
+
+
+ADD_SUBDIRECTORY(programs/fnj/gengetopt)
+ADD_SUBDIRECTORY(programs/fastdist/gengetopt)
 
 SET(FASTPHYLO_SRCS BitVector.cpp 
 Exception.cpp
@@ -52,7 +60,6 @@ arg_utils.c
 std_c_utils.c
 )
 
-
 SET(FASTPHYLO_SPECIAL_SRCS DNA_b128/sse2_wrapper.c 
                           DNA_b128/computeTAMURANEIDistance_DNA_b128_String.cpp 
                           DNA_b128/computeDistance_DNA_b128_String.cpp) 
@@ -67,18 +74,42 @@ programs/fastdist/DataInputStream.cpp
 programs/fastdist/XmlInputStream.cpp
 programs/fastdist/DataOutputStream.cpp
 programs/fastdist/XmlOutputStream.cpp
-programs/fastdist/gengetopt/fastdist_gengetopt.c 
+${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.c 
 )
+
+SET(FNJ_SRCS programs/fnj/fnj.cpp
+programs/fnj/DataInputStream.cpp
+programs/fnj/XmlInputStream.cpp
+programs/fnj/DataOutputStream.cpp
+programs/fnj/XmlOutputStream.cpp
+${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.c 
+)
+
+
+SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.c  PROPERTIES GENERATED true)
+SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.h  PROPERTIES GENERATED true)
+SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.c  PROPERTIES GENERATED true)
+SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.h  PROPERTIES GENERATED true)
+
+
 
 FOREACH(i ${FASTPHYLO_SPECIAL_SRCS})
   SET_SOURCE_FILES_PROPERTIES(${i} PROPERTIES COMPILE_FLAGS "${COMMON_FLAGS} -DNDEBUG  -fforce-addr  -fno-branch-count-reg  -fomit-frame-pointer ")
 ENDFOREACH(i)
 
-FOREACH(i ${FASTPHYLO_SRCS} ${FASTDIST_SRCS} )
+FOREACH(i ${FASTPHYLO_SRCS} ${FASTDIST_SRCS} ${FNJ_SRCS} )
   SET_SOURCE_FILES_PROPERTIES(${i} PROPERTIES COMPILE_FLAGS "${COMMON_FLAGS}  -fcaller-saves  -ffast-math  -fno-default-inline  -fprefetch-loop-arrays  -fsched-interblock  -fsched-spec  -fschedule-insns  -fschedule-insns2  -ftracer  -funroll-loops  ")
 ENDFOREACH(i)
 
 ADD_EXECUTABLE(fastdist ${FASTDIST_SRCS} ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS})
 TARGET_LINK_LIBRARIES(fastdist m xml2)
 
+ADD_EXECUTABLE(fnj ${FNJ_SRCS} ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS}  ) 
+TARGET_LINK_LIBRARIES(fnj m xml2)
+
+
+ADD_DEPENDENCIES(fnj fnj_gengetopt_target)
+ADD_DEPENDENCIES(fastdist fastdist_gengetopt_target)
+
 INSTALL(TARGETS fastdist DESTINATION bin)
+INSTALL(TARGETS fnj DESTINATION bin)
