@@ -10,10 +10,8 @@ public:
   XmlOutputStream();
   XmlOutputStream(char * filename );
   virtual ~XmlOutputStream();
-
-  virtual void print( StrDblMatrix & dm );
-  virtual void printStartRun( std::vector<std::string> & names );
-  virtual void printEndRun();
+protected:
+  virtual void print( tree2int_map & tree2count, bool noCounts );
 };
 
 #endif // XMLOUTPUTSTREAM_HPP

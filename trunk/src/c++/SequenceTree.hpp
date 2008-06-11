@@ -30,6 +30,9 @@
 #define EDGE(node) (node)->data.dbl
 
 
+
+
+
 class SequenceTree : public Tree<Sequence_double, Data_init<Sequence_double>, Data_printOn<Sequence_double> >
 {
 public:
@@ -165,7 +168,7 @@ public:
 
 };
 
-
+typedef __gnu_cxx::hash_map<const SequenceTree , int, objhash, objeq> tree2int_map;
 
 #endif // SEQUENCETREE_HPP
 

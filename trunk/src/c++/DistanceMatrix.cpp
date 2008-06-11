@@ -77,9 +77,10 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
 
   const size_t numNodes = dm.getSize();
 
-  xmlNodePtr dmNode;
+  //  xmlNodePtr dmNode;
   if ( writeXml ) {
-    dmNode = xmlNewNode(0, ( const xmlChar * ) "dm"); 
+    //    dmNode = xmlNewNode(0, ( const xmlChar * ) "dm"); 
+    fprintf(out,"<dm>\n"); 
   } 
   else {
     fprintf(out,"%5lu\n",numNodes); 
@@ -95,8 +96,10 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
 
     xmlNodePtr rowNode;
     if (  writeXml )   { 
-      rowNode = xmlNewChild(dmNode,0, ( const xmlChar * ) "row",0);
-      xmlSetProp(rowNode, ( const xmlChar * ) "species",( const xmlChar * ) dm.getIdentifier(i).c_str() );
+      //      rowNode = xmlNewChild(dmNode,0, ( const xmlChar * ) "row",0);
+      // xmlSetProp(rowNode, ( const xmlChar * ) "species",( const xmlChar * ) dm.getIdentifier(i).c_str() );
+
+      fprintf(out,"<row species=\"%s\">\n", dm.getIdentifier(i).c_str() ); 
     }
     else {
       fprintf(out,"%-10s", dm.getIdentifier(i).c_str());
@@ -108,7 +111,8 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
 	USER_WARNING("warning float not finite (use fix factor) " << f );
 
 	if (  writeXml ) { 
-	  xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) "-1" ); 
+	  //	  xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) "-1" ); 
+                 fprintf(out,"<entry>\n", dm.getIdentifier(i).c_str() ); 
 	} 
 	else {
 	  fprintf(out,"        -1"); 
@@ -190,9 +194,9 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
 
   }
   if (  writeXml ) { 
-    xmlElemDump(out, 0, dmNode);
+    //    xmlElemDump(out, 0, dmNode);
     fprintf(out,"\n");
-    xmlFreeNode(dmNode);
+    //  xmlFreeNode(dmNode);
   } 
 }
 
