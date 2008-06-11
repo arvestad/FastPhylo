@@ -80,7 +80,7 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
   //  xmlNodePtr dmNode;
   if ( writeXml ) {
     //    dmNode = xmlNewNode(0, ( const xmlChar * ) "dm"); 
-    fprintf(out,"<dm>\n"); 
+    fprintf(out,"   <dm>\n"); 
   } 
   else {
     fprintf(out,"%5lu\n",numNodes); 
@@ -94,12 +94,13 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
   //the names PENDING NAME LENGTH
   for ( size_t i = 0 ; i < numNodes ; i++ ){
 
-    xmlNodePtr rowNode;
+    //    xmlNodePtr rowNode;
     if (  writeXml )   { 
       //      rowNode = xmlNewChild(dmNode,0, ( const xmlChar * ) "row",0);
       // xmlSetProp(rowNode, ( const xmlChar * ) "species",( const xmlChar * ) dm.getIdentifier(i).c_str() );
 
-      fprintf(out,"<row species=\"%s\">\n", dm.getIdentifier(i).c_str() ); 
+      //      fprintf(out,"    <row species=\"%s\">\n", dm.getIdentifier(i).c_str() ); 
+      fprintf(out,"    <row>\n" ); 
     }
     else {
       fprintf(out,"%-10s", dm.getIdentifier(i).c_str());
@@ -112,7 +113,7 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
 
 	if (  writeXml ) { 
 	  //	  xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) "-1" ); 
-                 fprintf(out,"<entry>\n", dm.getIdentifier(i).c_str() ); 
+                 fprintf(out,"     <entry>%s</entry>\n", dm.getIdentifier(i).c_str() ); 
 	} 
 	else {
 	  fprintf(out,"        -1"); 
@@ -128,9 +129,11 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
 
 	  if (  writeXml ) { 
             // I guess 20 should be more than enough. Please lower this number if you know how it all works. /Erik Sjolund
-	    char str[20];   
-	    snprintf(str,20,"%10d",intpart);  
-	    xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) str ); 
+	    // char str[20];   
+	    //	    snprintf(str,20,"%10d",intpart);  
+	    //	    xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) str ); 
+                 fprintf(out,"     <entry>%10d</entry>\n", intpart ); 
+
 	  }
 	  else {
 	    fprintf(out,"%10d",intpart);
@@ -141,9 +144,11 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
 
 	if (  writeXml ) { 
           // I guess 20 should be more than enough. Please lower this number if you know how it all works. /Erik Sjolund
-	  char str[20];  
-	  snprintf(str,20,"%10f",f);  
-	  xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) str ); 
+	  //	  char str[20];  
+	  //  snprintf(str,20,"%10f",f);  
+	  // xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) str ); 
+                 fprintf(out,"     <entry>%10f</entry>\n", f ); 
+
 	} 
 	else {
 	  fprintf(out,"%10f",f);
@@ -182,20 +187,27 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
 	while ( defstr[i] == ' ' ) { 
 	  i++; 
         }
-	xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) &defstr[i] ); 
+	//	xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) &defstr[i] ); 
+                 fprintf(out,"     <entry>%s</entry>\n", &defstr[i] ); 
+
+
       } 
       else {
 	fwrite(defstr,sizeof(char),10,out); 
       }
     }
-    if ( ! writeXml )    {
-    fprintf(out,"\n");
-  }
-
+    
+  if (  writeXml )    {
+      fprintf(out,"    </row>\n"); 
+    } else {
+      fprintf(out,"\n"); 
+    }
+    
+   
   }
   if (  writeXml ) { 
     //    xmlElemDump(out, 0, dmNode);
-    fprintf(out,"\n");
+    fprintf(out,"   </dm>\n");
     //  xmlFreeNode(dmNode);
   } 
 }
