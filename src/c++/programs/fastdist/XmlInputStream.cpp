@@ -103,7 +103,7 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs ) {
 
 	      xmlNodePtr tree;
 	      tree = xmlTextReaderExpand (reader);
-              readRunTree(tree, seqs   ); 
+              readRunTree(tree, seqs ); 
  
               run_read = true;  break; // break out of the while loop
 	    } 
@@ -112,7 +112,7 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs ) {
 	if ( depth == 0 &&  xmlStrEqual (name, (const xmlChar *)"root" ))
 	  {
 	    switch (type) {
-	    case XML_READER_TYPE_ELEMENT:  l.in_root = true; break; 
+	    case XML_READER_TYPE_ELEMENT:  l.in_root = true; continue; 
 	    case XML_READER_TYPE_END_ELEMENT:  l.in_root = false; break; 
 	    }
 	  }
@@ -120,8 +120,8 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs ) {
 	if ( l.in_root && depth == 1 &&  xmlStrEqual (name, (const xmlChar *)"runs" ))
 	  {
 	    switch (type) {
-	    case XML_READER_TYPE_ELEMENT:  l.in_runs = true; break; 
-	    case XML_READER_TYPE_END_ELEMENT:  l.in_runs = false; break; 
+	    case XML_READER_TYPE_ELEMENT:  l.in_runs = true; continue; 
+	    case XML_READER_TYPE_END_ELEMENT:  l.in_runs = false; continue; 
 	    }
 	  }
       }

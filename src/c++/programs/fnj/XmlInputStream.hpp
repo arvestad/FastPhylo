@@ -8,10 +8,11 @@
 #include <libxml/xmlreader.h>
 #include "DataInputStream.hpp"
 
-typedef enum { RUN_NOT_FINISHED = 0, RUN_FINISHED = 1 } streamstatus;
+typedef enum { SPECIES_READ = 0, DM_READ = 1, NOTHING_READ = 3 } readstatus;
 
 typedef struct {  int in_root ; 
-  int in_runs ; 
+  int in_runs ;
+  int in_run ; 
  } locator_t;
 
 
@@ -20,9 +21,13 @@ class XmlInputStream : public DataInputStream
 public:
    XmlInputStream(char * filename);
   ~XmlInputStream();
-  bool read( StrDblMatrix & dm,  str2int_hashmap & name2id );
+
+  bool readSpeciesNamesAndOneDM( std::vector<std::string> & speciesnames, StrDblMatrix & dm );
+  bool readSpeciesOneDM( StrDblMatrix & dm );
+
 protected:
-  void readRun( xmlNodePtr tree,  StrDblMatrix & dm,  str2int_hashmap & name2id );
+  void read( StrDblMatrix & dm, std::vector<std::string> & speciesnames, readstatus & status );
+
   xmlTextReaderPtr reader;
   locator_t l;
   int fd;
