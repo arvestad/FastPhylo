@@ -113,7 +113,7 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
 
 	if (  writeXml ) { 
 	  //	  xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) "-1" ); 
-                 fprintf(out,"     <entry>%s</entry>\n", dm.getIdentifier(i).c_str() ); 
+                 fprintf(out,"     <entry>-1</entry>\n" ); 
 	} 
 	else {
 	  fprintf(out,"        -1"); 
