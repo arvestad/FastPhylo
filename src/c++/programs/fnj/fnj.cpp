@@ -23,9 +23,6 @@
 using namespace std;
 
 
-
-
-
 //
 // Builds trees using the supplied distance methods.
 // Each created tree is added to the tree2count map.
@@ -43,12 +40,7 @@ buildTrees(StrDblMatrix &dm, tree2int_map &tree2count, std::vector<NJ_method> &m
     else
       tree2count[tree] = 1;
   }
-
-
 }
-
-
-
 
 
 int
@@ -79,11 +71,8 @@ main(int argc,
 
   //--------------
   bool noCounts = args_info.no_counts_flag;
-  int ndatasets = args_info.datasets_arg;
-  int numboot = args_info.bootstraps_arg;
 
-  tree2int_map tree2count((size_t)(numboot*1.3));
-  str2int_hashmap name2id;
+
 
   try {
 
@@ -106,17 +95,17 @@ main(int argc,
     {
     case input_format_arg_phylip_dm: istream = new PhylipMaInputStream(inputfilename);  break;
     case input_format_arg_xml: istream = new XmlInputStream(inputfilename); break;
-   default: exit(EXIT_FAILURE);
+    default: exit(EXIT_FAILURE);
 }
 
   switch ( args_info.output_format_arg )
     {
     case output_format_arg_tree_as_text: ostream = new TreeTextOutputStream(outputfilename);  break;
     case output_format_arg_xml: ostream = new XmlOutputStream(outputfilename); break;
-   default: exit(EXIT_FAILURE);
+    default: exit(EXIT_FAILURE);
 }
 
-    StrDblMatrix dm;
+
 
 
       //open infile
@@ -126,35 +115,52 @@ main(int argc,
       std::vector<string> names;
       std::vector<DNA_b128_String> b128seqs;
 
-
       //for each dataset in the files
 
-      for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
 
-	if ( ! istream->read(dm,name2id)) break;
+      //      for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
 
-	  //	applyFixFactor(dm,fixfactor);
-   
+      bool latestReadSuccessful = true;
+
+      std::vector<std::string> speciesnames;
+
+
+      while ( latestReadSuccessful ) {
+        tree2int_map tree2count((size_t)( args_info.bootstraps_arg * 1.3));
+        StrDblMatrix dm;
+        str2int_hashmap name2id;
+
+
+	if ( ! ( latestReadSuccessful = istream->readSpeciesNamesAndDM( speciesnames, dm ))) {
+	printf("first break\n");
+
+ break; // nothing more to read 
+ };
+
+	for(size_t namei=0 ; namei < speciesnames.size() ; namei++ )
+	  name2id[speciesnames[namei]] = namei;
+
 	buildTrees(dm, tree2count, methods,name2id);
-	ostream->print(tree2count,noCounts);
+
+        for ( int i = 0 ;  latestReadSuccessful  && ( i < args_info.dm_per_run_arg || args_info.input_format_arg == input_format_arg_xml ) ; i++ ){
 
 
+	//	   applyFixFactor(dm,fixfactor);
+	  if (! ( latestReadSuccessful = istream->readDM( dm ))) { 
+	printf("second break\n");
+break; // nothing more to read 
+ };
+	  buildTrees(dm, tree2count, methods,name2id);
+        }
+        ostream->print(tree2count,noCounts);
 
       }//end data set loop
 
-
-
-
       delete ostream;
       delete istream;
-
   }
 
-
-
   catch(...){
-
-
     throw;
   }
 

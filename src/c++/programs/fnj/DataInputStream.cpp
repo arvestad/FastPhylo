@@ -36,15 +36,21 @@ PhylipMaInputStream::PhylipMaInputStream(char * filename = 0 )
 }
 
 bool
-PhylipMaInputStream::read( StrDblMatrix & dm, str2int_hashmap & name2id ) 
+PhylipMaInputStream::readSpeciesNamesAndDM( std::vector<std::string> & speciesnames, StrDblMatrix & dm ) 
 {
   dm.objInitFromStream(*fp);
-
-  for(size_t namei=0 ; namei<dm.getSize() ; namei++ )
-    {
-      name2id[dm.getIdentifier(namei)] = namei;
-    }
-
-
+  speciesnames.clear();
+  for (size_t namei=0 ; namei<dm.getSize() ; namei++ ) {
+    speciesnames.push_back(dm.getIdentifier(namei) );
+  }
  return true;
 }
+
+
+bool
+PhylipMaInputStream::readDM( StrDblMatrix & dm ) 
+{
+  dm.objInitFromStream(*fp);
+ return true;
+}
+
