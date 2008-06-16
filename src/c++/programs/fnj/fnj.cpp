@@ -105,10 +105,6 @@ main(int argc,
     default: exit(EXIT_FAILURE);
 }
 
-
-
-
-      //open infile
   
        // THE DATA WE WILL PROCESS
       std::vector<Sequence> seqs;
