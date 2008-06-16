@@ -8,14 +8,16 @@
 #include <iostream>
 #include <fstream>
 
+typedef enum { START = 0, DM_READ = 1, END_OF_RUN = 2, END_OF_RUNS = 3, ERROR = 4 } readstatus;
+
 class DataInputStream
 {
 public:
   DataInputStream();
   virtual ~DataInputStream() {};
 
-  virtual bool readSpeciesNamesAndDM( std::vector<std::string> & speciesnames, StrDblMatrix & dm ) = 0;
-  virtual bool readDM( StrDblMatrix & dm ) = 0;
+
+  virtual readstatus readDM( StrDblMatrix & dm ) = 0;
 
 };
 
@@ -25,14 +27,14 @@ public:
   PhylipMaInputStream(char * filename );
   ~PhylipMaInputStream();
 
-  virtual  bool readSpeciesNamesAndDM( std::vector<std::string> & speciesnames, StrDblMatrix & dm );
-  virtual bool readDM( StrDblMatrix & dm );
+  virtual readstatus readDM( StrDblMatrix & dm );
 
 protected:
   std::istream * fp;
   std::ifstream fin;
   bool file_was_opened;
 
+ 
 };
 
 

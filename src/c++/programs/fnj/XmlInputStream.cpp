@@ -35,15 +35,17 @@ XmlInputStream::XmlInputStream(char * filename = 0)
   l.in_root =  false;
   l.in_runs =  false;
 
+  dmSize = 0;
 }
 
-void XmlInputStream::read( StrDblMatrix & dm, std::vector<string> & speciesnames, readstatus & status )  
+readstatus  
+XmlInputStream::readDM( StrDblMatrix & dm ) {
 { 
     const xmlChar *name, *value;
 
     bool run_read = false;
     int ret;
-    status = NOTHING_READ;
+
     while ( ( ret = xmlTextReaderRead(reader)) == 1 )
       {
 	int depth = xmlTextReaderDepth(reader);
@@ -56,14 +58,44 @@ void XmlInputStream::read( StrDblMatrix & dm, std::vector<string> & speciesnames
 	      if ( type == XML_READER_TYPE_ELEMENT ) {
 		xmlNodePtr tree;
 		tree = xmlTextReaderExpand (reader);
-                xmlNode *node = NULL;
 
+                xmlNode *node = NULL;
+		int i=0;
+                speciesnames.clear();
                 for (node = tree->children; node; node = node->next) {
                   if (node->type == XML_ELEMENT_NODE && xmlStrEqual (node->name, (const xmlChar *)"entry" ) ) {
-		    speciesnames.push_back(( char * ) node->content );
+		    char * species =  ( char * ) xmlNodeGetContent( node );
+    		    speciesnames.push_back( species );
+                    i++;
                   }
                 }
-                status = SPECIES_READ; break; // break out of the while loop
+	      } 
+	    } 
+	    if ( xmlStrEqual (name, (const xmlChar *)"dm" ) ) {
+	      if ( type == XML_READER_TYPE_ELEMENT ) {
+		xmlNodePtr tree;
+		tree = xmlTextReaderExpand (reader);
+                dm.resize(dmSize);
+
+                xmlNode *node = NULL;
+                int rowIter = 0;
+                for (node = tree->children; node; node = node->next) {
+                  if (node->type == XML_ELEMENT_NODE && xmlStrEqual (node->name, (const xmlChar *)"row" ) ) {
+		    //		    speciesnames.push_back(( char * ) node->content );
+                    int entryIter = 0; 
+                    for (xmlNode *node2  = node->children; node2; node2 = node2->next) {
+                      if (node2->type == XML_ELEMENT_NODE && xmlStrEqual (node2->name, (const xmlChar *)"entry" ) ) {
+                	//	dm.setDistance(rowIter,entryIter,  atof(( char * ) node2->content ));
+			entryIter++;
+		      }
+		    }
+                    rowIter++;
+                  }
+                }
+		for(size_t namei=0 ; namei < speciesnames.size() ; namei++ )
+		  {	    dm.setIdentifier(namei,speciesnames[namei]); }
+
+                return DM_READ; // break out of the while loop
 	      } 
 	    } 
 	  }
@@ -80,75 +112,20 @@ void XmlInputStream::read( StrDblMatrix & dm, std::vector<string> & speciesnames
 	  {
 	    switch (type) {
 	    case XML_READER_TYPE_ELEMENT:  l.in_runs = true; continue; 
-	    case XML_READER_TYPE_END_ELEMENT:  l.in_runs = false; continue; 
+	    case XML_READER_TYPE_END_ELEMENT:  l.in_runs = false; return END_OF_RUNS;  
 	    }
 	  }
 
 	if (  l.in_root && l.in_runs && depth == 2 && xmlStrEqual (name, (const xmlChar *)"run" ))
 	  {
-	    switch (type) {
-	    case XML_READER_TYPE_ELEMENT:  l.in_run = true; continue; 
-	    case XML_READER_TYPE_END_ELEMENT:  l.in_run = false; continue; 
-	    }
+	    if (type == XML_READER_TYPE_ELEMENT ) { l.in_run = true; 
+	      char * dimStr = ( char * ) xmlTextReaderGetAttribute(reader,(const xmlChar *)"dim" );
+	      dmSize=atoi((const char *) dimStr );
+	      continue; }; 
+            if (type == XML_READER_TYPE_END_ELEMENT ) { l.in_run = false; return END_OF_RUN; }
 	  }
       }
-
-    if (ret == 1 && ( status == SPECIES_READ || status == DM_READ )) {
-      return; // successful read
-    }
-    if (ret == 0 && status == NOTHING_READ  ) { 
-      return; // nothing more to read 
-    }
- 
-  THROW_EXCEPTION("failed to parse");
-  exit(EXIT_FAILURE);
+ }
+    return ERROR;
 }
 
-bool 
-XmlInputStream::readSpeciesNamesAndDM( std::vector<string> & speciesnames, StrDblMatrix & dm ) {
-  readstatus status;
-  read( dm, speciesnames, status );
-
-  switch (status){                               
-    case SPECIES_READ: { break;  }
-    case NOTHING_READ: { return 0; }
-    case DM_READ: { 
-      THROW_EXCEPTION("failed to parse");
-      exit(EXIT_FAILURE);
-    }
-  }
-
-  std::vector<string> dummy;  
-
-  read( dm, dummy, status );
-
-  switch (status){                               
-    case SPECIES_READ: { 
-      THROW_EXCEPTION("failed to parse");
-      exit(EXIT_FAILURE);
-    }
-    case NOTHING_READ: { return 0; }
-    case DM_READ: { 
-      return 1;
-    }
-  }
-}
-
-bool 
-XmlInputStream::readDM( StrDblMatrix & dm ) {
-
-  std::vector<string> dummy;  
-  readstatus status;
-  read( dm, dummy, status );
-
-  switch (status){                               
-    case SPECIES_READ: { 
-      THROW_EXCEPTION("failed to parse");
-      exit(EXIT_FAILURE);
-    }
-    case NOTHING_READ: { return 0; }
-    case DM_READ: { 
-      return 1;
-    }
-  }
-}

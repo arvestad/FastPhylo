@@ -26,7 +26,7 @@ XmlOutputStream::print( StrDblMatrix & dm )
 void
 XmlOutputStream::printStartRun( std::vector<string> & names ) 
 {
-  fprintf(fp,"  <run>\n   <species>\n");
+  fprintf(fp,"  <run dim=\"%i\">\n   <species>\n", names.size() );
       for(size_t namei=0 ; namei<names.size() ; namei++ )
 	{
 	  // This only works if we constrain the input by a schema to not have "<", "&" and such.
