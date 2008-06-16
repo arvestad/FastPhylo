@@ -22,8 +22,8 @@ public:
    XmlInputStream(char * filename);
   ~XmlInputStream();
 
-  bool readSpeciesNamesAndOneDM( std::vector<std::string> & speciesnames, StrDblMatrix & dm );
-  bool readSpeciesOneDM( StrDblMatrix & dm );
+virtual  bool readSpeciesNamesAndDM( std::vector<std::string> & speciesnames, StrDblMatrix & dm );
+virtual bool readDM( StrDblMatrix & dm );
 
 protected:
   void read( StrDblMatrix & dm, std::vector<std::string> & speciesnames, readstatus & status );

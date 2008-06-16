@@ -60,7 +60,7 @@ void XmlInputStream::read( StrDblMatrix & dm, std::vector<string> & speciesnames
 
                 for (node = tree->children; node; node = node->next) {
                   if (node->type == XML_ELEMENT_NODE && xmlStrEqual (node->name, (const xmlChar *)"entry" ) ) {
-		    speciesnames.push_back(( char * ) node->conent );
+		    speciesnames.push_back(( char * ) node->content );
                   }
                 }
                 status = SPECIES_READ; break; // break out of the while loop
@@ -104,10 +104,9 @@ void XmlInputStream::read( StrDblMatrix & dm, std::vector<string> & speciesnames
   exit(EXIT_FAILURE);
 }
 
-
 bool 
-XmlInputStream::readSpeciesNamesAndOneDM( std::vector<string> & speciesnames, StrDblMatrix & dm ) {
-
+XmlInputStream::readSpeciesNamesAndDM( std::vector<string> & speciesnames, StrDblMatrix & dm ) {
+  readstatus status;
   read( dm, speciesnames, status );
 
   switch (status){                               
@@ -136,10 +135,10 @@ XmlInputStream::readSpeciesNamesAndOneDM( std::vector<string> & speciesnames, St
 }
 
 bool 
-XmlInputStream::readSpeciesOneDM( StrDblMatrix & dm ) {
+XmlInputStream::readDM( StrDblMatrix & dm ) {
 
   std::vector<string> dummy;  
-
+  readstatus status;
   read( dm, dummy, status );
 
   switch (status){                               

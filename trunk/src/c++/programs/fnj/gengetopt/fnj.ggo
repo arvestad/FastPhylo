@@ -12,9 +12,8 @@ option "output-format" O  "output format" enum values="tree_as_text","xml" defau
 option "no-counts" C "Tree file should not contain the counts" flag off
 option "method"  m "reconstruction methods to apply" enum values="NJ","FNJ","BIONJ" optional multiple(1-) required
 
-option "bootstraps" b  "Bootstrap num times and create matrix for each" int default="0" optional
-
-option "datasets" d "nr of datasets in input. Is only used if the input format is phylip_dm" int optional default="1"
+option "dm-per-run" d "nr of Distance matrices per run. Is only used if the input format is phylip_dm" int optional default="1"
+option "bootstraps" b  "number of boot straps" int default="0" optional
 
 text "Example usage: 
 $ ./fnj file.tree

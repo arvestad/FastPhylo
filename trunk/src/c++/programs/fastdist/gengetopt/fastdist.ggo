@@ -36,7 +36,6 @@ text "Options for tree building:"
 option "no-counts" C "Tree file should not contain the counts" flag off
 option "method"  m "reconstruction method to apply" enum values="NJ","FNJ","BIONJ" optional multiple
 
-
 text "Example usage: 
 $ ./fastdist infile.seq
 $ ./fastdist -D JC -o outfile.txt infile.seq 
