@@ -92,6 +92,16 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
   defstr[3] = '.';
   defstr[10] = 0;
   //the names PENDING NAME LENGTH
+
+  int entriesPerRow;
+
+
+  if ( writeXml ) {
+    entriesPerRow = 0;
+  } else
+    {
+  entriesPerRow = numNodes;
+    }
   for ( size_t i = 0 ; i < numNodes ; i++ ){
 
     //    xmlNodePtr rowNode;
@@ -106,7 +116,9 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
       fprintf(out,"%-10s", dm.getIdentifier(i).c_str());
     }
     
-    for ( size_t j = 0 ; j < numNodes ; j++ ){
+    if ( writeXml )  ( entriesPerRow++ );
+
+    for ( size_t j = 0 ; j < entriesPerRow ; j++ ){
       float f = dm.getDistance(i,j);
       if ( ! isfinite(f) ){
 	USER_WARNING("warning float not finite (use fix factor) " << f );

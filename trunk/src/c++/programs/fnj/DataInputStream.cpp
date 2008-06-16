@@ -35,22 +35,10 @@ PhylipMaInputStream::PhylipMaInputStream(char * filename = 0 )
     }
 }
 
-bool
-PhylipMaInputStream::readSpeciesNamesAndDM( std::vector<std::string> & speciesnames, StrDblMatrix & dm ) 
-{
-  dm.objInitFromStream(*fp);
-  speciesnames.clear();
-  for (size_t namei=0 ; namei<dm.getSize() ; namei++ ) {
-    speciesnames.push_back(dm.getIdentifier(namei) );
-  }
- return true;
-}
-
-
-bool
+readstatus
 PhylipMaInputStream::readDM( StrDblMatrix & dm ) 
 {
   dm.objInitFromStream(*fp);
- return true;
+ return DM_READ;
 }
 

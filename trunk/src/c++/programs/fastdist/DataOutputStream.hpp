@@ -14,7 +14,7 @@ public:
   DataOutputStream(char * filename );
   virtual ~DataOutputStream() {};
   virtual void print( StrDblMatrix & dm ) = 0;
-  virtual void printStartRun(std::vector<std::string> & names) {};
+  virtual void printStartRun(std::vector<std::string> & names ) {};
   virtual void printEndRun() {};
 
 protected:
