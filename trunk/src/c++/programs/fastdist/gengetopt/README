@@ -1,6 +1,0 @@
-The generated files should be removed from subversion....
-Need to figure out how CMake works first.
-
-The command to generate the files:
-
-gengetopt -i fastdist.ggo
