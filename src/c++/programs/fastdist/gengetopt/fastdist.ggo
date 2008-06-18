@@ -4,10 +4,7 @@ description "Computes distance matrices out of multialignments"
      
 args "--file-name=fastdist_gengetopt --unamed-opts=FILE"
 
-
 text "If FILE is not specified the input is read from stdin "
-
-
 
 option "outfile" o "output filename. If not specifed, output is written to stdout" string typestr="filename" optional
 
@@ -26,7 +23,7 @@ option "tstvratio" T "Transition/transvertion ratio for purine transitions ( for
 option "pyrtvratio" P "Transition/transvertion ratio for  pyrimidines transitions ( for the TN model )" float default="2.0" optional   
 option "no-tstvratio" N "If given fixed ts/tv ratios will not be used" flag off
 option "fixfactor" F "Float specifying what factor to use for saturated data. If not given -1 in the entry." float default="1" optional
-option "datasets" d "nr of datasets in input. Is only used if the input format is phylip_multialignment" int optional default="1"
+option "number-of-runs" r "nr of runs ( datasets ) in input. Is only used if the input format is phylip_multialignment" int optional default="1"
 
 # Not implemented yet....
 # option "bootmode" B "Kind of bootstrapping" values="","" default=""
