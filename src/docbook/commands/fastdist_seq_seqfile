@@ -1,0 +1,1 @@
+fastdist -r 2 seq.seqfile

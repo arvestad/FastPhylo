@@ -136,7 +136,6 @@ main(int argc,
 
 	  //	   applyFixFactor(dm,fixfactor);
 	  if ( ( status = istream->readDM( dm )) != DM_READ ) { 
-	    printf("second break %i\n", status);
 	    break;
 	  };
      

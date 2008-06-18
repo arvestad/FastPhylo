@@ -28,19 +28,7 @@ option "number-of-runs" r "nr of runs ( datasets ) in input. Is only used if the
 # Not implemented yet....
 # option "bootmode" B "Kind of bootstrapping" values="","" default=""
 
-text "Options for tree building:"
-
-option "no-counts" C "Tree file should not contain the counts" flag off
-option "method"  m "reconstruction method to apply" enum values="NJ","FNJ","BIONJ" optional multiple
-
-text "Example usage: 
-$ ./fastdist infile.seq
-$ ./fastdist -D JC -o outfile.txt infile.seq 
-
-Creates 10 bootstrapped matrices 
-$./fastdist -o outfile.txt -b 10 --no-incl-orig infile.seq 
+text "
+Example usage of this program can be found at its home page
+http://fastphylo.sourceforge.net/
 "
-
-
-
-

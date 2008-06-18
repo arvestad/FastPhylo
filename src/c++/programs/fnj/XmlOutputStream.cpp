@@ -18,6 +18,15 @@ XmlOutputStream::~XmlOutputStream()
 void
 XmlOutputStream::print( tree2int_map & tree2count, bool noCounts ) 
 {
-  //  printPHYLIPfast(dm, fp , true );
+
+  tree2int_map::iterator iter = tree2count.begin();
+  for( ; iter!=tree2count.end() ; ++iter){
+    *fp << "   <run>" <<  std::endl
+        << "    <count>"  << (*iter).second 
+        << "</count>"  <<  std::endl 
+        << "    <tree>" << (*iter).first
+        << "    </tree>" << std::endl
+        << "   </run>"  << std::endl;
+  }
 }
 

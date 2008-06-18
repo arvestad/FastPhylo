@@ -21,11 +21,11 @@ fastphylo is software project containing the implementations of the algorithms "
     <title>Algorithms</title>
 
 
-  <sect2 id="Fast_Computation_of_Distance Estimators">
+  <sect2 id="Fast_Computation_of_Distance_Estimators">
     <title>Fast Computation of Distance Estimators</title>
 
 
-  <sect3 id="about_the_article_Fast_Computation_of_Distance Estimators">
+  <sect3 id="about_the_article_Fast_Computation_of_Distance_Estimators">
     <title>About the published article</title>
 
 <para>
@@ -311,6 +311,9 @@ Install the project...
   <sect3 id="fastdist">
     <title>fastdist</title>
 
+<para><application>fastdist</application> implements the algorithm Fast Computation of Distance Estimators ( see <xref linkend="Fast_Computation_of_Distance_Estimators"/> )
+</para>
+
 
   <sect4 id="fastdist_command_line_options">
     <title>Command line options</title>
@@ -338,24 +341,24 @@ Type <userinput>fastdist --help</userinput> to see the command line options
   <sect4 id="fastdist_examples">
     <title>Examples</title>
 <para>
-<example id="example_fastdist_seq_small_seqfile"><title>fastdist with sequence file in Phylip multialignment format</title><para>
-Let us use the example input file <ulink url="example_files/seq-small.seqfile">seq-small.seqfile</ulink> that is in the Phylip multialignment format and looks like this
+<example id="example_fastdist_seq_seqfile"><title>fastdist with sequence file in Phylip multialignment format</title><para>
+We will us use the example input file <ulink url="example_files/seq.phylip_multialignment">seq.phylip_multialignment</ulink> that is in the Phylip multialignment format. Let us take a look at the file content
 
-<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq-small.seqfile">
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.phylip_multialignment">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
 </xi:include></programlisting>
 
-The file has two datasets so we pass the option <userinput>-d 2</userinput> to <application>fastdist</application>. Per default the output is given in the Phylip distance matrix format.
+The file has two datasets so we pass the option <userinput>-r 2</userinput> to <application>fastdist</application>. Per default the output is given in the Phylip distance matrix format.
 
 <programlisting><![CDATA[
-[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_seq_small_seqfile">
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_seq_phylip_multialignment">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
 </xi:include>
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastdist_seq_small_seqfile">
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastdist_seq_phylip_multialignment">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
@@ -365,17 +368,38 @@ The file has two datasets so we pass the option <userinput>-d 2</userinput> to <
 </para>
 </example>
 
-<example id="example_fastdist_seq_small_xml"><title>fastdist with sequence file in XML format</title><para>
+<example id="example_fastdist_seq_xml"><title>fastdist with sequence file in XML format</title><para>
 
-Let us use the example input file <ulink url="example_files/seq-small.xml">seq-small.xml</ulink> that has this content
+Let us use the example input file <ulink url="example_files/seq.xml">seq.xml</ulink> that has this content
 
-<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq-small.xml">
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.xml">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
 </xi:include></programlisting>
 
-<note><para>The -d option is not available and also not needed when the input is in XML format. <application>fastdist</application> computes all data sets.</para></note>
+
+
+
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/cat_seq_xml">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/cat_seq_xml">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+
+
+
+
+<note><para>The -r option is not available and also not needed when the input is in XML format. <application>fastdist</application> computes all data sets ( runs ).</para></note>
 
 <programlisting><![CDATA[
 [user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_xml_file_xml_output">
@@ -397,7 +421,7 @@ Let us use the example input file <ulink url="example_files/seq-small.xml">seq-s
 <example id="example_fastdist_with_an_xml_stream_on_stdin"><title>fastdist with an XML stream on stdin</title><para>
 
 If you leave out the input filename, the input will be read from stdin. <application>fastdist</application> doesn't wait for the whole xml file to be read before it starts. It starts a computation as soon as an ending <![CDATA[ </run>   ]]>
-has been read. The memory consumption will not grow over time so the input can be arbitrarily large. A never ending input stream only works in the XML input format, because the phylip multialignment input format needs you to specify in advance how many data sets are to be sent to <application>fastdist</application> ( the -d option ).
+has been read. The memory consumption will not grow over time so the input can be arbitrarily large. A never ending input stream only works in the XML input format, because the phylip multialignment input format needs you to specify in advance how many data sets are to be sent to <application>fastdist</application> ( the -r option ).
 
 
 
@@ -458,6 +482,164 @@ Read more about <ulink url="http://codespeak.net/lxml/parsing.html">lxml</ulink>
     </sect4>
 
     </sect3>
+
+
+  <sect3 id="fnj">
+    <title>fnj</title>
+<para><application>fnj</application> implements the algorithm Fast Neighbor Joining ( see <xref linkend="Fast_Neighbor_Joining"/> )
+</para>
+
+
+
+  <sect4 id="fnj_command_line_options">
+    <title>Command line options</title>
+
+
+<para>
+
+Type <userinput>fnj --help</userinput> to see the command line options
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fnj_help">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fnj_help">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+</para></sect4>
+
+  <sect4 id="fnj_examples">
+    <title>Examples</title>
+<para>
+<example id="example_fnj_seq_phylip_dm"><title>fnj with sequence file in Phylip distance matrix format</title><para>
+We will use the example input file <ulink url="example_files/dm.phylip_dm">dm.phylip_dm</ulink> that is in the Phylip distance matrix format. Let us take a look at the file content
+
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/dm.phylip_dm">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include></programlisting>
+
+The file has two datasets so we pass the option <userinput>-r 2</userinput> to <application>fnj</application>. Per default the output is given in the Phylip distance matrix format.
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fnj_seq_phylip_dmultialignment">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fnj_seq_phylip_multialignment">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+</para>
+</example>
+
+<example id="example_fnj_seq_xml"><title>fnj with sequence file in XML format</title><para>
+
+Let us use the example input file <ulink url="example_files/seq.xml">seq.xml</ulink> that has this content
+
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.xml">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include></programlisting>
+
+<note><para>The -r option is not available and also not needed when the input is in XML format. <application>fnj</application> computes all data sets ( runs ).</para></note>
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fnj_xml_file_xml_output">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fnj_xml_file_xml_output">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+
+</para>
+</example>
+
+<example id="example_fnj_with_an_xml_stream_on_stdin"><title>fnj with an XML stream on stdin</title><para>
+
+If you leave out the input filename, the input will be read from stdin. <application>fnj</application> doesn't wait for the whole xml file to be read before it starts. It starts a computation as soon as an ending <![CDATA[ </run>   ]]>
+has been read. The memory consumption will not grow over time so the input can be arbitrarily large. A never ending input stream only works in the XML input format, because the phylip multialignment input format needs you to specify in advance how many data sets are to be sent to <application>fnj</application> ( the -r option ).
+
+
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fnj_xml_stdin_xml_output">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fnj_xml_stdin_xml_output">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+</para>
+</example>
+
+
+
+<example id="example_reading_the_fnj_xml_stream_output_with_python"><title>reading the fnj XML stream output with python</title><para>
+
+
+If the XML output is very large you might want to use an XML parser that doesn't hold the whole file in memory. This python script is an example of how to do this
+
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/fnj_lxml.py">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include></programlisting>
+
+
+For each distance matrix the script counts the number of elements with a value below 0.1
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fnj_lxml">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fnj_lxml">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+Read more about <ulink url="http://codespeak.net/lxml/parsing.html">lxml</ulink> and <ulink url="http://www.zvon.org/xxl/XPathTutorial/General/examples.html">xpath</ulink>.
+
+
+</para>
+</example>
+
+
+      </para>
+
+    </sect4>
+
+    </sect3>
+
+
+
     </sect2>
   </sect1>
 

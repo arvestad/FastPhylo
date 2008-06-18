@@ -216,6 +216,7 @@ Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin){
       i--;
       continue;
     }
+    s.name.clear();
     appendUntil(s.name,tmpName,fin.gcount(), ' ');
     
     fin.clear();
