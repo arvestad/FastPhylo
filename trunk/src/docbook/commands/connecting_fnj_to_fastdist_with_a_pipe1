@@ -1,0 +1,1 @@
+cat seq.phylip_multialignment | fastdist -b 3 -r 2 | fnj -O xml -r 2 -d 4 -m FNJ

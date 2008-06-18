@@ -341,14 +341,24 @@ Type <userinput>fastdist --help</userinput> to see the command line options
   <sect4 id="fastdist_examples">
     <title>Examples</title>
 <para>
-<example id="example_fastdist_seq_seqfile"><title>fastdist with sequence file in Phylip multialignment format</title><para>
+<example id="example_fastdist_seq_phylip_multialignment"><title>fastdist with sequence file in Phylip multialignment format</title><para>
 We will us use the example input file <ulink url="example_files/seq.phylip_multialignment">seq.phylip_multialignment</ulink> that is in the Phylip multialignment format. Let us take a look at the file content
 
-<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.phylip_multialignment">
+
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/cat_seq_phylip_multialignment">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
-</xi:include></programlisting>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/cat_seq_phylip_multialignment">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
 
 The file has two datasets so we pass the option <userinput>-r 2</userinput> to <application>fastdist</application>. Per default the output is given in the Phylip distance matrix format.
 
@@ -443,8 +453,7 @@ has been read. The memory consumption will not grow over time so the input can b
 
 
 
-<example id="example_reading_the_fastdist_xml_stream_output_with_python"><title>reading the fastdist XML stream output with python</title><para>
-
+<example id="example_reading_the_fastdist_xml_output_stream_with_python"><title>reading the fastdist XML output stream with python</title><para>
 
 If the XML output is very large you might want to use an XML parser that doesn't hold the whole file in memory. This python script is an example of how to do this
 
@@ -520,39 +529,43 @@ Type <userinput>fnj --help</userinput> to see the command line options
 <example id="example_fnj_seq_phylip_dm"><title>fnj with sequence file in Phylip distance matrix format</title><para>
 We will use the example input file <ulink url="example_files/dm.phylip_dm">dm.phylip_dm</ulink> that is in the Phylip distance matrix format. Let us take a look at the file content
 
-<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/dm.phylip_dm">
-<xi:fallback>
-   couldn't xinclude file
-</xi:fallback>
-</xi:include></programlisting>
 
-The file has two datasets so we pass the option <userinput>-r 2</userinput> to <application>fnj</application>. Per default the output is given in the Phylip distance matrix format.
+
+
 
 <programlisting><![CDATA[
-[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fnj_seq_phylip_dmultialignment">
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/cat_dm_phylip_dm">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
 </xi:include>
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fnj_seq_phylip_multialignment">
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/cat_dm_phylip_dm">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
 </xi:include>
 </programlisting>
 
+The file has two datasets so we pass the option <userinput>-r 2</userinput> to <application>fnj</application>. Per default the output is given in the Phylip distance matrix format.
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fnj_dm_phylip_dm">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fnj_dm_phylip_dm">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
 </para>
 </example>
 
 <example id="example_fnj_seq_xml"><title>fnj with sequence file in XML format</title><para>
 
-Let us use the example input file <ulink url="example_files/seq.xml">seq.xml</ulink> that has this content
-
-<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.xml">
-<xi:fallback>
-   couldn't xinclude file
-</xi:fallback>
-</xi:include></programlisting>
+We will use the example input file <ulink url="example_files/dm.xml">dm.xml</ulink> that is in the Phylip distance matrix format. Let us take a look at the file content
 
 <note><para>The -r option is not available and also not needed when the input is in XML format. <application>fnj</application> computes all data sets ( runs ).</para></note>
 
@@ -573,32 +586,52 @@ Let us use the example input file <ulink url="example_files/seq.xml">seq.xml</ul
 </para>
 </example>
 
-<example id="example_fnj_with_an_xml_stream_on_stdin"><title>fnj with an XML stream on stdin</title><para>
+<example id="example_connecting_fnj_to_fastdist_with_a_pipe"><title>connecting fnj to fastdist with a pipe</title><para>
 
-If you leave out the input filename, the input will be read from stdin. <application>fnj</application> doesn't wait for the whole xml file to be read before it starts. It starts a computation as soon as an ending <![CDATA[ </run>   ]]>
-has been read. The memory consumption will not grow over time so the input can be arbitrarily large. A never ending input stream only works in the XML input format, because the phylip multialignment input format needs you to specify in advance how many data sets are to be sent to <application>fnj</application> ( the -r option ).
 
+Let us use the example input file <ulink url="example_files/seq.xml">seq.xml</ulink> that has two data sets. We will bootstrap 3 times.
+
+First we send the data in  phylip_dm format through the pipe:
 
 
 <programlisting><![CDATA[
-[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fnj_xml_stdin_xml_output">
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/connecting_fnj_to_fastdist_with_a_pipe1">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
 </xi:include>
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fnj_xml_stdin_xml_output">
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/connecting_fnj_to_fastdist_with_a_pipe1">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
 </xi:include>
 </programlisting>
 
+
+We could also send the data in XML format through the pipe:
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/connecting_fnj_to_fastdist_with_a_pipe2">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/connecting_fnj_to_fastdist_with_a_pipe2">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+As the the XML format is more descriptive, the flags -d and -r  are no longer needed by <application>fnj</application>.
+
+
+
 </para>
 </example>
 
 
 
-<example id="example_reading_the_fnj_xml_stream_output_with_python"><title>reading the fnj XML stream output with python</title><para>
+<example id="example_reading_the_fnj_xml_output_stream_with_python"><title>reading the fnj XML output stream with python</title><para>
 
 
 If the XML output is very large you might want to use an XML parser that doesn't hold the whole file in memory. This python script is an example of how to do this
@@ -610,7 +643,7 @@ If the XML output is very large you might want to use an XML parser that doesn't
 </xi:include></programlisting>
 
 
-For each distance matrix the script counts the number of elements with a value below 0.1
+The script prints the maximum count ( just as an example ).
 
 <programlisting><![CDATA[
 [user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fnj_lxml">
