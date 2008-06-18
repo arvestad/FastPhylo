@@ -1,0 +1,1 @@
+cat seq.xml | fastdist -I xml -O xml | fnj -I xml -O xml -m FNJ

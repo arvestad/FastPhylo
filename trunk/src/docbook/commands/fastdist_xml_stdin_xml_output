@@ -1,1 +1,1 @@
-cat seq-small.xml | fastdist -I xml -O xml
+cat seq.xml | fastdist -I xml -O xml

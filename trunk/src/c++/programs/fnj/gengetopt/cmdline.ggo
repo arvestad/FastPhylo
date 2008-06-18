@@ -9,15 +9,16 @@ option "outfile" o "output filename. If not specifed, output is written to stdou
 option "input-format" I "input format" enum values="phylip_dm","xml" default="phylip_dm" optional
 option "output-format" O  "output format" enum values="tree_as_text","xml" default="tree_as_text" optional 
 
-option "no-counts" C "Tree file should not contain the counts" flag off
+option "no-counts" C "Tree file should not contain the counts. This flag has no effect on the XML output format." flag off
 option "method"  m "reconstruction methods to apply" enum values="NJ","FNJ","BIONJ" optional multiple(1-) required
 
 option "dm-per-run" d "nr of Distance matrices per run. Is only used if the input format is phylip_dm" int optional default="1"
 option "number-of-runs" r "nr of runs. Is only used if the input format is phylip_dm" int optional default="1"
 option "bootstraps" b  "number of boot straps" int default="0" optional
 
-text "Example usage: 
-$ ./fnj file.tree
+text "
+Example usage of this program can be found at its home page
+http://fastphylo.sourceforge.net/
 "
 
 

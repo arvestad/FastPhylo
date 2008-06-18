@@ -69,7 +69,7 @@ SET(FASTPHYLO_SPECIAL_SRCS DNA_b128/sse2_wrapper.c
 
 SET(COMMON_FLAGS  "-march=pentium4 -msse2 -falign-functions -falign-jumps -falign-labels -falign-loops -fcse-follow-jumps -fcse-skip-blocks -fdelete-null-pointer-checks -fexpensive-optimizations -fgcse -fgcse-lm -fgcse-sm -finline-functions -foptimize-sibling-calls -fpeephole2 -fregmove -frename-registers -freorder-blocks -freorder-functions -frerun-cse-after-loop -frerun-loop-opt -fstrength-reduce -fstrict-aliasing -O1" )
 
-SET(FASTDIST_SRCS programs/fastdist/fastdist.cpp
+SET(FASTDIST_SRCS programs/fastdist/main.cpp
 programs/fastdist/DataInputStream.cpp
 programs/fastdist/XmlInputStream.cpp
 programs/fastdist/DataOutputStream.cpp
@@ -77,7 +77,7 @@ programs/fastdist/XmlOutputStream.cpp
 ${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.c 
 )
 
-SET(FNJ_SRCS programs/fnj/fnj.cpp
+SET(FNJ_SRCS programs/fnj/main.cpp
 programs/fnj/DataInputStream.cpp
 programs/fnj/XmlInputStream.cpp
 programs/fnj/DataOutputStream.cpp

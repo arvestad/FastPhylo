@@ -80,7 +80,7 @@ main(int argc,
     }
   bool useFixFactor = args_info.fixfactor_given;
   float fixfactor=args_info.fixfactor_arg;
-  int ndatasets = args_info.datasets_arg;
+  int ndatasets = args_info.number_of_runs_arg;
 
   //FINNISHED PARSING ARGS
   //---------------------------------------------------------
@@ -153,7 +153,8 @@ main(int argc,
 	  names.clear();names.reserve(seqs.size());
 	  for( size_t i=0;i<seqs.size();i++)
 	    names.push_back(seqs[i].name);
-  
+
+
           ostream->printStartRun(names);
 	  if ( !no_incl_orig ){//create the distance matrix for the original sequences
 	    Sequences2DNA_b128(seqs,b128seqs);
