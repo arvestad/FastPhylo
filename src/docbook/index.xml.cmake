@@ -342,7 +342,7 @@ Type <userinput>fastdist --help</userinput> to see the command line options
     <title>Examples</title>
 <para>
 <example id="example_fastdist_seq_phylip_multialignment"><title>fastdist with sequence file in Phylip multialignment format</title><para>
-We will us use the example input file <ulink url="example_files/seq.phylip_multialignment">seq.phylip_multialignment</ulink> that is in the Phylip multialignment format. Let us take a look at the file content
+We will us use the example input file <ulink url="example_files/seq.phylip_multialignment">seq.phylip_multialignment</ulink> that is in the Phylip multialignment format ( phylip_multialignment ). Let us take a look at the file content
 
 
 
@@ -360,7 +360,7 @@ We will us use the example input file <ulink url="example_files/seq.phylip_multi
 </programlisting>
 
 
-The file has two datasets so we pass the option <userinput>-r 2</userinput> to <application>fastdist</application>. Per default the output is given in the Phylip distance matrix format.
+The file has two datasets so we pass the option <userinput>-r 2</userinput> to <application>fastdist</application>. Per default the output is given in the Phylip distance matrix format ( -O phylip_dm ).
 
 <programlisting><![CDATA[
 [user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_seq_phylip_multialignment">
@@ -546,7 +546,7 @@ We will use the example input file <ulink url="example_files/dm.phylip_dm">dm.ph
 </xi:include>
 </programlisting>
 
-The file has two datasets so we pass the option <userinput>-r 2</userinput> to <application>fnj</application>. Per default the output is given in the Phylip distance matrix format.
+The file has two datasets so we pass the option <userinput>-r 2</userinput> to <application>fnj</application>. Per default the output is given in the format "Tree as text" ( -O tree_as_text ).
 
 <programlisting><![CDATA[
 [user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fnj_dm_phylip_dm">
@@ -565,7 +565,7 @@ The file has two datasets so we pass the option <userinput>-r 2</userinput> to <
 
 <example id="example_fnj_seq_xml"><title>fnj with sequence file in XML format</title><para>
 
-We will use the example input file <ulink url="example_files/dm.xml">dm.xml</ulink> that is in the Phylip distance matrix format. Let us take a look at the file content
+We will use the example input file <ulink url="example_files/dm.xml">dm.xml</ulink> that is in the Phylip distance matrix format ( phylip_dm ). Let us take a look at the file content
 
 <note><para>The -r option is not available and also not needed when the input is in XML format. <application>fnj</application> computes all data sets ( runs ).</para></note>
 
