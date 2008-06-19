@@ -1,7 +1,10 @@
 #include "XmlInputStream.hpp"
 #include <cstdio>
 
+#include <libxml/relaxng.h>
+
 using namespace std;
+
 
 XmlInputStream::~XmlInputStream()
 { 
@@ -35,6 +38,19 @@ XmlInputStream::XmlInputStream(char * filename = 0)
   l.in_root =  false;
   l.in_runs =  false;
 
+
+  xmlRelaxNGParserCtxtPtr parserctxt;
+  size_t len = strlen(relaxngstr);
+  parserctxt = xmlRelaxNGNewMemParserCtxt(relaxngstr,len);
+  xmlRelaxNGSetParserErrors(parserctxt,(xmlRelaxNGValidityErrorFunc) fprintf, (xmlRelaxNGValidityWarningFunc) fprintf, stderr);
+  xmlRelaxNGPtr schema = NULL;
+  schema = xmlRelaxNGParse(parserctxt);
+  xmlRelaxNGFreeParserCtxt(parserctxt);
+
+  if ( xmlTextReaderRelaxNGSetSchema( reader,  schema ) != 0 )  { 
+    THROW_EXCEPTION("failed to set relax ng schema");
+    exit(EXIT_FAILURE);
+  }
 }
 
 bool XmlInputStream::read( vector<string> &names, vector<DNA_b128_String> &b128seqs )  
@@ -93,6 +109,11 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs ) {
     int ret;
     while ( ( ret = xmlTextReaderRead(reader)) == 1 )
       {
+ 	if ( xmlTextReaderIsValid( reader ) != 1 ) { 
+          THROW_EXCEPTION("xml input does not validate");
+          exit(EXIT_FAILURE);
+        } 
+
 	int depth = xmlTextReaderDepth(reader);
 	int type = xmlTextReaderNodeType(reader);
 	name = xmlTextReaderConstName(reader);
@@ -103,9 +124,17 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs ) {
 
 	      xmlNodePtr tree;
 	      tree = xmlTextReaderExpand (reader);
+
+              if ( tree == NULL ) { 
+                THROW_EXCEPTION("could not expand tree");
+                exit(EXIT_FAILURE);
+              } 
               readRunTree(tree, seqs ); 
- 
-              run_read = true;  break; // break out of the while loop
+
+              run_read = true;  continue; 
+	    } 
+	    if ( type == XML_READER_TYPE_END_ELEMENT ) {
+                  return true;
 	    } 
 	  }
 
@@ -125,12 +154,11 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs ) {
 	    }
 	  }
       }
-
-  if (ret == 1 && run_read ) {
-    return true;
-  }
-
   if (ret == 0 && ! run_read ) {
+  THROW_EXCEPTION("YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY");
+  exit(EXIT_FAILURE);
+
+
     return false;
   }
   THROW_EXCEPTION("failed to parse");

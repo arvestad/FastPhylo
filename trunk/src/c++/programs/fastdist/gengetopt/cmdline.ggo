@@ -24,6 +24,8 @@ option "pyrtvratio" P "Transition/transvertion ratio for  pyrimidines transition
 option "no-tstvratio" N "If given fixed ts/tv ratios will not be used" flag off
 option "fixfactor" F "Float specifying what factor to use for saturated data. If not given -1 in the entry." float default="1" optional
 option "number-of-runs" r "nr of runs ( datasets ) in input. Is only used if the input format is phylip_multialignment" int optional default="1"
+option "print-relaxng" p "print the Relax NG schema for the XML input format and then exit" flag off
+
 
 # Not implemented yet....
 # option "bootmode" B "Kind of bootstrapping" values="","" default=""

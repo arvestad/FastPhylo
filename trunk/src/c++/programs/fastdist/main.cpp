@@ -42,6 +42,9 @@ main(int argc,
   //-----------------------------------------------------
   // EVOLUTIONARY MODEL
 
+  if ( args_info.print_relaxng_given ) {  cout << relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
+
+
   switch ( args_info.distance_function_arg )
     { 
     case distance_function_arg_JC : trans_model.model = JC; break;

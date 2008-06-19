@@ -38,6 +38,7 @@ PhylipMaInputStream::PhylipMaInputStream(char * filename = 0 )
 readstatus
 PhylipMaInputStream::readDM( StrDblMatrix & dm ) 
 {
+  printf("T\n");
   dm.objInitFromStream(*fp);
  return DM_READ;
 }
