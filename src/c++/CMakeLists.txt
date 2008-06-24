@@ -70,7 +70,8 @@ SET(FASTPHYLO_SPECIAL_SRCS DNA_b128/sse2_wrapper.c
 SET(COMMON_FLAGS  "-march=pentium4 -msse2 -falign-functions -falign-jumps -falign-labels -falign-loops -fcse-follow-jumps -fcse-skip-blocks -fdelete-null-pointer-checks -fexpensive-optimizations -fgcse -fgcse-lm -fgcse-sm -finline-functions -foptimize-sibling-calls -fpeephole2 -fregmove -frename-registers -freorder-blocks -freorder-functions -frerun-cse-after-loop -frerun-loop-opt -fstrength-reduce -fstrict-aliasing -O1" )
 
 SET(FASTDIST_SRCS programs/fastdist/main.cpp
-programs/fastdist/DataInputStream.cpp
+programs/fastdist/PhylipMaInputStream.cpp
+programs/fastdist/FastaInputStream.cpp
 programs/fastdist/XmlInputStream.cpp
 programs/fastdist/DataOutputStream.cpp
 programs/fastdist/XmlOutputStream.cpp
@@ -84,7 +85,6 @@ programs/fnj/DataOutputStream.cpp
 programs/fnj/XmlOutputStream.cpp
 ${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.c 
 )
-
 
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.c  PROPERTIES GENERATED true)
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.h  PROPERTIES GENERATED true)

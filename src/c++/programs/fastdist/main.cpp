@@ -22,6 +22,8 @@
 #include "NeighborJoining.hpp"
 #include "DataInputStream.hpp"
 #include "XmlInputStream.hpp"
+#include "PhylipMaInputStream.hpp"
+#include "FastaInputStream.hpp"
 #include "DataOutputStream.hpp"
 #include "XmlOutputStream.hpp"
 
@@ -39,11 +41,10 @@ main(int argc,
   if (cmdline_parser (argc, argv, &args_info) != 0)
     exit(EXIT_FAILURE);
 
-  //-----------------------------------------------------
-  // EVOLUTIONARY MODEL
-
   if ( args_info.print_relaxng_given ) {  cout << relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
 
+  //-----------------------------------------------------
+  // EVOLUTIONARY MODEL
 
   switch ( args_info.distance_function_arg )
     { 
@@ -110,6 +111,7 @@ main(int argc,
 
   switch ( args_info.input_format_arg )
     {
+    case input_format_arg_fasta: istream = new FastaInputStream(inputfilename);  break;
     case input_format_arg_phylip_multialignment: istream = new PhylipMaInputStream(inputfilename);  break;
     case input_format_arg_xml: istream = new XmlInputStream(inputfilename); break;
    default: exit(EXIT_FAILURE);
@@ -121,7 +123,6 @@ main(int argc,
     case output_format_arg_xml: ostream = new XmlOutputStream(outputfilename); break;
    default: exit(EXIT_FAILURE);
 }
-
 
     StrDblMatrix dm;
       //open infile
@@ -136,7 +137,6 @@ main(int argc,
       for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
 	//no bootstrapping
 
-
 	if ( !no_incl_orig && numboot == 0){//only need to create one distance matrix
           if ( ! istream->read(names,b128seqs)) break;
 	  fillMatrix(dm, b128seqs, trans_model);
@@ -145,7 +145,6 @@ main(int argc,
 	  if(useFixFactor) applyFixFactor(dm,fixfactor);
 	  //	  output << dm;
 	  ostream->print(dm);
-
 	}
 	//bootstrapping
 	else{
@@ -156,7 +155,6 @@ main(int argc,
 	  names.clear();names.reserve(seqs.size());
 	  for( size_t i=0;i<seqs.size();i++)
 	    names.push_back(seqs[i].name);
-
 
           ostream->printStartRun(names);
 	  if ( !no_incl_orig ){//create the distance matrix for the original sequences
@@ -185,17 +183,11 @@ main(int argc,
 
   //OUTPUT THE TREES
 
-
       delete ostream;
       delete istream;
-
   }
 
-
-
   catch(...){
-
-
     throw;
   }
 

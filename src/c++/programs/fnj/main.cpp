@@ -53,6 +53,8 @@ main(int argc,
   if (cmdline_parser (argc, argv, &args_info) != 0)
     exit(EXIT_FAILURE);
 
+  if ( args_info.print_relaxng_given ) {  cout << relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
+
   //----------------------------------------------
   // DISTANCE METHODS
   std::vector<NJ_method> methods;
@@ -60,6 +62,10 @@ main(int argc,
 
   if( args_info.number_of_runs_given && args_info.input_format_arg == input_format_arg_xml )
     { cerr << "error: --number-of-runs can not be used together with input format xml." << endl; exit(EXIT_FAILURE);   }
+
+  if( ! args_info.method_given ) 
+    { cerr << "error: at least one --method must be given" << endl; exit(EXIT_FAILURE);   }
+
 
 
 
@@ -105,7 +111,7 @@ main(int argc,
 
   switch ( args_info.output_format_arg )
     {
-    case output_format_arg_tree_as_text: ostream = new TreeTextOutputStream(outputfilename);  break;
+    case output_format_arg_newick: ostream = new TreeTextOutputStream(outputfilename);  break;
     case output_format_arg_xml: ostream = new XmlOutputStream(outputfilename); break;
     default: exit(EXIT_FAILURE);
 }
@@ -125,14 +131,14 @@ main(int argc,
 
       readstatus status;
       int run = 0;
-      status = START;
-      while ( ( status == START || status == END_OF_RUN )  && ( args_info.input_format_arg == input_format_arg_xml || run < args_info.number_of_runs_arg )) {
+      status = END_OF_RUN;
+      while (   status == END_OF_RUN   && ( args_info.input_format_arg == input_format_arg_xml || run < args_info.number_of_runs_arg )) {
         run++;
         tree2int_map tree2count((size_t)( args_info.bootstraps_arg * 1.3));
         StrDblMatrix dm;
         str2int_hashmap name2id;
 
-        for ( int i = 0 ; ( status == START || status == END_OF_RUN || status == DM_READ ) && ( i < args_info.dm_per_run_arg - 1 || args_info.input_format_arg == input_format_arg_xml ) ; i++ ){
+        for ( int i = 0 ; ( status == END_OF_RUN || status == DM_READ ) && ( i < args_info.dm_per_run_arg - 1 || args_info.input_format_arg == input_format_arg_xml ) ; i++ ){
 
 	  //	   applyFixFactor(dm,fixfactor);
 	  if ( ( status = istream->readDM( dm )) != DM_READ ) { 
@@ -141,9 +147,6 @@ main(int argc,
      
 	for(size_t namei=0 ; namei<dm.getSize() ; namei++ )
 	  name2id[dm.getIdentifier(namei)] = namei;
-
-
-
 
 	  buildTrees(dm, tree2count, methods,name2id);
         }

@@ -35,9 +35,10 @@ XmlInputStream::XmlInputStream(char * filename = 0)
   reader = xmlReaderForFile(filename,0, XML_PARSE_COMPACT | XML_PARSE_NONET );
   if ( reader == 0 ) { THROW_EXCEPTION("Could not open file"); };
 
-  l.in_root =  false;
-  l.in_runs =  false;
-
+  l.in_root = false;
+  l.in_runs = false;
+  l.in_run  = false;
+  l.in_seq  = false;
 
   xmlRelaxNGParserCtxtPtr parserctxt;
   size_t len = strlen(relaxngstr);
@@ -65,48 +66,13 @@ bool XmlInputStream::read( vector<string> &names, vector<DNA_b128_String> &b128s
   return true;
 }
 
-void 
-XmlInputStream::readRunTree( xmlNodePtr tree, std::vector<Sequence> &seqs ) {
-
-  int numSequences = 0;
-  unsigned int seqlen;
-
-  xmlNode *node = NULL;
- 
-  for (node = tree->children; node; node = node->next) {
-    if (node->type == XML_ELEMENT_NODE && xmlStrEqual (node->name, (const xmlChar *)"seq" ) ) {
-      numSequences++;
-    }
-  }
-  seqs.resize(numSequences);
-
-  int i = 0;
-  for (node = tree->children; node; node = node->next) {
-    if (node->type == XML_ELEMENT_NODE && xmlStrEqual (node->name, (const xmlChar *)"seq" ) ) {
-       Sequence &s = seqs[i];
-
-      xmlChar * name =  xmlGetProp(node, (const xmlChar *) "name") ;
-      xmlChar * seq = xmlGetProp(node, (const xmlChar *) "seq") ;
-
-      if ( name == 0 ) THROW_EXCEPTION("failed to read attribute \"name\"");
-      if ( seq == 0 ) THROW_EXCEPTION("failed to read attribute \"seq\"");
-
-      s.name =  ( const char *) name;
-      s.seq =  ( const char *) seq;
-
-      xmlFree(name);
-      xmlFree(seq);
-      i++;
-    }
-  }
-}
-
-bool 
+bool
 XmlInputStream::readSequences( std::vector<Sequence> &seqs ) {
     const xmlChar *name, *value;
 
     bool run_read = false;
     int ret;
+    int numSequences = 0;
     while ( ( ret = xmlTextReaderRead(reader)) == 1 )
       {
  	if ( xmlTextReaderIsValid( reader ) != 1 ) { 
@@ -118,20 +84,25 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs ) {
 	int type = xmlTextReaderNodeType(reader);
 	name = xmlTextReaderConstName(reader);
 
-	if ( l.in_root && l.in_runs && depth == 2 && xmlStrEqual (name, (const xmlChar *)"run" ))
+	if ( l.in_root && l.in_runs && l.in_run && depth == 3 && xmlStrEqual (name, (const xmlChar *)"seq" ))
 	  {
 	    if ( type == XML_READER_TYPE_ELEMENT ) {
+	      numSequences++;
+              seqs.resize(numSequences);
 
-	      xmlNodePtr tree;
-	      tree = xmlTextReaderExpand (reader);
+              Sequence &s = seqs[numSequences-1];
+ 
+      xmlChar * name =  xmlTextReaderGetAttribute(reader, (const xmlChar *) "name") ;
+      xmlChar * seq = xmlTextReaderGetAttribute(reader, (const xmlChar *) "seq") ;
 
-              if ( tree == NULL ) { 
-                THROW_EXCEPTION("could not expand tree");
-                exit(EXIT_FAILURE);
-              } 
-              readRunTree(tree, seqs ); 
+      if ( name == 0 ) THROW_EXCEPTION("failed to read attribute \"name\"");
+      if ( seq == 0 ) THROW_EXCEPTION("failed to read attribute \"seq\"");
 
-              run_read = true;  continue; 
+      s.name =  ( const char *) name;
+      s.seq = ( const char *) seq;
+      xmlFree(name);
+      xmlFree(seq);
+
 	    } 
 	    if ( type == XML_READER_TYPE_END_ELEMENT ) {
                   return true;
@@ -153,14 +124,22 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs ) {
 	    case XML_READER_TYPE_END_ELEMENT:  l.in_runs = false; continue; 
 	    }
 	  }
+
+	if ( l.in_root && l.in_runs && depth == 2 && xmlStrEqual (name, (const xmlChar *)"run" ))
+	  {
+	    switch (type) {
+	    case XML_READER_TYPE_ELEMENT:  l.in_run = true; continue; 
+	    case XML_READER_TYPE_END_ELEMENT:  l.in_run = false; return true; 
+            }
+         }
       }
-  if (ret == 0 && ! run_read ) {
-  THROW_EXCEPTION("YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY");
-  exit(EXIT_FAILURE);
-
-
-    return false;
-  }
-  THROW_EXCEPTION("failed to parse");
-  exit(EXIT_FAILURE);
+    if (ret == 0 ) {
+      if ( l.in_root ) {
+        THROW_EXCEPTION("failed to parse");
+        exit(EXIT_FAILURE);
+      } 
+      else { 
+        return false;
+      }
+    }
 }

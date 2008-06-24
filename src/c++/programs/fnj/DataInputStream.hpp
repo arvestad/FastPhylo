@@ -8,7 +8,7 @@
 #include <iostream>
 #include <fstream>
 
-typedef enum { START = 0, DM_READ = 1, END_OF_RUN = 2, END_OF_RUNS = 3, ERROR = 4 } readstatus;
+typedef enum { DM_READ = 1, END_OF_RUN = 2, END_OF_RUNS = 3, ERROR = 4 } readstatus;
 
 class DataInputStream
 {
