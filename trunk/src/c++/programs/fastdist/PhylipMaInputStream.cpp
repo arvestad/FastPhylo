@@ -1,14 +1,7 @@
-#include "DataInputStream.hpp"
+#include "PhylipMaInputStream.hpp"
 #include <cstdio>
 
 using namespace std;
-
-DataInputStream & chooseStream(char ** argv);
-
-DataInputStream::DataInputStream()
-{ 
-}
-
 
 PhylipMaInputStream::~PhylipMaInputStream() {
   if ( file_was_opened ) 
@@ -47,5 +40,3 @@ PhylipMaInputStream::readSequences(std::vector<Sequence> &seqs) {
   Sequence::readSequences(seqs ,*fp);
  return true;
 }
-
-

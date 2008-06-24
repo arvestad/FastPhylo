@@ -8,30 +8,21 @@
 
 #include <iostream>
 #include <fstream>
+#include <libxml/tree.h>
+
+struct SeqIdentifier { 
+  std::string name;
+  std::string species;
+  xmlNodePtr extrainfo;
+};
 
 class DataInputStream
 {
 public:
-  DataInputStream();
+  DataInputStream() {};
   virtual ~DataInputStream() {};
   virtual bool read( std::vector<std::string> &names, std::vector<DNA_b128_String> &b128_strings ) = 0;
   virtual bool readSequences( std::vector<Sequence> &seqs ) = 0;
 };
-
-class PhylipMaInputStream : public DataInputStream
-{
-public:
-  PhylipMaInputStream(char * filename );
-  ~PhylipMaInputStream();
-
-  bool read( std::vector<std::string> &names, std::vector<DNA_b128_String> &b128_strings);
-  bool readSequences(std::vector<Sequence> &seqs);
-protected:
-  std::istream * fp;
-  std::ifstream fin;
-  bool file_was_opened;
-
-};
-
 
 #endif // DATAINPUTSTREAM_HPP

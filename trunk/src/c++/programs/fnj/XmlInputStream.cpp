@@ -34,8 +34,25 @@ XmlInputStream::XmlInputStream(char * filename = 0)
 
   l.in_root =  false;
   l.in_runs =  false;
+  l.in_run = false;
+  l.in_identities = false;
+  l.row_nr = -1;
+  l.entry_nr = -1;
 
   dmSize = 0;
+
+  xmlRelaxNGParserCtxtPtr parserctxt;
+  size_t len = strlen(relaxngstr);
+  parserctxt = xmlRelaxNGNewMemParserCtxt(relaxngstr,len);
+  xmlRelaxNGSetParserErrors(parserctxt,(xmlRelaxNGValidityErrorFunc) fprintf, (xmlRelaxNGValidityWarningFunc) fprintf, stderr);
+  xmlRelaxNGPtr schema = NULL;
+  schema = xmlRelaxNGParse(parserctxt);
+  xmlRelaxNGFreeParserCtxt(parserctxt);
+
+  if ( xmlTextReaderRelaxNGSetSchema( reader,  schema ) != 0 )  { 
+    THROW_EXCEPTION("failed to set relax ng schema");
+    exit(EXIT_FAILURE);
+  }
 }
 
 readstatus  
@@ -48,65 +65,79 @@ XmlInputStream::readDM( StrDblMatrix & dm ) {
 
     while ( ( ret = xmlTextReaderRead(reader)) == 1 )
       {
+ 	if ( xmlTextReaderIsValid( reader ) != 1 ) { 
+          THROW_EXCEPTION("xml input does not validate");
+          exit(EXIT_FAILURE);
+        } 
+
 	int depth = xmlTextReaderDepth(reader);
 	int type = xmlTextReaderNodeType(reader);
 	name = xmlTextReaderConstName(reader);
 
-	if ( l.in_root && l.in_runs && l.in_run && depth == 3 )
+
+      	if ( l.in_root && l.in_runs && l.in_run && l.in_dms && l.in_dm &&  l.in_row && 
+               depth == 6 &&  xmlStrEqual (name, (const xmlChar *)"entry" )  && type == XML_READER_TYPE_ELEMENT  )
 	  {
-	    if ( xmlStrEqual (name, (const xmlChar *)"species" ) ) {
-	      if ( type == XML_READER_TYPE_ELEMENT ) {
-		xmlNodePtr tree;
-		tree = xmlTextReaderExpand (reader);
+                l.entry_nr++;
+  	        xmlChar * distanceStr = xmlTextReaderReadString(reader);
+                float distance =  atof( ( char * ) distanceStr );
+                dm.setDistance(l.row_nr,l.entry_nr, distance );  
+                xmlFree(distanceStr);
+           }
 
-                xmlNode *node = NULL;
-		int i=0;
-                speciesnames.clear();
-                for (node = tree->children; node; node = node->next) {
-                  if (node->type == XML_ELEMENT_NODE && xmlStrEqual (node->name, (const xmlChar *)"entry" ) ) {
-		    char * species =  ( char * ) xmlNodeGetContent( node );
-    		    speciesnames.push_back( species );
-                    i++;
-                  }
-                }
-	      } 
-	    } 
-	    if ( xmlStrEqual (name, (const xmlChar *)"dm" ) ) {
-	      if ( type == XML_READER_TYPE_ELEMENT ) {
-		xmlNodePtr tree;
-		tree = xmlTextReaderExpand (reader);
-                dm.resize(dmSize);
-
-                xmlNode *node = NULL;
-                int rowIter = 0;
-                for (node = tree->children; node; node = node->next) {
-                  if (node->type == XML_ELEMENT_NODE && xmlStrEqual (node->name, (const xmlChar *)"row" ) ) {
-		    //		    speciesnames.push_back(( char * ) node->content );
-                    int entryIter = 0; 
-                    for (xmlNode *node2  = node->children; node2; node2 = node2->next) {
-                      if (node2->type == XML_ELEMENT_NODE && xmlStrEqual (node2->name, (const xmlChar *)"entry" ) ) {
-                	//	dm.setDistance(rowIter,entryIter,  atof(( char * ) node2->content ));
-			entryIter++;
-		      }
-		    }
-                    rowIter++;
-                  }
-                }
-		for(size_t namei=0 ; namei < speciesnames.size() ; namei++ )
-		  {	    dm.setIdentifier(namei,speciesnames[namei]); }
-
-                return DM_READ; // break out of the while loop
-	      } 
-	    } 
-	  }
-
-	if ( depth == 0 &&  xmlStrEqual (name, (const xmlChar *)"root" ))
+      	if ( l.in_root && l.in_runs && l.in_run && l.in_dms && l.in_dm &&  depth == 5 &&  xmlStrEqual (name, (const xmlChar *)"row" ))
 	  {
 	    switch (type) {
-	    case XML_READER_TYPE_ELEMENT:  l.in_root = true; continue; 
-	    case XML_READER_TYPE_END_ELEMENT:  l.in_root = false; continue; 
+	    case XML_READER_TYPE_ELEMENT:  l.in_row = true; l.row_nr++; l.entry_nr = -1; continue; 
+	    case XML_READER_TYPE_END_ELEMENT:  l.in_row = false; continue;  
 	    }
 	  }
+
+      	if ( l.in_root && l.in_runs && l.in_run && l.in_dms && depth == 4 &&  xmlStrEqual (name, (const xmlChar *)"dm" ))
+	  {
+	    switch (type) {
+	    case XML_READER_TYPE_ELEMENT: dm.resize(dmSize); l.in_dm = true; l.row_nr = -1; continue; 
+	    case XML_READER_TYPE_END_ELEMENT:  l.in_dm = false; 
+		for(size_t namei=0 ; namei < speciesnames.size() ; namei++ )
+		  {   dm.setIdentifier(namei,speciesnames[namei]); }
+                return DM_READ;  
+	    }
+	  }
+
+    	if ( l.in_root && l.in_runs && l.in_run && l.in_identities && depth == 4 && xmlStrEqual (name, (const xmlChar *)"identity" ) &&
+               type == XML_READER_TYPE_ELEMENT  ) {
+  	        xmlChar * nameStr =  xmlTextReaderGetAttribute(reader,(const xmlChar *)"name" );
+                speciesnames.push_back( ( char * ) nameStr );
+                xmlFree( nameStr );
+	}
+
+      	if ( l.in_root && l.in_runs && l.in_run && depth == 3 &&  xmlStrEqual (name, (const xmlChar *)"dms" ))
+	  {
+	    switch (type) {
+	    case XML_READER_TYPE_ELEMENT:  l.in_dms = true; continue; 
+	    case XML_READER_TYPE_END_ELEMENT:  l.in_dms = false; continue;  
+	    }
+	  }
+
+	if (  l.in_root && l.in_runs && depth == 2 && xmlStrEqual (name, (const xmlChar *)"run" ))
+	  {
+	    if (type == XML_READER_TYPE_ELEMENT ) { l.in_run = true; 
+	      xmlChar * dimStr = xmlTextReaderGetAttribute(reader,(const xmlChar *)"dim" );
+	      dmSize=atoi((const char *) dimStr );
+              xmlFree(dimStr);
+	      continue; }; 
+            if (type == XML_READER_TYPE_END_ELEMENT ) { l.in_run = false; return END_OF_RUN; }
+	  }
+
+
+      	if ( l.in_root && l.in_runs && l.in_run && depth == 3 &&  xmlStrEqual (name, (const xmlChar *)"identities" ))
+	  {
+	    switch (type) {
+	    case XML_READER_TYPE_ELEMENT:  l.in_identities = true; speciesnames.clear(); continue; 
+	    case XML_READER_TYPE_END_ELEMENT:  l.in_identities = false; continue;  
+	    }
+	  }
+
 
 	if ( l.in_root && depth == 1 &&  xmlStrEqual (name, (const xmlChar *)"runs" ))
 	  {
@@ -116,13 +147,12 @@ XmlInputStream::readDM( StrDblMatrix & dm ) {
 	    }
 	  }
 
-	if (  l.in_root && l.in_runs && depth == 2 && xmlStrEqual (name, (const xmlChar *)"run" ))
+	if ( depth == 0 &&  xmlStrEqual (name, (const xmlChar *)"root" ))
 	  {
-	    if (type == XML_READER_TYPE_ELEMENT ) { l.in_run = true; 
-	      char * dimStr = ( char * ) xmlTextReaderGetAttribute(reader,(const xmlChar *)"dim" );
-	      dmSize=atoi((const char *) dimStr );
-	      continue; }; 
-            if (type == XML_READER_TYPE_END_ELEMENT ) { l.in_run = false; return END_OF_RUN; }
+	    switch (type) {
+	    case XML_READER_TYPE_ELEMENT:  l.in_root = true; continue; 
+	    case XML_READER_TYPE_END_ELEMENT:  l.in_root = false; continue; 
+	    }
 	  }
       }
  }
