@@ -62,7 +62,7 @@ FastaInputStream::readSeq(std::vector<Sequence> &seqs, std::string &line, int li
       }
     }
   }
-  if ( seqStr.size() == 0 || seqStr.find_first_not_of("ACGTacgt") != string::npos ) {
+  if ( seqStr.size() == 0 || seqStr.find_first_not_of("ACGTacgt-") != string::npos ) {
     THROW_EXCEPTION("Malformed Fasta format\n");
     exit(EXIT_FAILURE);
   } else {
