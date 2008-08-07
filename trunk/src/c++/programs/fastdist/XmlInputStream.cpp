@@ -28,7 +28,7 @@ XmlInputStream::XmlInputStream(char * filename = 0)
   }
 
   if ( filename == 0 ) {
-    filename = "-";
+    filename = (char *) "-";
   }
   LIBXML_TEST_VERSION
 
@@ -41,8 +41,8 @@ XmlInputStream::XmlInputStream(char * filename = 0)
   l.in_seq  = false;
 
   xmlRelaxNGParserCtxtPtr parserctxt;
-  size_t len = strlen(relaxngstr);
-  parserctxt = xmlRelaxNGNewMemParserCtxt(relaxngstr,len);
+  size_t len = strlen(fastphylo_sequence_xml_relaxngstr);
+  parserctxt = xmlRelaxNGNewMemParserCtxt(fastphylo_sequence_xml_relaxngstr,len);
   xmlRelaxNGSetParserErrors(parserctxt,(xmlRelaxNGValidityErrorFunc) fprintf, (xmlRelaxNGValidityWarningFunc) fprintf, stderr);
   xmlRelaxNGPtr schema = NULL;
   schema = xmlRelaxNGParse(parserctxt);
@@ -54,10 +54,10 @@ XmlInputStream::XmlInputStream(char * filename = 0)
   }
 }
 
-bool XmlInputStream::read( vector<string> &names, vector<DNA_b128_String> &b128seqs )  
+bool XmlInputStream::read( vector<string> &names, Extrainfos &extrainfos, vector<DNA_b128_String> &b128seqs )  
 { 
   std::vector<Sequence> seqs;
-  if ( ! readSequences(seqs) ) return false;
+  if ( ! readSequences(seqs, extrainfos) ) return false;
   names.clear();names.reserve(seqs.size());
   for( size_t i=0;i<seqs.size();i++) {
     names.push_back(seqs[i].name);
@@ -67,7 +67,7 @@ bool XmlInputStream::read( vector<string> &names, vector<DNA_b128_String> &b128s
 }
 
 bool
-XmlInputStream::readSequences( std::vector<Sequence> &seqs ) {
+XmlInputStream::readSequences( std::vector<Sequence> &seqs, Extrainfos &extrainfos ) {
     const xmlChar *name, *value;
 
     bool run_read = false;
@@ -87,27 +87,57 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs ) {
 	if ( l.in_root && l.in_runs && l.in_run && depth == 3 && xmlStrEqual (name, (const xmlChar *)"seq" ))
 	  {
 	    if ( type == XML_READER_TYPE_ELEMENT ) {
+              l.in_seq = true;
 	      numSequences++;
               seqs.resize(numSequences);
-
+	      extrainfos.push_back( std::string() );
+	      //              extrainfos.resize(numSequences);
+	      //    extrainfos[numSequences-1]=NULL;
               Sequence &s = seqs[numSequences-1];
  
-      xmlChar * name =  xmlTextReaderGetAttribute(reader, (const xmlChar *) "name") ;
-      xmlChar * seq = xmlTextReaderGetAttribute(reader, (const xmlChar *) "seq") ;
+              xmlChar * name =  xmlTextReaderGetAttribute(reader, (const xmlChar *) "name") ;
+              xmlChar * seq = xmlTextReaderGetAttribute(reader, (const xmlChar *) "seq") ;
+            
+              if ( name == 0 ) THROW_EXCEPTION("failed to read attribute \"name\"");
+              if ( seq == 0 ) THROW_EXCEPTION("failed to read attribute \"seq\"");
+            
+              s.name =  ( const char *) name;
+              s.seq = ( const char *) seq;
+              xmlFree(name);
+              xmlFree(seq);
+              continue;
+	    } 
+	    if ( type == XML_READER_TYPE_END_ELEMENT ) {
+	          l.in_seq = false;
+                  continue;
+	    } 
+        }
 
-      if ( name == 0 ) THROW_EXCEPTION("failed to read attribute \"name\"");
-      if ( seq == 0 ) THROW_EXCEPTION("failed to read attribute \"seq\"");
+	if ( l.in_root && l.in_runs && l.in_run && l.in_seq && depth == 4 && xmlStrEqual (name, (const xmlChar *)"extrainfo" ))
+	  {
+	    if ( type == XML_READER_TYPE_ELEMENT ) {
+ 
+	      //              xmlNodePtr extrainfoPtr = xmlTextReaderExpand(reader);
+	      // if ( extrainfoPtr == 0 ) THROW_EXCEPTION("could not xmlTextReaderExpand \"extrainfo\"");
+              xmlChar * outerStr = xmlTextReaderReadOuterXml(reader);
 
-      s.name =  ( const char *) name;
-      s.seq = ( const char *) seq;
-      xmlFree(name);
-      xmlFree(seq);
+	      //              extrainfos[numSequences-1]=outerStr;
+              extrainfos.back()= ( char * ) outerStr;
+              xmlFree(outerStr);
+
+	      //              xmlChar * extrainfo = extrainfos.back();
+	      //            extrainfo = ;
+	      //  char * m = ( char *) outerStr;
+	      // std::cout <<  m   << std::endl;
+
+			    //              xmlFree(outerStr);
+              continue;
 
 	    } 
 	    if ( type == XML_READER_TYPE_END_ELEMENT ) {
-                  return true;
+                  continue;
 	    } 
-	  }
+        }
 
 	if ( depth == 0 &&  xmlStrEqual (name, (const xmlChar *)"root" ))
 	  {
@@ -128,7 +158,7 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs ) {
 	if ( l.in_root && l.in_runs && depth == 2 && xmlStrEqual (name, (const xmlChar *)"run" ))
 	  {
 	    switch (type) {
-	    case XML_READER_TYPE_ELEMENT:  l.in_run = true; continue; 
+	    case XML_READER_TYPE_ELEMENT:  l.in_run = true; extrainfos.clear(); continue; 
 	    case XML_READER_TYPE_END_ELEMENT:  l.in_run = false; return true; 
             }
          }

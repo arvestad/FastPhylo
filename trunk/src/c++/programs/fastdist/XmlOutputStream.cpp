@@ -24,7 +24,7 @@ XmlOutputStream::print( StrDblMatrix & dm )
 
 
 void
-XmlOutputStream::printStartRun( std::vector<string> & names ) 
+XmlOutputStream::printStartRun( std::vector<string> & names, Extrainfos &extrainfos ) 
 {
   fprintf(fp,"  <run dim=\"%i\">\n   <identities>\n", names.size() );
       for(size_t namei=0 ; namei<names.size() ; namei++ )
@@ -32,7 +32,15 @@ XmlOutputStream::printStartRun( std::vector<string> & names )
 	  // This only works if we constrain the input by a schema to not have "<", "&" and such.
           // Otherwise we need to use xmlEncodeSpecialChars(xmlDocPtr doc,  const xmlChar * input)
 	  //	  xmlChar * str = xmlEncodeSpecialChars( 0 ,( const xmlChar * ) names[namei].c_str()  );
-	          fprintf(fp,"    <identity name=\"%s\"/>\n", names[namei].c_str() );
+	  fprintf(fp,"    <identity name=\"%s\"", names[namei].c_str() );
+
+	  if ( extrainfos.size() > namei  && extrainfos[namei].size() > 0 ) {
+	    fprintf(fp,">\n     %s\n    </identity>\n", (char *) extrainfos[namei].c_str() );
+          } 
+          else {
+	    fprintf(fp,"/>\n");
+         } 
+
 		  // fprintf(fp,"     <entry>%s</entry>\n", ( char * ) str );
 		  //  xmlFree(str);
 	}

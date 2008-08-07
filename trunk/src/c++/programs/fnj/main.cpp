@@ -1,5 +1,3 @@
-
-
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -7,8 +5,6 @@
 
 #include "file_utils.hpp"
 #include "NeighborJoining.hpp"
-
-
 
 #include "log_utils.hpp"
 #include "fnj_gengetopt.h"
@@ -19,6 +15,7 @@
 #include "XmlInputStream.hpp"
 #include "DataOutputStream.hpp"
 #include "XmlOutputStream.hpp"
+#include "Extrainfos.hpp"
 
 using namespace std;
 
@@ -53,7 +50,17 @@ main(int argc,
   if (cmdline_parser (argc, argv, &args_info) != 0)
     exit(EXIT_FAILURE);
 
-  if ( args_info.print_relaxng_given ) {  cout << relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
+
+  if ( args_info.print_relaxng_input_given && args_info.print_relaxng_output_given ) {
+     cerr << "error: --print-relaxng-input and --print-relaxng-output can not be used at the same time" << endl; exit(EXIT_FAILURE);
+  }
+
+
+  if ( args_info.print_relaxng_input_given ) {  cout << fastphylo_distance_matrix_xml_relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
+  if ( args_info.print_relaxng_output_given ) {  cout << fastphylo_tree_count_xml_relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
+
+
+
 
   //----------------------------------------------
   // DISTANCE METHODS
@@ -63,27 +70,15 @@ main(int argc,
   if( args_info.number_of_runs_given && args_info.input_format_arg == input_format_arg_xml )
     { cerr << "error: --number-of-runs can not be used together with input format xml." << endl; exit(EXIT_FAILURE);   }
 
-  if( ! args_info.method_given ) 
-    { cerr << "error: at least one --method must be given" << endl; exit(EXIT_FAILURE);   }
-
-
-
-
-  for (int i = 0; i < args_info.method_given; ++i)
-    {
-      switch ( args_info.method_arg[i] )
-	{ 
-	case method_arg_NJ    :   methods.push_back(NJ); break;
-	case method_arg_FNJ   :   methods.push_back(FNJ); break;
-	case method_arg_BIONJ :   methods.push_back(BIONJ); break;
-	default: cerr << "error: method chosen not available" << endl; exit(EXIT_FAILURE);
-	}
+  switch ( args_info.method_arg )
+    { 
+    case method_arg_NJ    :   methods.push_back(NJ); break;
+    case method_arg_FNJ   :   methods.push_back(FNJ); break;
+    case method_arg_BIONJ :   methods.push_back(BIONJ); break;
+    default: cerr << "error: method chosen not available" << endl; exit(EXIT_FAILURE);
     }
 
-  //--------------
   bool noCounts = args_info.no_counts_flag;
-
-
 
   try {
 
@@ -112,18 +107,22 @@ main(int argc,
   switch ( args_info.output_format_arg )
     {
     case output_format_arg_newick: ostream = new TreeTextOutputStream(outputfilename);  break;
-    case output_format_arg_xml: ostream = new XmlOutputStream(outputfilename); break;
+    case output_format_arg_xml: ostream = new XmlOutputStream(outputfilename); 
+                                newickDelimiters.left_parenthesis=std::string("<branch><item>");
+                                newickDelimiters.right_parenthesis="</item></branch>";
+                                newickDelimiters.comma="</item><item>";
+                                newickDelimiters.null_tree="";
+                                newickDelimiters.semi_colon="";
+
+break;
     default: exit(EXIT_FAILURE);
 }
   
        // THE DATA WE WILL PROCESS
       std::vector<Sequence> seqs;
-      std::vector<string> names;
+      std::vector<std::string> names;
       std::vector<DNA_b128_String> b128seqs;
-
-      //for each dataset in the files
-
-      //      for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
+      Extrainfos extrainfos;
 
       bool latestReadSuccessful = true;
 
@@ -140,18 +139,19 @@ main(int argc,
 
         for ( int i = 0 ; ( status == END_OF_RUN || status == DM_READ ) && ( i < args_info.dm_per_run_arg - 1 || args_info.input_format_arg == input_format_arg_xml ) ; i++ ){
 
-	  //	   applyFixFactor(dm,fixfactor);
-	  if ( ( status = istream->readDM( dm )) != DM_READ ) { 
+	  if (( status = istream->readDM( dm, names, extrainfos)) != DM_READ ) { 
 	    break;
 	  };
      
-	for(size_t namei=0 ; namei<dm.getSize() ; namei++ )
-	  name2id[dm.getIdentifier(namei)] = namei;
+    	  for(size_t namei=0 ; namei<dm.getSize() ; namei++ ) {
+	     name2id[dm.getIdentifier(namei)] = namei;
+	  }
 
 	  buildTrees(dm, tree2count, methods,name2id);
         }
-
-        ostream->print(tree2count,noCounts);
+        if ( status == END_OF_RUN ) {
+           ostream->print(tree2count,noCounts, names, extrainfos);
+	}
 
       }//end run loop
 

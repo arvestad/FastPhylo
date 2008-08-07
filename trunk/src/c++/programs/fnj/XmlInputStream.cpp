@@ -36,14 +36,15 @@ XmlInputStream::XmlInputStream(char * filename = 0)
   l.in_runs =  false;
   l.in_run = false;
   l.in_identities = false;
+  l.in_identity = false;
   l.row_nr = -1;
   l.entry_nr = -1;
 
   dmSize = 0;
 
   xmlRelaxNGParserCtxtPtr parserctxt;
-  size_t len = strlen(relaxngstr);
-  parserctxt = xmlRelaxNGNewMemParserCtxt(relaxngstr,len);
+  size_t len = strlen(fastphylo_distance_matrix_xml_relaxngstr);
+  parserctxt = xmlRelaxNGNewMemParserCtxt(fastphylo_distance_matrix_xml_relaxngstr,len);
   xmlRelaxNGSetParserErrors(parserctxt,(xmlRelaxNGValidityErrorFunc) fprintf, (xmlRelaxNGValidityWarningFunc) fprintf, stderr);
   xmlRelaxNGPtr schema = NULL;
   schema = xmlRelaxNGParse(parserctxt);
@@ -56,12 +57,13 @@ XmlInputStream::XmlInputStream(char * filename = 0)
 }
 
 readstatus  
-XmlInputStream::readDM( StrDblMatrix & dm ) {
+XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> & names, Extrainfos & extrainfos ) {
 { 
     const xmlChar *name, *value;
 
     bool run_read = false;
     int ret;
+    int nr_of_ids = 0;
 
     while ( ( ret = xmlTextReaderRead(reader)) == 1 )
       {
@@ -83,6 +85,7 @@ XmlInputStream::readDM( StrDblMatrix & dm ) {
                 float distance =  atof( ( char * ) distanceStr );
                 dm.setDistance(l.row_nr,l.entry_nr, distance );  
                 xmlFree(distanceStr);
+                continue;
            }
 
       	if ( l.in_root && l.in_runs && l.in_run && l.in_dms && l.in_dm &&  depth == 5 &&  xmlStrEqual (name, (const xmlChar *)"row" ))
@@ -98,18 +101,44 @@ XmlInputStream::readDM( StrDblMatrix & dm ) {
 	    switch (type) {
 	    case XML_READER_TYPE_ELEMENT: dm.resize(dmSize); l.in_dm = true; l.row_nr = -1; continue; 
 	    case XML_READER_TYPE_END_ELEMENT:  l.in_dm = false; 
-		for(size_t namei=0 ; namei < speciesnames.size() ; namei++ )
-		  {   dm.setIdentifier(namei,speciesnames[namei]); }
+		for(size_t namei=0 ; namei < names.size() ; namei++ )
+		  {   dm.setIdentifier(namei,names[namei]); }
                 return DM_READ;  
 	    }
 	  }
 
-    	if ( l.in_root && l.in_runs && l.in_run && l.in_identities && depth == 4 && xmlStrEqual (name, (const xmlChar *)"identity" ) &&
-               type == XML_READER_TYPE_ELEMENT  ) {
-  	        xmlChar * nameStr =  xmlTextReaderGetAttribute(reader,(const xmlChar *)"name" );
-                speciesnames.push_back( ( char * ) nameStr );
-                xmlFree( nameStr );
+    	if ( l.in_root && l.in_runs && l.in_run && l.in_identities && depth == 4 && xmlStrEqual (name, (const xmlChar *)"identity" ) ) {
+
+	  switch (type) {
+	  case XML_READER_TYPE_ELEMENT: {
+	    nr_of_ids++;
+	    l.in_identity = true;
+	    extrainfos.push_back( std::string() );
+	    //                extrainfos.resize(nr_of_ids);
+	    //                extrainfos[nr_of_ids-1]=NULL;
+
+	    xmlChar * nameStr =  xmlTextReaderGetAttribute(reader,(const xmlChar *)"name" );
+	    names.push_back( ( char * ) nameStr );
+	    xmlFree( nameStr );
+	    continue; 
+          }
+	  case XML_READER_TYPE_END_ELEMENT:  l.in_identity = false; continue;
+	  }
 	}
+
+	if ( l.in_root && l.in_runs && l.in_run && l.in_identities && l.in_identity && depth == 5 && xmlStrEqual (name, (const xmlChar *)"extrainfo" ))
+	  {
+	    switch (type) {
+            case XML_READER_TYPE_ELEMENT:  {
+              xmlChar * outerStr = xmlTextReaderReadOuterXml(reader);
+     	      extrainfos.back() = ( char * ) outerStr;
+              xmlFree(outerStr);
+              continue;	    } 
+	    case XML_READER_TYPE_END_ELEMENT:  {   continue;   } 
+	    }
+        }
+
+
 
       	if ( l.in_root && l.in_runs && l.in_run && depth == 3 &&  xmlStrEqual (name, (const xmlChar *)"dms" ))
 	  {
@@ -133,7 +162,7 @@ XmlInputStream::readDM( StrDblMatrix & dm ) {
       	if ( l.in_root && l.in_runs && l.in_run && depth == 3 &&  xmlStrEqual (name, (const xmlChar *)"identities" ))
 	  {
 	    switch (type) {
-	    case XML_READER_TYPE_ELEMENT:  l.in_identities = true; speciesnames.clear(); continue; 
+	    case XML_READER_TYPE_ELEMENT:  l.in_identities = true; names.clear(); extrainfos.clear(); continue; 
 	    case XML_READER_TYPE_END_ELEMENT:  l.in_identities = false; continue;  
 	    }
 	  }

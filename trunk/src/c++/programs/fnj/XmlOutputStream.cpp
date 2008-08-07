@@ -16,17 +16,35 @@ XmlOutputStream::~XmlOutputStream()
 };
 
 void
-XmlOutputStream::print( tree2int_map & tree2count, bool noCounts ) 
+XmlOutputStream::print( tree2int_map & tree2count, bool noCounts, std::vector<std::string> & names, Extrainfos & extrainfos ) 
 {
+  Extrainfos::iterator it;
+  std::vector<std::string>::iterator it2;
+  *fp << "   <run>" <<  std::endl 
+      << "   <identities>" <<  std::endl;
+
+  for ( it=extrainfos.begin(), it2=names.begin() ; it != extrainfos.end() && it2 != names.end()  ; ++it , ++it2 )
+    {  
+      if ( it->size() > 0 ) {
+	*fp << "    <identity name=\""  <<  *it2  <<  "\">" << *it << "      </identifier>" <<  std::endl;         
+      } 
+      else {
+	*fp << "    <identity name=\""  <<  *it2  <<  "\"/>" <<  std::endl;         
+      }
+    }
+
+  *fp  << "   </identities>" <<  std::endl;
+
 
   tree2int_map::iterator iter = tree2count.begin();
   for( ; iter!=tree2count.end() ; ++iter){
-    *fp << "   <run>" <<  std::endl
-        << "    <count>"  << (*iter).second 
+    *fp  << "   <tree>" <<  std::endl
+<< "    <count>"  << (*iter).second 
         << "</count>"  <<  std::endl 
-        << "    <tree>" << (*iter).first
-        << "    </tree>" << std::endl
-        << "   </run>"  << std::endl;
-  }
+        << "    <newick>" << (*iter).first
+        << "    </newick>" << std::endl
+        << "   </tree>"  << std::endl;
+    }
+   *fp     << "   </run>"  << std::endl;
 }
 

@@ -4,9 +4,12 @@
 #include <cstdio>
 #include "Sequences2DistanceMatrix.hpp"
 #include "Exception.hpp"
+#include "Extrainfos.hpp"
 
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include <string>
 
 typedef enum { DM_READ = 1, END_OF_RUN = 2, END_OF_RUNS = 3, ERROR = 4 } readstatus;
 
@@ -15,10 +18,7 @@ class DataInputStream
 public:
   DataInputStream();
   virtual ~DataInputStream() {};
-
-
-  virtual readstatus readDM( StrDblMatrix & dm ) = 0;
-
+  virtual readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, Extrainfos & extrainfos ) = 0;
 };
 
 class PhylipMaInputStream : public DataInputStream
@@ -26,8 +26,7 @@ class PhylipMaInputStream : public DataInputStream
 public:
   PhylipMaInputStream(char * filename );
   ~PhylipMaInputStream();
-
-  virtual readstatus readDM( StrDblMatrix & dm );
+  virtual readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, Extrainfos & extrainfos );
 
 protected:
   std::istream * fp;

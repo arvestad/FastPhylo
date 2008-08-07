@@ -26,6 +26,7 @@
 #include "FastaInputStream.hpp"
 #include "DataOutputStream.hpp"
 #include "XmlOutputStream.hpp"
+#include "Extrainfos.hpp"
 
 using namespace std;
 
@@ -41,7 +42,16 @@ main(int argc,
   if (cmdline_parser (argc, argv, &args_info) != 0)
     exit(EXIT_FAILURE);
 
-  if ( args_info.print_relaxng_given ) {  cout << relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
+  if ( args_info.print_relaxng_input_given && args_info.print_relaxng_output_given ) {
+     cerr << "error: --print-relaxng-input and --print-relaxng-output can not be used at the same time" << endl; exit(EXIT_FAILURE);
+  }
+
+  if ( args_info.print_relaxng_input_given ) {  cout << fastphylo_sequence_xml_relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
+  if ( args_info.print_relaxng_output_given ) {  cout << fastphylo_distance_matrix_xml_relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
+
+  if ( args_info.number_of_runs_given && args_info.input_format_arg != input_format_arg_phylip_multialignment ) {
+    cerr << "error: --number-of-runs can only be used together with --input-format=phylip_multialignment" << endl; exit(EXIT_FAILURE);
+  }
 
   //-----------------------------------------------------
   // EVOLUTIONARY MODEL
@@ -132,15 +142,18 @@ main(int argc,
       std::vector<string> names;
       std::vector<DNA_b128_String> b128seqs;
 
+      Extrainfos extrainfos;
+
       //for each dataset in the files
 
       for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
 	//no bootstrapping
 
 	if ( !no_incl_orig && numboot == 0){//only need to create one distance matrix
-          if ( ! istream->read(names,b128seqs)) break;
+          if ( ! istream->read(names,extrainfos,b128seqs)) break;
 	  fillMatrix(dm, b128seqs, trans_model);
-          ostream->printStartRun(names);
+          ostream->printStartRun(names,extrainfos);
+	  //          freeXmlStrings(extrainfos);
 	  dm.setIdentifiers(names);
 	  if(useFixFactor) applyFixFactor(dm,fixfactor);
 	  //	  output << dm;
@@ -150,13 +163,14 @@ main(int argc,
 	else{
 	  //read original sequences
 
-          if ( ! istream->readSequences(seqs)) break;
+          if ( ! istream->readSequences(seqs,extrainfos)) break;
 
 	  names.clear();names.reserve(seqs.size());
 	  for( size_t i=0;i<seqs.size();i++)
 	    names.push_back(seqs[i].name);
 
-          ostream->printStartRun(names);
+          ostream->printStartRun(names,extrainfos);
+	  //          freeXmlStrings(extrainfos);
 	  if ( !no_incl_orig ){//create the distance matrix for the original sequences
 	    Sequences2DNA_b128(seqs,b128seqs);
 	    fillMatrix(dm, b128seqs, trans_model);
