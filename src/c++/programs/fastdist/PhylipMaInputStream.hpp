@@ -12,8 +12,8 @@ public:
   PhylipMaInputStream(char * filename );
   ~PhylipMaInputStream();
 
-  virtual bool read( std::vector<std::string> &names, std::vector<DNA_b128_String> &b128_strings);
-  virtual bool readSequences(std::vector<Sequence> &seqs);
+  virtual bool read( std::vector<std::string> &names, Extrainfos &extrainfos, std::vector<DNA_b128_String> &b128_strings);
+  virtual bool readSequences(std::vector<Sequence> &seqs, Extrainfos &extrainfos);
 protected:
   std::istream * fp;
   std::ifstream fin;

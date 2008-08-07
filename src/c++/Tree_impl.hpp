@@ -27,6 +27,21 @@
 // CONSTRUCTORS
 
 
+
+struct NewickDelimiters {
+   std::string left_parenthesis;
+   std::string right_parenthesis;
+   std::string comma;
+   std::string null_tree;
+   std::string semi_colon;
+   NewickDelimiters() : left_parenthesis("("), right_parenthesis("eeeeeeee)"), comma(","), semi_colon(";") {}
+};
+
+static NewickDelimiters newickDelimiters; 
+
+
+
+
 TREE_TEMPLATE TREE::Tree(char *newickstr){
   _nullVariables();
   std::string str(newickstr);
@@ -195,9 +210,9 @@ TREE::initSubtreeFromStream(std::istream &in){
 TREE_TEMPLATE std::ostream&
 TREE::printOn(std::ostream &os) const{
   if(root==NULL)
-    return os << "NULLTREE";
+    return os <<  newickDelimiters.null_tree.c_str();
  
-  return os << root <<";";
+  return os << root <<  newickDelimiters.semi_colon.c_str();
 }
 
 
@@ -971,15 +986,15 @@ TREENODE::printOn(std::ostream &os) const{
   }
   else{
     //PENDING SLOW
-        os <<"(";
+    os << newickDelimiters.left_parenthesis.c_str();
     const TREENODE *child = rightMostChild;
     os << child;
     child = child->leftSibling;
     
     for ( ; child != NULL ; child = child->leftSibling )
-      os << "," << child;
+      os <<  newickDelimiters.comma.c_str()  << child;
 
-    os << ")";
+    os <<  newickDelimiters.right_parenthesis.c_str();
     ownertree->dataPrintOn(os, data);
     return os;
   }

@@ -36,7 +36,7 @@ PhylipMaInputStream::PhylipMaInputStream(char * filename = 0 )
 }
 
 readstatus
-PhylipMaInputStream::readDM( StrDblMatrix & dm ) 
+PhylipMaInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> & names, Extrainfos & extrainfos ) 
 {
   printf("T\n");
   dm.objInitFromStream(*fp);

@@ -29,7 +29,7 @@ TreeTextOutputStream::TreeTextOutputStream(char * filename = 0 ) : DataOutputStr
 
 
 void
-TreeTextOutputStream::print( tree2int_map & tree2count, bool noCounts ) 
+TreeTextOutputStream::print( tree2int_map & tree2count, bool noCounts, std::vector<std::string> & names, Extrainfos & extrainfos ) 
 {
   //OUTPUT THE TREES
 

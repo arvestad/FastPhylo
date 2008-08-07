@@ -29,14 +29,14 @@ PhylipMaInputStream::PhylipMaInputStream(char * filename = 0 )
 }
 
 bool
-PhylipMaInputStream::read( std::vector<std::string> &names, std::vector<DNA_b128_String> &b128_strings) 
+PhylipMaInputStream::read( std::vector<std::string> &names, Extrainfos &extrainfos, std::vector<DNA_b128_String> &b128_strings) 
 {
 DNA_b128_StringsFromPHYLIP( *fp ,names,b128_strings);
  return true;
 }
 
 bool
-PhylipMaInputStream::readSequences(std::vector<Sequence> &seqs) {
+PhylipMaInputStream::readSequences(std::vector<Sequence> &seqs, Extrainfos &extrainfos) {
   Sequence::readSequences(seqs ,*fp);
  return true;
 }

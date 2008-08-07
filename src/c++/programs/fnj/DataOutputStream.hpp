@@ -4,8 +4,11 @@
 
 #include "Exception.hpp"
 #include "SequenceTree.hpp"
+#include "Extrainfos.hpp"
 
 #include <iostream>
+#include <vector>
+#include <string>
 
 class DataOutputStream
 {
@@ -13,7 +16,7 @@ public:
   DataOutputStream( );
   DataOutputStream(char * filename );
   virtual ~DataOutputStream() {};
-  virtual void print( tree2int_map & tree2count, bool noCounts  ) = 0;
+  virtual void print( tree2int_map & tree2count, bool noCounts,  std::vector<std::string> & names, Extrainfos & extrainfos  ) = 0;
 protected:
   std::ostream * fp;
   std::ofstream fout;
@@ -25,7 +28,7 @@ class TreeTextOutputStream : public DataOutputStream
 public:
   TreeTextOutputStream(char * filename );
   virtual ~TreeTextOutputStream() {};
-  virtual void print( tree2int_map & tree2count, bool noCounts );
+  virtual void print( tree2int_map & tree2count, bool noCounts, std::vector<std::string> & names, Extrainfos & extrainfos );
 };
 
 #endif // DATAOUTPUTSTREAM_HPP

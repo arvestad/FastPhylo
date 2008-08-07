@@ -10,7 +10,7 @@
 <xsl:param name="admon.graphics.path">../style/images/</xsl:param>
 <xsl:param name="admon.graphics.extension" select="'.png'"/>
 <xsl:param name="generate.section.toc.level" select="0"></xsl:param>
-<xsl:param name="toc.section.depth">4</xsl:param>
+<xsl:param name="toc.section.depth">5</xsl:param>
 
 <xsl:param name="section.autolabel" select="1"/>
 

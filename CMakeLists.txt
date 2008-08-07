@@ -17,8 +17,10 @@ OPTION(BUILD_DOCBOOK "build Docbook html documentation" OFF )
 # make package_source
 #
 
-SET(CPACK_GENERATOR TGZ)
+SET(CPACK_GENERATOR RPM;DEB)
 SET(CPACK_SOURCE_GENERATOR TGZ;ZIP)
+# SET(CPACK_RPM_PACKAGE_ARCHITECTURE "i386")
+SET(CPACK_PACKAGE_CONTACT "erik.sjolund@gmail.com") 
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "fastphylo is software project containing the implementations of the algorithms \"Fast Computation of Distance Estimators\" and \"Fast Neighbor Joining\".")
 SET(CPACK_PACKAGE_VENDOR "Isaac Elias, Jensl Lagergren, Erik Sjölund")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")

@@ -6,6 +6,8 @@
 #include <string>
 #include "Exception.hpp"
 #include "DistanceMatrix.hpp"
+#include "Extrainfos.hpp"
+#include <libxml/tree.h>
 
 class DataOutputStream
 {
@@ -14,7 +16,7 @@ public:
   DataOutputStream(char * filename );
   virtual ~DataOutputStream() {};
   virtual void print( StrDblMatrix & dm ) = 0;
-  virtual void printStartRun(std::vector<std::string> & names ) {};
+  virtual void printStartRun(std::vector<std::string> & names, Extrainfos &extrainfos ) {};
   virtual void printEndRun() {};
 
 protected:
