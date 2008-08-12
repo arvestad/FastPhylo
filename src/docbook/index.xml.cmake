@@ -338,133 +338,90 @@ Type <userinput>fastdist --help</userinput> to see the command line options
 
 
 
-  <sect4 id="fastdist_input_formats">
-    <title>Input formats</title>
+  <sect4 id="fastdist_input_file_formats">
+    <title>fastdist input file formats</title>
 
-
-  <sect5 id="fastphylo_sequence_xml_format">
-    <title>Fastphylo sequence XML format</title>
 <para>
-The Fastphylo sequence XML format is chosen by the option <userinput>-I xml</userinput> to fastdist. 
 
-Type <userinput>fastdist --print-relaxng-input</userinput> to see its relaxng schema
+<table frame='all'><title>fastdist input file formats</title>
+<tgroup cols='3' align='left' colsep='1' rowsep='1'>
+<thead>
+<row>
+<entry>file format</entry>
+<entry>short option</entry>
+<entry>description</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry>fasta format</entry>
+<entry>-I xml</entry>
+<entry><xref linkend="fasta_format"/></entry>
+</row>
+<row>
+<entry>phylip multialignment format</entry>
+<entry>-I phylip_multialignment_format</entry>
+<entry><xref linkend="phylip_multialignment_format"/></entry>
 
-<programlisting><![CDATA[
-[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_print_relaxng_input">
-<xi:fallback>
-   couldn't xinclude file
-</xi:fallback>
-</xi:include>
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastdist_print_relaxng_input">
-<xi:fallback>
-   couldn't xinclude file
-</xi:fallback>
-</xi:include>
-</programlisting>
+</row>
+<row>
+<entry>fastphylo sequence XML format</entry>
+<entry>-I fastphylo_sequence_xml_format</entry>
+<entry><xref linkend="fastphylo_sequence_xml_format"/></entry>
 
-
-
-Let us take a look at the example input file <ulink url="example_files/seq.xml">seq.xml</ulink> that is in this xml format. 
-
-
-
-<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.xml">
-<xi:fallback>
-   couldn't xinclude file
-</xi:fallback>
-</xi:include></programlisting>
-
-
-The Relax NG schema specifies that the extrainfo element is optional and can be inserted as a child to a seq element. The extrainfo element may contain any content and will be passed on to the output XML format.
-
-
-</para></sect5>
+</row>
+</tbody>
+</tgroup>
+</table>
 
 
-  <sect5 id="fastdist_phylip_multialignment_format">
-    <title>Phylip multialignment format</title>
-<para>
-The Phylip multialignment input format is chosen by the option <userinput>-I phylip_multialignment</userinput>. 
-
-Let us take a look at the example input file <ulink url="example_files/seq.phylip_multialignment">seq.phylip_multialignment</ulink> that is in the Phylip multialignment format ( phylip_multialignment ). 
+</para>
 
 
 
-
-
-<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.phylip_multialignment">
-<xi:fallback>
-   couldn't xinclude file
-</xi:fallback>
-</xi:include></programlisting>
-
-This format has an extra option -r ( --number-of-run ) for specifying the number of data sets in the input.
-
-
-
-</para></sect5>
-
-
-  <sect5 id="fastdist_fasta_format">
-    <title>Fasta format</title>
-<para>
-The Fasta input format is chosen by the option <userinput>-I fasta</userinput>. It is the default so you don't need to specify it, if you don't want to.
-Let us take a look at the example fasta file <ulink url="example_files/seq.fasta_multialignment">seq.fasta_multialignment</ulink>
-
-
-
-
-<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.fasta_multialignment">
-<xi:fallback>
-   couldn't xinclude file
-</xi:fallback>
-</xi:include></programlisting>
-
-
-
-
-</para></sect5>
 
 
   </sect4>
 
   <sect4 id="fastdist_output_formats">
-    <title>Output formats</title>
+    <title>fastdist output file formats</title>
 
 
-  <sect5 id="fastphylo_distance_matrix_xml_format">
-    <title>Fastphylo distance matrix XML format</title>
 <para>
-The Fastphylo sequence XML format is chosen by the option <userinput>-O xml</userinput> to fastdist. 
 
-Type <userinput>fastdist --print-relaxng-output</userinput> to see its relaxng schema
+<table frame='all'><title>fastdist output file formats</title>
+<tgroup cols='3' align='left' colsep='1' rowsep='1'>
+<thead>
+<row>
+<entry>file format</entry>
+<entry>short option</entry>
+<entry>description</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry>fastphylo sequence XML format</entry>
+<entry>-O xml</entry>
+<entry><xref linkend="fastphylo_distance_matrix_xml_format"/></entry>
 
-<programlisting><![CDATA[
-[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_print_relaxng_output">
-<xi:fallback>
-   couldn't xinclude file
-</xi:fallback>
-</xi:include>
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastdist_print_relaxng_output">
-<xi:fallback>
-   couldn't xinclude file
-</xi:fallback>
-</xi:include>
-</programlisting>
+</row>
+<row>
+<entry>phylip distance matrix format</entry>
+<entry>-O phylip_distance_matrix_format</entry>
+<entry><xref linkend="phylip_distance_matrix_format"/></entry>
 
-The Relax NG schema specifies that the extrainfo element is optional and can be inserted as a child to a seq element. The extrainfo element may contain any content.
-
-</para></sect5>
+</row>
+</tbody>
+</tgroup>
+</table>
 
 
-  <sect5 id="fastdist_phylip_distance_matrix_format">
-    <title>Phylip distance matrix format</title>
-<para>
-The Phylip distance matrix format is chosen by the option <userinput>-O phylip_multialignment</userinput> to fastdist.
+</para>
 
 
 
-</para></sect5>
+
+
 
 
   </sect4>
@@ -520,7 +477,7 @@ Let us use the example input file <ulink url="example_files/seq.xml">seq.xml</ul
 <example id="example_fastdist_with_an_xml_stream_on_stdin"><title>fastdist with an XML stream on stdin</title><para>
 
 If you leave out the input filename, the input will be read from stdin. <application>fastdist</application> doesn't wait for the whole xml file to be read before it starts. It starts a computation as soon as an ending <![CDATA[ </run>   ]]>
-has been read. The memory consumption will not grow over time so the input can be arbitrarily large. A never ending input stream only works in the XML input format, because the phylip multialignment input format needs you to specify in advance how many data sets are to be sent to <application>fastdist</application> ( the -r option ).
+has been read. The memory consumption will not grow over time so the input can be arbitrarily large. A never ending input stream only works in the fastphylo sequence XML format, because the phylip multialignment input format needs you to specify in advance how many data sets are to be sent to <application>fastdist</application> ( the -r option ).
 
 
 
@@ -615,31 +572,69 @@ Type <userinput>fnj --help</userinput> to see the command line options
 
 
 
-  <sect4 id="fnj_input_formats">
-    <title>Input formats</title>
+  <sect4 id="fnj_input_file_formats">
+    <title>fnj input file formats</title>
 
 
 
-  <sect5 id="fnj_fastphylo_distance_matrix_xml_format">
-    <title>Fastphylo distance matrix XML format</title>
-<para>
-The Fastphylo sequence XML format is chosen by the option <userinput>-I xml</userinput> to fnj. 
-This format is described here <xref linkend="fastphylo_distance_matrix_xml_format"/>
 
-</para></sect5>
 
-  <sect5 id="fnj_phylip_distance_matrix_format">
-    <title>Phylip distance matrix format</title>
-<para>
-The Phylip distance matrix format is chosen by the option <userinput>-I phylip_multialignment</userinput> to fnj.
-This format is described here <xref linkend="fastdist_phylip_distance_matrix_format"/>
-</para></sect5>
+<table frame='all'><title>fnj input file formats</title>
+<tgroup cols='3' align='left' colsep='1' rowsep='1'>
+<thead>
+<row>
+<entry>file format</entry>
+<entry>short option</entry>
+<entry>description</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry>fastphylo sequence XML format</entry>
+<entry>-I xml</entry>
+<entry><xref linkend="fastphylo_distance_matrix_xml_format"/></entry>
+
+</row>
+<row>
+<entry>phylip distance matrix format</entry>
+<entry>-I phylip_distance_matrix_format</entry>
+<entry><xref linkend="phylip_distance_matrix_format"/></entry>
+
+</row>
+</tbody>
+</tgroup>
+</table>
+
 
 
   </sect4>
 
   <sect4 id="fnj_output_formats">
-    <title>Output formats</title>
+    <title>fnj output file formats</title>
+
+
+
+<table frame='all'><title>fnj output file formats</title>
+<tgroup cols='3' align='left' colsep='1' rowsep='1'>
+<thead>
+<row>
+<entry>file format</entry>
+<entry>short option</entry>
+<entry>description</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry>fastphylo count tree XML format</entry>
+<entry>-O xml</entry>
+<entry><xref linkend="fastphylo_tree_count_xml_format"/></entry>
+
+</row>
+</tbody>
+</tgroup>
+</table>
+
+
 
 
 
@@ -799,7 +794,177 @@ Read more about <ulink url="http://codespeak.net/lxml/parsing.html">lxml</ulink>
 
 
     </sect2>
+
+  <sect2 id="file_formats">
+    <title>File formats</title>
+    <para>      
+This software package handles the following file formats
+</para>
+
+
+  <sect3 id="fastphylo_sequence_xml_format">
+    <title>Fastphylo sequence XML format</title>
+<para>
+The Fastphylo sequence XML format is chosen by the option <userinput>-I xml</userinput> to fastdist. 
+
+Type <userinput>fastdist --print-relaxng-input</userinput> to see its relaxng schema
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_print_relaxng_input">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastdist_print_relaxng_input">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+
+
+Let us take a look at the example input file <ulink url="example_files/seq.xml">seq.xml</ulink> that is in this xml format. 
+
+
+
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.xml">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include></programlisting>
+
+
+The Relax NG schema specifies that the extrainfo element is optional and can be inserted as a child to a seq element. The extrainfo element may contain any content and will be passed on to the output XML format.
+
+
+</para></sect3>
+
+
+  <sect3 id="phylip_multialignment_format">
+    <title>Phylip multialignment format</title>
+<para>
+The Phylip multialignment input format is chosen by the option <userinput>-I phylip_multialignment</userinput>. 
+
+Let us take a look at the example input file <ulink url="example_files/seq.phylip_multialignment">seq.phylip_multialignment</ulink> that is in the Phylip multialignment format ( phylip_multialignment ). 
+
+
+
+
+
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.phylip_multialignment">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include></programlisting>
+
+This format has an extra option -r ( --number-of-run ) for specifying the number of data sets in the input.
+
+
+
+</para></sect3>
+
+
+  <sect3 id="fasta_format">
+    <title>Fasta format</title>
+<para>
+The Fasta input format is chosen by the option <userinput>-I fasta</userinput>. It is the default so you don't need to specify it, if you don't want to.
+Let us take a look at the example fasta file <ulink url="example_files/seq.fasta_multialignment">seq.fasta_multialignment</ulink>
+
+
+
+
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.fasta_multialignment">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include></programlisting>
+
+
+
+
+</para></sect3>
+
+
+
+
+
+
+
+
+  <sect3 id="fastphylo_distance_matrix_xml_format">
+    <title>Fastphylo distance matrix XML format</title>
+<para>
+The Fastphylo sequence XML format is chosen by the option <userinput>-O xml</userinput> to fastdist. 
+
+Type <userinput>fastdist --print-relaxng-output</userinput> to see its relaxng schema
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_print_relaxng_output">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastdist_print_relaxng_output">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+The Relax NG schema specifies that the extrainfo element is optional and can be inserted as a child to a seq element. The extrainfo element may contain any content.
+
+</para></sect3>
+
+
+
+
+
+  <sect3 id="phylip_distance_matrix_format">
+    <title>Phylip distance matrix format</title>
+<para>
+The Phylip distance matrix format is chosen by the option <userinput>-O phylip_multialignment</userinput> to fastdist.
+
+
+
+</para></sect3>
+
+
+
+
+
+
+
+  <sect3 id="fastphylo_tree_count_xml_format">
+    <title>Fastphylo tree count XML format</title>
+<para>
+The Fastphylo tree count XML format is chosen by the option <userinput>-O xml</userinput> to fnj. 
+
+Type <userinput>fnj --print-relaxng-output</userinput> to see its relaxng schema
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fnj_print_relaxng_output">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fnj_print_relaxng_output">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+
+</para></sect3>
+
+
+
+  </sect2>
+
+
   </sect1>
+
 
 
 
