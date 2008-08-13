@@ -21,11 +21,11 @@ public:
   virtual readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, Extrainfos & extrainfos ) = 0;
 };
 
-class PhylipMaInputStream : public DataInputStream
+class PhylipDmInputStream : public DataInputStream
 {
 public:
-  PhylipMaInputStream(char * filename );
-  ~PhylipMaInputStream();
+  PhylipDmInputStream(char * filename );
+  ~PhylipDmInputStream();
   virtual readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, Extrainfos & extrainfos );
 
 protected:
