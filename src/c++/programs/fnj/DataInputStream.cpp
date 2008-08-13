@@ -9,13 +9,12 @@ DataInputStream::DataInputStream()
 { 
 }
 
-
-PhylipMaInputStream::~PhylipMaInputStream() {
+PhylipDmInputStream::~PhylipDmInputStream() {
   if ( file_was_opened ) 
     fin.close();
 }
 
-PhylipMaInputStream::PhylipMaInputStream(char * filename = 0 )  
+PhylipDmInputStream::PhylipDmInputStream(char * filename = 0 )  
 { 
   file_was_opened = false;
   if ( filename == 0 )
@@ -36,10 +35,14 @@ PhylipMaInputStream::PhylipMaInputStream(char * filename = 0 )
 }
 
 readstatus
-PhylipMaInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> & names, Extrainfos & extrainfos ) 
+PhylipDmInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> & names, Extrainfos & extrainfos ) 
 {
-  printf("T\n");
-  dm.objInitFromStream(*fp);
+ dm.objInitFromStream(*fp);
+ names.clear();
+
+ for(size_t namei=0 ; namei<dm.getSize() ; namei++ ) {
+   names.push_back(dm.getIdentifier(namei));
+ }
  return DM_READ;
 }
 

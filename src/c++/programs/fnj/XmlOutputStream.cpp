@@ -21,19 +21,20 @@ XmlOutputStream::print( tree2int_map & tree2count, bool noCounts, std::vector<st
   Extrainfos::iterator it;
   std::vector<std::string>::iterator it2;
   *fp << "   <run>" <<  std::endl 
-      << "   <identities>" <<  std::endl;
-
-  for ( it=extrainfos.begin(), it2=names.begin() ; it != extrainfos.end() && it2 != names.end()  ; ++it , ++it2 )
+      << "    <identities>" <<  std::endl;
+  it=extrainfos.begin();
+  for (it2=names.begin() ; it2 != names.end()  ;  ++it2 )
     {  
-      if ( it->size() > 0 ) {
-	*fp << "    <identity name=\""  <<  *it2  <<  "\">" << *it << "      </identifier>" <<  std::endl;         
+      if ( it != extrainfos.end() && it->size() > 0 ) { 
+	*fp << "     <identity name=\""  <<  *it2  <<  "\">" << *it << "     </identity>" <<  std::endl;         
+        ++it;
       } 
       else {
-	*fp << "    <identity name=\""  <<  *it2  <<  "\"/>" <<  std::endl;         
+	*fp << "     <identity name=\""  <<  *it2  <<  "\"/>" <<  std::endl;         
       }
     }
 
-  *fp  << "   </identities>" <<  std::endl;
+  *fp  << "    </identities>" <<  std::endl;
 
 
   tree2int_map::iterator iter = tree2count.begin();

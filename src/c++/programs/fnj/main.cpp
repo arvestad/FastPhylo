@@ -99,7 +99,7 @@ main(int argc,
 
   switch ( args_info.input_format_arg )
     {
-    case input_format_arg_phylip_dm: istream = new PhylipMaInputStream(inputfilename);  break;
+    case input_format_arg_phylip_dm: istream = new PhylipDmInputStream(inputfilename);  break;
     case input_format_arg_xml: istream = new XmlInputStream(inputfilename); break;
     default: exit(EXIT_FAILURE);
 }
@@ -136,8 +136,8 @@ break;
         tree2int_map tree2count((size_t)( args_info.bootstraps_arg * 1.3));
         StrDblMatrix dm;
         str2int_hashmap name2id;
-
-        for ( int i = 0 ; ( status == END_OF_RUN || status == DM_READ ) && ( i < args_info.dm_per_run_arg - 1 || args_info.input_format_arg == input_format_arg_xml ) ; i++ ){
+	int i;
+        for ( i = 0 ; ( status == END_OF_RUN || status == DM_READ ) && ( i < args_info.dm_per_run_arg   || args_info.input_format_arg == input_format_arg_xml ) ; i++ ){
 
 	  if (( status = istream->readDM( dm, names, extrainfos)) != DM_READ ) { 
 	    break;
@@ -149,7 +149,7 @@ break;
 
 	  buildTrees(dm, tree2count, methods,name2id);
         }
-        if ( status == END_OF_RUN ) {
+        if ( status == END_OF_RUN || i == args_info.dm_per_run_arg ) {
            ostream->print(tree2count,noCounts, names, extrainfos);
 	}
 
