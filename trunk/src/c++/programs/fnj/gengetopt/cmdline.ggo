@@ -11,7 +11,9 @@ option "output-format" O  "output format. 'xml' means the 'Fastphylo tree count 
 
 option "no-counts" C "Tree file should not contain the counts. This flag has no effect on the XML output format." flag off
 
+
 #option "method"  m "reconstruction methods to apply" enum values="NJ","FNJ","BIONJ" optional multiple(1-)
+# there is functionality for multiple methods, but Lars Arvestad suggested leaving it out.
 option "method"  m "reconstruction method to apply" enum values="NJ","FNJ","BIONJ" default="FNJ" optional
 
 option "dm-per-run" d "nr of Distance matrices per run. Is only used if the input format is phylip_dm" int optional default="1"
