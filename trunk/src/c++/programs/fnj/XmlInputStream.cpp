@@ -57,7 +57,7 @@ XmlInputStream::XmlInputStream(char * filename = 0)
 }
 
 readstatus  
-XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> & names, Extrainfos & extrainfos ) {
+XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos ) {
 { 
     const xmlChar *name, *value;
 
@@ -152,7 +152,12 @@ XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> & names, Ext
 	  {
 	    if (type == XML_READER_TYPE_ELEMENT ) { l.in_run = true; 
 	      xmlChar * dimStr = xmlTextReaderGetAttribute(reader,(const xmlChar *)"dim" );
+	      xmlChar * idStr = xmlTextReaderGetAttribute(reader,(const xmlChar *)"id" );
+              if ( dimStr == 0 ) THROW_EXCEPTION("failed to read attribute \"dim\"");
+              if ( idStr == 0 ) THROW_EXCEPTION("failed to read attribute \"id\"");
 	      dmSize=atoi((const char *) dimStr );
+              runId = ( const char *) idStr;
+              xmlFree(idStr); 
               xmlFree(dimStr);
 	      continue; }; 
             if (type == XML_READER_TYPE_END_ELEMENT ) { l.in_run = false; return END_OF_RUN; }

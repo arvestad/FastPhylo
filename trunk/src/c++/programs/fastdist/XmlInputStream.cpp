@@ -54,10 +54,10 @@ XmlInputStream::XmlInputStream(char * filename = 0)
   }
 }
 
-bool XmlInputStream::read( vector<string> &names, Extrainfos &extrainfos, vector<DNA_b128_String> &b128seqs )  
+bool XmlInputStream::read(  std::vector<DNA_b128_String> &b128seqs, std::string & runId, std::vector<std::string> &names, Extrainfos &extrainfos )  
 { 
   std::vector<Sequence> seqs;
-  if ( ! readSequences(seqs, extrainfos) ) return false;
+  if ( ! readSequences(seqs, runId, extrainfos) ) return false;
   names.clear();names.reserve(seqs.size());
   for( size_t i=0;i<seqs.size();i++) {
     names.push_back(seqs[i].name);
@@ -67,7 +67,7 @@ bool XmlInputStream::read( vector<string> &names, Extrainfos &extrainfos, vector
 }
 
 bool
-XmlInputStream::readSequences( std::vector<Sequence> &seqs, Extrainfos &extrainfos ) {
+XmlInputStream::readSequences( std::vector<Sequence> &seqs, std::string & runId, Extrainfos &extrainfos  ) {
     const xmlChar *name, *value;
 
     bool run_read = false;
@@ -158,7 +158,11 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs, Extrainfos &extrainf
 	if ( l.in_root && l.in_runs && depth == 2 && xmlStrEqual (name, (const xmlChar *)"run" ))
 	  {
 	    switch (type) {
-	    case XML_READER_TYPE_ELEMENT:  l.in_run = true; extrainfos.clear(); continue; 
+	    case XML_READER_TYPE_ELEMENT:  { l.in_run = true; extrainfos.clear(); 
+              xmlChar * id =  xmlTextReaderGetAttribute(reader, (const xmlChar *) "id") ;
+              if ( id == 0 ) THROW_EXCEPTION("failed to read attribute \"id\"");
+              runId = ( const char *) id;
+              xmlFree(id); continue; }
 	    case XML_READER_TYPE_END_ELEMENT:  l.in_run = false; return true; 
             }
          }

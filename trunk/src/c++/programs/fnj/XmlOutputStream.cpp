@@ -16,11 +16,11 @@ XmlOutputStream::~XmlOutputStream()
 };
 
 void
-XmlOutputStream::print( tree2int_map & tree2count, bool noCounts, std::vector<std::string> & names, Extrainfos & extrainfos ) 
+XmlOutputStream::print( tree2int_map & tree2count, bool noCounts, std::string & runId, std::vector<std::string> & names, Extrainfos & extrainfos ) 
 {
   Extrainfos::iterator it;
   std::vector<std::string>::iterator it2;
-  *fp << "   <run>" <<  std::endl 
+  *fp << "   <run id=\""   <<  runId <<      "\" dim=\"" <<  names.size()  << "\">" <<  std::endl 
       << "    <identities>" <<  std::endl;
   it=extrainfos.begin();
   for (it2=names.begin() ; it2 != names.end()  ;  ++it2 )
@@ -38,19 +38,19 @@ XmlOutputStream::print( tree2int_map & tree2count, bool noCounts, std::vector<st
 
   tree2int_map::iterator iter = tree2count.begin();
   for( ; iter!=tree2count.end() ; ++iter){
-    *fp  << "   <tree>" <<  std::endl
-<< "    <count>"  << (*iter).second 
+    *fp  << "    <tree>" <<  std::endl
+<< "     <count>"  << (*iter).second 
         << "</count>"  <<  std::endl 
-        << "    <newick-xml>" << (*iter).first
+        << "     <newick-xml>" << (*iter).first
 	 << "</newick-xml>" << std::endl
-         << "    <newick>";
+         << "     <newick>";
 
 
     ostringstream oss;
     oss <<  (*iter).first;
     printNewick( fp , oss.str() );
-    *fp   << "</newick>"  << std::endl
-    << "   </tree>"  << std::endl;
+    *fp   << ";</newick>"  << std::endl
+    << "    </tree>"  << std::endl;
     }
    *fp     << "   </run>"  << std::endl;
 }

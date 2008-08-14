@@ -27,8 +27,9 @@ class XmlInputStream : public DataInputStream
 public:
    XmlInputStream(char * filename);
   ~XmlInputStream();
-  virtual bool read( std::vector<std::string> &names, Extrainfos &extrainfos, std::vector<DNA_b128_String> &b128_strings );
-  virtual bool readSequences( std::vector<Sequence> &seqs, Extrainfos &extrainfos );
+
+  virtual bool read( std::vector<DNA_b128_String> &b128_strings, std::string & runId, std::vector<std::string> &names, Extrainfos &extrainfos );
+  virtual bool readSequences( std::vector<Sequence> &seqs, std::string & runId, Extrainfos &extrainfos );
 protected:
   xmlTextReaderPtr reader;
   locator_t l;

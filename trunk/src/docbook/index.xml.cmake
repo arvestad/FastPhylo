@@ -893,13 +893,6 @@ The example file <ulink url="example_files/seq.fasta">seq.fasta</ulink> contains
 
 </para></sect3>
 
-
-
-
-
-
-
-
   <sect3 id="fastphylo_distance_matrix_xml_format">
     <title>Fastphylo distance matrix XML format</title>
 <para>
@@ -939,10 +932,6 @@ The example file <ulink url="example_files/dm.xml">dm.xml</ulink> contains
 
 </para></sect3>
 
-
-
-
-
   <sect3 id="phylip_distance_matrix_format">
     <title>Phylip distance matrix format</title>
 <para>
@@ -966,19 +955,13 @@ It contains two data sets.
 
 </para></sect3>
 
-
-
-
-
-
-
   <sect3 id="fastphylo_tree_count_xml_format">
     <title>Fastphylo tree count XML format</title>
 <para>
 The Fastphylo tree count XML format is chosen by the option <userinput>-O xml</userinput> to fnj. 
+You can see an example of the format in the example <xref linkend="fnj_dm.xml"/>.
 
-Type <userinput>fnj --print-relaxng-output</userinput> to see its relaxng schema
-
+Type <userinput>fnj --print-relaxng-output</userinput> to see the formats relaxng schema. 
 <programlisting><![CDATA[
 [user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fnj_print_relaxng_output">
 <xi:fallback>

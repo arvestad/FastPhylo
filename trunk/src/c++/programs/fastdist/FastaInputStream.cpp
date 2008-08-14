@@ -28,11 +28,13 @@ FastaInputStream::FastaInputStream(char * filename = 0 )
     }
 }
 
+
+
 bool
-FastaInputStream::read( std::vector<std::string> &names,  Extrainfos &extrainfos, std::vector<DNA_b128_String> &b128seqs) 
+FastaInputStream::read( std::vector<DNA_b128_String> &b128seqs, std::string & runId, std::vector<std::string> &names,  Extrainfos &extrainfos) 
 {
   std::vector<Sequence> seqs;
-  if ( ! readSequences(seqs,extrainfos) ) return false;
+  if ( ! readSequences(seqs,runId,extrainfos) ) return false;
   names.clear();names.reserve(seqs.size());
   for( size_t i=0;i<seqs.size();i++) {
     names.push_back(seqs[i].name);
@@ -72,8 +74,9 @@ FastaInputStream::readSeq(std::vector<Sequence> &seqs, std::string &line, int li
   return true;
 }
 
+
 bool
-FastaInputStream::readSequences(std::vector<Sequence> &seqs,  Extrainfos &extrainfos) {
+FastaInputStream::readSequences(std::vector<Sequence> &seqs,  std::string & runId, Extrainfos &extrainfos) {
 
   std::string line;
   while ( getline ( *fp, line ) ) {

@@ -30,7 +30,7 @@ public:
    XmlInputStream(char * filename);
   ~XmlInputStream();
 
-  virtual readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, Extrainfos & extrainfos );
+  virtual readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos );
 
 protected:
 
