@@ -146,13 +146,14 @@ main(int argc,
 
       //for each dataset in the files
 
+
       for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
 	//no bootstrapping
-
+	std::string runId("");
 	if ( !no_incl_orig && numboot == 0){//only need to create one distance matrix
-          if ( ! istream->read(names,extrainfos,b128seqs)) break;
+          if ( ! istream->read(b128seqs,runId,names,extrainfos)) break;
 	  fillMatrix(dm, b128seqs, trans_model);
-          ostream->printStartRun(names,extrainfos);
+          ostream->printStartRun(names,runId,extrainfos);
 	  //          freeXmlStrings(extrainfos);
 	  dm.setIdentifiers(names);
 	  if(useFixFactor) applyFixFactor(dm,fixfactor);
@@ -163,13 +164,13 @@ main(int argc,
 	else{
 	  //read original sequences
 
-          if ( ! istream->readSequences(seqs,extrainfos)) break;
+          if ( ! istream->readSequences(seqs,runId,extrainfos)) break;
 
 	  names.clear();names.reserve(seqs.size());
 	  for( size_t i=0;i<seqs.size();i++)
 	    names.push_back(seqs[i].name);
 
-          ostream->printStartRun(names,extrainfos);
+          ostream->printStartRun(names,runId,extrainfos);
 	  //          freeXmlStrings(extrainfos);
 	  if ( !no_incl_orig ){//create the distance matrix for the original sequences
 	    Sequences2DNA_b128(seqs,b128seqs);

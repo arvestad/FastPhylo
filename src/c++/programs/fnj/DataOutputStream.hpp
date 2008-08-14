@@ -16,7 +16,8 @@ public:
   DataOutputStream( );
   DataOutputStream(char * filename );
   virtual ~DataOutputStream() {};
-  virtual void print( tree2int_map & tree2count, bool noCounts,  std::vector<std::string> & names, Extrainfos & extrainfos  ) = 0;
+  // runId and extrainfos are just used by the XmlOutputStream
+  virtual void print( tree2int_map & tree2count, bool noCounts, std::string & runId,  std::vector<std::string> & names, Extrainfos & extrainfos  ) = 0;
 protected:
   std::ostream * fp;
   std::ofstream fout;
@@ -28,7 +29,7 @@ class TreeTextOutputStream : public DataOutputStream
 public:
   TreeTextOutputStream(char * filename );
   virtual ~TreeTextOutputStream() {};
-  virtual void print( tree2int_map & tree2count, bool noCounts, std::vector<std::string> & names, Extrainfos & extrainfos );
+  virtual void print( tree2int_map & tree2count, bool noCounts, std::string & runId, std::vector<std::string> & names, Extrainfos & extrainfos );
 };
 
 #endif // DATAOUTPUTSTREAM_HPP

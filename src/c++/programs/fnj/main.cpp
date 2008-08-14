@@ -125,6 +125,7 @@ break;
       int run = 0;
       status = END_OF_RUN;
       while (   status == END_OF_RUN   && ( args_info.input_format_arg == input_format_arg_xml || run < args_info.number_of_runs_arg )) {
+        std::string runId("");
         run++;
         tree2int_map tree2count((size_t)( args_info.bootstraps_arg * 1.3));
         StrDblMatrix dm;
@@ -132,7 +133,7 @@ break;
 	int i;
         for ( i = 0 ; ( status == END_OF_RUN || status == DM_READ ) && ( i < args_info.dm_per_run_arg   || args_info.input_format_arg == input_format_arg_xml ) ; i++ ){
 
-	  if (( status = istream->readDM( dm, names, extrainfos)) != DM_READ ) { 
+	  if (( status = istream->readDM( dm, names, runId, extrainfos)) != DM_READ ) { 
 	    break;
 	  };
      
@@ -143,7 +144,7 @@ break;
 	  buildTrees(dm, tree2count, methods,name2id);
         }
         if ( status == END_OF_RUN || i == args_info.dm_per_run_arg ) {
-           ostream->print(tree2count,noCounts, names, extrainfos);
+	  ostream->print(tree2count,noCounts, runId, names, extrainfos);
 	}
 
       }//end run loop

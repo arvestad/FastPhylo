@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <root>
  <runs>
-  <run dim="3">
+  <run id="a" dim="3">
    <identities>
     <identity name="Alpha"/>
     <identity name="Beta"/>
@@ -24,7 +24,7 @@
    </dm>
    </dms>
   </run>
-  <run dim="3">
+  <run id="b" dim="3">
    <identities>
     <identity name="Alpha"/>
     <identity name="Beta"/>

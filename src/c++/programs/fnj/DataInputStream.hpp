@@ -18,7 +18,7 @@ class DataInputStream
 public:
   DataInputStream();
   virtual ~DataInputStream() {};
-  virtual readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, Extrainfos & extrainfos ) = 0;
+  virtual readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos ) = 0;
 };
 
 class PhylipDmInputStream : public DataInputStream
@@ -26,7 +26,7 @@ class PhylipDmInputStream : public DataInputStream
 public:
   PhylipDmInputStream(char * filename );
   ~PhylipDmInputStream();
-  virtual readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, Extrainfos & extrainfos );
+  virtual readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos );
 
 protected:
   std::istream * fp;

@@ -12,7 +12,7 @@ public:
   virtual ~XmlOutputStream();
 
   virtual void print( StrDblMatrix & dm );
-  virtual void printStartRun( std::vector<std::string> & names, Extrainfos &extrainfos );
+  virtual void printStartRun( std::vector<std::string> & names, std::string & runId, Extrainfos &extrainfos );
   virtual void printEndRun();
 };
 
