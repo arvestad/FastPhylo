@@ -26,7 +26,6 @@ using namespace std;
 //
 void
 buildTrees(StrDblMatrix &dm, tree2int_map &tree2count, std::vector<NJ_method> &methods, str2int_hashmap &name2id){
-
   SequenceTree tree;
   for(size_t i=0 ; i<methods.size() ; i++){
     computeNJTree(dm,tree,methods[i]);
@@ -44,23 +43,17 @@ main(int argc,
      char **argv){
 
   TRY_EXCEPTION();
-
   gengetopt_args_info args_info;
 
   if (cmdline_parser (argc, argv, &args_info) != 0)
     exit(EXIT_FAILURE);
 
-
   if ( args_info.print_relaxng_input_given && args_info.print_relaxng_output_given ) {
      cerr << "error: --print-relaxng-input and --print-relaxng-output can not be used at the same time" << endl; exit(EXIT_FAILURE);
   }
 
-
   if ( args_info.print_relaxng_input_given ) {  cout << fastphylo_distance_matrix_xml_relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
   if ( args_info.print_relaxng_output_given ) {  cout << fastphylo_tree_count_xml_relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
-
-
-
 
   //----------------------------------------------
   // DISTANCE METHODS
@@ -108,9 +101,9 @@ main(int argc,
     {
     case output_format_arg_newick: ostream = new TreeTextOutputStream(outputfilename);  break;
     case output_format_arg_xml: ostream = new XmlOutputStream(outputfilename); 
-                                newickDelimiters.left_parenthesis=std::string("<branch><item>");
-                                newickDelimiters.right_parenthesis="</item></branch>";
-                                newickDelimiters.comma="</item><item>";
+                                newickDelimiters.left_parenthesis=std::string("<branch><leaf>");
+                                newickDelimiters.right_parenthesis="</leaf></branch>";
+                                newickDelimiters.comma="</leaf><leaf>";
                                 newickDelimiters.null_tree="";
                                 newickDelimiters.semi_colon="";
 

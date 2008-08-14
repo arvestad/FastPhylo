@@ -34,7 +34,7 @@ struct NewickDelimiters {
    std::string comma;
    std::string null_tree;
    std::string semi_colon;
-   NewickDelimiters() : left_parenthesis("("), right_parenthesis("eeeeeeee)"), comma(","), semi_colon(";") {}
+   NewickDelimiters() : left_parenthesis("("), right_parenthesis(")"), comma(","), semi_colon(";") {}
 };
 
 static NewickDelimiters newickDelimiters; 

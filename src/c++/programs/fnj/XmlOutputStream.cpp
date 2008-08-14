@@ -36,16 +36,62 @@ XmlOutputStream::print( tree2int_map & tree2count, bool noCounts, std::vector<st
 
   *fp  << "    </identities>" <<  std::endl;
 
-
   tree2int_map::iterator iter = tree2count.begin();
   for( ; iter!=tree2count.end() ; ++iter){
     *fp  << "   <tree>" <<  std::endl
 << "    <count>"  << (*iter).second 
         << "</count>"  <<  std::endl 
-        << "    <newick>" << (*iter).first
-        << "    </newick>" << std::endl
-        << "   </tree>"  << std::endl;
+        << "    <newick-xml>" << (*iter).first
+	 << "</newick-xml>" << std::endl
+         << "    <newick>";
+
+
+    ostringstream oss;
+    oss <<  (*iter).first;
+    printNewick( fp , oss.str() );
+    *fp   << "</newick>"  << std::endl
+    << "   </tree>"  << std::endl;
     }
    *fp     << "   </run>"  << std::endl;
+}
+
+void XmlOutputStream::printNewick(std::ostream * fp , std::string s ) {
+  xmlDocPtr doc;
+  xmlNode *root = NULL;
+  doc = xmlReadMemory(s.c_str(), s.size(), "", NULL, 0);
+  if (doc == NULL) {
+    std::cerr << "internal parse error" << std::endl; 
+    return;
+  }
+  root = xmlDocGetRootElement(doc);
+  printNewickNode(fp , root);
+  xmlFreeDoc(doc);
+ 
+  return;
+}
+
+void XmlOutputStream::printNewickNode(std::ostream * fp , xmlNode * node)
+{
+  xmlNode *n = NULL;
+ 
+   bool firsttime = true;
+   for (n = node; n; n = n->next) {
+     if (n->type == XML_ELEMENT_NODE) {
+       if ( firsttime ) {
+	 firsttime = false;
+       } else {
+	 *fp << ",";
+       }
+       if ( xmlStrEqual (n->name, (const xmlChar *)"branch" ) ) {
+         *fp << "("; 
+	 printNewickNode( fp, n->children );
+         *fp << ")"; 
+       } 
+       if ( xmlStrEqual (n->name, (const xmlChar *)"leaf" ) ) {
+	 *fp << xmlNodeGetContent(n);
+       } 
+     }
+   }
+   return;
 }
 

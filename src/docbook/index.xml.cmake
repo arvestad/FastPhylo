@@ -470,9 +470,9 @@ Per default the output is given in XML format
 
 <example id="example_fastdist_seq_xml"><title>fastdist with input file in XML format</title><para>
 
-Let us use the example input file <ulink url="example_files/seq.xml">seq.xml</ulink> shown in <xref linkend="fastphylo_sequence_xml_format"/> 
 
 
+We use the file described in <xref linkend="seq.xml"/> as input file. 
 
 <note><para>The -r option can only be used if the input is in phylip_multialignment format. <application>fastdist</application> will for XML files compute all data sets ( runs ). Fasta files can only contain one data set so the -r option does not make any sense there.</para></note>
 
@@ -709,11 +709,10 @@ We use the file described in <xref linkend="dm.xml"/> as input file. Per default
 
 <example id="example_connecting_fastdist_to_fnj_with_a_pipe"><title>connecting fastdist to fnj with a pipe</title><para>
 
-
-As input let us use the file described in <ulink url="example_files/seq.xml">seq.xml</ulink>. The file has two data sets. We will bootstrap 3 times.
+We use the file described in <xref linkend="seq.phylip_multialignment"/> as input file. 
+The file has two data sets. We will bootstrap 3 times.
 
 First we send the data in  phylip_dm format through the pipe:
-
 
 <programlisting><![CDATA[
 [user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/connecting_fnj_to_fastdist_with_a_pipe1">
