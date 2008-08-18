@@ -16,7 +16,7 @@ static const char fastphylo_sequence_xml_relaxngstr[] = "<?xml version=\"1.0\" e
 "              <element name=\"seq\">\n"
 "                <attribute name=\"seq\">\n"
 "                  <data type=\"string\">\n"
-"                    <param name=\"pattern\">[ACGT -]+</param>\n"
+"                    <param name=\"pattern\">[acgtumrwsykvhdbnxACGTUMRWSYKVHDBNX -.?]+</param>\n"
 "                  </data>\n"
 "                </attribute>\n"
 "                <attribute name=\"name\">\n"
