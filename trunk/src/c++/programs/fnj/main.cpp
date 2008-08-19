@@ -101,9 +101,11 @@ main(int argc,
     {
     case output_format_arg_newick: ostream = new TreeTextOutputStream(outputfilename);  break;
     case output_format_arg_xml: ostream = new XmlOutputStream(outputfilename); 
-                                newickDelimiters.left_parenthesis=std::string("<branch><leaf>");
-                                newickDelimiters.right_parenthesis="</leaf></branch>";
-                                newickDelimiters.comma="</leaf><leaf>";
+                                newickDelimiters.left_parenthesis=std::string("<branch>");
+                                newickDelimiters.right_parenthesis="</branch>";
+                                newickDelimiters.left_leaf=std::string("<leaf>");
+                                newickDelimiters.right_leaf=std::string("</leaf>");
+                                newickDelimiters.comma="";
                                 newickDelimiters.null_tree="";
                                 newickDelimiters.semi_colon="";
 
