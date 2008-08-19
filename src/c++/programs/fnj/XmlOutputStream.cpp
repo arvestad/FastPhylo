@@ -58,7 +58,9 @@ XmlOutputStream::print( tree2int_map & tree2count, bool noCounts, std::string & 
 void XmlOutputStream::printNewick(std::ostream * fp , std::string s ) {
   xmlDocPtr doc;
   xmlNode *root = NULL;
-  doc = xmlReadMemory(s.c_str(), s.size(), "", NULL, 0);
+
+  std:string newickxml = "<newick-xml>" + s + "</newick-xml>"; 
+  doc = xmlReadMemory(newickxml.c_str(), newickxml.size(), "", NULL, 0);
   if (doc == NULL) {
     std::cerr << "internal parse error" << std::endl; 
     return;
@@ -75,17 +77,24 @@ void XmlOutputStream::printNewickNode(std::ostream * fp , xmlNode * node)
   xmlNode *n = NULL;
  
    bool firsttime = true;
+   bool foundleaf = true;
+
    for (n = node; n; n = n->next) {
      if (n->type == XML_ELEMENT_NODE) {
-       if ( firsttime ) {
+       if ( firsttime == true ) {
 	 firsttime = false;
        } else {
 	 *fp << ",";
        }
        if ( xmlStrEqual (n->name, (const xmlChar *)"branch" ) ) {
+         foundleaf = false;    
          *fp << "("; 
 	 printNewickNode( fp, n->children );
          *fp << ")"; 
+       } 
+       if ( xmlStrEqual (n->name, (const xmlChar *)"newick-xml" ) ) {
+         foundleaf = false;
+	 printNewickNode( fp, n->children );
        } 
        if ( xmlStrEqual (n->name, (const xmlChar *)"leaf" ) ) {
 	 *fp << xmlNodeGetContent(n);

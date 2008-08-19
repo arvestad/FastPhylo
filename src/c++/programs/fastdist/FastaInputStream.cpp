@@ -50,7 +50,17 @@ FastaInputStream::readSeq(std::vector<Sequence> &seqs, std::string &line, int li
   seqs.resize(linesRead);
   std::string seqStr;
   Sequence &s = seqs[linesRead-1];
-  s.name = line.substr(1, line.size()-1);
+  string::size_type st = line.find_first_of("\t ",1);
+  string::size_type enda;  
+  if ( st == string::npos ) {
+    enda = line.size() -1;
+  }
+  else {
+    enda = st-1;
+  }
+
+
+  s.name = line.substr(1, enda);
 
   bool readGreaterThan = false;
   while ( ! readGreaterThan && getline ( *fp, line ) ) {

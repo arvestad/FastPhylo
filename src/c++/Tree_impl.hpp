@@ -31,10 +31,12 @@
 struct NewickDelimiters {
    std::string left_parenthesis;
    std::string right_parenthesis;
+   std::string left_leaf;
+   std::string right_leaf;
    std::string comma;
    std::string null_tree;
    std::string semi_colon;
-   NewickDelimiters() : left_parenthesis("("), right_parenthesis(")"), comma(","), semi_colon(";") {}
+  NewickDelimiters() : left_parenthesis("("), right_parenthesis(")"), comma(","), semi_colon(";"), left_leaf(""), right_leaf("") {}
 };
 
 static NewickDelimiters newickDelimiters; 
@@ -982,7 +984,8 @@ TREENODE::printOn(std::ostream &os) const{
     std::string str = outstr.str();
     if ( str.size() == 0 )
       str = std::string("n") + nodeId;
-    return os << str;
+    std::string str2 = newickDelimiters.left_leaf +  str  + newickDelimiters.right_leaf;
+    return os << str2;
   }
   else{
     //PENDING SLOW
