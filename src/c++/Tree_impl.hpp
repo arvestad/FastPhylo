@@ -20,26 +20,13 @@
 #include <assert.h>
 #include "log_utils.hpp"
 #include <algorithm>
+#include "Newick.hpp"
 
 #define TREE_ASSERT(stmnt) if(true){stmnt;}
 
 //-------------------------------------------------------
 // CONSTRUCTORS
 
-
-
-struct NewickDelimiters {
-   std::string left_parenthesis;
-   std::string right_parenthesis;
-   std::string left_leaf;
-   std::string right_leaf;
-   std::string comma;
-   std::string null_tree;
-   std::string semi_colon;
-  NewickDelimiters() : left_parenthesis("("), right_parenthesis(")"), comma(","), semi_colon(";"), left_leaf(""), right_leaf("") {}
-};
-
-static NewickDelimiters newickDelimiters; 
 
 
 

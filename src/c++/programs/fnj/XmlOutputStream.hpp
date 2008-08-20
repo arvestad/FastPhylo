@@ -18,8 +18,8 @@ protected:
  /** printNewick unparses the xml string created before. Of course it would better if the SequenceTree would produce both a newick string
      and some xml representation of newick. 
 **/
-  virtual void printNewick(std::ostream * fp , std::string s );
-  virtual void printNewickNode(std::ostream * fp , xmlNode * node);
+  virtual void printNewick(std::ostream * fp , std::string s, bool printXml );
+  virtual void printNewickNode(std::ostream * fp , xmlNode * node,  bool printXml);
 };
 
 #endif // XMLOUTPUTSTREAM_HPP
