@@ -10,7 +10,6 @@
 #include "fnj_gengetopt.h"
 #include "NeighborJoining.hpp"
 
-
 #include "DataInputStream.hpp"
 #include "XmlInputStream.hpp"
 #include "DataOutputStream.hpp"
@@ -108,6 +107,8 @@ main(int argc,
                                 newickDelimiters.comma="";
                                 newickDelimiters.null_tree="";
                                 newickDelimiters.semi_colon="";
+                                newickDelimiters.sequence_double_left="<length>";
+                                newickDelimiters.sequence_double_right="</length>";
 
 break;
     default: exit(EXIT_FAILURE);

@@ -45,17 +45,16 @@ XmlOutputStream::print( tree2int_map & tree2count, bool noCounts, std::string & 
 	 << "</newick-xml>" << std::endl
          << "     <newick>";
 
-
     ostringstream oss;
     oss <<  (*iter).first;
-    printNewick( fp , oss.str() );
+    printNewick( fp , oss.str(), false );
     *fp   << ";</newick>"  << std::endl
     << "    </tree>"  << std::endl;
     }
    *fp     << "   </run>"  << std::endl;
 }
 
-void XmlOutputStream::printNewick(std::ostream * fp , std::string s ) {
+void XmlOutputStream::printNewick(std::ostream * fp , std::string s, bool printXml ) {
   xmlDocPtr doc;
   xmlNode *root = NULL;
 
@@ -66,13 +65,12 @@ void XmlOutputStream::printNewick(std::ostream * fp , std::string s ) {
     return;
   }
   root = xmlDocGetRootElement(doc);
-  printNewickNode(fp , root);
-  xmlFreeDoc(doc);
- 
+  printNewickNode(fp , root, printXml);
+  xmlFreeDoc(doc); 
   return;
 }
 
-void XmlOutputStream::printNewickNode(std::ostream * fp , xmlNode * node)
+void XmlOutputStream::printNewickNode(std::ostream * fp , xmlNode * node, bool printXml)
 {
   xmlNode *n = NULL;
  
@@ -80,24 +78,41 @@ void XmlOutputStream::printNewickNode(std::ostream * fp , xmlNode * node)
    bool foundleaf = true;
 
    for (n = node; n; n = n->next) {
-     if (n->type == XML_ELEMENT_NODE) {
-       if ( firsttime == true ) {
-	 firsttime = false;
-       } else {
-	 *fp << ",";
+     if (n->type == XML_ELEMENT_NODE  ) {
+       //       *fp << "n->name=" << (char * ) n->name << std::endl;
+       if ( xmlStrEqual (n->name, (const xmlChar *)"branch") ||  xmlStrEqual (n->name, (const xmlChar *)"leaf") ) {
+         if ( firsttime == true ) {
+	   firsttime = false;
+         } else {
+  	   *fp << ",";
+         }
+       }
+       if ( xmlStrEqual (n->name, (const xmlChar *)"length" ) ) {
+           xmlChar * len = xmlNodeGetContent(n);
+	   *fp <<  ":" << len ;
+           xmlFree(len);
        }
        if ( xmlStrEqual (n->name, (const xmlChar *)"branch" ) ) {
          foundleaf = false;    
          *fp << "("; 
-	 printNewickNode( fp, n->children );
+	 printNewickNode( fp, n->children, printXml );
          *fp << ")"; 
        } 
        if ( xmlStrEqual (n->name, (const xmlChar *)"newick-xml" ) ) {
          foundleaf = false;
-	 printNewickNode( fp, n->children );
+	 printNewickNode( fp, n->children, printXml );
        } 
-       if ( xmlStrEqual (n->name, (const xmlChar *)"leaf" ) ) {
-	 *fp << xmlNodeGetContent(n);
+       if ( xmlStrEqual (n->name, (const xmlChar *)"leaf" ) && n->children != NULL ) {
+         xmlChar * species = xmlNodeGetContent(n->children);
+       	 *fp << species;
+         xmlFree(species);
+         if ( n->children->next != NULL  && 
+           n->children->next->type == XML_ELEMENT_NODE &&
+           xmlStrEqual (n->children->next->name, (const xmlChar *)"length" ) ) {
+           xmlChar * length = xmlNodeGetContent(n->children->next);
+	   *fp <<  ":" << length;
+           xmlFree(length);
+	 }
        } 
      }
    }

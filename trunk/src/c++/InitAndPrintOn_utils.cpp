@@ -12,6 +12,9 @@
 #include "InitAndPrintOn_utils.hpp"
 #include <string>
 #include "file_utils.hpp"
+#include "Newick.hpp"
+
+
 
 
 
@@ -48,7 +51,8 @@ operator>>(std::istream &in,Sequence_double &strflt){
 std::ostream&
 operator<<(std::ostream & os, const Sequence_double &strflt){
     strflt.s.printShort(os);
-    if ( strflt.dbl != -1 ) os  << ":"<< strflt.dbl;
+    if ( strflt.dbl != -1 ) os  << newickDelimiters.sequence_double_left.c_str()
+         <<  strflt.dbl << newickDelimiters.sequence_double_right.c_str();
     return os;
 }
 
