@@ -38,15 +38,19 @@ XmlOutputStream::print( tree2int_map & tree2count, bool noCounts, std::string & 
 
   tree2int_map::iterator iter = tree2count.begin();
   for( ; iter!=tree2count.end() ; ++iter){
-    *fp  << "    <tree>" <<  std::endl
-<< "     <count>"  << (*iter).second 
-        << "</count>"  <<  std::endl 
-        << "     <newick-xml>" << (*iter).first
-	 << "</newick-xml>" << std::endl
-         << "     <newick>";
 
     ostringstream oss;
     oss <<  (*iter).first;
+
+    *fp  << "    <tree>" <<  std::endl
+<< "     <count>"  << (*iter).second 
+        << "</count>"  <<  std::endl 
+	 << "     <newick-xml>";
+
+    printNewick( fp , oss.str(), true );
+  *fp 	 << "</newick-xml>" << std::endl
+         << "     <newick>";
+
     printNewick( fp , oss.str(), false );
     *fp   << ";</newick>"  << std::endl
     << "    </tree>"  << std::endl;
@@ -58,8 +62,8 @@ void XmlOutputStream::printNewick(std::ostream * fp , std::string s, bool printX
   xmlDocPtr doc;
   xmlNode *root = NULL;
 
-  std:string newickxml = "<newick-xml>" + s + "</newick-xml>"; 
-  doc = xmlReadMemory(newickxml.c_str(), newickxml.size(), "", NULL, 0);
+  std:string rootstr = "<root>" + s + "</root>"; 
+  doc = xmlReadMemory(rootstr.c_str(), rootstr.size(), "", NULL, 0);
   if (doc == NULL) {
     std::cerr << "internal parse error" << std::endl; 
     return;
@@ -75,34 +79,60 @@ void XmlOutputStream::printNewickNode(std::ostream * fp , xmlNode * node, bool p
   xmlNode *n = NULL;
  
    bool firsttime = true;
-   bool foundleaf = true;
 
    for (n = node; n; n = n->next) {
      if (n->type == XML_ELEMENT_NODE  ) {
        //       *fp << "n->name=" << (char * ) n->name << std::endl;
-       if ( xmlStrEqual (n->name, (const xmlChar *)"branch") ||  xmlStrEqual (n->name, (const xmlChar *)"leaf") ) {
+       if (  printXml == false && ( xmlStrEqual (n->name, (const xmlChar *)"branch") ||  xmlStrEqual (n->name, (const xmlChar *)"leaf")) ) {
          if ( firsttime == true ) {
-	   firsttime = false;
+            firsttime = false;
          } else {
-  	   *fp << ",";
+	     *fp << ",";
          }
        }
-       if ( xmlStrEqual (n->name, (const xmlChar *)"length" ) ) {
+       if (  printXml == true && xmlStrEqual (n->name, (const xmlChar *)"branch")  ) {
+	   *fp << "<branch";
+             if ( n->next && n->next->type == XML_ELEMENT_NODE && xmlStrEqual (n->next->name, (const xmlChar *)"length")  ) {
+	       *fp << " length=\"";
+	       xmlChar * leng = xmlNodeGetContent(n->next);
+	       *fp <<  leng << "\"" ;
+	       xmlFree(leng);
+	     }
+   	     *fp << ">";
+	     printNewickNode( fp, n->children, printXml );
+	   *fp << "</branch>";
+       }
+       if (  printXml == true && xmlStrEqual (n->name, (const xmlChar *)"leaf")  ) {
+	   *fp << "<leaf";
+	   if (  n->children && n->children->next && n->children->next->type == XML_ELEMENT_NODE &&
+  xmlStrEqual (n->children->next->name, (const xmlChar *)"length")   ) {
+	       *fp << " length=\"";
+	       xmlChar * leng = xmlNodeGetContent(n->children->next);
+	       *fp <<  leng << "\"" ;
+	       xmlFree(leng);
+	     }
+   	     *fp << ">";
+	   if (  n->children && n->children->type == XML_TEXT_NODE  ) {
+	     xmlChar * text = xmlNodeGetContent(n->children);
+	     *fp <<  text  ;
+	     xmlFree(text);
+	   }
+	   *fp << "</leaf>";
+      }
+      if ( printXml == false && xmlStrEqual (n->name, (const xmlChar *)"length" ) ) {
            xmlChar * len = xmlNodeGetContent(n);
 	   *fp <<  ":" << len ;
            xmlFree(len);
        }
-       if ( xmlStrEqual (n->name, (const xmlChar *)"branch" ) ) {
-         foundleaf = false;    
+       if ( printXml == false && xmlStrEqual (n->name, (const xmlChar *)"branch" ) ) {
          *fp << "("; 
 	 printNewickNode( fp, n->children, printXml );
          *fp << ")"; 
        } 
-       if ( xmlStrEqual (n->name, (const xmlChar *)"newick-xml" ) ) {
-         foundleaf = false;
+       if ( xmlStrEqual (n->name, (const xmlChar *)"root" ) ) {
 	 printNewickNode( fp, n->children, printXml );
        } 
-       if ( xmlStrEqual (n->name, (const xmlChar *)"leaf" ) && n->children != NULL ) {
+       if ( printXml == false && xmlStrEqual (n->name, (const xmlChar *)"leaf" ) && n->children != NULL ) {
          xmlChar * species = xmlNodeGetContent(n->children);
        	 *fp << species;
          xmlFree(species);

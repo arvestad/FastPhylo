@@ -296,6 +296,8 @@ Install the project...
 -- Installing /tmp/install/bin/fastdist
 -- Install configuration: ""
 ]]></programlisting>
+
+If you want to build the html documentation ( i.e. this page ) you need to pass the -DBUILD_DOCBOOK=ON option to <application>cmake</application>.
       </para>
     </sect3>
   </sect2>
