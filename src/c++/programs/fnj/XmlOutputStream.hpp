@@ -14,12 +14,6 @@ public:
   virtual ~XmlOutputStream();
 protected:
   virtual void print( tree2int_map & tree2count, bool noCounts, std::string & runId, std::vector<std::string> & names, Extrainfos & extrainfos );
-
- /** printNewick unparses the xml string created before. Of course it would better if the SequenceTree would produce both a newick string
-     and some xml representation of newick. 
-**/
-  virtual void printNewick(std::ostream * fp , std::string s, bool printXml );
-  virtual void printNewickNode(std::ostream * fp , xmlNode * node,  bool printXml);
 };
 
 #endif // XMLOUTPUTSTREAM_HPP

@@ -58,7 +58,7 @@ sequence_likelihood/string_compare.cpp
 DistanceMatrix.cpp
 arg_utils.c
 std_c_utils.c
-Newick.cpp
+xml_output_global.cpp
 )
 
 SET(FASTPHYLO_SPECIAL_SRCS DNA_b128/sse2_wrapper.c 
