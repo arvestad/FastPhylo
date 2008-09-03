@@ -20,15 +20,12 @@
 #include <assert.h>
 #include "log_utils.hpp"
 #include <algorithm>
-#include "Newick.hpp"
+#include "xml_output_global.hpp"
 
 #define TREE_ASSERT(stmnt) if(true){stmnt;}
 
 //-------------------------------------------------------
 // CONSTRUCTORS
-
-
-
 
 
 TREE_TEMPLATE TREE::Tree(char *newickstr){
@@ -198,10 +195,19 @@ TREE::initSubtreeFromStream(std::istream &in){
 // PRINTING AND DRAWING
 TREE_TEMPLATE std::ostream&
 TREE::printOn(std::ostream &os) const{
-  if(root==NULL)
-    return os <<  newickDelimiters.null_tree.c_str();
+
+  if(xmlPrint) {
+    if(root != NULL)
+         os << root;      
+  } else
+    {
+      if(root==NULL)
+	return os << "NULLTREE";
+
+      return os << root <<";";
+    }
  
-  return os << root <<  newickDelimiters.semi_colon.c_str();
+
 }
 
 
@@ -965,27 +971,70 @@ TREENODE::getDegree() const{
 TREE_TEMPLATE std::ostream &
 TREENODE::printOn(std::ostream &os) const{
 
+
   if ( isLeaf() ){
+    if(xmlPrint) {
+      os << "<leaf";
+    }
     std::ostringstream outstr;
     ownertree->dataPrintOn(outstr, data);
     std::string str = outstr.str();
     if ( str.size() == 0 )
       str = std::string("n") + nodeId;
-    std::string str2 = newickDelimiters.left_leaf +  str  + newickDelimiters.right_leaf;
-    return os << str2;
+    if(xmlPrint) {
+      return os << str << "</leaf>";
+    } else
+    {
+    return os << str;
+    }
+
   }
   else{
     //PENDING SLOW
-    os << newickDelimiters.left_parenthesis.c_str();
+
     const TREENODE *child = rightMostChild;
-    os << child;
+
+
+
+    if(xmlPrint) {
+      os << "<branch" ;
+       ownertree->dataPrintOn(os, data); 
+       os << child;
+
+
+
+    } 
+    else   {
+      os <<"(";
+      os << child;
+    }
+
+
+
     child = child->leftSibling;
     
     for ( ; child != NULL ; child = child->leftSibling )
-      os <<  newickDelimiters.comma.c_str()  << child;
+      {
+	if(xmlPrint) {
+	  os <<  child;
+	} else
+	  {
+	    os << "," << child;
+	  }
 
-    os <<  newickDelimiters.right_parenthesis.c_str();
-    ownertree->dataPrintOn(os, data);
+      }
+
+	if(xmlPrint) {
+          os << "</branch>";
+	} 
+	else {
+          os << ")";
+	}
+        
+
+	  if(!xmlPrint) {  ownertree->dataPrintOn(os, data); }
+
+        
     return os;
   }
   
