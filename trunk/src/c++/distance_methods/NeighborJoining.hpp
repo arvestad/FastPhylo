@@ -305,6 +305,13 @@ computeBioNJTree( DistanceMatrix< TreeNode_type *, double,
   }
   // END ITERATION
   //--------------
+
+  EDGE(dm.getIdentifier(0)) = dm.getDistance(0,1) + dm.getDistance(0,2)
+    - 2 * dm.getDistance(1,2);
+  EDGE(dm.getIdentifier(1)) = dm.getDistance(0,1) + dm.getDistance(1,2)
+    - 2 * dm.getDistance(0,2);
+  EDGE(dm.getIdentifier(2)) = dm.getDistance(0,2) + dm.getDistance(1,2)
+    - 2 * dm.getDistance(0,1);
 }
 
 
