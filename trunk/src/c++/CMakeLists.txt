@@ -5,9 +5,17 @@ IF(NOT CMAKE_COMPILER_IS_GNUCXX)
       MESSAGE(SEND_ERROR "Could not find gcc")
 ENDIF(NOT CMAKE_COMPILER_IS_GNUCXX)
 
+
+IF(WITH_LIBXML)
+  FIND_PACKAGE(LibXml2)
+ENDIF(WITH_LIBXML)
+
 PROJECT(fastphylo)
-FIND_PACKAGE(LibXml2)
+
 FIND_PROGRAM(GENGETOPT gengetopt)
+
+
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 
 INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
@@ -61,6 +69,10 @@ std_c_utils.c
 xml_output_global.cpp
 )
 
+
+
+
+
 SET(FASTPHYLO_SPECIAL_SRCS DNA_b128/sse2_wrapper.c 
                           DNA_b128/computeTAMURANEIDistance_DNA_b128_String.cpp 
                           DNA_b128/computeDistance_DNA_b128_String.cpp) 
@@ -73,40 +85,48 @@ SET(COMMON_FLAGS  "-march=pentium4 -msse2 -falign-functions -falign-jumps -falig
 SET(FASTDIST_SRCS programs/fastdist/main.cpp
 programs/fastdist/PhylipMaInputStream.cpp
 programs/fastdist/FastaInputStream.cpp
-programs/fastdist/XmlInputStream.cpp
 programs/fastdist/DataOutputStream.cpp
 programs/fastdist/XmlOutputStream.cpp
 ${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.c 
 )
 
+
+
+IF(WITH_LIBXML)
+SET(FASTDIST_XML_SRCS programs/fastdist/XmlInputStream.cpp )
+ENDIF(WITH_LIBXML)
+
+
 SET(FNJ_SRCS programs/fnj/main.cpp
 programs/fnj/DataInputStream.cpp
-programs/fnj/XmlInputStream.cpp
 programs/fnj/DataOutputStream.cpp
 programs/fnj/XmlOutputStream.cpp
 ${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.c 
 )
+
+IF(WITH_LIBXML)
+SET(FNJ_XML_SRCS programs/fnj/XmlInputStream.cpp
+)
+ENDIF(WITH_LIBXML)
 
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.c  PROPERTIES GENERATED true)
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.h  PROPERTIES GENERATED true)
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.c  PROPERTIES GENERATED true)
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.h  PROPERTIES GENERATED true)
 
-
-
 FOREACH(i ${FASTPHYLO_SPECIAL_SRCS})
   SET_SOURCE_FILES_PROPERTIES(${i} PROPERTIES COMPILE_FLAGS "${COMMON_FLAGS} -DNDEBUG  -fforce-addr  -fno-branch-count-reg  -fomit-frame-pointer ")
 ENDFOREACH(i)
 
-FOREACH(i ${FASTPHYLO_SRCS} ${FASTDIST_SRCS} ${FNJ_SRCS} )
+FOREACH(i ${FASTPHYLO_SRCS} ${FASTDIST_SRCS} ${FNJ_SRCS}  ${FASTDIST_XML_SRCS} ${FNJ_XML_SRCS} )
   SET_SOURCE_FILES_PROPERTIES(${i} PROPERTIES COMPILE_FLAGS "${COMMON_FLAGS}  -fcaller-saves  -ffast-math  -fno-default-inline  -fprefetch-loop-arrays  -fsched-interblock  -fsched-spec  -fschedule-insns  -fschedule-insns2  -ftracer  -funroll-loops  ")
 ENDFOREACH(i)
 
-ADD_EXECUTABLE(fastdist ${FASTDIST_SRCS} ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS})
+ADD_EXECUTABLE(fastdist ${FASTDIST_SRCS}  ${FASTDIST_XML_SRCS} ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS})
 #TARGET_LINK_LIBRARIES(fastdist m xml2)
 TARGET_LINK_LIBRARIES(fastdist m  ${LIBXML2_LIBRARIES} )
 
-ADD_EXECUTABLE(fnj ${FNJ_SRCS} ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS}  ) 
+ADD_EXECUTABLE(fnj ${FNJ_SRCS} ${FNJ_XML_SRCS} ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS}  ) 
 #TARGET_LINK_LIBRARIES(fnj m xml2)
 TARGET_LINK_LIBRARIES(fnj m  ${LIBXML2_LIBRARIES} )
 

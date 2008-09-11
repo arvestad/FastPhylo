@@ -12,6 +12,7 @@ add_subdirectory(src/c++)
 add_subdirectory(src/docbook)
 
 OPTION(BUILD_DOCBOOK "build Docbook html documentation" OFF )
+OPTION(WITH_LIBXML "build xml functionality. This adds a dependeny for libxml" ON )
 
 # after running cmake, we can generate source tarballs ( in tar.gz and zip ) by running
 # make package_source

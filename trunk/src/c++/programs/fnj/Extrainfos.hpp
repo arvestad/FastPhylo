@@ -3,7 +3,7 @@
 
 
 #include <vector>
-#include <libxml/tree.h>
+
 
 
 typedef std::vector< std::string > Extrainfos;

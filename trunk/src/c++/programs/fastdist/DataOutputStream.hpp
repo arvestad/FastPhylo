@@ -7,7 +7,7 @@
 #include "Exception.hpp"
 #include "DistanceMatrix.hpp"
 #include "Extrainfos.hpp"
-#include <libxml/tree.h>
+
 
 class DataOutputStream
 {

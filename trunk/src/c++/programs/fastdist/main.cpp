@@ -15,18 +15,23 @@
 #include <fstream>
 #include <assert.h>
 
+#include "config.h"
 #include "file_utils.hpp"
 #include <iomanip>
 #include "log_utils.hpp"
 #include "fastdist_gengetopt.h"
 #include "NeighborJoining.hpp"
 #include "DataInputStream.hpp"
-#include "XmlInputStream.hpp"
 #include "PhylipMaInputStream.hpp"
 #include "FastaInputStream.hpp"
 #include "DataOutputStream.hpp"
-#include "XmlOutputStream.hpp"
 #include "Extrainfos.hpp"
+#include "fileFormatSchema.hpp"
+#include "XmlOutputStream.hpp"
+
+#ifdef WITH_LIBXML
+#include "XmlInputStream.hpp"
+#endif // WITH_LIBXML
 
 using namespace std;
 
@@ -38,6 +43,13 @@ main(int argc,
 
   sequence_translation_model trans_model;
   gengetopt_args_info args_info;
+
+
+#ifndef WITH_LIBXML
+  if ( args_info.input_format_arg == input_format_arg_xml ) {
+     cerr << "The software was built with WITH_LIBXML=OFF. Please rebuild it if you want XML functionality." << endl; exit(EXIT_FAILURE);
+  }
+#endif // WITH_LIBXML
 
   if (cmdline_parser (argc, argv, &args_info) != 0)
     exit(EXIT_FAILURE);
@@ -123,7 +135,9 @@ main(int argc,
     {
     case input_format_arg_fasta: istream = new FastaInputStream(inputfilename);  break;
     case input_format_arg_phylip_multialignment: istream = new PhylipMaInputStream(inputfilename);  break;
+#ifdef WITH_LIBXML
     case input_format_arg_xml: istream = new XmlInputStream(inputfilename); break;
+#endif // WITH_LIBXML
    default: exit(EXIT_FAILURE);
 }
 
