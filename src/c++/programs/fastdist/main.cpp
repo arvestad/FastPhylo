@@ -39,10 +39,11 @@ int
 main(int argc,
      char **argv){
 
+  gengetopt_args_info args_info;
   TRY_EXCEPTION();
 
   sequence_translation_model trans_model;
-  gengetopt_args_info args_info;
+
 
 
 #ifndef WITH_LIBXML
@@ -221,6 +222,7 @@ main(int argc,
   }
 
   CATCH_EXCEPTION();
+  cmdline_parser_free(&args_info);
   return 0;
 }
 

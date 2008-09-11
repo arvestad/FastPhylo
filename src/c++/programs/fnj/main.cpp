@@ -46,8 +46,8 @@ int
 main(int argc,
      char **argv){
 
-  TRY_EXCEPTION();
   gengetopt_args_info args_info;
+  TRY_EXCEPTION();
 
   if (cmdline_parser (argc, argv, &args_info) != 0)
     exit(EXIT_FAILURE);
@@ -163,6 +163,7 @@ main(int argc,
   }
 
   CATCH_EXCEPTION();
+  cmdline_parser_free(&args_info);
   return 0;
 }
 
