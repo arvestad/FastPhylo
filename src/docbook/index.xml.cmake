@@ -230,7 +230,7 @@ Slides from presentation at ICALP 2005
 
           <listitem>
             <para>
-              <ulink url="http://xmlsoft.org/">libxml2</ulink>
+              <ulink url="http://xmlsoft.org/">libxml2</ulink> ( You can remove this requirement by passing the option -DWITH_LIBXML=OFF to <application>cmake</application> )
 
             </para>
           </listitem>
@@ -297,7 +297,7 @@ Install the project...
 -- Install configuration: ""
 ]]></programlisting>
 
-If you want to build the html documentation ( i.e. this page ) you need to pass the -DBUILD_DOCBOOK=ON option to <application>cmake</application>.
+If you want to build the html documentation ( i.e. this page ) you need to pass the option -DBUILD_DOCBOOK=ON to <application>cmake</application>.
       </para>
     </sect3>
   </sect2>

@@ -3,18 +3,23 @@
 #include <fstream>
 #include <assert.h>
 
+#include "config.h"
 #include "file_utils.hpp"
 #include "NeighborJoining.hpp"
 
 #include "log_utils.hpp"
 #include "fnj_gengetopt.h"
-#include "NeighborJoining.hpp"
 
 #include "DataInputStream.hpp"
-#include "XmlInputStream.hpp"
 #include "DataOutputStream.hpp"
 #include "XmlOutputStream.hpp"
 #include "Extrainfos.hpp"
+#include "fileFormatSchema.hpp"
+
+#ifdef WITH_LIBXML
+#include "XmlInputStream.hpp"
+#endif // WITH_LIBXML
+
 
 using namespace std;
 
@@ -46,6 +51,12 @@ main(int argc,
 
   if (cmdline_parser (argc, argv, &args_info) != 0)
     exit(EXIT_FAILURE);
+
+#ifndef WITH_LIBXML
+  if ( args_info.input_format_arg == input_format_arg_xml ) {
+     cerr << "The software was built with WITH_LIBXML=OFF. Please rebuild it if you want XML functionality." << endl; exit(EXIT_FAILURE);
+  }
+#endif // WITH_LIBXML
 
   if ( args_info.print_relaxng_input_given && args_info.print_relaxng_output_given ) {
      cerr << "error: --print-relaxng-input and --print-relaxng-output can not be used at the same time" << endl; exit(EXIT_FAILURE);
@@ -92,7 +103,9 @@ main(int argc,
   switch ( args_info.input_format_arg )
     {
     case input_format_arg_phylip_dm: istream = new PhylipDmInputStream(inputfilename);  break;
+#ifdef WITH_LIBXML
     case input_format_arg_xml: istream = new XmlInputStream(inputfilename); break;
+#endif // WITH_LIBXML
     default: exit(EXIT_FAILURE);
 }
 

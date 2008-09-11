@@ -3,10 +3,7 @@
 #include <iostream>
 #include "log_utils.hpp"
 #include "DistanceMatrix.hpp"
-
-// writeXml
-#include <libxml/xmlreader.h>
-
+#include "config.h"
 
 
 bool
