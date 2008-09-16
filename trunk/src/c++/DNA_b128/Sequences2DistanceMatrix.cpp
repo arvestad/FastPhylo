@@ -421,7 +421,7 @@ fillMatrix_K2P(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 
   for ( size_t i = 0 ; i < numSequences ; i++ ){
     dm.setDistance(i,i,0);
-    int closestNeig = -1;
+    int closestNeig = i;
     float closestDist =  FLT_MAX;
     DNA_b128_String &si = seqs[i];
     

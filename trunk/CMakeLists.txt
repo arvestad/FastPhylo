@@ -8,11 +8,13 @@ SET(CPACK_PACKAGE_VERSION_MINOR "9")
 SET(CPACK_PACKAGE_VERSION_PATCH "0")
 set(PACKAGE_VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH})
 
-add_subdirectory(src/c++)
-add_subdirectory(src/docbook)
 
 OPTION(BUILD_DOCBOOK "build Docbook html documentation" OFF )
 OPTION(WITH_LIBXML "build xml functionality. This adds a dependeny for libxml" ON )
+
+
+add_subdirectory(src/c++)
+add_subdirectory(src/docbook)
 
 # after running cmake, we can generate source tarballs ( in tar.gz and zip ) by running
 # make package_source

@@ -15,7 +15,7 @@ PROJECT(fastphylo)
 FIND_PROGRAM(GENGETOPT gengetopt)
 
 
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 
 INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
@@ -32,7 +32,7 @@ INCLUDE_DIRECTORIES(${fastphylo_BINARY_DIR}/programs/fastdist/gengetopt)
 INCLUDE_DIRECTORIES(${fastphylo_SOURCE_DIR}/programs/fnj)
 INCLUDE_DIRECTORIES(${fastphylo_BINARY_DIR}/programs/fnj/gengetopt)
 INCLUDE_DIRECTORIES(${fastphylo_SOURCE_DIR}/sequence_likelihood)
-INCLUDE_DIRECTORIES(${fastphylo_SOURCE_DIR}/aml)
+#INCLUDE_DIRECTORIES(${fastphylo_SOURCE_DIR}/aml)
 
 
 ADD_SUBDIRECTORY(programs/fnj/gengetopt)
@@ -51,11 +51,11 @@ file_utils.cpp
 stl_utils.cpp
 DNA_b128/DNA_b128_String.cpp
 DNA_b128/Sequences2DistanceMatrix.cpp
-aml/AML_LeafLifting.cpp
-aml/AML_given_edge_probabilities.cpp
-aml/AML_local_improve.cpp
-aml/AML_star.cpp
-aml/Big_AML.cpp
+#aml/AML_LeafLifting.cpp
+#aml/AML_given_edge_probabilities.cpp
+#aml/AML_local_improve.cpp
+#aml/AML_star.cpp
+#aml/Big_AML.cpp
 distance_methods/LeastSquaresFit.cpp
 distance_methods/NeighborJoining.cpp
 sequence_likelihood/Kimura2parameter.cpp
@@ -80,7 +80,17 @@ SET(FASTPHYLO_SPECIAL_SRCS DNA_b128/sse2_wrapper.c
 # Erik Sjolund removed -fforce-mem from COMMON_FLAGS because of the g++ warning
 # cc1plus: warning: -f[no-]force-mem is nop and option will be removed in 4.2
 
-SET(COMMON_FLAGS  "-march=pentium4 -msse2 -falign-functions -falign-jumps -falign-labels -falign-loops -fcse-follow-jumps -fcse-skip-blocks -fdelete-null-pointer-checks -fexpensive-optimizations -fgcse -fgcse-lm -fgcse-sm -finline-functions -foptimize-sibling-calls -fpeephole2 -fregmove -frename-registers -freorder-blocks -freorder-functions -frerun-cse-after-loop -frerun-loop-opt -fstrength-reduce -fstrict-aliasing -O1" )
+
+IF(MINGW AND WITH_LIBXML)
+ set( LIBXML_EXTRA_COMPILE_FLAGS " -DLIBXML_STATIC " )
+ENDIF(MINGW AND WITH_LIBXML)
+
+
+
+# without -O1
+SET(COMMON_FLAGS  "-march=pentium4 -msse2 -falign-functions -falign-jumps -falign-labels -falign-loops -fcse-follow-jumps -fcse-skip-blocks -fdelete-null-pointer-checks -fexpensive-optimizations -fgcse -fgcse-lm -fgcse-sm -finline-functions -foptimize-sibling-calls -fpeephole2 -fregmove -frename-registers -freorder-blocks -freorder-functions -frerun-cse-after-loop -frerun-loop-opt -fstrength-reduce -fstrict-aliasing ${LIBXML_EXTRA_COMPILE_FLAGS} " )
+
+
 
 SET(FASTDIST_SRCS programs/fastdist/main.cpp
 programs/fastdist/PhylipMaInputStream.cpp
@@ -118,17 +128,26 @@ FOREACH(i ${FASTPHYLO_SPECIAL_SRCS})
   SET_SOURCE_FILES_PROPERTIES(${i} PROPERTIES COMPILE_FLAGS "${COMMON_FLAGS} -DNDEBUG  -fforce-addr  -fno-branch-count-reg  -fomit-frame-pointer ")
 ENDFOREACH(i)
 
+
+
 FOREACH(i ${FASTPHYLO_SRCS} ${FASTDIST_SRCS} ${FNJ_SRCS}  ${FASTDIST_XML_SRCS} ${FNJ_XML_SRCS} )
-  SET_SOURCE_FILES_PROPERTIES(${i} PROPERTIES COMPILE_FLAGS "${COMMON_FLAGS}  -fcaller-saves  -ffast-math  -fno-default-inline  -fprefetch-loop-arrays  -fsched-interblock  -fsched-spec  -fschedule-insns  -fschedule-insns2  -ftracer  -funroll-loops  ")
+  SET_SOURCE_FILES_PROPERTIES(${i} PROPERTIES COMPILE_FLAGS "${COMMON_FLAGS}  -fcaller-saves  -ffast-math  -fno-default-inline  -fprefetch-loop-arrays  -fsched-interblock  -fsched-spec  -fschedule-insns  -fschedule-insns2  -ftracer  -funroll-loops ")
 ENDFOREACH(i)
 
 ADD_EXECUTABLE(fastdist ${FASTDIST_SRCS}  ${FASTDIST_XML_SRCS} ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS})
-#TARGET_LINK_LIBRARIES(fastdist m xml2)
 TARGET_LINK_LIBRARIES(fastdist m  ${LIBXML2_LIBRARIES} )
 
+IF(MINGW)
+ set_property(TARGET fastdist PROPERTY LINK_SEARCH_END_STATIC ON )
+ENDIF(MINGW)
+
+
 ADD_EXECUTABLE(fnj ${FNJ_SRCS} ${FNJ_XML_SRCS} ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS}  ) 
-#TARGET_LINK_LIBRARIES(fnj m xml2)
 TARGET_LINK_LIBRARIES(fnj m  ${LIBXML2_LIBRARIES} )
+
+IF(MINGW)
+ set_property(TARGET fnj PROPERTY LINK_SEARCH_END_STATIC ON )
+ENDIF(MINGW)
 
 
 ADD_DEPENDENCIES(fnj fnj_gengetopt_target)
