@@ -211,9 +211,7 @@ Slides from presentation at ICALP 2005
     <para>      
        Download the software from the <ulink url="http://sourceforge.net/projects/fastphylo">sourceforge</ulink> project page. 
 
-( The software is currently in the subversion repository )
-
-<!-- The latest version of fastphylo is @PACKAGE_VERSION@. -->
+ The latest version of fastphylo is @PACKAGE_VERSION@. 
     </para>
   </sect2>
   <sect2 id="installation">
