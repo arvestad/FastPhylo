@@ -1,12 +1,19 @@
 
+
 IF(MINGW)
  SET(LIBXML2_INCLUDE_DIR  "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/install/include/libxml2" )
  SET(LIBXML2_LIBRARIES  "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/install/lib/libxml2.a" )
- SET(GENGETOPT "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/install/bin/gengetopt.exe"  )
-ELSEIF(MINGW)
+ SET(GENGETOPTDEP "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/install/bin/gengetopt.exe"  )
+ SET(GENGETOPT "${GENGETOPTDEP}" )
+ELSE(MINGW)
  FIND_PROGRAM(GENGETOPT gengetopt)
+#  string(STRIP "${GENGETOPT}" GENGETOPT) 
+
 ENDIF(MINGW)
 
+
+#message(  FATAL_ERROR  "OU ${GENGETOPT} aa ${CMAKE_CURRENT_BINARY_DIR} bb" )
+#message(  FATAL_ERROR  "OU ${GENGETOPT} aa" )
 SET(GENGETOPT_VERSION 2.22 )
 SET(LIBXML2_VERSION 2.7.2 )
 SET(ZLIB_VERSION 1.2.3 )
@@ -30,14 +37,13 @@ file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt )
 
 
 
-
   ADD_CUSTOM_COMMAND( OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/download/gengetopt-${GENGETOPT_VERSION}.tar.gz" COMMAND  wget --directory-prefix=win32-static-libs/download "ftp://ftp.gnu.org/gnu/gengetopt/gengetopt-${GENGETOPT_VERSION}.tar.gz" )
 
   ADD_CUSTOM_COMMAND( OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/download/libxml2-${LIBXML2_VERSION}.tar.gz" COMMAND  wget --directory-prefix=win32-static-libs/download  "ftp://xmlsoft.org/libxml2/libxml2-${LIBXML2_VERSION}.tar.gz" )
 
   ADD_CUSTOM_COMMAND( OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/download/zlib-${ZLIB_VERSION}.tar.gz" COMMAND  wget --directory-prefix=win32-static-libs/download  "http://www.gzip.org/zlib/zlib-${ZLIB_VERSION}.tar.gz" )
 
-  ADD_CUSTOM_COMMAND( OUTPUT "${GENGETOPT}" COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/build_gengetopt.sh" ${GENGETOPT_VERSION} "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/install"  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/download/gengetopt-${GENGETOPT_VERSION}.tar.gz" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/build" )
+  ADD_CUSTOM_COMMAND( OUTPUT "${GENGETOPTDEP}" COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/build_gengetopt.sh" ${GENGETOPT_VERSION} "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/install"  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/download/gengetopt-${GENGETOPT_VERSION}.tar.gz" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/build" )
 
   ADD_CUSTOM_COMMAND( OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/install/lib/libxml2.a" "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/install/include/libxml2/libxml/xmlreader.h" COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/build_libxml2.sh" ${LIBXML2_VERSION} "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/install"  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/download/libxml2-${LIBXML2_VERSION}.tar.gz" "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/install/lib/libz.a"  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/build" )
 
@@ -49,7 +55,7 @@ file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt )
 
 add_custom_command(OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.c   ${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.h
                      COMMAND ${GENGETOPT} -i  ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastdist/gengetopt/cmdline.ggo  --output-dir=${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt
-                     DEPENDS   ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastdist/gengetopt/cmdline.ggo  ${GENGETOPT}
+                     DEPENDS   ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastdist/gengetopt/cmdline.ggo  ${GENGETOPTDEP}
                      VERBATIM)
 
 
@@ -148,8 +154,13 @@ ${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.c
 )
 
 IF(WITH_LIBXML)
-SET(FASTDIST_XML_SRCS programs/fastdist/XmlInputStream.cpp   "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/install/include/libxml2/libxml/xmlreader.h" )
+ IF(MINGW)
+  SET(FASTDIST_XML_SRCS programs/fastdist/XmlInputStream.cpp  "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/install/include/libxml2/libxml/xmlreader.h" )
+ ELSE(MINGW)
+  SET(FASTDIST_XML_SRCS programs/fastdist/XmlInputStream.cpp )
+ ENDIF(MINGW)
 ENDIF(WITH_LIBXML)
+
 
 
 SET(FNJ_SRCS programs/fnj/main.cpp
@@ -160,7 +171,11 @@ ${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.c
 )
 
 IF(WITH_LIBXML)
-SET(FNJ_XML_SRCS programs/fnj/XmlInputStream.cpp  "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/install/include/libxml2/libxml/xmlreader.h" )
+ IF(MINGW)
+  SET(FNJ_XML_SRCS programs/fnj/XmlInputStream.cpp  "${CMAKE_CURRENT_BINARY_DIR}/win32-static-libs/install/include/libxml2/libxml/xmlreader.h" )
+ ELSE(MINGW)
+  SET(FNJ_XML_SRCS programs/fnj/XmlInputStream.cpp )
+ ENDIF(MINGW)
 ENDIF(WITH_LIBXML)
 
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.c  PROPERTIES GENERATED true)
