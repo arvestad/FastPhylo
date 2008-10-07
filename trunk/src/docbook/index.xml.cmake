@@ -397,7 +397,7 @@ The source code for gengetopt, libz and libxml will be automatically downloaded 
     <sect5 id="building_install_package_rpm">
       <title>Building an rpm</title>
 <para>
-On a CentOS or Fedora machine. First as root install the dependencies
+On a CentOS or Fedora machine, first log in as root and install the dependencies
 <programlisting><![CDATA[
 # yum install xmlto libxml2-devel cmake gcc-c++ binutils gengetopt
 ]]></programlisting>
@@ -421,7 +421,7 @@ $ cmake -DCMAKE_INSTALL_PREFIX=/ -DBUILD_DOCBOOK=ON /tmp/source && make package
     <sect5 id="building_install_package_deb">
       <title>Building a deb package</title>
 <para>
-On a Debian or Ubuntu machine  do as root
+On a Debian or Ubuntu machine, first log in as root and install the dependencies
 <programlisting><![CDATA[
 # apt-get install libxml2-dev cmake g++ binutils gengetopt
 ]]></programlisting>
