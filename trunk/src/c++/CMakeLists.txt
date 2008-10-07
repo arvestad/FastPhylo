@@ -142,7 +142,7 @@ IF(MINGW AND WITH_LIBXML)
  set( LIBXML_EXTRA_COMPILE_FLAGS " -DLIBXML_STATIC " )
 ENDIF(MINGW AND WITH_LIBXML)
 
-# without -O1
+
 SET(COMMON_FLAGS  "-march=pentium4 -msse2 -falign-functions -falign-jumps -falign-labels -falign-loops -fcse-follow-jumps -fcse-skip-blocks -fdelete-null-pointer-checks -fexpensive-optimizations -fgcse -fgcse-lm -fgcse-sm -finline-functions -foptimize-sibling-calls -fpeephole2 -fregmove -frename-registers -freorder-blocks -freorder-functions -frerun-cse-after-loop -frerun-loop-opt -fstrength-reduce -fstrict-aliasing ${LIBXML_EXTRA_COMPILE_FLAGS} -O1" )
 
 SET(FASTDIST_SRCS programs/fastdist/main.cpp

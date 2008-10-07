@@ -81,7 +81,7 @@ main(int argc,
     default: cerr << "error: method chosen not available" << endl; exit(EXIT_FAILURE);
     }
 
-  bool noCounts = args_info.no_counts_flag;
+  bool printCounts = args_info.print_counts_flag;
 
   try {
 
@@ -149,7 +149,7 @@ main(int argc,
 	  buildTrees(dm, tree2count, methods,name2id);
         }
         if ( status == END_OF_RUN || i == args_info.dm_per_run_arg ) {
-	  ostream->print(tree2count,noCounts, runId, names, extrainfos);
+	  ostream->print(tree2count,printCounts, runId, names, extrainfos);
 	}
 
       }//end run loop

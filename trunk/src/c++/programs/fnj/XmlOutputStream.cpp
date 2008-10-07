@@ -15,7 +15,7 @@ XmlOutputStream::~XmlOutputStream()
 };
 
 void
-XmlOutputStream::print( tree2int_map & tree2count, bool noCounts, std::string & runId, std::vector<std::string> & names, Extrainfos & extrainfos ) 
+XmlOutputStream::print( tree2int_map & tree2count, bool printCounts, std::string & runId, std::vector<std::string> & names, Extrainfos & extrainfos ) 
 {
   Extrainfos::iterator it;
   std::vector<std::string>::iterator it2;

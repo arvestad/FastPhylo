@@ -13,7 +13,7 @@ public:
   XmlOutputStream(char * filename );
   virtual ~XmlOutputStream();
 protected:
-  virtual void print( tree2int_map & tree2count, bool noCounts, std::string & runId, std::vector<std::string> & names, Extrainfos & extrainfos );
+  virtual void print( tree2int_map & tree2count, bool printCounts, std::string & runId, std::vector<std::string> & names, Extrainfos & extrainfos );
 };
 
 #endif // XMLOUTPUTSTREAM_HPP
