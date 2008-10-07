@@ -1,5 +1,5 @@
 !include "MUI2.nsh"
-Name "fastphylo"
+Name "fastphylo-${PACKAGE_VERSION}"
 outfile "${CMAKE_CURRENT_BINARY_DIR}/fastphylo-${PACKAGE_VERSION}-win32.exe"
 installDir $PROGRAMFILES\fastphylo
 
@@ -21,14 +21,6 @@ Section "Dummy Section" SecDummy
   file fnj.exe
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
-
-  ;Language strings
-;  LangString DESC_SecDummy ${LANG_ENGLISH} "en minitestsektion."
-
-  ;Assign language strings to sections
-;  !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-;    !insertmacro MUI_DESCRIPTION_TEXT ${SecDummy} $(DESC_SecDummy)
-;  !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 Section "Uninstall"
   Delete "$INSTDIR\Uninstall.exe"

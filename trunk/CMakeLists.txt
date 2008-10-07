@@ -20,7 +20,7 @@ add_subdirectory(src/docbook)
 # make package_source
 #
 
-SET(CPACK_GENERATOR RPM;DEB)
+#SET(CPACK_GENERATOR RPM;DEB)
 SET(CPACK_SOURCE_GENERATOR TGZ;ZIP)
 # SET(CPACK_RPM_PACKAGE_ARCHITECTURE "i386")
 SET(CPACK_PACKAGE_CONTACT "erik.sjolund@gmail.com") 

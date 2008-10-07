@@ -218,25 +218,65 @@ Slides from presentation at ICALP 2005
   </sect2>
   <sect2 id="installation">
     <title>Installation</title>
+
+    <sect3 id="installation_with_prebuilt_package">
+      <title>Installation with prebuilt package</title>
+
+    <sect4 id="installation_on_windows">
+      <title>Installation on Windows with .exe file</title>
+<para>
+To install fastphylo on Windows, first download the fastphylo-@PACKAGE_VERSION@-win32.exe and then execute the file ( click on it ). 
+    </para>
+  </sect4>
+
+
+    <sect4 id="installation_on_ubuntu_and_debian">
+      <title>Installation on Ubuntu and Debian</title>
+
+<para>
+To install fastphylo on Ubuntu or Debian, first download the fastphylo-@PACKAGE_VERSION@.deb  and then log in as root and  
+<programlisting><![CDATA[
+# dpkg -i fastphylo-@PACKAGE_VERSION@.deb 
+]]></programlisting>
+
+    </para>
+  </sect4>
+
+
+    <sect4 id="installation_on_centos_and_fedora_linux">
+      <title>Installation on CentOS and Fedora</title>
+
+<para>
+To install fastphylo on Centos or Debian, first download the fastphylo-@PACKAGE_VERSION@.Linux.rpm   and then log in as root and  
+<programlisting><![CDATA[
+# yum localinstall fastphylo-@PACKAGE_VERSION@.Linux.rpm 
+]]></programlisting>
+
+    </para>
+  </sect4> 
+ </sect3>
+
+
+
+
     <sect3 id="building_from_source">
       <title>Building from source</title>
-      <para>To build fastphylo you need to have this installed
+
+    <sect4 id="building_from_source_on_unix">
+      <title>Building from source on Unix</title>
+
+      <para>To build fastphylo on Unix ( e.g. Linux, MacOSX, CygWin ) you need to have this installed
         <itemizedlist mark="bullet">
           <listitem>
             <para>
               <ulink url="http://www.cmake.org">cmake</ulink>
             </para>
           </listitem>
-
           <listitem>
             <para>
-              <ulink url="http://xmlsoft.org/">libxml2</ulink> ( You can remove this requirement by passing the option -DWITH_LIBXML=OFF to <application>cmake</application> )
-
+              <ulink url="http://xmlsoft.org/">libxml2</ulink>
             </para>
           </listitem>
-
-
-
         </itemizedlist>
       </para>
       <para>
@@ -297,9 +337,125 @@ Install the project...
 -- Install configuration: ""
 ]]></programlisting>
 
-If you want to build the html documentation ( i.e. this page ) you need to pass the option -DBUILD_DOCBOOK=ON to <application>cmake</application>.
+If you want to build the html documentation ( i.e. this page ) you need to pass the -DBUILD_DOCBOOK=ON option to <application>cmake</application>.
       </para>
+    </sect4>
+
+
+    <sect4 id="building_install_packages">
+      <title>Building install packages</title>
+      <para>This is section is mainly intended for package maintainers</para>
+
+    <sect5 id="building_install_package_on_windows">
+      <title>Building install package on Windows</title>
+<para>
+To build the fastphylo nullsoft installer package you need to have this installed
+        <itemizedlist mark="bullet">
+          <listitem>
+            <para>
+              <ulink url="http://www.cmake.org">cmake</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <ulink url="http://www.mingw.org">mingw</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <ulink url="http://www.mingw.org/wiki/msys">msys</ulink>
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
+              <ulink url="http://gnuwin32.sourceforge.net/packages/wget.htm">wget</ulink>
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
+              <ulink url="http://nsis.sourceforge.net">Nullsoft Scriptable Install System</ulink>
+            </para>
+          </listitem>
+        </itemizedlist>
+      </para>
+      <para>
+
+Just open up a msys bash shell 
+<programlisting><![CDATA[
+$ mkdir tmpbuild
+$ cd tmpbuild
+$ cmake path/to/the/fastphylo/source/code && make win32installer
+]]></programlisting>
+
+The source code for gengetopt, libz and libxml will be automatically downloaded and built statically.
+      </para>
+    </sect5>
+
+
+    <sect5 id="building_install_package_rpm">
+      <title>Building an rpm</title>
+<para>
+On a CentOS or Fedora machine. First as root install the dependencies
+<programlisting><![CDATA[
+# yum install xmlto libxml2-devel cmake gcc-c++ binutils gengetopt
+]]></programlisting>
+
+Check that cmake is version 2.6 or later
+<programlisting><![CDATA[
+$ cmake --version
+cmake version 2.6-patch 0
+]]></programlisting>
+If it is older you could download a cmake binary directly from <ulink url="http://www.cmake.org">www.cmake.org</ulink>
+
+<programlisting><![CDATA[
+$ mkdir /tmp/build
+$ cd /tmp/build
+$ cmake -DCMAKE_INSTALL_PREFIX=/ -DBUILD_DOCBOOK=ON /tmp/source && make package
+]]></programlisting>
+
+      </para>
+    </sect5>
+
+    <sect5 id="building_install_package_deb">
+      <title>Building a deb package</title>
+<para>
+On a Debian or Ubuntu machine  do as root
+<programlisting><![CDATA[
+# apt-get install libxml2-dev cmake g++ binutils gengetopt
+]]></programlisting>
+
+Check that cmake is version 2.6 or later
+<programlisting><![CDATA[
+$ cmake --version
+cmake version 2.6-patch 0
+]]></programlisting>
+If it is older you could download a cmake binary directly from <ulink url="http://www.cmake.org">www.cmake.org</ulink>. As root do ( maybe you could avoid being root by using the package fakeroot )
+
+
+<programlisting><![CDATA[
+# mkdir /tmp/build
+# cd /tmp/build
+# cmake -DCMAKE_INSTALL_PREFIX=/ -DBUILD_DOCBOOK=ON /tmp/source && make package
+]]></programlisting>
+
+      </para>
+    </sect5>
+
+
+
+
+    </sect4>
+
+
+
     </sect3>
+
+
+
+
+
   </sect2>
 
 
