@@ -344,10 +344,11 @@ If you want to build the html documentation ( i.e. this page ) you need to pass 
       <title>Building install packages</title>
       <para>This is section is mainly intended for package maintainers</para>
 
-    <sect5 id="building_install_package_on_windows">
-      <title>Building install package on Windows</title>
+    <sect5 id="building_an_exe_file_for_windows">
+      <title>Building an .exe file for Windows</title>
 <para>
-To build the fastphylo nullsoft installer package you need to have this installed
+To build the fastphylo nullsoft installer package ( fastphylo-@PACKAGE_VERSION@-win32.exe ) 
+you need to have this installed
         <itemizedlist mark="bullet">
           <listitem>
             <para>
@@ -377,6 +378,7 @@ To build the fastphylo nullsoft installer package you need to have this installe
             </para>
           </listitem>
         </itemizedlist>
+on your Windows machine.
       </para>
       <para>
 
