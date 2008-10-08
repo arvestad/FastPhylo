@@ -386,7 +386,7 @@ Just open up a msys bash shell
 <programlisting><![CDATA[
 $ mkdir tmpbuild
 $ cd tmpbuild
-$ cmake path/to/the/fastphylo/source/code && make win32installer
+$ cmake path/to/the/fastphylo/source/code  -DSTATIC=ON && make win32installer
 ]]></programlisting>
 
 The source code for gengetopt, libz and libxml will be automatically downloaded and built statically.
@@ -438,6 +438,46 @@ If it is older you could download a cmake binary directly from <ulink url="http:
 # mkdir /tmp/build
 # cd /tmp/build
 # cmake -DCMAKE_INSTALL_PREFIX=/ -DBUILD_DOCBOOK=ON /tmp/source && make package
+]]></programlisting>
+
+      </para>
+    </sect5>
+
+
+    <sect5 id="building_install_package_for_macosx">
+      <title>Building install package for MacOS X</title>
+<para>
+To build the fastphylo install package for MacOS X
+you need to have this installed
+        <itemizedlist mark="bullet">
+          <listitem>
+            <para>
+              <ulink url="http://www.cmake.org">cmake</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <ulink url="http://www.gnu.org/software/wget/">wget</ulink>
+            </para>
+          </listitem>
+        </itemizedlist>
+on your MacOS X computer.
+      </para>
+
+
+      <para>
+
+Check that cmake is version 2.6 or later
+<programlisting><![CDATA[
+$ cmake --version
+cmake version 2.6-patch 0
+]]></programlisting>
+
+
+<programlisting><![CDATA[
+$ mkdir /tmp/build
+$ cd /tmp/build
+$ cmake -DSTATIC -DCPACK_GENERATOR="TGZ" /tmp/source && make package
 ]]></programlisting>
 
       </para>
