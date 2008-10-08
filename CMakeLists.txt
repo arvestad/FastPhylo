@@ -11,6 +11,7 @@ set(PACKAGE_VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR
 
 OPTION(BUILD_DOCBOOK "build Docbook html documentation" OFF )
 OPTION(WITH_LIBXML "build xml functionality. This adds a dependeny for libxml" ON )
+OPTION(STATIC "build a static binaries. This is mainly intended for the win32-package and the MACOSX-bundle. This is  will download gengetopt, lixml2, zlib and build them. The libxml2-library ( and therefore indirectly zlib ) will be statically linked in" OFF )
 
 
 add_subdirectory(src/c++)
@@ -21,6 +22,8 @@ add_subdirectory(src/docbook)
 #
 
 #SET(CPACK_GENERATOR RPM;DEB)
+
+
 SET(CPACK_SOURCE_GENERATOR TGZ;ZIP)
 # SET(CPACK_RPM_PACKAGE_ARCHITECTURE "i386")
 SET(CPACK_PACKAGE_CONTACT "erik.sjolund@gmail.com") 
