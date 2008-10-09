@@ -406,7 +406,7 @@ Just open up a msys bash shell
 <programlisting><![CDATA[
 $ mkdir tmpbuild
 $ cd tmpbuild
-$ cmake path/to/the/fastphylo/source/code  -DSTATIC=ON && make win32installer
+$ cmake path/to/the/fastphylo/source/code  -DSTATIC=ON -G "MSYS Makefiles" && make win32installer
 ]]></programlisting>
 
 The source code for gengetopt, libz and libxml will be automatically downloaded and built statically.
