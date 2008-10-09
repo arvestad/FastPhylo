@@ -451,13 +451,13 @@ Check that cmake is version 2.6 or later
 $ cmake --version
 cmake version 2.6-patch 0
 ]]></programlisting>
-If it is older you could download a cmake binary directly from <ulink url="http://www.cmake.org">www.cmake.org</ulink>. As root do ( maybe you could avoid being root by using the package fakeroot )
+If it is older you could download a cmake binary directly from <ulink url="http://www.cmake.org">www.cmake.org</ulink>. Now build the deb package.
 
 
 <programlisting><![CDATA[
-# mkdir /tmp/build
-# cd /tmp/build
-# cmake -DCMAKE_INSTALL_PREFIX=/ -DBUILD_DOCBOOK=ON /tmp/source && make package
+$ mkdir /tmp/build
+$ cd /tmp/build
+$ cmake -DCMAKE_INSTALL_PREFIX=/ -DBUILD_DOCBOOK=ON /tmp/source && make package
 ]]></programlisting>
 
       </para>
