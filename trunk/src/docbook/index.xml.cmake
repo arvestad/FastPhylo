@@ -261,9 +261,16 @@ To install fastphylo on Centos or Debian, first download the fastphylo-@PACKAGE_
       <title>Installation on Mac OS X</title>
 
 <para>
-To install fastphylo on a Mac OS X v10.5 ( Leopard ) on a Mac computer with Intel cpu, first download the fastphylo-@PACKAGE_VERSION@-Darwin.tar.gz   and then 
+To install fastphylo on a Mac OS X v10.5 ( Leopard ) on a Mac computer with Intel cpu, first download the fastphylo-@PACKAGE_VERSION@-MacOSX10.5.tar.gz   and then 
 <programlisting><![CDATA[
-$ tar xfz fastphylo-@PACKAGE_VERSION@-Darwin.tar.gz  
+$ tar xfz fastphylo-@PACKAGE_VERSION@-MacOSX10.5.tar.gz  
+]]></programlisting>
+
+    </para>
+<para>
+To install fastphylo on a Mac OS X v10.4 ( Tiger ) on a Mac computer with Intel cpu, first download the fastphylo-@PACKAGE_VERSION@-MacOSX10.4.tar.gz   and then 
+<programlisting><![CDATA[
+$ tar xfz fastphylo-@PACKAGE_VERSION@-MacOSX10.4.tar.gz
 ]]></programlisting>
 
     </para>
