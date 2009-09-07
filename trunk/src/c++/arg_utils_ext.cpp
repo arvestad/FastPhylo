@@ -10,7 +10,7 @@
 //--------------------------------------------------
 
 #include "arg_utils_ext.hpp"
-
+#include <cstdlib>
 
 bool
 get_boolean_option_value(int argc, char **argv, char *option_id){

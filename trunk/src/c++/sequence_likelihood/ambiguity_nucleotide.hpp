@@ -16,6 +16,8 @@
 #include "dna_pairwise_sequence_likelihood.hpp"
 #include <assert.h>
 #include <string>
+#include <cstdlib>
+
 #include <iostream>
 #include "log_utils.hpp"
 
