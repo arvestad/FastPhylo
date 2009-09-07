@@ -4,6 +4,8 @@
 
 
 #include <string>
+#include <cstring>
+
 #include <list>
 #include <ext/hash_map>
 #include <ext/hash_set>

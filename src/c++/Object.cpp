@@ -28,7 +28,7 @@ std::string Object::toString() const{
 }
 
 ostream& Object::printOn(ostream& os) const{
-  return os << "Object " << ((int) this)<<" ";
+  return os << "Object " << ((long) this)<<" ";
 }
 
 

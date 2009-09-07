@@ -11,6 +11,7 @@
 
 #include "file_utils.hpp"
 #include <string>
+#include <cstring>
 #include <iostream>
 #include <fstream>
 #include <iomanip>

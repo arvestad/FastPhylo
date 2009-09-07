@@ -17,7 +17,7 @@ ENDIF(STATIC)
 
 #message(  FATAL_ERROR  "OU ${GENGETOPT} aa ${CMAKE_CURRENT_BINARY_DIR} bb" )
 
-SET(GENGETOPT_VERSION 2.22 )
+SET(GENGETOPT_VERSION 2.22.2 )
 SET(LIBXML2_VERSION 2.7.2 )
 SET(ZLIB_VERSION 1.2.3 )
 
@@ -136,7 +136,7 @@ IF(STATIC AND WITH_LIBXML)
 ENDIF(STATIC AND WITH_LIBXML)
 
 
-SET(COMMON_FLAGS  "-march=pentium4 -msse2 -falign-functions -falign-jumps -falign-labels -falign-loops -fcse-follow-jumps -fcse-skip-blocks -fdelete-null-pointer-checks -fexpensive-optimizations -fgcse -fgcse-lm -fgcse-sm -finline-functions -foptimize-sibling-calls -fpeephole2 -fregmove -frename-registers -freorder-blocks -freorder-functions -frerun-cse-after-loop -frerun-loop-opt -fstrength-reduce -fstrict-aliasing ${LIBXML_EXTRA_COMPILE_FLAGS} -O1" )
+SET(COMMON_FLAGS  " -msse2 -falign-functions -falign-jumps -falign-labels -falign-loops -fcse-follow-jumps -fcse-skip-blocks -fdelete-null-pointer-checks -fexpensive-optimizations -fgcse -fgcse-lm -fgcse-sm -finline-functions -foptimize-sibling-calls -fpeephole2 -fregmove -frename-registers -freorder-blocks -freorder-functions -frerun-cse-after-loop -frerun-loop-opt -fstrength-reduce -fstrict-aliasing ${LIBXML_EXTRA_COMPILE_FLAGS} -O1" )
 
 SET(FASTDIST_SRCS programs/fastdist/main.cpp
 programs/fastdist/PhylipMaInputStream.cpp

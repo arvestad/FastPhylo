@@ -10,7 +10,10 @@
 //--------------------------------------------------
 
 #include "DNA_b128_String.hpp"
+
+#include <climits>
 #include <string>
+#include <cstring>
 #include <iostream>
 #include <sstream>
 #include "log_utils.hpp"
