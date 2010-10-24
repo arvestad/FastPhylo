@@ -33,7 +33,7 @@ Isaac Elias and Jens Lagergren published the algorithm in the journal <ulink url
 
  BibTex
 <programlisting>
-@Article{EliasLagergren_fastdist
+@Article{EliasLagergren_fastdist,
   author =      {Isaac Elias and Jens Lagergren},
   title =	{Fast Computation of Distance Estimators},
   journal =	{BMC Bioinformatics},
