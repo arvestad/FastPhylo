@@ -1,0 +1,51 @@
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <start>
+    <element name="root">
+      <element name="runs">
+        <zeroOrMore>
+          <element name="run">
+            <attribute name="id">
+              <text/>
+            </attribute>
+            <oneOrMore>
+              <element name="seq">
+                <attribute name="seq">
+                  <data type="string">
+                    <param name="pattern">[arndcqeghilkmfpstwyvARNDCQEGHILKMFPSTWYV -?]+</param>
+                  </data>
+                </attribute>
+                <attribute name="name">
+                  <text/>
+                </attribute>
+                <optional>
+                  <element name="extrainfo">
+                    <ref name="anyContent"/>
+                  </element>
+                </optional>
+              </element>
+            </oneOrMore>
+          </element>
+        </zeroOrMore>
+      </element>
+    </element>
+  </start>
+  <define name="anyContent">
+    <mixed>
+      <zeroOrMore>
+        <choice>
+          <attribute>
+            <anyName/>
+          </attribute>
+          <ref name="anyElement"/>
+        </choice>
+      </zeroOrMore>
+    </mixed>
+  </define>
+  <define name="anyElement">
+    <element>
+      <anyName/>
+      <ref name="anyContent"/>
+    </element>
+  </define>
+</grammar>
+
