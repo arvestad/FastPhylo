@@ -12,6 +12,8 @@
 #define LIKELIHOODMATRIX_HPP
 
 #include "DistanceMatrix.hpp"
+
+//#include "FloatDistanceMatrix.hpp"
 #include <string>
 #include <vector>
 #include "InitAndPrintOn_utils.hpp"

@@ -14,6 +14,10 @@ public:
   virtual void print( StrDblMatrix & dm );
   virtual void printStartRun( std::vector<std::string> & names, std::string & runId, Extrainfos &extrainfos );
   virtual void printEndRun();
+  //mehmood changes here... email: malagori@kth.se
+  virtual void printRow( StrFloRow & dm , std::string name, int row);
+  virtual void printHeader( size_t numNodes );
+  virtual void printBootstrapSpliter(size_t numNodes);
 };
 
 #endif // XMLOUTPUTSTREAM_HPP

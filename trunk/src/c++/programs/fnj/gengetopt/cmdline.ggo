@@ -6,7 +6,7 @@ args "--file-name=fnj_gengetopt --unamed-opts=FILE"
 
 option "outfile" o "output filename. If not specifed, output is written to stdout" string typestr="filename" optional
 
-option "input-format" I "input format. 'xml' means the 'Fastphylo distance matrix XML format'" enum values="phylip_dm","xml" default="xml" optional
+option "input-format" I "input format. 'xml' means the 'Fastphylo distance matrix XML format'" enum values="phylip_dm","xml","binary" default="xml" optional
 option "output-format" O  "output format. 'xml' means the 'Fastphylo tree count XML format'" enum values="newick","xml" default="xml" optional 
 
 option "print-counts" c "print the tree count before each the newick tree. This flag has no effect on the XML output format." flag off

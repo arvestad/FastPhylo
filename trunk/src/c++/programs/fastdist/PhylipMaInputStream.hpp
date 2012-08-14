@@ -2,7 +2,6 @@
 #define PHYLIPMAINPUTSTREAM_HPP
 
 #include "DataInputStream.hpp"
-
 #include <iostream>
 #include <fstream>
 

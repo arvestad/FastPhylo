@@ -12,6 +12,8 @@
 #define NEIGHBORJOINING_HPP
 
 #include "DistanceMatrix.hpp"
+#include "FloatDistanceMatrix.hpp"
+#include "DistanceRow.hpp"
 #include <string>
 #include <math.h>
 #include "log_utils.hpp"
@@ -46,6 +48,9 @@ enum NJ_method{
 //
 void
 computeNJTree(StrDblMatrix &dm, SequenceTree &resultTree, NJ_method m=NJ );
+//mehmood's changes here'
+void
+computeFloatNJTree(StrFloMatrix &dm, SequenceTree &resultTree, NJ_method m=NJ );
 
 //---------------------- NEIGHBOR JOINING ----------------------------------------
 //Takes a distance matrix in which the identifiers are tree nodes.
@@ -150,6 +155,108 @@ computeNeighborJoiningTree( DistanceMatrix< TreeNode_type *, double,
   // END ITERATION
   //--------------
 }
+
+// NJ for float DM start ----------------------------------
+template <class TreeNode_type, class Data>
+void
+computeFloatNeighborJoiningTree( FloatDistanceMatrix< TreeNode_type *, float,
+			    Data_init<TreeNode_type*>, Data_printOn<TreeNode_type *>,
+			    Data_init<float>, Data_printOn<float> > &dm,
+			    Data defaultNodeData ){
+
+  const size_t origNumNodes = dm.getSize();
+#ifndef NDEBUG
+  //make sure that the input nodes are in a star
+  TreeNode_type *starroot = dm.getIdentifier(0)->getParent();
+  for ( size_t i = 0 ; i < origNumNodes ; i++ )
+    if ( dm.getIdentifier(i)->getParent() != starroot ){
+      PROG_ERROR("The input nodes to NJ are not connected in a star");
+    }
+#endif
+  //compute the row sums
+  float rowSums[origNumNodes];
+  for ( size_t row = 0 ; row < origNumNodes ; row++ ){
+    float sum = 0;
+    size_t i = 0;
+    for (  ; i < origNumNodes ; i++ ){
+      float d=dm.getDistance(row,i);
+      if(isfinite(d))
+	sum += d;
+      else{
+	USER_ERROR("Distance Matrix contains a non finite number: " << d);
+      }
+    }
+    rowSums[row] = sum;
+  }
+
+
+  //----------------
+  // NJ ITERATION
+  size_t numNodes = dm.getSize();
+  while ( numNodes > 3 ) {
+    assert(dm.getSize() == numNodes);
+    //find the minimal value
+    float minVal = FLT_MAX;
+    size_t mini = 1000000;
+    size_t minj = 1000000;
+    for ( size_t i = 0 ; i < numNodes ; i++ ){
+      for ( size_t j = i+1 ; j < numNodes ; j++ ){
+        float newVal = (numNodes - 2.0)*dm.getDistance(i,j) - rowSums[i] - rowSums[j];
+        if ( newVal < minVal ){
+          minVal = newVal;
+          mini = i;
+          minj = j;
+        }
+      }
+    }
+
+    //make sure that minj is the last row in the matrix
+    if ( minj != numNodes -1 ){
+      if(mini==numNodes-1){
+        mini=minj;
+        minj=numNodes-1;
+        float tmp = rowSums[numNodes-1];
+        rowSums[numNodes-1] = rowSums[mini];
+        rowSums[mini] = tmp;
+      }else{
+	//        PRINT(minj);PRINT(numNodes);
+        dm.swapRowToLast(minj);
+	std::swap(rowSums[numNodes-1],rowSums[minj]);
+        minj = numNodes-1;
+      }
+    }
+
+    TreeNode_type *newparent = dm.getIdentifier(mini)->getTree()->
+      detachFromParentAndAddAsSiblings(dm.getIdentifier(mini),dm.getIdentifier(minj), defaultNodeData);
+    dm.setIdentifier(mini, newparent);
+
+    // UPDATE DISTANCES
+    for ( size_t i = 0 ; i < numNodes-1 ; i++ ){//skip last row
+      float dist2iandj = dm.getDistance(mini,i) + dm.getDistance(minj,i);
+      // regular nj update function:
+      dm.setDistance(mini,i, dist2iandj * 0.5);
+
+      //update rowsums
+      rowSums[i] = rowSums[i] - dist2iandj + dm.getDistance(mini,i);
+    }
+
+    //remove the last row of the matrix
+    dm.removeLastRow();
+    numNodes--;
+
+    //recompute the row sum for the parent
+    dm.setDistance(mini,mini,0);
+    float sum = 0;
+    for ( size_t i = 0 ; i < numNodes ; i++ )
+      sum += dm.getDistance(mini,i);
+    rowSums[mini] = sum;
+
+  }
+  // END ITERATION
+  //--------------
+}
+
+// NJ for Float DM end's here-------------------------------------------
 
 
 //-------------------- BIO NJ -------------------------------------------------------------
@@ -313,6 +420,168 @@ computeBioNJTree( DistanceMatrix< TreeNode_type *, double,
   EDGE(dm.getIdentifier(2)) = dm.getDistance(0,2) + dm.getDistance(1,2)
     - 2 * dm.getDistance(0,1);
 }
+//mehmood's addition here
+//----------------------- BIO NJ for float DM start---------------------------------
+template <class TreeNode_type, class Data>
+void
+computeFloatBioNJTree( FloatDistanceMatrix< TreeNode_type *, float,
+		  Data_init<TreeNode_type*>, Data_printOn<TreeNode_type *>,
+		  Data_init<float>, Data_printOn<float> > &dm,
+		  Data defaultNodeData ){
+
+  const size_t origNumNodes = dm.getSize();
+  //make sure that the input nodes are in a star
+#ifndef NDEBUG
+  TreeNode_type *starroot = dm.getIdentifier(0)->getParent();
+  for ( size_t i = 0 ; i < origNumNodes ; i++ ){
+    if ( dm.getIdentifier(i)->getParent() != starroot ){
+      PROG_ERROR("The input nodes to NJ are not connected in a star");
+    }
+  }
+#endif
+
+  //the variance matrix
+  StrFloMatrix V(origNumNodes);//the variance is copied from the regular distance matrix
+  for(size_t i=0;i<origNumNodes;i++){
+    Sequence_double data;
+    for(size_t j=i;j<origNumNodes;j++){
+      V.setDistance(i,j,dm.getDistance(i,j));
+    }
+  }
+
+  //compute the row sums
+  float rowSums[origNumNodes];
+  float varianceRowSums[origNumNodes];
+  for ( size_t row = 0 ; row < origNumNodes ; row++ ){
+    float sum = 0;
+    float sumV =0;
+    size_t i = 0;
+    for (  ; i < origNumNodes ; i++ ){
+      float d=dm.getDistance(row,i);
+      if(isfinite(d)){
+	sum += d;
+	sumV += V.getDistance(row,i);
+      }else{
+	USER_ERROR("Distance Matrix contains a non finite number: " << d);
+      }
+    }
+    rowSums[row] = sum;
+    varianceRowSums[row] = sum;
+  }
+
+
+  //----------------
+  //ITERATION
+  size_t numNodes = dm.getSize();
+  while (  numNodes > 3) {
+    assert(dm.getSize() == numNodes);
+    //find the minimal value
+    float minVal = FLT_MAX;
+    size_t mini = 9999999;
+    size_t minj = 9999999;
+    for ( size_t i = 0 ; i < numNodes ; i++ ){
+      for ( size_t j = i+1 ; j < numNodes ; j++ ){
+        float newVal = (numNodes - 2.0)*dm.getDistance(i,j) - rowSums[i] - rowSums[j];
+        if ( newVal < minVal ){
+          minVal = newVal;
+          mini = i;
+          minj = j;
+        }
+      }
+    }
+
+    //make sure that minj is the last row in the matrix
+    if ( minj != numNodes -1 ){
+      if(mini==numNodes-1){
+        mini=minj;
+        minj=numNodes-1;
+        float tmp = rowSums[numNodes-1];
+        rowSums[numNodes-1] = rowSums[mini];
+        rowSums[mini] = tmp;
+	tmp = varianceRowSums[numNodes-1];
+        varianceRowSums[numNodes-1] = varianceRowSums[mini];
+        varianceRowSums[mini] = tmp;
+      }else{
+	//        PRINT(minj);PRINT(numNodes);
+        dm.swapRowToLast(minj);
+	V.swapRowToLast(minj);
+	std::swap(rowSums[numNodes-1],rowSums[minj]);
+	std::swap(varianceRowSums[numNodes-1],varianceRowSums[minj]);
+        minj = numNodes-1;
+      }
+    }
+
+
+    //COMPUTE lamba
+    float V_a2b = V.getDistance(mini,minj);
+    float lambda = 0.5 + (varianceRowSums[minj] - varianceRowSums[mini])/(2*(V.getSize()-2)*V_a2b);
+    if ( lambda > 1 ) lambda = 1.0;
+    else if ( lambda < 0 ) lambda = 0;
+    else if ( V_a2b == 0 )//i.e. lambda==NaN
+      lambda = 0.5;
+
+
+   float D_a2b = dm.getDistance(mini,minj);
+
+   TreeNode_type *a = dm.getIdentifier(mini);
+   TreeNode_type *b = dm.getIdentifier(minj);
+
+   TreeNode_type *newparent = dm.getIdentifier(mini)->getTree()->
+     detachFromParentAndAddAsSiblings(dm.getIdentifier(mini),dm.getIdentifier(minj), defaultNodeData);
+    dm.setIdentifier(mini, newparent);
+
+    float D_a2parent = 0.5*(D_a2b+(rowSums[mini]-rowSums[minj])/(numNodes-2));
+    float D_b2parent = 0.5*(D_a2b+(rowSums[minj]-rowSums[mini])/(numNodes-2));
+    EDGE(a)=D_a2parent;
+    EDGE(b)=D_b2parent;
+
+
+    // UPDATE DISTANCES
+    for ( size_t i = 0 ; i < numNodes-1 ; i++ ){//skip last row
+      float dist2ab = dm.getDistance(mini,i) + dm.getDistance(minj,i);
+      float newdist = lambda*dm.getDistance(mini,i)+(1-lambda)*dm.getDistance(minj,i)
+	- lambda*D_a2parent - (1-lambda)*D_b2parent;
+
+      dm.setDistance(mini,i,newdist);
+      rowSums[i] = rowSums[i] - dist2ab + dm.getDistance(mini,i);
+
+      //Update variance
+      float var2ab = V.getDistance(i,mini)+V.getDistance(i,minj);
+      V.setDistance(i,mini, lambda*V.getDistance(i,mini) + (1-lambda)*V.getDistance(i,minj) - lambda*(1-lambda)*V_a2b);
+      varianceRowSums[i] = varianceRowSums[i] - var2ab + V.getDistance(i,mini);
+    }
+
+    //remove the last row of the matrix
+    dm.removeLastRow();
+    V.removeLastRow();
+    numNodes--;
+    //recompute the row sum for the parent
+    dm.setDistance(mini,mini,0);
+    V.setDistance(mini,mini,0);
+    float sum = 0;
+    float sumV = 0;
+    for ( size_t i = 0 ; i < numNodes ; i++ ){
+      sum += dm.getDistance(mini,i);
+      sumV += V.getDistance(mini,i);
+    }
+    rowSums[mini] = sum;
+    varianceRowSums[mini] = sumV;
+
+
+  }
+  // END ITERATION
+  //--------------
+
+  EDGE(dm.getIdentifier(0)) = dm.getDistance(0,1) + dm.getDistance(0,2)
+    - 2 * dm.getDistance(1,2);
+  EDGE(dm.getIdentifier(1)) = dm.getDistance(0,1) + dm.getDistance(1,2)
+    - 2 * dm.getDistance(0,2);
+  EDGE(dm.getIdentifier(2)) = dm.getDistance(0,2) + dm.getDistance(1,2)
+    - 2 * dm.getDistance(0,1);
+}
+
+//----------------------- Bio NJ for float DM end's here---------------------------
+
 
 
 //------------------------------- FAST NEIGHBOR JOINING -----------------------
@@ -484,6 +753,182 @@ computeFNJTree( DistanceMatrix< TreeNode_type *, double,
   // END ITERATION
   //--------------
 }
+
+
+//------------------ Fast Neigbor Joining for float DM starts here-----------------------
+
+template <class TreeNode_type, class Data>
+
+void
+computeFloatFNJTree( FloatDistanceMatrix< TreeNode_type *, float,
+		Data_init<TreeNode_type*>, Data_printOn<TreeNode_type *>,
+		Data_init<float>, Data_printOn<float> > &dm, Data defaultNodeData ){
+
+  const size_t origNumNodes = dm.getSize();
+
+  //make sure that the input nodes are in a star
+#ifndef NDEBUG
+  TreeNode_type *starroot = dm.getIdentifier(0)->getParent();
+  for ( size_t i = 0 ; i < origNumNodes ; i++ )
+    if ( dm.getIdentifier(i)->getParent() != starroot ){
+      PROG_ERROR("The input nodes to NJ are not connected in a star");
+    }
+#endif
+
+  //compute the row sums
+  float rowSums[origNumNodes];
+  for ( size_t row = 0 ; row < origNumNodes ; row++ ){
+    float sum = 0;
+    size_t i = 0;
+    for (  ; i < origNumNodes ; i++ ){
+      float d=dm.getDistance(row,i);
+      if(isfinite(d))
+		sum += d;
+      else{
+		USER_ERROR("Distance Matrix contains a non finite number: " << d);
+      }
+    }
+    rowSums[row] = sum;
+  }
+  //compute visible set.
+  size_t visible_set[origNumNodes];
+  for ( size_t i = 0 ; i < origNumNodes ; i++ ){
+    float minVal = FLT_MAX;
+    size_t minNeigh = i;
+    for ( size_t j = 0 ; j < i ; j++ ){
+      float newVal = (origNumNodes - 2.0)*dm.getDistance(i,j) - rowSums[i] - rowSums[j];
+      if ( newVal < minVal ){
+	minVal = newVal;
+	minNeigh = j;
+      }
+    }
+
+    for ( size_t j = i+1 ; j < origNumNodes ; j++ ){
+      float newVal = (origNumNodes - 2.0)*dm.getDistance(i,j) - rowSums[i] - rowSums[j];
+      if ( newVal < minVal ){
+	minVal = newVal;
+	minNeigh = j;
+      }
+    }
+    visible_set[i] = minNeigh;
+    assert(minNeigh != i );
+  }
+
+
+  //----------------
+  // NJ ITERATION
+  size_t numNodes = dm.getSize();
+  while ( numNodes > 3 ) {
+
+    assert(dm.getSize() == numNodes);
+    //find the minimal value
+    size_t mini = 0;
+    size_t minj = visible_set[0];
+    float minVal = (numNodes - 2.0)*dm.getDistance(0,minj) - rowSums[0] - rowSums[minj];
+    // min over visible set
+    for ( size_t i = 1 ; i < numNodes ; i++ ){
+      size_t j = visible_set[i];
+      float newVal = (numNodes - 2.0)*dm.getDistance(i,j) - rowSums[i] - rowSums[j];
+      if ( newVal < minVal ){
+		minVal = newVal;
+		mini = i;
+		minj = j;
+      }
+    }
+
+
+    //make sure that minj is the last row in the matrix
+
+    if ( minj != numNodes -1 ){
+      if(mini==numNodes-1){
+        mini=minj;
+        minj=numNodes-1;
+        float tmp = rowSums[numNodes-1];
+        rowSums[numNodes-1] = rowSums[mini];
+        rowSums[mini] = tmp;
+
+		//update the visible set so that no one points to numNodes-1
+		for(size_t vi = 0; vi<numNodes; vi++)
+		  if(visible_set[vi]==minj)
+		    visible_set[vi] = mini;//those that point to
+	  }
+      else{// minj needs to be swapped to the last row
+
+		//update visible set
+		for(size_t vi = 0; vi<numNodes; vi++)
+		  if(visible_set[vi]==numNodes-1)
+		    visible_set[vi] = minj;//those that point to the last row before the swap
+		  else if (visible_set[vi]==minj)
+		    visible_set[vi] = mini;//those that point minj before the swap
+
+	        dm.swapRowToLast(minj);
+		std::swap(rowSums[numNodes-1],rowSums[minj]);
+		std::swap(visible_set[numNodes-1],visible_set[minj]);
+		minj = numNodes-1;
+
+      }
+    }
+    else{//if minj == numNodes -1
+
+      for(size_t vi = 0; vi<numNodes; vi++)
+	if(visible_set[vi]==minj)
+	  visible_set[vi] = mini;//those that point to minj
+    }
+
+    //join the tree nodes
+    TreeNode_type *newparent = dm.getIdentifier(mini)->getTree()->
+      detachFromParentAndAddAsSiblings(dm.getIdentifier(mini),dm.getIdentifier(minj), defaultNodeData);
+    dm.setIdentifier(mini, newparent);
+
+
+    // UPDATE DISTANCES
+    for ( size_t i = 0 ; i < numNodes-1 ; i++ ){//skip last row
+      float dist2iandj = dm.getDistance(mini,i) + dm.getDistance(minj,i);
+      // regular nj update function:
+      dm.setDistance(mini,i, dist2iandj * 0.5);
+
+      //update rowsums
+      rowSums[i] = rowSums[i] - dist2iandj + dm.getDistance(mini,i);
+    }
+    //remove the last row of the matrix
+    dm.removeLastRow();numNodes--;
+    //*** update visible set.
+    //recompute the row sum for the parent
+    dm.setDistance(mini,mini,0);
+    float sum = 0;
+    for ( size_t i = 0 ; i < numNodes ; i++ )
+      sum += dm.getDistance(mini,i);
+    rowSums[mini] = sum;
+    //compute visible neighbor
+    minVal = FLT_MAX;
+    size_t minNeigh = mini;
+
+
+    for ( size_t j = 0 ; j < mini ; j++ ){
+      float newVal = (numNodes - 2.0)*dm.getDistance(mini,j) - rowSums[mini] - rowSums[j];
+      if ( newVal < minVal ){
+		minVal = newVal;
+		minNeigh = j;
+      }
+    }
+
+    //ERROR IN THE FOR-LOOP
+
+    for ( size_t j = mini+1 ; j < numNodes ; j++ ){
+      float newVal = (numNodes - 2.0)*dm.getDistance(mini,j) - rowSums[mini] - rowSums[j];
+      if ( newVal < minVal ){
+		minVal = newVal;
+		minNeigh = j;
+      }
+    }
+
+    visible_set[mini] = minNeigh;
+  }
+  // END ITERATION
+  //--------------
+}
+
+//------------------ Fast Neigbor Joining for float DM End's here-----------------------
 
 
 

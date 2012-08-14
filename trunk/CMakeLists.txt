@@ -8,6 +8,19 @@ SET(CPACK_PACKAGE_VERSION_MINOR "9")
 SET(CPACK_PACKAGE_VERSION_PATCH "0")
 set(PACKAGE_VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH})
 
+# OpenMPI support
+FIND_PACKAGE(MPI REQUIRED)
+INCLUDE(CMakeForceCompiler)
+#mehmood's changes here
+IF(CMAKE_HOST_APPLE)
+	CMAKE_FORCE_CXX_COMPILER(openmpic++ "MPI C++ Compiler for Apple")
+ELSEIF(CMAKE_HOST_UNIX)
+	CMAKE_FORCE_CXX_COMPILER(mpiCC "MPI C++ Compiler for Linux")
+ENDIF()
+
+
+# Ignore annoying deprecation warnings for now
+SET(CMAKE_CXX_FLAGS "-Wno-deprecated")
 
 OPTION(BUILD_DOCBOOK "build Docbook html documentation" OFF )
 OPTION(WITH_LIBXML "build xml functionality. This adds a dependeny for libxml" ON )

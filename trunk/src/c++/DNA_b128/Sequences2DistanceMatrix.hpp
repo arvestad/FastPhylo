@@ -13,12 +13,13 @@
 #define SEQUENCES2DISTANCEMATRIX_HPP
 
 #include "DistanceMatrix.hpp"
+#include "FloatDistanceMatrix.hpp"
+#include "DistanceRow.hpp"
 #include <string>
 #include "DNA_b128_String.hpp"
 #include <fstream>
 #include "dna_pairwise_sequence_likelihood.hpp"
 #include "SequenceTree.hpp"
-
 //
 // This file contains functions for creating a distance matrix from
 // DNA sequences using different models of evolution.
@@ -80,7 +81,31 @@ void fillMatrix_TN93(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 		     sequence_translation_model trans_model);
 
 //-----------
+//--------- mehmood warka dang---------------
 
+void fillMatrixRow(StrFloRow &dm, std::vector<DNA_b128_String> &b128_strings,
+		sequence_translation_model trans_model, size_t row);
+
+//--------------------------------------------------------------------
+//Functions for specific models.
+
+void
+fillMatrixRow_Hamming(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
+		   sequence_translation_model trans_model, size_t row);
+
+void fillMatrixRow_JC(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
+		   sequence_translation_model trans_model, size_t row);
+
+void fillMatrixRow_K2P(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
+		    sequence_translation_model trans_model, size_t row);
+
+void fillMatrixRow_TN93(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
+		     DNA_b128_String::base_frequences freqs,
+		     sequence_translation_model trans_model, size_t row);
+
+//-----------
+
+//----------- khatham sho--------------
 
 
 

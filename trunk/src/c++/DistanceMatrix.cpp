@@ -3,7 +3,6 @@
 #include <iostream>
 #include "log_utils.hpp"
 #include "DistanceMatrix.hpp"
-#include "config.h"
 
 
 bool
@@ -36,7 +35,7 @@ applyFixFactor(StrDblMatrix &dm, double fixFactor){
 }
 
 
-
+/*
 //-------------------------------------------------------------
 // FAST PRINTING OF FLOATS
 static const char ONEDIGIT[128]={
@@ -221,7 +220,7 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
   } 
 }
 
-
+*/
 
 
 

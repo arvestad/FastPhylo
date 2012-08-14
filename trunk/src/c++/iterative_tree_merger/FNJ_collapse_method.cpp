@@ -11,6 +11,8 @@
 
 #include "Tree.hpp"
 #include "DistanceMatrix.hpp"
+
+#include "FloatDistanceMatrix.hpp"
 #include <string>
 
 #include "arg_utils.h"

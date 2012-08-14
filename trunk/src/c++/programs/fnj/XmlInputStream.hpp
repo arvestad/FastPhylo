@@ -28,9 +28,10 @@ class XmlInputStream : public DataInputStream
 {
 public:
    XmlInputStream(char * filename);
-  ~XmlInputStream();
+  virtual ~XmlInputStream();
 
   virtual readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos );
+  virtual readstatus readFloatDM( StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos ) {} ;
 
 protected:
 

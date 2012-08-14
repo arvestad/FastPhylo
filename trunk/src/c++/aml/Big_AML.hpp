@@ -18,6 +18,7 @@
 #include <string>
 #include "InitAndPrintOn_utils.hpp"
 #include "DistanceMatrix.hpp"
+#include "FloatDistanceMatrix.hpp"
 
 
 //

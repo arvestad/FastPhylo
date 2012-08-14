@@ -8,7 +8,7 @@ DataInputStream & chooseStream(char ** argv);
 DataInputStream::DataInputStream()
 { 
 }
-
+/*
 PhylipDmInputStream::~PhylipDmInputStream() {
   if ( file_was_opened ) 
     fin.close();
@@ -33,7 +33,7 @@ PhylipDmInputStream::PhylipDmInputStream(char * filename = 0 )
      fp = & fin;
     }
 }
-
+// readDM( StrDblMatrix....) will be called when we are using full data matrix otherwise readDM function from BinaryInputStream.hpp would be called for memory-efficient choices
 readstatus
 PhylipDmInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos ) 
 {
@@ -45,4 +45,4 @@ PhylipDmInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> & names
  }
  return DM_READ;
 }
-
+*/

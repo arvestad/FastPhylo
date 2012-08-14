@@ -2,8 +2,8 @@
 //                                        
 // File: SequenceTree.cpp                              
 //                             
-// Author: Isaac Elias         
-// e-mail: isaac@nada.kth.se   
+// Author: Mehmood Alam Khan,Isaac Elias
+// e-mail: malagori@kth.se, isaac@nada.kth.se
 //                             
 // cvs: $Id: SequenceTree.cpp,v 1.44 2006/12/08 11:09:13 isaac Exp $                                 
 //
@@ -113,6 +113,18 @@ SequenceTree::sumOfEdgeLengths(){
   return sum;
 }
 
+float
+SequenceTree::sumOfFloatEdgeLengths(){
+  SequenceTree::NodeVector nodes;
+
+  addNodesInPrefixOrder(nodes);
+  float sum =0;
+  //skip the root
+  for(size_t i=1;i<nodes.size();i++)
+    sum+=EDGE(nodes[i]);
+
+  return sum;
+}
 //--------------------
 //SHORTCUT
 void SequenceTree::shortcutDegree2Nodes(){
@@ -130,6 +142,32 @@ void SequenceTree::shortcutDegree2Nodes(){
     }
     else{
       double pedge = EDGE(n);
+      EDGE(n->getRightMostChild()) += pedge;
+      shortcutNode(vec[i]);
+    }
+  }
+  if ( getRoot()->getDegree() == 1 ){
+    reRootAtHighDegreeNode();
+    SequenceTree::Node *root = getRoot();
+    EDGE(root) = -1;
+  }
+}
+
+void SequenceTree::shortcutFloatDegree2Nodes(){
+  SequenceTree::NodeVector vec;
+  addNodesWithDegree(vec,2);
+
+  for ( size_t i = 0 ; i < vec.size() ; i++ ){
+    SequenceTree::Node *n = vec[i];
+    if ( vec[i]->isRoot() ){
+      SequenceTree::Node *child = n->getRightMostChild();
+      float newedge = EDGE(child) + EDGE(child->getLeftSibling());
+      shortcutNode(vec[i]);
+      EDGE(child) = -1;
+      EDGE(child->getRightMostChild()) = newedge;
+    }
+    else{
+      float pedge = EDGE(n);
       EDGE(n->getRightMostChild()) += pedge;
       shortcutNode(vec[i]);
     }
@@ -188,6 +226,49 @@ SequenceTree::compute_loglikelihood(){
   //cout << "------"<< endl;
   return loglikelihood;
 }
+float
+SequenceTree::computeFloat_loglikelihood(){
+
+  SequenceTree::NodeVector vec;
+  addNodesInPrefixOrder(vec);
+
+  float hamdist;
+
+  //skip the root node
+  float loglikelihood = 0;
+  for ( size_t i = 1 ; i < vec.size() ; i++ ){
+    SequenceTree::Node *n = vec[i];
+    float slen = 1.0*SEQ(n).size();
+    hamdist = hamming_distance(SEQ(n),SEQ(n->getParent()));
+    //   PRINT(n->data.s.name); PRINT(n->getParent()->data.s.name);PRINT(hamdist);
+    //cout <<"-----------"<< endl;
+    // if ( n->data.flt >=0 ){
+    //       //cout << "prob: " << n->data.flt << endl;
+    //       if ( hamdist != 0 ){
+    //         PRINT(hamdist);
+    //         PRINT(n->data.flt);
+    //         PRINT(hamdist*log(n->data.flt/3.0) + (slen - hamdist)*log(1 - n->data.flt));
+    //         loglikelihood += hamdist*log(n->data.flt/3.0) + (slen - hamdist)*log(1 - n->data.flt);
+    //         PRINT(loglikelihood);
+    //       }
+    //     }
+    //     else {//if no edge length available take optimadl edge length
+    float optprob = hamdist/slen;
+    optprob = ( 0.499 < optprob ? 0.499 : optprob );//we don't allow for more than 0.5 probability of change
+    //cout << "optprob: " << optprob << endl;
+    if ( hamdist != 0 ){
+      //PRINT(hamdist*log(optprob/3.0) + (slen - hamdist)*log(1 - optprob));
+      loglikelihood += hamdist*log(optprob/3.0) + (slen - hamdist)*log(1 - optprob);
+      EDGE(n) = optprob;
+    }
+    else
+      EDGE(n) = 0;
+    //}
+    //cout << "newlog " << loglikelihood << endl;
+  }
+  //cout << "------"<< endl;
+  return loglikelihood;
+}
 
 void
 SequenceTree::computeEdgeLengths(){
@@ -201,6 +282,20 @@ SequenceTree::computeEdgeLengths(){
 
 int
 SequenceTree::contractEdgesShorterThan(double bound){
+  SequenceTree::NodeVector nodes;
+  addNodesInPrefixOrder(nodes);
+  int numC=0;
+  for(size_t i=1 ; i<nodes.size() ; i++){
+    if(nodes[i]->isLeaf()) continue;
+    if(EDGE(nodes[i])<=bound){
+      shortcutNode(nodes[i]);
+      numC++;
+    }
+  }
+  return numC;
+}
+int
+SequenceTree::contractFloatEdgesShorterThan(float bound){
   SequenceTree::NodeVector nodes;
   addNodesInPrefixOrder(nodes);
   int numC=0;
@@ -482,6 +577,92 @@ SequenceTree::computeRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){
   return ((double) in_1_notin_2 + in_2_notin_1)/( set1.size() + set2.size());
  
 }
+float
+SequenceTree::computeFloatRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){
+
+  int numLeafs = t1.getNumLeafs();
+  if(numLeafs != t2.getNumLeafs()){
+    USER_WARNING("trees have different num Leafs: " << numLeafs <<"!=" << t2.getNumLeafs());
+    return -1;
+  }
+
+  SequenceTree::NodeVector nodes1;
+  SequenceTree::NodeVector nodes2;
+
+  //1. index map for leafs;
+  str2int_hashmap name2index((int)(numLeafs*1.5));
+  t1.addLeafs(nodes1);
+  for(int i=0 ; i<numLeafs ; i++){
+    name2index[NAME(nodes1[i])] = i;
+  }
+
+  //check that all leafs are the same in the two trees
+
+  t2.addLeafs(nodes2);
+  for(int i=0 ; i<numLeafs ; i++){
+    str2int_hashmap::iterator iter = name2index.find(NAME(nodes2[i]));
+    if(iter == name2index.end() ){
+      USER_WARNING("trees have different leafs. " << NAME(nodes2[i]) <<" doesn't exist.");
+      return -1;
+    }
+  }
+  //2. compute splitt set for each tree.
+  vector<BitVector> splitts1;
+  t1.computeSplittSet(splitts1,nodes1,name2index);
+  //t1.drawTree(cout);
+  vector<BitVector> splitts2;
+  t2.computeSplittSet(splitts2,nodes2,name2index);
+  //t2.drawTree(cout);
+
+  BitVectorPtr_set set1((int)(numLeafs*1.5));
+  BitVectorPtr_set set2((int)(numLeafs*1.5));
+
+
+  for(size_t i=0;i<splitts1.size();i++){
+    if(!nodes1[i]->isLeaf() && !nodes1[i]->isRoot()){
+      set1.insert(&splitts1[i]);
+      //printSplitt(splitts1[i],name2index);
+    }
+  }
+  for(size_t i=0;i<splitts2.size();i++){
+    if(!nodes2[i]->isLeaf() && !nodes2[i]->isRoot()){
+      set2.insert(&splitts2[i]);
+      //printSplitt(splitts2[i],name2index);
+    }
+  }
+  //3. compute RF formula over splitt sets;
+
+  int in_1_notin_2=0;
+  int in_2_notin_1=0;
+
+  BitVectorPtr_set::iterator iter = set1.begin();
+  for( ; iter!= set1.end() ; ++iter){
+    if( set2.find(*iter) == set2.end()){
+      //      PRINT("1 didn't find");PRINT(*iter);printSplitt(**iter,name2index);
+      in_1_notin_2++;
+    }
+  }
+  iter = set2.begin();
+  for( ; iter!= set2.end() ; ++iter){
+    if( set1.find(*iter) == set1.end()){
+      //      PRINT("2 didn't find");PRINT(*iter); printSplitt(**iter,name2index);
+      in_2_notin_1++;
+    }
+  }
+
+  //PRINT(in_1_notin_2);PRINT(in_2_notin_1);
+
+  //The Robinson Foulds distance between two trees is
+  //the number of edges in one tree that are not in the other tree.
+  //i.e RF(T1,T2) = |Splitts(T1)\Splitts(T2)| + |Splitts(T2)\Splitts(T1)|
+  //The normalized meassure is thus RF(T1,T2)/(Splitts(T1)+Splitts(T2))
+  //The number of splitts in a binary tree is (remember leaf edges are not splitts)
+  //n-3, since the number of nodes in a rooted binary tree is n-1 and the root is not a
+  //splitt node and also the two edges from the root describe the same splitt.
+
+  return ((float) in_1_notin_2 + in_2_notin_1)/( set1.size() + set2.size());
+
+}
 
 
 void
@@ -561,6 +742,34 @@ SequenceTree::tree2distanceMatrix(StrDblMatrix &dm){
     }
   }
 }
+void
+SequenceTree::tree2FloatdistanceMatrix(StrFloMatrix &fdm){
+  int numLeafs = getNumLeafs();
+
+  fdm.resize(numLeafs);
+  SequenceTree::NodeVector leafs;
+  addLeafs(leafs);
+  for(size_t i=0;i<leafs.size();i++){
+    fdm.setIdentifier(i,NAME(leafs[i]));
+    for(size_t j=i+1;j<leafs.size();j++)
+      fdm.setDistance(i,j,0);
+  }
+
+
+  SequenceTree::NodeVector nodesOnPath;
+  for(size_t i=0;i<leafs.size();i++){
+    for(size_t j=i+1;j<leafs.size();j++){
+      nodesOnPath.clear();
+      addNodesOnPathExceptLCA(nodesOnPath,leafs[i],leafs[j]);
+      float sum =0;
+      for(size_t e=0;e<nodesOnPath.size();e++){
+	sum+=EDGE(nodesOnPath[e]);
+      }
+      fdm.setDistance(i,j,sum);
+    }
+  }
+}
+
 
 //--------------------------------------------------------------------
 

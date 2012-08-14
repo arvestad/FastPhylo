@@ -11,6 +11,7 @@
 
 #include "InitAndPrintOn_utils.hpp"
 #include <string>
+#include <cstring>
 #include "file_utils.hpp"
 #include "xml_output_global.hpp"
 
