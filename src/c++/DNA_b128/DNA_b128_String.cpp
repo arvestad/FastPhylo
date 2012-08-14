@@ -10,12 +10,14 @@
 //--------------------------------------------------
 
 #include "DNA_b128_String.hpp"
-
+/*
 #include <climits>
 #include <string>
-#include <cstring>
+#include <cstring>*/
+#include <string.h>
 #include <iostream>
 #include <sstream>
+#include <limits.h>
 #include "log_utils.hpp"
 #include <algorithm>
 

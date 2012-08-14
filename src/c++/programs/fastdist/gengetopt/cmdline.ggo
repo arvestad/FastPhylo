@@ -8,13 +8,13 @@ text "If FILE is not specified the input is read from stdin "
 
 option "outfile" o "output filename. If not specifed, output is written to stdout" string typestr="filename" optional
 
-option "input-format" I "input format. xml means the Fastphylo sequence XML format" values="fasta","phylip_multialignment","xml" enum  default="fasta" optional
+option "input-format" I "input format. xml means the Fastphylo sequence XML format" values="fasta","phylip","xml" enum  default="fasta" optional
 
-option "output-format" O  "output format. xml means the Fastphylo distance matrix XML format"  values="phylip_dm","xml" enum default="xml" optional 
+option "output-format" O  "output format. xml means the Fastphylo distance matrix XML format"  values="phylip","xml","binary" enum default="xml" optional  
 option "distance-function" D "Distance function" values="JC","K2P","FAKE_F84","TN93","HAMMING" enum default="K2P" optional
 
 option "bootstraps" b  "Bootstrap num times and create matrix for each" int default="0" optional
-option "no-incl-orig" k "If the distance matrix from the original sequences should be included" flag off
+option "no-incl-orig" k "If the distance matrix from the original sequences should not be included" flag off
 option "seed" s "Random seed. If not specified the current timestamp will be used" int optional
 option "no-ambiguities" A "Ignore ambiguities" flag off
 option "no-ambig-resolve" R "Specifies that ambigious symbols should not be resolved by nearest neighbor" flag off

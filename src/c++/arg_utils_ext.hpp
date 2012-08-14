@@ -15,6 +15,7 @@
 
 #include <vector>
 #include "arg_utils.h"
+#include <stdlib.h>
 
 
 /*  GET BOOLEAN OPTION VALUE */

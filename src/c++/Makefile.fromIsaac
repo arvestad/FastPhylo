@@ -19,7 +19,7 @@
 # --------- Source files ----------------
 INSTALLDIR	= ./bin
 
-SOURCES		= DistanceMatrix.cpp Simulator.cpp std_c_utils.c BitVector.cpp Object.cpp arg_utils.c\
+SOURCES		= DistanceMatrix.cpp FloatDistanceMatrix.cpp DistanceRow.cpp Simulator.cpp std_c_utils.c BitVector.cpp Object.cpp arg_utils.c\
 		arg_utils_ext.cpp stl_utils.cpp file_utils.cpp SequenceTree.cpp\
 		InitAndPrintOn_utils.cpp Sequence.cpp Exception.cpp SequenceTree_MostParsimonious.cpp
 
@@ -221,10 +221,18 @@ etags		:
 DistanceMatrix.o: log_utils.hpp DistanceMatrix.hpp Object.hpp
 DistanceMatrix.o: InitAndPrintOn_utils.hpp file_utils.hpp Exception.hpp
 DistanceMatrix.o: stl_utils.hpp Sequence.hpp DistanceMatrix_impl.hpp
+#mehmood jaan
+FloatDistanceMatrix.o: log_utils.hpp FloatDistanceMatrix.hpp Object.hpp
+FloatDistanceMatrix.o: stl_utils.hpp Sequence.hpp FloatDistanceMatrix_impl.hpp
+FloatDistanceMatrix.o: InitAndPrintOn_utils.hpp file_utils.hpp Exception.hpp
+DistanceRow.o: log_utils.hpp DistanceRow.hpp Object.hpp
+DistanceRow.o: InitAndPrintOn_utils.hpp file_utils.hpp Exception.hpp
+DistanceRow.o: stl_utils.hpp Sequence.hpp DistanceRow_impl.hpp
 Simulator.o: Simulator.hpp stl_utils.hpp file_utils.hpp Exception.hpp
 Simulator.o: Object.hpp log_utils.hpp SequenceTree.hpp Tree.hpp
 Simulator.o: InitAndPrintOn_utils.hpp Sequence.hpp Tree_impl.hpp
 Simulator.o: DistanceMatrix.hpp DistanceMatrix_impl.hpp BitVector.hpp
+Simulator.o: FloatDistanceMatrix.hpp FloatDistanceMatrix_impl.hpp BitVector.hpp
 Simulator.o: std_c_utils.h
 std_c_utils.o: std_c_utils.h
 BitVector.o: BitVector.hpp Object.hpp log_utils.hpp
@@ -238,6 +246,7 @@ SequenceTree.o: SequenceTree.hpp Tree.hpp Object.hpp log_utils.hpp
 SequenceTree.o: stl_utils.hpp file_utils.hpp Exception.hpp
 SequenceTree.o: InitAndPrintOn_utils.hpp Sequence.hpp Tree_impl.hpp
 SequenceTree.o: DistanceMatrix.hpp DistanceMatrix_impl.hpp BitVector.hpp
+SequenceTree.o: FloatDistanceMatrix.hpp FloatDistanceMatrix_impl.hpp BitVector.hpp
 SequenceTree.o: ./sequence_likelihood/string_compare.hpp
 SequenceTree.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
 SequenceTree.o: nucleotide.hpp
@@ -251,20 +260,25 @@ SequenceTree_MostParsimonious.o: log_utils.hpp stl_utils.hpp file_utils.hpp
 SequenceTree_MostParsimonious.o: Exception.hpp InitAndPrintOn_utils.hpp
 SequenceTree_MostParsimonious.o: Sequence.hpp Tree_impl.hpp
 SequenceTree_MostParsimonious.o: DistanceMatrix.hpp DistanceMatrix_impl.hpp
+SequenceTree_MostParsimonious.o: FloatDistanceMatrix.hpp FloatDistanceMatrix_impl.hpp
 SequenceTree_MostParsimonious.o: BitVector.hpp nucleotide.hpp std_c_utils.h
 distance_methods/LeastSquaresFit.o: SequenceTree.hpp Tree.hpp Object.hpp
 distance_methods/LeastSquaresFit.o: log_utils.hpp stl_utils.hpp
 distance_methods/LeastSquaresFit.o: file_utils.hpp Exception.hpp
 distance_methods/LeastSquaresFit.o: InitAndPrintOn_utils.hpp Sequence.hpp
 distance_methods/LeastSquaresFit.o: Tree_impl.hpp DistanceMatrix.hpp
+distance_methods/LeastSquaresFit.o: Tree_impl.hpp FloatDistanceMatrix.hpp
 distance_methods/LeastSquaresFit.o: DistanceMatrix_impl.hpp BitVector.hpp
+distance_methods/LeastSquaresFit.o: FloatDistanceMatrix_impl.hpp BitVector.hpp
 distance_methods/LeastSquaresFit.o: distance_methods/LeastSquaresFit.hpp
 distance_methods/NeighborJoining.o: distance_methods/NeighborJoining.hpp
 distance_methods/NeighborJoining.o: DistanceMatrix.hpp Object.hpp
+distance_methods/NeighborJoining.o: FlaotDistanceMatrix.hpp Object.hpp
 distance_methods/NeighborJoining.o: log_utils.hpp InitAndPrintOn_utils.hpp
 distance_methods/NeighborJoining.o: file_utils.hpp Exception.hpp
 distance_methods/NeighborJoining.o: stl_utils.hpp Sequence.hpp
 distance_methods/NeighborJoining.o: DistanceMatrix_impl.hpp SequenceTree.hpp
+distance_methods/NeighborJoining.o: FloatDistanceMatrix_impl.hpp SequenceTree.hpp
 distance_methods/NeighborJoining.o: Tree.hpp Tree_impl.hpp BitVector.hpp
 sequence_likelihood/ambiguity_nucleotide.o: sequence_likelihood/ambiguity_nucleotide.hpp
 sequence_likelihood/ambiguity_nucleotide.o: nucleotide.hpp
@@ -284,6 +298,7 @@ aml/Big_AML.o: SequenceTree.hpp Tree.hpp Object.hpp log_utils.hpp
 aml/Big_AML.o: stl_utils.hpp file_utils.hpp Exception.hpp
 aml/Big_AML.o: InitAndPrintOn_utils.hpp Sequence.hpp Tree_impl.hpp
 aml/Big_AML.o: DistanceMatrix.hpp DistanceMatrix_impl.hpp BitVector.hpp
+aml/Big_AML.o: FloatDistanceMatrix.hpp FloatDistanceMatrix_impl.hpp BitVector.hpp
 aml/Big_AML.o: ./sequence_likelihood/LikelihoodMatrix.hpp
 aml/Big_AML.o: ./sequence_likelihood/string_compare.hpp
 aml/Big_AML.o: ./sequence_likelihood/DistanceMethodMatrix.hpp
@@ -292,7 +307,9 @@ aml/AML_LeafLifting.o: aml/AML_LeafLifting.hpp SequenceTree.hpp Tree.hpp
 aml/AML_LeafLifting.o: Object.hpp log_utils.hpp stl_utils.hpp file_utils.hpp
 aml/AML_LeafLifting.o: Exception.hpp InitAndPrintOn_utils.hpp Sequence.hpp
 aml/AML_LeafLifting.o: Tree_impl.hpp DistanceMatrix.hpp
+aml/AML_LeafLifting.o: Tree_impl.hpp FloatDistanceMatrix.hpp
 aml/AML_LeafLifting.o: DistanceMatrix_impl.hpp BitVector.hpp
+aml/AML_LeafLifting.o: FloatDistanceMatrix_impl.hpp BitVector.hpp
 aml/AML_LeafLifting.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
 aml/AML_LeafLifting.o: ./sequence_likelihood/LikelihoodMatrix.hpp
 aml/AML_LeafLifting.o: ./sequence_likelihood/string_compare.hpp
@@ -300,15 +317,18 @@ aml/AML_star.o: aml/AML_star.hpp
 aml/AML_star.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
 aml/AML_star.o: ./sequence_likelihood/string_compare.hpp
 aml/AML_star.o: ./sequence_likelihood/LikelihoodMatrix.hpp DistanceMatrix.hpp
+aml/AML_star.o: ./sequence_likelihood/LikelihoodMatrix.hpp FlaotDistanceMatrix.hpp
 aml/AML_star.o: Object.hpp log_utils.hpp InitAndPrintOn_utils.hpp
 aml/AML_star.o: file_utils.hpp Exception.hpp stl_utils.hpp Sequence.hpp
 aml/AML_star.o: DistanceMatrix_impl.hpp SequenceTree.hpp Tree.hpp
+aml/AML_star.o: FloatDistanceMatrix_impl.hpp SequenceTree.hpp Tree.hpp
 aml/AML_star.o: Tree_impl.hpp BitVector.hpp
 aml/AML_local_improve.o: aml/AML_local_improve.hpp SequenceTree.hpp Tree.hpp
 aml/AML_local_improve.o: Object.hpp log_utils.hpp stl_utils.hpp
 aml/AML_local_improve.o: file_utils.hpp Exception.hpp
 aml/AML_local_improve.o: InitAndPrintOn_utils.hpp Sequence.hpp Tree_impl.hpp
 aml/AML_local_improve.o: DistanceMatrix.hpp DistanceMatrix_impl.hpp
+aml/AML_local_improve.o: FloatDistanceMatrix.hpp FloatDistanceMatrix_impl.hpp
 aml/AML_local_improve.o: BitVector.hpp
 aml/AML_local_improve.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
 aml/AML_local_improve.o: aml/AML_star.hpp
@@ -318,6 +338,8 @@ aml/AML_given_edge_probabilities.o: log_utils.hpp stl_utils.hpp
 aml/AML_given_edge_probabilities.o: file_utils.hpp Exception.hpp
 aml/AML_given_edge_probabilities.o: InitAndPrintOn_utils.hpp Sequence.hpp
 aml/AML_given_edge_probabilities.o: Tree_impl.hpp DistanceMatrix.hpp
+aml/AML_given_edge_probabilities.o: Tree_impl.hpp FloatDistanceMatrix.hpp
 aml/AML_given_edge_probabilities.o: DistanceMatrix_impl.hpp BitVector.hpp
+aml/AML_given_edge_probabilities.o: FloatDistanceMatrix_impl.hpp BitVector.hpp
 aml/AML_given_edge_probabilities.o: ./sequence_likelihood/dna_pairwise_sequence_likelihood.hpp
 aml/AML_given_edge_probabilities.o: nucleotide.hpp

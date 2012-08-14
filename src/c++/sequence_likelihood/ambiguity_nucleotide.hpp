@@ -17,7 +17,7 @@
 #include <assert.h>
 #include <string>
 #include <cstdlib>
-
+#include <cstdlib>
 #include <iostream>
 #include "log_utils.hpp"
 

@@ -17,6 +17,7 @@
 #include "NeighborJoining.hpp"
 #include "Simulator.hpp"
 #include "Sequences2DistanceMatrix.hpp"
+
 #include "arg_utils_ext.hpp"
 
 #include <vector>

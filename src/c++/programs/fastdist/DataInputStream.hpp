@@ -7,7 +7,6 @@
 #include "Sequence.hpp"
 #include "Extrainfos.hpp"
 
-
 #include <iostream>
 #include <fstream>
 

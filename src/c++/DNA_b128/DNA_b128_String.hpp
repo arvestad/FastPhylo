@@ -13,6 +13,8 @@
 #define DNA_b128_STRING_HPP
 
 #include <string>
+#include <cstring>
+#include <climits>
 #include "sse2_wrapper.h"
 #include "nucleotide.hpp"
 #include "ambiguity_nucleotide.hpp"

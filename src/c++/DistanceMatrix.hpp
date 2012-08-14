@@ -128,8 +128,7 @@ bool
 applyFixFactor(StrDblMatrix &dm, double fixFactor);
 
 // FAST PRINTING 
-void
-printPHYLIPfast(const StrDblMatrix &dm, FILE *out,bool writeXml);
+//void printPHYLIPfast(const StrDblMatrix &dm, FILE *out,bool writeXml);
 
 #endif // DISTANCEMATRIX_HPP
 

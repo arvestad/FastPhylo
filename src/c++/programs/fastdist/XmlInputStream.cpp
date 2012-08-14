@@ -1,4 +1,5 @@
 #include "XmlInputStream.hpp"
+
 #include <cstdio>
 
 #include <libxml/relaxng.h>

@@ -9,6 +9,7 @@
 ///////////////////////////////////////////////
 
 #include "Sequences2DistanceMatrix.hpp"
+
 #include <string>
 #include <iostream>
 #include <time.h>

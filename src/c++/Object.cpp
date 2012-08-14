@@ -28,7 +28,8 @@ std::string Object::toString() const{
 }
 
 ostream& Object::printOn(ostream& os) const{
-  return os << "Object " << ((long) this)<<" ";
+  //return os << "Object " << ((ptrdiff_t) this)<<" "; // if problem, then uncoment this line and comment below one
+  return os << "Object " << ( this)<<" ";
 }
 
 

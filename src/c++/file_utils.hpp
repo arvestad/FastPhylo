@@ -54,6 +54,11 @@ open_read_stream(const std::string fname,std::ifstream &fin) throw(Exception);
 FILE *
 open_read_file_interactive(const char *fname);
 
+// Added by Mehmood Khan Malagori; email: malagori@kth.se
+std::ofstream *
+open_write_binary(const char *fname) throw(Exception);
+// end
+
 void
 open_read_stream_interactive(const char *fname,std::ifstream &fin);
 

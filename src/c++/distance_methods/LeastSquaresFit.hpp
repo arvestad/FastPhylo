@@ -2,8 +2,8 @@
 //                                        
 // File: Leastsquaresfit.hpp                             
 //                             
-// Author: Isaac Elias         
-// e-mail: isaac@nada.kth.se   
+// Author: Mehmood Alam Khan, Isaac Elias
+// e-mail: malagori@kth.se, isaac@nada.kth.se
 //                             
 // cvs: $Id: LeastSquaresFit.hpp,v 1.3 2006/12/08 11:09:13 isaac Exp $                                 
 //
@@ -13,6 +13,7 @@
 
 #include "SequenceTree.hpp"
 #include "DistanceMatrix.hpp"
+#include "FloatDistanceMatrix.hpp"
 #include <string>
 
 #include "log_utils.hpp"
@@ -33,6 +34,14 @@ computeLeastSquaresEdgeLengths(const StrDblMatrix &orig_dm,  SequenceTree &resul
 // computes the L2 distance betweent he two matrices.
 double
 computeL2(const StrDblMatrix &A,  const StrDblMatrix &B);
+
+
+/// warka dang-----------------------
+float
+computeLeastFloatSquaresEdgeLengths(const StrFloMatrix &orig_dm,  SequenceTree &resultTree);
+
+float
+computeFloatL2(const StrFloMatrix &A,  const StrFloMatrix &B);
 
 #endif // LEASTSQUARESFIT_HPP
 
