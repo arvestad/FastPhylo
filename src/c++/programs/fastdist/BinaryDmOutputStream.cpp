@@ -22,7 +22,7 @@ BinaryDmOutputStream::printRow( StrFloRow & dm, string name, int row) {
 		float f = dm.getDistance(j);
 
 		if ( ! isfinite(f) ){
-			USER_WARNING("warning float not finite (use fix factor) " << f );
+			//USER_WARNING("warning float not finite (use fix factor) " << f );
 			f = -1.0;
 		}
 

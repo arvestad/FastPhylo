@@ -14,6 +14,7 @@
 #include <string>
 
 
+
 class PhylipDmInputStream : public DataInputStream
 {
 public:

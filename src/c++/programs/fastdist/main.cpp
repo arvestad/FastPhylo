@@ -155,7 +155,7 @@ main(int argc,
 		}
 
 		//Mehmood's Changes here : email: malagori@kth.se
-		if (args_info.output_format_arg == output_format_arg_binary) {
+		if (args_info.output_format_arg == output_format_arg_binary || args_info.memory_efficient_given ) {
 			StrFloRow dm;
 			//open infile
 
