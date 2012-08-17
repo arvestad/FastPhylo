@@ -1,1 +1,1 @@
-cat seq.phylip_multialignment | fastdist -I phylip_multialignment -O phylip_dm -b 3 -r 2 | fnj -I phylip_dm -O xml -r 2 -d 4
+cat seq.phylip | fastdist -I phylip -O phylip -b 3 -r 2 | fnj -I phylip -O xml -r 2 -d 4

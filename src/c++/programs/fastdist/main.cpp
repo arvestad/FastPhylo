@@ -65,8 +65,8 @@ main(int argc,
 	if ( args_info.print_relaxng_input_given ) {  cout << fastphylo_sequence_xml_relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
 	if ( args_info.print_relaxng_output_given ) {  cout << fastphylo_distance_matrix_xml_relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
 
-	if ( args_info.number_of_runs_given && args_info.input_format_arg != input_format_arg_phylip_multialignment ) {
-		cerr << "error: --number-of-runs can only be used together with --input-format=phylip_multialignment" << endl; exit(EXIT_FAILURE);
+	if ( args_info.number_of_runs_given && args_info.input_format_arg != input_format_arg_phylip  ) {
+		cerr << "error: --number-of-runs can only be used together with --input-format=phylip " << endl; exit(EXIT_FAILURE);
 	}
 
 	//-----------------------------------------------------
@@ -138,7 +138,7 @@ main(int argc,
 		switch ( args_info.input_format_arg )
 		{
 		case input_format_arg_fasta: istream = new FastaInputStream(inputfilename);  break;
-		case input_format_arg_phylip_multialignment: istream = new PhylipMaInputStream(inputfilename);  break;
+		case input_format_arg_phylip : istream = new PhylipMaInputStream(inputfilename);  break;
 #ifdef WITH_LIBXML
 		case input_format_arg_xml: istream = new XmlInputStream(inputfilename); break;
 #endif // WITH_LIBXML
@@ -147,7 +147,7 @@ main(int argc,
 
 		switch ( args_info.output_format_arg )
 		{
-		case output_format_arg_phylip_dm: ostream = new PhylipDmOutputStream(outputfilename);  break;
+		case output_format_arg_phylip: ostream = new PhylipDmOutputStream(outputfilename);  break;
 		case output_format_arg_xml: ostream = new XmlOutputStream(outputfilename); break;
 		//Mehmood's Changes here : email: malagori@kth.se
 		case output_format_arg_binary: ostream = new BinaryDmOutputStream(outputfilename); break;

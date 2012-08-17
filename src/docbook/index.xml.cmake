@@ -584,9 +584,9 @@ Type <userinput>fastdist --help</userinput> to see the command line options
 <entry><xref linkend="fasta_format"/></entry>
 </row>
 <row>
-<entry>phylip multialignment format</entry>
-<entry>-I phylip_multialignment_format</entry>
-<entry><xref linkend="phylip_multialignment_format"/></entry>
+<entry>phylip format</entry>
+<entry>-I phylip_format</entry>
+<entry><xref linkend="phylip_format"/></entry>
 
 </row>
 <row>
@@ -632,7 +632,7 @@ Type <userinput>fastdist --help</userinput> to see the command line options
 </row>
 <row>
 <entry>phylip distance matrix format</entry>
-<entry>-O phylip_dm</entry>
+<entry>-O phylip</entry>
 <entry><xref linkend="phylip_distance_matrix_format"/></entry>
 
 </row>
@@ -654,17 +654,17 @@ Type <userinput>fastdist --help</userinput> to see the command line options
   <sect4 id="fastdist_examples">
     <title>Examples</title>
 <para>
-<example id="fastdist_phylip_multialignment"><title>fastdist with input in file Phylip multialignment format</title><para>
-We use the file described in <xref linkend="seq.phylip_multialignment"/> as input file. 
+<example id="fastdist_phylip"><title>fastdist with input in file phylip format</title><para>
+We use the file described in <xref linkend="seq.phylip"/> as input file. 
 The file has two datasets so we pass the option <userinput>-r 2</userinput> to <application>fastdist</application>. Per default the output is given in XML format 
 
 <programlisting><![CDATA[
-[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_seq.phylip_multialignment">
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_seq.phylip">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
 </xi:include>
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastdist_seq.phylip_multialignment">
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastdist_seq.phylip">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
@@ -699,7 +699,7 @@ Per default the output is given in XML format
 
 We use the file described in <xref linkend="seq.xml"/> as input file. 
 
-<note><para>The -r option can only be used if the input is in phylip_multialignment format. <application>fastdist</application> will for XML files compute all data sets ( runs ). Fasta files can only contain one data set so the -r option does not make any sense there.</para></note>
+<note><para>The -r option can only be used if the input is in phylip format. <application>fastdist</application> will for XML files compute all data sets ( runs ). Fasta files can only contain one data set so the -r option does not make any sense there.</para></note>
 
 <programlisting><![CDATA[
 [user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_seq.xml">
@@ -721,7 +721,7 @@ We use the file described in <xref linkend="seq.xml"/> as input file.
 <example id="example_fastdist_with_an_xml_stream_on_stdin"><title>fastdist with an XML stream on stdin</title><para>
 
 If you leave out the input filename, the input will be read from stdin. <application>fastdist</application> doesn't wait for the whole xml file to be read before it starts. It starts a computation as soon as an ending <![CDATA[ </run>   ]]>
-has been read. The memory consumption will not grow over time so the input can be arbitrarily large. A never ending input stream only works in the fastphylo sequence XML format, because the phylip multialignment input format needs you to specify in advance how many data sets are to be sent to <application>fastdist</application> ( the -r option ).
+has been read. The memory consumption will not grow over time so the input can be arbitrarily large. A never ending input stream only works in the fastphylo sequence XML format, because the phylip input format needs you to specify in advance how many data sets are to be sent to <application>fastdist</application> ( the -r option ).
 
 
 
@@ -841,7 +841,7 @@ Type <userinput>fnj --help</userinput> to see the command line options
 </row>
 <row>
 <entry>phylip distance matrix format</entry>
-<entry>-I phylip_dm</entry>
+<entry>-I phylip</entry>
 <entry><xref linkend="phylip_distance_matrix_format"/></entry>
 
 </row>
@@ -891,15 +891,15 @@ Type <userinput>fnj --help</userinput> to see the command line options
     <title>Examples</title>
 <para>
 <example id="fnj_phylip.dm"><title>fnj with input file in Phylip distance matrix format</title><para>
-We use the file described in <xref linkend="dm.phylip_dm"/> as input file. The file has two datasets so we pass the option <userinput>-r 2</userinput> to <application>fnj</application>. Per default the output is given in the "fastphylo count tree XML format" ( -O xml ).
+We use the file described in <xref linkend="dm.phylip"/> as input file. The file has two datasets so we pass the option <userinput>-r 2</userinput> to <application>fnj</application>. Per default the output is given in the "fastphylo count tree XML format" ( -O xml ).
 
 <programlisting><![CDATA[
-[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fnj_dm.phylip_dm">
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fnj_dm.phylip">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
 </xi:include>
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fnj_dm.phylip_dm">
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fnj_dm.phylip">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
@@ -934,10 +934,10 @@ We use the file described in <xref linkend="dm.xml"/> as input file. Per default
 
 <example id="example_connecting_fastdist_to_fnj_with_a_pipe"><title>connecting fastdist to fnj with a pipe</title><para>
 
-We use the file described in <xref linkend="seq.phylip_multialignment"/> as input file. 
+We use the file described in <xref linkend="seq.phylip"/> as input file. 
 The file has two data sets. We will bootstrap 3 times.
 
-First we send the data in  phylip_dm format through the pipe:
+First we send the data in  phylip format through the pipe:
 
 <programlisting><![CDATA[
 [user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/connecting_fnj_to_fastdist_with_a_pipe1">
@@ -1066,10 +1066,10 @@ The example file <ulink url="example_files/seq.xml">seq.xml</ulink> contains
 </para></sect3>
 
 
-  <sect3 id="phylip_multialignment_format">
-    <title>Phylip multialignment format</title>
+  <sect3 id="phylip_format">
+    <title>phylip format</title>
 <para>
-The Phylip multialignment input format is chosen by the option <userinput>-I phylip_multialignment</userinput> to fastdist. 
+The phylip input format is chosen by the option <userinput>-I phylip</userinput> to fastdist. 
 
 This format has an extra option -r ( --number-of-run ) for specifying the number of data sets in the input.
 
@@ -1077,10 +1077,10 @@ This format has an extra option -r ( --number-of-run ) for specifying the number
 
 
 
-<example id="seq.phylip_multialignment"><title>seq.phylip_multialignment, an example file in Phylip multialignment format</title><para>
-The example file <ulink url="example_files/seq.phylip_multialignment">seq.phylip_multialignment</ulink> contains
+<example id="seq.phylip"><title>seq.phylip, an example file in phylip format</title><para>
+The example file <ulink url="example_files/seq.phylip">seq.phylip</ulink> contains
 
-<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.phylip_multialignment">
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.phylip">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
@@ -1160,15 +1160,15 @@ The example file <ulink url="example_files/dm.xml">dm.xml</ulink> contains
   <sect3 id="phylip_distance_matrix_format">
     <title>Phylip distance matrix format</title>
 <para>
-The Phylip distance matrix format is chosen by the option <userinput>-O phylip_dm</userinput> to fastdist or the option  <userinput>-I phylip_dm</userinput> to fnj.
+The Phylip distance matrix format is chosen by the option <userinput>-O phylip</userinput> to fastdist or the option  <userinput>-I phylip</userinput> to fnj.
 
 
-<example id="dm.phylip_dm"><title>dm.phylip_dm, an example file in phylip distance matrix format</title><para>
-The example file <ulink url="example_files/dm.phylip_dm">dm.phylip_dm</ulink> contains
+<example id="dm.phylip"><title>dm.phylip, an example file in phylip distance matrix format</title><para>
+The example file <ulink url="example_files/dm.phylip">dm.phylip</ulink> contains
 
 
 
-<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/dm.phylip_dm">
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/dm.phylip">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>

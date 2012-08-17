@@ -120,7 +120,7 @@ main(int argc,
 
 		switch ( args_info.input_format_arg )
 		{
-		case input_format_arg_phylip_dm: istream = new PhylipDmInputStream(inputfilename);  break;
+		case input_format_arg_phylip: istream = new PhylipDmInputStream(inputfilename);  break;
 		//Mehmood's Changes here. email: malagori@kth.se
 		case input_format_arg_binary: istream = new BinaryInputStream(inputfilename); break;
 #ifdef WITH_LIBXML
