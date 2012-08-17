@@ -1,1 +1,0 @@
-fastdist -I phylip_multialignment -r 2 seq.phylip_multialignment

@@ -1,0 +1,1 @@
+fastdist -I phylip -r 2 seq.phylip

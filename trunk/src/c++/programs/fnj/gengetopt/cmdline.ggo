@@ -6,7 +6,7 @@ args "--file-name=fnj_gengetopt --unamed-opts=FILE"
 
 option "outfile" o "output filename. If not specifed, output is written to stdout" string typestr="filename" optional
 
-option "input-format" I "input format. 'xml' means the 'Fastphylo distance matrix XML format'" enum values="phylip_dm","xml","binary" default="xml" optional
+option "input-format" I "input format. 'xml' means the 'Fastphylo distance matrix XML format'" enum values="phylip","xml","binary" default="xml" optional
 option "output-format" O  "output format. 'xml' means the 'Fastphylo tree count XML format'" enum values="newick","xml" default="xml" optional 
 
 option "print-counts" c "print the tree count before each the newick tree. This flag has no effect on the XML output format." flag off
@@ -16,8 +16,8 @@ option "print-counts" c "print the tree count before each the newick tree. This 
 # there is functionality for multiple methods, but Lars Arvestad suggested leaving it out.
 option "method"  m "reconstruction method to apply" enum values="NJ","FNJ","BIONJ" default="FNJ" optional
 
-option "dm-per-run" d "nr of Distance matrices per run. Is only used if the input format is phylip_dm" int optional default="1"
-option "number-of-runs" r "nr of runs. Is only used if the input format is phylip_dm" int optional default="1"
+option "dm-per-run" d "nr of Distance matrices per run. Is only used if the input format is phylip" int optional default="1"
+option "number-of-runs" r "nr of runs. Is only used if the input format is phylip" int optional default="1"
 option "bootstraps" b  "number of boot straps" int default="0" optional
 
 option "print-relaxng-input" p "print the Relax NG schema for the XML input format ( Fastphylo distance matrix XML format ) and then exit" flag off
