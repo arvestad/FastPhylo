@@ -1,5 +1,5 @@
 package "fnj"
-version "0.9"
+version "1.0"
 description "builds phylogenetic trees"
      
 args "--file-name=fnj_gengetopt --unamed-opts=FILE"
