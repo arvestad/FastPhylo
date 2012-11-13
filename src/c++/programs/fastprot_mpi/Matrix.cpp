@@ -4,7 +4,7 @@
 #include <iostream>
 #include <numeric>
 #include <cstdio>
-//#include <omp.h>
+#include <omp.h>
 
   // LAPACK/BLAS functions
   extern"C"{
