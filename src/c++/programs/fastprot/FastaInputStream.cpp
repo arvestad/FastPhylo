@@ -71,23 +71,24 @@ FastaInputStream::readSeq(std::vector<Sequence> &seqs, string &line, int linesRe
 				readGreaterThan = true;
 				readSeq( seqs, line, linesRead );
 			} else {
-				//      std::cerr<<"line: "<<line<<"\n"<<std::endl;
+				/* //      std::cerr<<"line: "<<line<<"\n"<<std::endl;
 				string seqLine;
 				seqLine=line;
 				//      std::cerr<<"seqLine: "<<seqLine<<"\n"<<std::endl;
-				seqStr=seqLine;
-				//      std::cerr<<"seqStr: "<<seqStr<<"\n"<<std::endl;
+				seqStr=seqLine; */
+				seqStr += line;
+		        //std::cerr<<"seqStr1: "<<seqStr<<"\n"<<std::endl;
 			}
 		}
 	}
 	//  std::cerr<<"seqStr: "<<seqStr<<"\n"<<std::endl;
-	if ( !fp->eof() && (seqStr.size() == 0 || seqStr.find_first_not_of("abcdefghiklmnopqrstuvwyzxABCDEFGHIKLMNOPQRSTUVWYZX -.?") != string::npos )) {
+	if ((seqStr.size() == 0 || seqStr.find_first_not_of("abcdefghiklmnopqrstuvwyzxABCDEFGHIKLMNOPQRSTUVWYZX -.?") != string::npos )) {
 		THROW_EXCEPTION("Malformed Fasta format\n");
 		exit(EXIT_FAILURE);
 	} else {
 		Sequence &s = seqs[linesRead-1];
 		s.seq = seqStr;
-		// std::cerr<<"seqStr: "<<seqStr<<std::endl;
+	    //std::cerr<<"seqName= "<<s.name<<"\nseqStr2: "<<seqStr<<std::endl;
 
 	}
 	return true;
