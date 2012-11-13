@@ -7,6 +7,7 @@
  */
 #include "BinaryInputStream.hpp"
 #include <math.h>
+#include <string.h>
 
 using namespace std;
 
@@ -18,7 +19,7 @@ BinaryInputStream::~BinaryInputStream() {
 BinaryInputStream::BinaryInputStream(char * filename = 0 )  
 { 
 	file_was_opened = false;
-	//TODO: caused by changes in fastdist pipe will not work any more => TMP file?!?
+	// pipe will work for binary
 	if ( filename == 0 )
 	{
 		fp = &std::cin;    }
@@ -64,10 +65,15 @@ BinaryInputStream::readFloatDM( StrFloMatrix & dm, std::vector<std::string> & na
 	for (int i=0; i< newSize; i++){
 		while(true){
 			fp->read(&c, sizeof(c));
-			if(c == '0') break;
+			if(c == ':') break;
 			identifier+=c;
 			//printf("%dname=%c\n",j,c);
 		}
+		// if identifier is empty don't add it to the sequence name vector
+		if(identifier.empty()){
+			continue;
+		}
+
 		dm.setIdentifier(i, identifier);
 		identifier= "";
 	}
