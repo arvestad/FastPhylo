@@ -5,7 +5,7 @@
 #include "MaximumLikelihood.hpp"
 #include "ProtSeqUtils.hpp"
 #include "Matrix.hpp"
-//#include "omp.h"
+#include "omp.h"
 
   /*
    * Method to call to calculate distances  
