@@ -10,7 +10,7 @@ option "outfile" o "output filename. If not specifed, output is written to stdou
 
 option "input-format" I "input format. xml means the Fastphylo sequence XML format" values="fasta","phylip","xml" enum  default="fasta" optional
 
-option "memory-efficient" e " memory efficient. Use less memory space and fast implementation" flag off
+option "memory-efficient" e " memory efficient. Use less memory space and fast implementation. Only used with fasta and phylip format" flag off
 
 option "output-format" O  "output format. xml means the Fastphylo distance matrix XML format"  values="phylip","xml","binary" enum default="xml" optional  
 option "distance-function" D "Distance function" values="JC","K2P","TN93","HAMMING" enum default="K2P" optional

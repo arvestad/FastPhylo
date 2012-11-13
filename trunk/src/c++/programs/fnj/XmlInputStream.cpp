@@ -103,7 +103,7 @@ XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> & names, std
 	    case XML_READER_TYPE_END_ELEMENT:  l.in_dm = false; 
 		for(size_t namei=0 ; namei < names.size() ; namei++ )
 		  {   dm.setIdentifier(namei,names[namei]); }
-                return DM_READ;  
+                return DM_READ;
 	    }
 	  }
 
@@ -177,7 +177,7 @@ XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> & names, std
 	  {
 	    switch (type) {
 	    case XML_READER_TYPE_ELEMENT:  l.in_runs = true; continue; 
-	    case XML_READER_TYPE_END_ELEMENT:  l.in_runs = false; return END_OF_RUNS;  
+	    case XML_READER_TYPE_END_ELEMENT:  l.in_runs = false; return END_OF_RUNS;
 	    }
 	  }
 

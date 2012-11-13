@@ -8,7 +8,7 @@ option "outfile" o "output filename. If not specifed, output is written to stdou
 
 option "input-format" I "input format. 'xml' means the 'Fastphylo distance matrix XML format'" enum values="phylip","xml","binary" default="xml" optional
 
-option "memory-efficient" e " memory efficient. Use less memory space and fast implementation" flag off
+option "memory-efficient" e " memory efficient. Use less memory space and fast implementation. Only used with fasta and phylip format" flag off
 
 option "output-format" O  "output format. 'xml' means the 'Fastphylo tree count XML format'" enum values="newick","xml" default="xml" optional 
 

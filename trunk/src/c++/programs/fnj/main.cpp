@@ -136,7 +136,7 @@ main(int argc,
 		default: exit(EXIT_FAILURE);
 		}
 
-		if (args_info.input_format_arg == input_format_arg_binary || args_info.input_format_arg==args_info.memory_efficient_given){
+		if (args_info.input_format_arg == input_format_arg_binary || args_info.memory_efficient_given){
 			StrFloMatrix dm;
 			// THE DATA WE WILL PROCESS
 			std::vector<Sequence> seqs;
@@ -207,7 +207,7 @@ main(int argc,
 				int i;
 				for ( i = 0 ; ( status == END_OF_RUN || status == DM_READ ) && ( i < args_info.dm_per_run_arg   || args_info.input_format_arg == input_format_arg_xml ) ; i++ ){
 
-					if (( status = istream->readDM( dm, names, runId, extrainfos)) != DM_READ ) {
+					if (( status = istream->readDM( dm, names, runId, extrainfos)) !=DM_READ ) {
 						break;
 					};
 

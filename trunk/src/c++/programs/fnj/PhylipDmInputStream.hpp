@@ -1,10 +1,9 @@
+#ifndef PHYLIPDMINPUTSTREAM_HPP
+#define PHYLIPDMINPUTSTREAM_HPP
 /*
  * PhylipDmInputStream.hpp
  *      Auther: Mehmood Alam Khan Email: malagori@kth.se
  */
-#ifndef PHYLIPDMINPUTSTREAM_HPP
-#define PHYLIPDMINPUTSTREAM_HPP
-
 #include <cstdio>
 #include "DataInputStream.hpp"
 

@@ -3,6 +3,7 @@
  *      Auther: Mehmood Alam Khan Email: malagori@kth.se
  */
 #include "PhylipDmInputStream.hpp"
+#include "DistanceMatrix.hpp"
 
 using namespace std;
 
