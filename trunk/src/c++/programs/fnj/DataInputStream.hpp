@@ -24,20 +24,5 @@ public:
 
 };
 
-/*class PhylipDmInputStream : public DataInputStream
-{
-public:
-  PhylipDmInputStream(char * filename );
-  ~PhylipDmInputStream();
-  virtual readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos );
-
-protected:
-  std::istream * fp;
-  std::ifstream fin;
-  bool file_was_opened;
-
- 
-};
-*/
 
 #endif // DATAINPUTSTREAM_HPP
