@@ -1,5 +1,5 @@
 package "fastprot_mpi"
-version "0.1"
+version "1.0"
 description "Computes distance matrices out of multialignments of protein sequences"
      
 args "--file-name=fastprot_mpi_gengetopt --unamed-opts=FILE"
