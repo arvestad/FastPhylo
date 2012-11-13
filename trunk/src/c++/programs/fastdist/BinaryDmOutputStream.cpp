@@ -45,7 +45,7 @@ BinaryDmOutputStream::printHeader( size_t numNodes ) {
 	for(int i = 0; i < numNodes; ++i) {
 		std::string name = m_names[i];
 		ofs->write(name.c_str(), name.length());
-		ofs->write("0",1);
+		ofs->write(":",1);
 	}
 
 }
