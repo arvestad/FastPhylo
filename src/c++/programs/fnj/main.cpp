@@ -136,7 +136,7 @@ main(int argc,
 		default: exit(EXIT_FAILURE);
 		}
 
-		if (args_info.input_format_arg == input_format_arg_binary){
+		if (args_info.input_format_arg == input_format_arg_binary || args_info.memory_efficient_given){
 			StrFloMatrix dm;
 			// THE DATA WE WILL PROCESS
 			std::vector<Sequence> seqs;
