@@ -46,11 +46,9 @@ enum NJ_method{
 // A tree is built from the distance matrix using the supplied method.
 // 
 //
-void
-computeNJTree(StrDblMatrix &dm, SequenceTree &resultTree, NJ_method m=NJ );
+void computeNJTree(StrDblMatrix &dm, SequenceTree &resultTree, NJ_method m=NJ );
 //mehmood's changes here'
-void
-computeFloatNJTree(StrFloMatrix &dm, SequenceTree &resultTree, NJ_method m=NJ );
+void computeNJTree(StrFloMatrix &dm, SequenceTree &resultTree, NJ_method m=NJ );
 
 //---------------------- NEIGHBOR JOINING ----------------------------------------
 //Takes a distance matrix in which the identifiers are tree nodes.

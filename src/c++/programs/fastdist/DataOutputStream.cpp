@@ -9,7 +9,7 @@ DataOutputStream::DataOutputStream(char * filename = 0)
 	fp = NULL;
 
 	file_was_opened = false;
-	if ( filename == 0 )
+	if ( filename == NULL )
 	{
 		fp = stdout;
 	}

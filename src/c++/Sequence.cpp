@@ -246,7 +246,7 @@ Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin){
 			}
 		}
 
-		while ( whileTrue || fin.eof() ){
+		while ( whileTrue){
 			for ( int i = 0 ; i < numSequences ; i++ ){
 				Sequence &s = seqs[i];
 

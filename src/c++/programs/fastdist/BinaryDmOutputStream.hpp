@@ -26,7 +26,7 @@ public:
 	  		ofs = &std::cout;
 	  		writeToCout = true;
 	  	}
-	  };
+		}
 
 
 	  virtual ~BinaryDmOutputStream() {
@@ -34,8 +34,8 @@ public:
 	  		delete ofs;
 	  		ofs = 0;
 	  	}
-	  };
-	  virtual void print( StrDblMatrix & dm ) {};
+		}
+	virtual void print( StrDblMatrix & dm ) {};
 	  virtual void printHeader( size_t numNodes );
 	  virtual void printStartRun(std::vector<std::string> & names, std::string & runId, Extrainfos &extrainfos);
 	  virtual void printRow( StrFloRow & dm, std::string name, int row);

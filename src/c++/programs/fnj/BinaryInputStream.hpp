@@ -8,30 +8,27 @@
 #ifndef BINARYINPUTSTREAM_HPP
 #define BINARYINPUTSTREAM_HPP
 
-#include <cstdio>
 #include "DataInputStream.hpp"
-
+#include <cstdio>
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
 
+using namespace std;
 
-class BinaryInputStream : public DataInputStream
-{
+class BinaryInputStream : public DataInputStream {
 public:
-  BinaryInputStream(char * filename );
-  virtual ~BinaryInputStream();
-  virtual readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos ) {} ;
-  virtual readstatus readFloatDM( StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos );
+  BinaryInputStream(char *filename);
+  ~BinaryInputStream();
+  readstatus readDM(StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos);
 
 protected:
-  std::istream * fp;
-  std::ifstream fin;
+  istream *fp;
+  ifstream fin;
   bool file_was_opened;
-
- 
+  int newSize;
+  bool input_was_read;
 };
-
 
 #endif // BINARYINPUTSTREAM_HPP

@@ -159,7 +159,7 @@ open_read_file(const char *fname) throw(Exception){
 // Added by Mehmood Khan Malagori; email: malagori@kth.se
 std::ofstream *
 open_write_binary(const char *fname) throw(Exception){
-	std::ofstream *ofs = new std::ofstream(fname, ios::binary);
+	ofstream *ofs = new ofstream(fname, ios::binary);
 	if ( !ofs->good() ){
 		ofs->close();
 		ofs->clear();

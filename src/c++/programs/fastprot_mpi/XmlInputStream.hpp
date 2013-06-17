@@ -1,5 +1,5 @@
-#ifndef XMLINPUTSTREAMM_HPP
-#define XMLINPUTSTREAMM_HPP
+#ifndef XMLINPUTSTREAM_HPP
+#define XMLINPUTSTREAM_HPP
 
 #include <cstdio>
 
@@ -10,8 +10,7 @@
 
 #include "../../fileFormatSchema.hpp"
 
-
-
+using namespace std;
 
 typedef enum { RUN_NOT_FINISHED = 0, RUN_FINISHED = 1 } streamstatus;
 

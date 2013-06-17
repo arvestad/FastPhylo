@@ -4,16 +4,12 @@
 #include <cstdio>
 #include "DataOutputStream.hpp"
 
-
-
-class XmlOutputStream : public DataOutputStream
-{
+class XmlOutputStream : public DataOutputStream {
 public:
-  XmlOutputStream();
-  XmlOutputStream(char * filename );
-  virtual ~XmlOutputStream();
+  XmlOutputStream(char *filename);
+  ~XmlOutputStream();
 protected:
-  virtual void print( tree2int_map & tree2count, bool printCounts, std::string & runId, std::vector<std::string> & names, Extrainfos & extrainfos );
+  void print( tree2int_map & tree2count, bool printCounts, std::string & runId, std::vector<std::string> & names, Extrainfos & extrainfos);
 };
 
 #endif // XMLOUTPUTSTREAM_HPP

@@ -1,5 +1,5 @@
 package "fastprot_mpi"
-version "1.0"
+version "1.0.0"
 description "Computes distance matrices out of multialignments of protein sequences"
      
 args "--file-name=fastprot_mpi_gengetopt --unamed-opts=FILE"
@@ -10,15 +10,17 @@ option "outfile" o "output filename. If not specified, output is written to stdo
 
 option "input-format" I "input format. xml means the Fastphylo sequence XML format" values="fasta","phylip","xml" enum  default="fasta" optional
 
-option "output-format" O  "output format. xml means the Fastphylo distance matrix XML format"  values="phylip","xml" enum default="xml" optional 
+option "memory-efficient" e " memory efficient. Use less memory space and fast implementation. Only used with fasta and phylip format" flag off
+
+option "output-format" O  "output format. xml means the Fastphylo distance matrix XML format"  values="phylip","xml","binary" enum default="xml" optional 
 
 option "bootstraps" b "Bootstrap num times and create matrix for each" int default="0" optional
 
-option "no-incl-orig" k "If the distance matrix from the original sequences should be included - for bootstrapping" flag off
+option "no-incl-orig" k "If the distance matrix from the original sequences should not be included - for bootstrapping" flag off
 
 option "seed" R "Random seed. If not specified the current timestamp will be used" int optional
 
-option "distance-function" D "Distance function" values="ID","JC","JCK","JCSS","WAG","JTT","DAY","ARVE","MVR" details="ID outputs percent identity, JC uses a simplistic Jukes-Cantor model, JCK is like JC but uses Kimura's correction, JCSS uses Storm-Sonhammer's correction, WAG uses the WAG matrix (Wheelan and Goldman, 2001), JTT uses the JTT matrix (Jones, Taylor, Thornton, 1992), DAY uses the Dayhoff matrix (Dayhoff et al, 1978), ARVE uses the Arvestad matrix and MVR uses the Muller-Vingron matrix (2000)" enum default="WAG" optional
+option "distance-function" D "Distance function" values="WAG","JTT","DAY","ARVE","MVR" details="ID outputs percent identity, JC uses a simplistic Jukes-Cantor model, JCK is like JC but uses Kimura's correction, JCSS uses Storm-Sonhammer's correction, WAG uses the WAG matrix (Wheelan and Goldman, 2001), JTT uses the JTT matrix (Jones, Taylor, Thornton, 1992), DAY uses the Dayhoff matrix (Dayhoff et al, 1978), ARVE uses the Arvestad matrix and MVR uses the Muller-Vingron matrix (2000)" enum default="WAG" optional
 
 option "model-file" F "Read matrix and equilibrium distribution from file, when used --distance-function is disregarded" string typestr="filename" optional 
 
@@ -29,8 +31,6 @@ option "maximum-likelihood" m "Compute a Maximum Likelihood estimate instead. Ca
 option "pfam" p "use a normal distribution as distance prior, estimated from Pfam 7.2" flag off
 
 option "speed" s "'Speed'. High speed results in low precision, only affects ED calculations. Default is 5. Valid range is [1,10]." int values="1", "2", "3", "4", "5", "6", "7", "8" default="4" optional
-
-option "number-of-runs" r "nr of runs ( datasets ) in input. This option is only used if the input format is phylip." int optional default="1"
 
 option "print-relaxng-input" P "print the Relax NG schema for the XML input format ( Fastphylo protein sequence XML format ) and then exit" flag off
 

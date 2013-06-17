@@ -14,7 +14,7 @@ XmlInputStream::~XmlInputStream()
   xmlCleanupParser();
 }
 
-XmlInputStream::XmlInputStream(char * filename = 0)  
+XmlInputStream::XmlInputStream(char * filename = NULL)
 {
   //
   //  Re: [xml] Why does "-" read from stdin?
@@ -27,13 +27,13 @@ XmlInputStream::XmlInputStream(char * filename = 0)
     THROW_EXCEPTION("file name \"-\" is not allowed. See \n http://mail.gnome.org/archives/xml/2007-February/msg00005.html \n  ");
   }
 
-  if ( filename == 0 ) {
+  if ( filename == NULL ) {
     filename = (char *) "-";
   }
   LIBXML_TEST_VERSION
 
   reader = xmlReaderForFile(filename,0, XML_PARSE_COMPACT | XML_PARSE_NONET );
-  if ( reader == 0 ) { THROW_EXCEPTION("Could not open file"); };
+  if ( reader == NULL ) { THROW_EXCEPTION("Could not open file"); };
 
   l.in_root = false;
   l.in_runs = false;

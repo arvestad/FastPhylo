@@ -10,8 +10,9 @@
 #include "ProtDistCalc.hpp"
 #include "ProtSeqUtils.hpp"
 #include "../../DistanceMatrix.hpp"
-
-#include <mpi.h>
+#include "BinaryDmOutputStream.hpp"
+#include "PhylipDmOutputStream.hpp"
+#include <unistd.h>
 
 #include <string>
 #include <vector>
@@ -26,6 +27,11 @@
 
 
 int main (int argc, char **argv){
+	if(isatty(STDIN_FILENO) && argc==1) {
+	    cout<<"No input data or parameters. Use -h,--help for more information"<<endl;
+	    exit(EXIT_FAILURE);
+	  }
+
 	int rank, size;
 	MPI::Status status;         // status of communication
 
@@ -76,10 +82,6 @@ int main (int argc, char **argv){
 			exit(EXIT_SUCCESS);
 		}
 
-		if (args_info.number_of_runs_given && args_info.input_format_arg != input_format_arg_phylip) {
-			std::cerr << "error: --number-of-runs can only be used together with --input-format=phylip" << std::endl;
-			exit(EXIT_FAILURE);
-		}
 
 		//--------------------------------------------------------------
 		// Read translation model
@@ -88,10 +90,6 @@ int main (int argc, char **argv){
 
 		if (! args_info.model_file_given){
 			switch (args_info.distance_function_arg) {
-			case distance_function_arg_ID : trans_model.model = id; break;
-			case distance_function_arg_JC : trans_model.model = jc; break;
-			case distance_function_arg_JCK : trans_model.model = jck; break;
-			case distance_function_arg_JCSS : trans_model.model = jcss; break;
 			case distance_function_arg_WAG : trans_model.model = wag; break;
 			case distance_function_arg_JTT : trans_model.model = jtt; break;
 			case distance_function_arg_DAY : trans_model.model = day; break;
@@ -121,7 +119,7 @@ int main (int argc, char **argv){
 
 		trans_model.ml = args_info.maximum_likelihood_given;
 		bool remove_indels = args_info.remove_indels_given;
-		int ndatasets = args_info.number_of_runs_arg;
+		int ndatasets = 1;
 
 		//----------------------------------------------
 		// BOOTSTRAPPING
@@ -159,11 +157,15 @@ int main (int argc, char **argv){
 #endif // WITH_LIBXML
 			default: exit(EXIT_FAILURE);
 			}
-
+			bool binary_format_type=args_info.memory_efficient_given;
 			switch ( args_info.output_format_arg )
 			{
 			case output_format_arg_phylip: ostream = new PhylipDmOutputStream(outputfilename);  break;
 			case output_format_arg_xml: ostream = new XmlOutputStream(outputfilename); break;
+			case output_format_arg_binary:
+				ostream = new BinaryDmOutputStream(outputfilename);
+			        binary_format_type=true;
+			        break;
 			default: exit(EXIT_FAILURE);
 			}
 
@@ -252,7 +254,7 @@ int main (int argc, char **argv){
 					}
 
 					ostream->printStartRun(names, runId, extrainfos);
-
+					ostream->printHeader(seqs.size());
 					ostream->print(dm);
 				}
 				// Bootstrapping
@@ -266,8 +268,9 @@ int main (int argc, char **argv){
 					ostream->printStartRun(names, runId, extrainfos);
 					ostream->print(dm);
 				}
-
-				ostream->printEndRun();
+				if (!binary_format_type){
+					ostream->printEndRun();
+				}
 			}
 
 			endtime = MPI::Wtime();

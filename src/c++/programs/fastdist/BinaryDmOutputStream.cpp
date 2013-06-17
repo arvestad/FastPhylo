@@ -32,12 +32,11 @@ BinaryDmOutputStream::printRow( StrFloRow & dm, string name, int row) {
 
 void
 BinaryDmOutputStream::printHeader( size_t numNodes ) {
-
 	//dala mung da num tapa pa  lagawoo
 
 	//converter variable is needed for running the binary output/input
 	//also on 64-bit systems
-	std::string tag = "FASTPHYLO 1";
+	string tag = "FASTPHYLO 1";
 	ofs->write(tag.c_str(), tag.length());
 	long converter = numNodes;
 	ofs->write(reinterpret_cast<char*>( &converter ), sizeof converter);

@@ -6,28 +6,22 @@
  */
 #include <cstdio>
 #include "DataInputStream.hpp"
-
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
 
+using namespace std;
 
-
-class PhylipDmInputStream : public DataInputStream
-{
+class PhylipDmInputStream : public DataInputStream {
 public:
-  PhylipDmInputStream(char * filename );
-  virtual ~PhylipDmInputStream();
-  virtual readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos );
-  virtual readstatus readFloatDM( StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos )  {};
+  PhylipDmInputStream(char * filename);
+  ~PhylipDmInputStream();
+  readstatus readDM( StrDblMatrix & dm, vector<string> & names, string & runId, Extrainfos & extrainfos );
 protected:
-  std::istream * fp;
-  std::ifstream fin;
+  istream * fp;
+  ifstream fin;
   bool file_was_opened;
-
- 
 };
-
 
 #endif // PHYLIPDMINPUTSTREAM_HPP

@@ -8,29 +8,22 @@ using namespace std;
 XmlOutputStream::XmlOutputStream(char * filename = 0 ) : DataOutputStream(filename) 
 {
   fprintf(fp,"<?xml version=\"1.0\"?>\n<root>\n <runs>\n");
-};
+}
 
-XmlOutputStream::~XmlOutputStream() 
-{
+XmlOutputStream::~XmlOutputStream() {
   fprintf(fp," </runs>\n</root>\n");
-};
+}
 
-void
-XmlOutputStream::print( StrDblMatrix & dm ) 
-{
+void XmlOutputStream::print( StrDblMatrix & dm ) {
   //printPHYLIPfast(dm, fp , true );
-  printPHYLIPfastSD(dm, fp , true, false );
+  PhylipDmOutputStream::printPHYLIPfastSD(dm, fp , true, false );
 }
 
-void
-XmlOutputStream::printSD( StrDblMatrix & dm ) 
-{
-  printPHYLIPfastSD(dm, fp , false, true );
+void XmlOutputStream::printSD( StrDblMatrix & dm ) {
+  PhylipDmOutputStream::printPHYLIPfastSD(dm, fp , false, true );
 }
 
-void
-XmlOutputStream::printStartRun( std::vector<string> & names, std::string & runId, Extrainfos &extrainfos ) 
-{
+void XmlOutputStream::printStartRun( std::vector<string> & names, std::string & runId, Extrainfos &extrainfos ) {
   fprintf(fp,"  <run id=\"%s\" dim=\"%i\">\n   <identities>\n", runId.c_str(), names.size() );
       for(size_t namei=0 ; namei<names.size() ; namei++ )
 	{
@@ -53,9 +46,7 @@ XmlOutputStream::printStartRun( std::vector<string> & names, std::string & runId
 }
 
 
-void
-XmlOutputStream::printEndRun() 
-{
+void XmlOutputStream::printEndRun() {
   fprintf(fp,"   </dms>\n  </run>\n");
 }
 

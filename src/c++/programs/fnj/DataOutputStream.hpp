@@ -1,7 +1,6 @@
 #ifndef DATAOUTPUTSTREAM_HPP
 #define DATAOUTPUTSTREAM_HPP
 
-
 #include "Exception.hpp"
 #include "SequenceTree.hpp"
 #include "Extrainfos.hpp"
@@ -10,26 +9,17 @@
 #include <vector>
 #include <string>
 
-class DataOutputStream
-{
-public:
-  DataOutputStream( );
-  DataOutputStream(char * filename );
-  virtual ~DataOutputStream() {};
-  // runId and extrainfos are just used by the XmlOutputStream
-  virtual void print( tree2int_map & tree2count, bool printCounts, std::string & runId,  std::vector<std::string> & names, Extrainfos & extrainfos  ) = 0;
-protected:
-  std::ostream * fp;
-  std::ofstream fout;
-  bool file_was_opened;
-};
+using namespace std;
 
-class TreeTextOutputStream : public DataOutputStream
-{
+class DataOutputStream {
 public:
-  TreeTextOutputStream(char * filename );
-  virtual ~TreeTextOutputStream() {};
-  virtual void print( tree2int_map & tree2count, bool printCounts, std::string & runId, std::vector<std::string> & names, Extrainfos & extrainfos );
+  DataOutputStream(char *filename);
+  virtual ~DataOutputStream() {};
+  virtual void print(tree2int_map & tree2count, bool printCounts, string & runId,vector<string> & names, Extrainfos & extrainfos) {};
+protected:
+  ostream * fp;
+  ofstream fout;
+  bool file_was_opened;
 };
 
 #endif // DATAOUTPUTSTREAM_HPP

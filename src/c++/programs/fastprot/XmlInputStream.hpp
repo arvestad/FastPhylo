@@ -10,8 +10,7 @@
 
 #include "../../fileFormatSchema.hpp"
 
-
-
+using namespace std;
 
 typedef enum { RUN_NOT_FINISHED = 0, RUN_FINISHED = 1 } streamstatus;
 

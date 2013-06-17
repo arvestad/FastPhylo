@@ -40,7 +40,7 @@ computeNJTree(StrDblMatrix &dm, SequenceTree &tree, NJ_method m ){
 
 // Mehmood's addition here
 void
-computeFloatNJTree(StrFloMatrix &dm, SequenceTree &tree, NJ_method m ){
+computeNJTree(StrFloMatrix &dm, SequenceTree &tree, NJ_method m ){
   //Rewrote this method because it unneccessarily created two distance matrices
   int rows = dm.getRows();
   int columns = dm.getColumns();

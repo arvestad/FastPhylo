@@ -11,7 +11,7 @@ FOREACH(i ${commands})
   ADD_CUSTOM_COMMAND(
    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/${i}
    COMMAND /bin/sh ${CMAKE_CURRENT_SOURCE_DIR}/helper.sh ${CMAKE_BINARY_DIR}/src/c++ ${CMAKE_CURRENT_SOURCE_DIR}/commands/${i} > ${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/${i}
-   DEPENDS fastdist
+   DEPENDS fastdist fnj fastprot fastprot_mpi
    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/example_files
   )
   LIST( APPEND depfiles ${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/${i} )
