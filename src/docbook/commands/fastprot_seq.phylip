@@ -1,0 +1,2 @@
+fastprot -I phylip protein_seq.phylip -O xml
+

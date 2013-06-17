@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<root>
+  <runs>
+    <run id="run1">
+      <seq name="Cow" seq="MAYPMQLGFQDA"/>
+	  <seq name="Carp" seq="MAHPTQLGFKDA"/>
+	  <seq name="Chicken" seq="MALLTLMLMEKL"/>
+	  <seq name="Human" seq="MAHLFLTLTTKL"/>
+	</run>  
+  </runs>
+</root>
