@@ -1,0 +1,1 @@
+cat protein_seq.phylip | fastprot -I phylip  -O xml | fnj -I xml -O xml -m NJ
