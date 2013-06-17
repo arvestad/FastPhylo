@@ -1,5 +1,5 @@
 package "fnj"
-version "1.0"
+version "1.0.0"
 description "builds phylogenetic trees"
      
 args "--file-name=fnj_gengetopt --unamed-opts=FILE"
@@ -12,6 +12,7 @@ option "output-format" O  "output format. 'xml' means the 'Fastphylo tree count 
 
 option "print-counts" c "print the tree count before each the newick tree. This flag has no effect on the XML output format." flag off
 
+option "analyze-run-number" a "Determines which dataset should be analyzed with 1 being the first dataset. By default all are analyzed" int optional
 
 #option "method"  m "reconstruction methods to apply" enum values="NJ","FNJ","BIONJ" optional multiple(1-)
 # there is functionality for multiple methods, but Lars Arvestad suggested leaving it out.

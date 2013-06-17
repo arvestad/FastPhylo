@@ -12,22 +12,18 @@
 using namespace std;
 
 BinaryInputStream::~BinaryInputStream() {
-	if ( file_was_opened )
+	if (file_was_opened)
 		fin.close();
 }
 
-BinaryInputStream::BinaryInputStream(char * filename = 0 )  
-{ 
+BinaryInputStream::BinaryInputStream(char * filename)  {
+	input_was_read=false;
 	file_was_opened = false;
-	// pipe will work for binary
-	if ( filename == 0 )
-	{
-		fp = &std::cin;    }
-	else
-	{
+	if (filename==NULL)
+		fp = &cin;
+	else {
 		fin.open(filename, ios::binary );
-		if ( ! fin.good() )
-		{
+		if (!fin.good()) {
 			fin.close();
 			fin.clear();
 			THROW_EXCEPTION("File doesn't exist: \"" << filename << "\"");
@@ -37,61 +33,56 @@ BinaryInputStream::BinaryInputStream(char * filename = 0 )
 	}
 }
 
-
-readstatus
-BinaryInputStream::readFloatDM( StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos )
-{
-
+readstatus BinaryInputStream::readDM(StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos) {
+	long converter;
 	char t;
 	int tagLength=11;
-	std::string tag = "";
-	for (int l=0; l< tagLength; ++l){
-		fp->read(&t, sizeof(t));
-		tag+=t;
+	string tag = "";
+
+	if (!input_was_read) {
+		for (int l=0; l< tagLength; ++l) {
+			fp->read(&t, sizeof(t));
+			tag+=t;
+		}
+		//converter variable is needed for running the binary output/input
+		//also on 64-bit systems
+		fp->read( reinterpret_cast<char*>( &converter ), sizeof(converter));
+		newSize = (int)converter;
 	}
-	//converter variable is needed for running the binary output/input
-	//also on 64-bit systems
-	long converter;
-	fp->read( reinterpret_cast<char*>( &converter ), sizeof converter);
-
-	int newSize = (int)converter;
-
 	dm.resize(newSize);
-
-
-	char c;
-	std::string identifier = "";
-	//printf("newSize:%d ", newSize);
-	for (int i=0; i< newSize; i++){
-		while(true){
-			fp->read(&c, sizeof(c));
-			if(c == ':') break;
-			identifier+=c;
-			//printf("%dname=%c\n",j,c);
+	if (!input_was_read) {
+		char c;
+		string identifier = "";
+		for (int i=0; i< newSize; i++) {
+			while(true){
+				fp->read(&c, sizeof(c));
+				if(c == ':') break;
+				identifier+=c;
+			}
+			// if identifier is empty don't add it to the sequence name vector
+			if(identifier.empty()){
+				continue;
+			}
+			dm.setIdentifier(i, identifier);
+			identifier= "";
 		}
-		// if identifier is empty don't add it to the sequence name vector
-		if(identifier.empty()){
-			continue;
-		}
-
-		dm.setIdentifier(i, identifier);
-		identifier= "";
+		names.clear();
+		for(size_t namei=0 ; namei<dm.getSize() ; namei++ )
+			names.push_back(dm.getIdentifier(namei));
 	}
+	else {
+		for (int i=0; i<names.size(); i++)
+			dm.setIdentifier(i,names.at(i));
+		}
 	// read each line of the matrix and set the distances
 	for(int i = 0; i < newSize; ++i) {
 		for(int j = i; j < newSize; ++j) {
 			float f;
-			fp->read( reinterpret_cast<char*>( &f ), sizeof f);
-			//printf("float=%f\n", f);
+			if (fp->read( reinterpret_cast<char*>( &f ), sizeof(f))==NULL)
+				return END_OF_RUN;
 			dm.setDistance(i, j, f);
 		}
 	}
-
-	names.clear();
-
-	for(size_t namei=0 ; namei<dm.getSize() ; namei++ ) {
-		names.push_back(dm.getIdentifier(namei));
-	}
-
+	input_was_read=true;
 	return DM_READ;
 }

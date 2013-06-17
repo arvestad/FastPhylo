@@ -95,6 +95,7 @@ FastaInputStream::readSequences(std::vector<Sequence> &seqs,  std::string & runI
   std::string line;
   int linesRead = 0;
   while ( getline ( *fp, line ) ) {
+      line.erase(line.find_last_not_of(" \n\r\t")+1);
       if ( line.size() > 0 && line[0] == '>' ) {
         ++linesRead;
         readSeqName( seqs , line ,linesRead );

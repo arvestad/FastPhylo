@@ -3,18 +3,19 @@
 
 #include <cstdio>
 #include "DataOutputStream.hpp"
+#include "PhylipDmOutputStream.hpp"
 
 class XmlOutputStream : public DataOutputStream
 {
 public:
   XmlOutputStream();
   XmlOutputStream(char * filename );
-  virtual ~XmlOutputStream();
+  ~XmlOutputStream();
 
-  virtual void print( StrDblMatrix & dm );
-  virtual void printSD( StrDblMatrix & dm );
-  virtual void printStartRun( std::vector<std::string> & names, std::string & runId, Extrainfos &extrainfos );
-  virtual void printEndRun();
+  void print( StrDblMatrix & dm );
+  void printSD( StrDblMatrix & dm );
+  void printStartRun( std::vector<std::string> & names, std::string & runId, Extrainfos &extrainfos );
+  void printEndRun();
 };
 
 #endif // XMLOUTPUTSTREAM_HPP

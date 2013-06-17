@@ -220,14 +220,6 @@ Slides from presentation at ICALP 2005
     <sect3 id="installation_with_prebuilt_package">
       <title>Installation with prebuilt package</title>
 
-    <sect4 id="installation_on_windows">
-      <title>Installation on Windows with .exe file</title>
-<para>
-To install fastphylo on Windows, first download the fastphylo-@PACKAGE_VERSION@-win32.exe and then execute the file ( click on it ). 
-    </para>
-  </sect4>
-
-
     <sect4 id="installation_on_ubuntu_and_debian">
       <title>Installation on Ubuntu and Debian</title>
 
@@ -261,9 +253,9 @@ To install fastphylo on Centos or Debian, first download the fastphylo-@PACKAGE_
       <title>Installation on Mac OS X</title>
 
 <para>
-To install fastphylo on a Mac OS X v10.5 ( Leopard ) on a Mac computer with Intel cpu, first download the fastphylo-@PACKAGE_VERSION@-MacOSX10.5.tar.gz   and then 
+To install fastphylo on a Mac OS X v10.6.8 (Snow Leopard ) on a Mac computer with Intel cpu, first download the fastphylo-@PACKAGE_VERSION@-MacOSX10.5.tar.gz   and then 
 <programlisting><![CDATA[
-$ tar xfz fastphylo-@PACKAGE_VERSION@-MacOSX10.5.tar.gz  
+$ tar xfz fastphylo-@PACKAGE_VERSION@-MacOSX10.6.8.tar.gz  
 ]]></programlisting>
 
     </para>
@@ -290,7 +282,7 @@ $ tar xfz fastphylo-@PACKAGE_VERSION@-MacOSX10.4.tar.gz
     <sect4 id="building_from_source_on_unix">
       <title>Building from source on Unix</title>
 
-      <para>To build fastphylo on Unix ( e.g. Linux, MacOSX, CygWin ) you need to have this installed
+      <para>To build fastphylo on Unix ( e.g. Linux, MacOSX ) you need to have this installed
         <itemizedlist mark="bullet">
           <listitem>
             <para>
@@ -300,6 +292,27 @@ $ tar xfz fastphylo-@PACKAGE_VERSION@-MacOSX10.4.tar.gz
           <listitem>
             <para>
               <ulink url="http://xmlsoft.org/">libxml2</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <ulink url="http://www.gnu.org/software/wget/">wget</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <ulink url="http://www.netlib.org/lapack/">LAPACK</ulink>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <ulink url="http://www.netlib.org/blas/">BLAS</ulink>
+            </para>
+          </listitem>
+          
+          <listitem>
+            <para>
+              <ulink url="http://www.open-mpi.org/">OpenMPI</ulink>
             </para>
           </listitem>
         </itemizedlist>
@@ -313,53 +326,127 @@ First run <command>cmake</command> then <command>make</command> and then <comman
 $ mkdir /tmp/build
 $ cd /tmp/build
 $ cmake -DCMAKE_INSTALL_PREFIX=/tmp/install /tmp/source && make && make install
+-- A library with BLAS API found.
+-- A library with BLAS API found.
+-- A library with LAPACK API found.
+-- A library with BLAS API found.
+-- A library with BLAS API found.
+-- A library with LAPACK API found.
 -- Configuring done
 -- Generating done
 -- Build files have been written to: /tmp/build
+Scanning dependencies of target fastphylo
+[  1%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/BitVector.cpp.o
+[  2%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/Exception.cpp.o
+[  3%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/InitAndPrintOn_utils.cpp.o
+[  4%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/Object.cpp.o
+[  5%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/Sequence.cpp.o
+[  7%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/SequenceTree.cpp.o
+[  8%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/SequenceTree_MostParsimonious.cpp.o
+[  9%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/Simulator.cpp.o
+[ 10%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/arg_utils_ext.cpp.o
+[ 11%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/file_utils.cpp.o
+[ 13%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/stl_utils.cpp.o
+[ 14%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/DNA_b128/DNA_b128_String.cpp.o
+[ 15%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/DNA_b128/Sequences2DistanceMatrix.cpp.o
+[ 16%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/distance_methods/LeastSquaresFit.cpp.o
+[ 17%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/distance_methods/NeighborJoining.cpp.o
+[ 19%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/sequence_likelihood/Kimura2parameter.cpp.o
+[ 20%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/sequence_likelihood/TamuraNei.cpp.o
+[ 21%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/sequence_likelihood/ambiguity_nucleotide.cpp.o
+[ 22%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/sequence_likelihood/dna_pairwise_sequence_likelihood.cpp.o
+[ 23%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/sequence_likelihood/string_compare.cpp.o
+[ 25%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/DistanceMatrix.cpp.o
+[ 26%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/FloatDistanceMatrix.cpp.o
+[ 27%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/DistanceRow.cpp.o
+[ 28%] Building C object src/c++/CMakeFiles/fastphylo.dir/arg_utils.c.o
+cc1: warning: command line option "-fno-default-inline" is valid for C++/ObjC++ but not for C
+[ 29%] Building C object src/c++/CMakeFiles/fastphylo.dir/std_c_utils.c.o
+cc1: warning: command line option "-fno-default-inline" is valid for C++/ObjC++ but not for C
+[ 30%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/xml_output_global.cpp.o
+[ 32%] Building C object src/c++/CMakeFiles/fastphylo.dir/DNA_b128/sse2_wrapper.c.o
+[ 33%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/DNA_b128/computeTAMURANEIDistance_DNA_b128_String.cpp.o
+[ 34%] Building CXX object src/c++/CMakeFiles/fastphylo.dir/DNA_b128/computeDistance_DNA_b128_String.cpp.o
+Linking CXX static library libfastphylo.a
+[ 34%] Built target fastphylo
+[ 35%] Generating programs/fastdist/gengetopt/fastdist_gengetopt.c, programs/fastdist/gengetopt/fastdist_gengetopt.h
 Scanning dependencies of target fastdist
-[  3%] Building CXX object src/c++/CMakeFiles/fastdist.dir/programs/fastdist.o
-[  6%] Building CXX object src/c++/CMakeFiles/fastdist.dir/BitVector.o
-[  9%] Building CXX object src/c++/CMakeFiles/fastdist.dir/Exception.o
-[ 12%] Building CXX object src/c++/CMakeFiles/fastdist.dir/InitAndPrintOn_utils.o
-[ 15%] Building CXX object src/c++/CMakeFiles/fastdist.dir/Object.o
-[ 18%] Building CXX object src/c++/CMakeFiles/fastdist.dir/Sequence.o
-[ 21%] Building CXX object src/c++/CMakeFiles/fastdist.dir/SequenceTree.o
-[ 25%] Building CXX object src/c++/CMakeFiles/fastdist.dir/SequenceTree_MostParsimonious.o
-[ 28%] Building CXX object src/c++/CMakeFiles/fastdist.dir/Simulator.o
-[ 31%] Building CXX object src/c++/CMakeFiles/fastdist.dir/arg_utils_ext.o
-[ 34%] Building CXX object src/c++/CMakeFiles/fastdist.dir/file_utils.o
-[ 37%] Building CXX object src/c++/CMakeFiles/fastdist.dir/stl_utils.o
-[ 40%] Building CXX object src/c++/CMakeFiles/fastdist.dir/DNA_b128/DNA_b128_String.o
-[ 43%] Building CXX object src/c++/CMakeFiles/fastdist.dir/DNA_b128/Sequences2DistanceMatrix.o
-[ 46%] Building CXX object src/c++/CMakeFiles/fastdist.dir/aml/AML_LeafLifting.o
-[ 50%] Building CXX object src/c++/CMakeFiles/fastdist.dir/aml/AML_given_edge_probabilities.o
-[ 53%] Building CXX object src/c++/CMakeFiles/fastdist.dir/aml/AML_local_improve.o
-[ 56%] Building CXX object src/c++/CMakeFiles/fastdist.dir/aml/AML_star.o
-[ 59%] Building CXX object src/c++/CMakeFiles/fastdist.dir/aml/Big_AML.o
-[ 62%] Building CXX object src/c++/CMakeFiles/fastdist.dir/distance_methods/LeastSquaresFit.o
-[ 65%] Building CXX object src/c++/CMakeFiles/fastdist.dir/distance_methods/NeighborJoining.o
-[ 68%] Building CXX object src/c++/CMakeFiles/fastdist.dir/sequence_likelihood/Kimura2parameter.o
-[ 71%] Building CXX object src/c++/CMakeFiles/fastdist.dir/sequence_likelihood/TamuraNei.o
-[ 75%] Building CXX object src/c++/CMakeFiles/fastdist.dir/sequence_likelihood/ambiguity_nucleotide.o
-[ 78%] Building CXX object src/c++/CMakeFiles/fastdist.dir/sequence_likelihood/dna_pairwise_sequence_likelihood.o
-[ 81%] Building CXX object src/c++/CMakeFiles/fastdist.dir/sequence_likelihood/string_compare.o
-[ 84%] Building CXX object src/c++/CMakeFiles/fastdist.dir/DistanceMatrix.o
-[ 87%] Building C object src/c++/CMakeFiles/fastdist.dir/arg_utils.o
+[ 36%] Building CXX object src/c++/CMakeFiles/fastdist.dir/programs/fastdist/main.cpp.o
+[ 38%] Building CXX object src/c++/CMakeFiles/fastdist.dir/programs/fastdist/PhylipMaInputStream.cpp.o
+[ 39%] Building CXX object src/c++/CMakeFiles/fastdist.dir/programs/fastdist/FastaInputStream.cpp.o
+[ 40%] Building CXX object src/c++/CMakeFiles/fastdist.dir/programs/fastdist/DataOutputStream.cpp.o
+[ 41%] Building CXX object src/c++/CMakeFiles/fastdist.dir/programs/fastdist/XmlOutputStream.cpp.o
+[ 42%] Building CXX object src/c++/CMakeFiles/fastdist.dir/programs/fastdist/PhylipDmOutputStream.cpp.o
+[ 44%] Building CXX object src/c++/CMakeFiles/fastdist.dir/programs/fastdist/BinaryDmOutputStream.cpp.o
+[ 45%] Building C object src/c++/CMakeFiles/fastdist.dir/programs/fastdist/gengetopt/fastdist_gengetopt.c.o
 cc1: warning: command line option "-fno-default-inline" is valid for C++/ObjC++ but not for C
-[ 90%] Building C object src/c++/CMakeFiles/fastdist.dir/std_c_utils.o
-cc1: warning: command line option "-fno-default-inline" is valid for C++/ObjC++ but not for C
-[ 93%] Building C object src/c++/CMakeFiles/fastdist.dir/DNA_b128/sse2_wrapper.o
-[ 96%] Building CXX object src/c++/CMakeFiles/fastdist.dir/DNA_b128/computeTAMURANEIDistance_DNA_b128_String.o
-[100%] Building CXX object src/c++/CMakeFiles/fastdist.dir/DNA_b128/computeDistance_DNA_b128_String.o
+[ 46%] Building CXX object src/c++/CMakeFiles/fastdist.dir/programs/fastdist/XmlInputStream.cpp.o
 Linking CXX executable fastdist
-[100%] Built target fastdist
-[100%] Built target fastdist
-Linking CXX executable CMakeFiles/CMakeRelink.dir/fastdist
+[ 48%] Built target fastdist
+[ 50%] Generating programs/fastprot/gengetopt/fastprot_gengetopt.c, programs/fastprot/gengetopt/fastprot_gengetopt.h
+Scanning dependencies of target fastprot
+[ 51%] Building CXX object src/c++/CMakeFiles/fastprot.dir/programs/fastprot/main.cpp.o
+[ 52%] Building CXX object src/c++/CMakeFiles/fastprot.dir/programs/fastprot/FastaInputStream.cpp.o
+[ 53%] Building CXX object src/c++/CMakeFiles/fastprot.dir/programs/fastprot/DataOutputStream.cpp.o
+[ 54%] Building CXX object src/c++/CMakeFiles/fastprot.dir/programs/fastprot/XmlOutputStream.cpp.o
+[ 55%] Building CXX object src/c++/CMakeFiles/fastprot.dir/programs/fastprot/PhylipMaInputStream.cpp.o
+[ 57%] Building CXX object src/c++/CMakeFiles/fastprot.dir/programs/fastprot/ProtDistCalc.cpp.o
+[ 58%] Building CXX object src/c++/CMakeFiles/fastprot.dir/programs/fastprot/ModelMatrix.cpp.o
+[ 59%] Building CXX object src/c++/CMakeFiles/fastprot.dir/programs/fastprot/ExpectedDistance.cpp.o
+[ 60%] Building CXX object src/c++/CMakeFiles/fastprot.dir/programs/fastprot/Matrix.cpp.o
+[ 61%] Building CXX object src/c++/CMakeFiles/fastprot.dir/programs/fastprot/MaximumLikelihood.cpp.o
+[ 63%] Building CXX object src/c++/CMakeFiles/fastprot.dir/programs/fastprot/ProtSeqUtils.cpp.o
+[ 64%] Building C object src/c++/CMakeFiles/fastprot.dir/programs/fastprot/gengetopt/fastprot_gengetopt.c.o
+cc1: warning: command line option "-fno-default-inline" is valid for C++/ObjC++ but not for C
+[ 65%] Building CXX object src/c++/CMakeFiles/fastprot.dir/programs/fastprot/XmlInputStream.cpp.o
+Linking CXX executable fastprot
+[ 67%] Built target fastprot
+[ 69%] Generating programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c, programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.h
+Scanning dependencies of target fastprot_mpi
+[ 70%] Building CXX object src/c++/CMakeFiles/fastprot_mpi.dir/programs/fastprot_mpi/main.cpp.o
+[ 71%] Building CXX object src/c++/CMakeFiles/fastprot_mpi.dir/programs/fastprot_mpi/FastaInputStream.cpp.o
+[ 72%] Building CXX object src/c++/CMakeFiles/fastprot_mpi.dir/programs/fastprot_mpi/DataOutputStream.cpp.o
+[ 73%] Building CXX object src/c++/CMakeFiles/fastprot_mpi.dir/programs/fastprot_mpi/XmlOutputStream.cpp.o
+[ 75%] Building CXX object src/c++/CMakeFiles/fastprot_mpi.dir/programs/fastprot_mpi/PhylipMaInputStream.cpp.o
+[ 76%] Building CXX object src/c++/CMakeFiles/fastprot_mpi.dir/programs/fastprot_mpi/ProtDistCalc.cpp.o
+[ 77%] Building CXX object src/c++/CMakeFiles/fastprot_mpi.dir/programs/fastprot_mpi/ModelMatrix.cpp.o
+[ 78%] Building CXX object src/c++/CMakeFiles/fastprot_mpi.dir/programs/fastprot_mpi/ExpectedDistance.cpp.o
+[ 79%] Building CXX object src/c++/CMakeFiles/fastprot_mpi.dir/programs/fastprot_mpi/Matrix.cpp.o
+[ 80%] Building CXX object src/c++/CMakeFiles/fastprot_mpi.dir/programs/fastprot_mpi/MaximumLikelihood.cpp.o
+[ 82%] Building CXX object src/c++/CMakeFiles/fastprot_mpi.dir/programs/fastprot_mpi/ProtSeqUtils.cpp.o
+[ 83%] Building C object src/c++/CMakeFiles/fastprot_mpi.dir/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c.o
+cc1: warning: command line option "-fno-default-inline" is valid for C++/ObjC++ but not for C
+[ 84%] Building CXX object src/c++/CMakeFiles/fastprot_mpi.dir/programs/fastprot_mpi/XmlInputStream.cpp.o
+Linking CXX executable fastprot_mpi
+[ 86%] Built target fastprot_mpi
+[ 88%] Generating programs/fnj/gengetopt/fnj_gengetopt.c, programs/fnj/gengetopt/fnj_gengetopt.h
+Scanning dependencies of target fnj
+[ 89%] Building CXX object src/c++/CMakeFiles/fnj.dir/programs/fnj/main.cpp.o
+[ 90%] Building CXX object src/c++/CMakeFiles/fnj.dir/programs/fnj/DataInputStream.cpp.o
+[ 91%] Building CXX object src/c++/CMakeFiles/fnj.dir/programs/fnj/DataOutputStream.cpp.o
+[ 92%] Building CXX object src/c++/CMakeFiles/fnj.dir/programs/fnj/XmlOutputStream.cpp.o
+[ 94%] Building CXX object src/c++/CMakeFiles/fnj.dir/programs/fnj/PhylipDmInputStream.cpp.o
+[ 95%] Building CXX object src/c++/CMakeFiles/fnj.dir/programs/fnj/BinaryInputStream.cpp.o
+[ 96%] Building C object src/c++/CMakeFiles/fnj.dir/programs/fnj/gengetopt/fnj_gengetopt.c.o
+cc1: warning: command line option "-fno-default-inline" is valid for C++/ObjC++ but not for C
+[ 97%] Building CXX object src/c++/CMakeFiles/fnj.dir/programs/fnj/XmlInputStream.cpp.o
+Linking CXX executable fnj
+[100%] Built target fnj
+[ 34%] Built target fastphylo
+[ 48%] Built target fastdist
+[ 67%] Built target fastprot
+[ 86%] Built target fastprot_mpi
+[100%] Built target fnj
 Install the project...
 -- Install configuration: ""
--- Install configuration: ""
--- Installing /tmp/install/bin/fastdist
--- Install configuration: ""
+-- Installing: /tmp/bin/fastdist
+-- Removed runtime path from "/tmp/bin/fastdist"
+-- Installing: /tmp/bin/fnj
+-- Removed runtime path from "/tmp/bin/fnj"
+-- Installing: /tmp/bin/fastprot
+-- Removed runtime path from "/tmp/bin/fastprot"
+-- Installing: /tmp/bin/fastprot_mpi
+-- Removed runtime path from "/tmp/bin/fastprot_mpi"
 ]]></programlisting>
 
 If you want to build the html documentation ( i.e. this page ) you need to pass the -DBUILD_DOCBOOK=ON option to <application>cmake</application>.
@@ -370,56 +457,6 @@ If you want to build the html documentation ( i.e. this page ) you need to pass 
     <sect4 id="building_install_packages">
       <title>Building install packages</title>
       <para>This is section is mainly intended for package maintainers</para>
-
-    <sect5 id="building_an_exe_file_for_windows">
-      <title>Building an .exe file for Windows</title>
-<para>
-To build the fastphylo nullsoft installer package ( fastphylo-@PACKAGE_VERSION@-win32.exe ) 
-you need to have this installed
-        <itemizedlist mark="bullet">
-          <listitem>
-            <para>
-              <ulink url="http://www.cmake.org">cmake</ulink>
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              <ulink url="http://www.mingw.org">mingw</ulink>
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              <ulink url="http://www.mingw.org/wiki/msys">msys</ulink>
-            </para>
-          </listitem>
-
-          <listitem>
-            <para>
-              <ulink url="http://gnuwin32.sourceforge.net/packages/wget.htm">wget</ulink>
-            </para>
-          </listitem>
-
-          <listitem>
-            <para>
-              <ulink url="http://nsis.sourceforge.net">Nullsoft Scriptable Install System</ulink>
-            </para>
-          </listitem>
-        </itemizedlist>
-on your Windows machine.
-      </para>
-      <para>
-
-Just open up a msys bash shell 
-<programlisting><![CDATA[
-$ mkdir tmpbuild
-$ cd tmpbuild
-$ cmake path/to/the/fastphylo/source/code  -DSTATIC=ON -G "MSYS Makefiles" && make win32installer
-]]></programlisting>
-
-The source code for gengetopt, libz and libxml will be automatically downloaded and built statically.
-      </para>
-    </sect5>
-
 
     <sect5 id="building_install_package_rpm">
       <title>Building an rpm</title>
@@ -475,19 +512,7 @@ $ cmake -DCMAKE_INSTALL_PREFIX=/ -DBUILD_DOCBOOK=ON /tmp/source && make package
       <title>Building install package for MacOS X</title>
 <para>
 To build the fastphylo install package for MacOS X
-you need to have this installed
-        <itemizedlist mark="bullet">
-          <listitem>
-            <para>
-              <ulink url="http://www.cmake.org">cmake</ulink>
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              <ulink url="http://www.gnu.org/software/wget/">wget</ulink>
-            </para>
-          </listitem>
-        </itemizedlist>
+you need to have installed all the dependancies mentioned in section <xref linkend="building_from_source_on_unix"/>
 on your MacOS X computer.
       </para>
 
@@ -580,18 +605,18 @@ Type <userinput>fastdist --help</userinput> to see the command line options
 <tbody>
 <row>
 <entry>fasta format</entry>
-<entry>-I xml</entry>
+<entry>-I fasta</entry>
 <entry><xref linkend="fasta_format"/></entry>
 </row>
 <row>
 <entry>phylip format</entry>
-<entry>-I phylip_format</entry>
+<entry>-I phylip</entry>
 <entry><xref linkend="phylip_format"/></entry>
 
 </row>
 <row>
 <entry>fastphylo sequence XML format</entry>
-<entry>-I fastphylo_sequence_xml_format</entry>
+<entry>-I xml</entry>
 <entry><xref linkend="fastphylo_sequence_xml_format"/></entry>
 
 </row>
@@ -655,7 +680,7 @@ Type <userinput>fastdist --help</userinput> to see the command line options
     <title>Examples</title>
 <para>
 <example id="fastdist_phylip"><title>fastdist with input in file phylip format</title><para>
-We use the file described in <xref linkend="seq.phylip"/> as input file. 
+We use the DNA file described in <xref linkend="example.phylip"/> as input file. 
 The file has two datasets so we pass the option <userinput>-r 2</userinput> to <application>fastdist</application>. Per default the output is given in XML format 
 
 <programlisting><![CDATA[
@@ -697,7 +722,7 @@ Per default the output is given in XML format
 
 
 
-We use the file described in <xref linkend="seq.xml"/> as input file. 
+We use the file described in <xref linkend="example.xml"/> containing DNA sequences as input file. 
 
 <note><para>The -r option can only be used if the input is in phylip format. <application>fastdist</application> will for XML files compute all data sets ( runs ). Fasta files can only contain one data set so the -r option does not make any sense there.</para></note>
 
@@ -769,8 +794,180 @@ For each distance matrix the script counts the number of elements with a value b
 </xi:include>
 </programlisting>
 
+
 Read more about <ulink url="http://codespeak.net/lxml/parsing.html">lxml</ulink> and <ulink url="http://www.zvon.org/xxl/XPathTutorial/General/examples.html">xpath</ulink>.
 
+
+</para>
+</example>
+
+
+      </para>
+
+    </sect4>
+
+    </sect3>
+
+<sect3 id="fastprot">
+    <title>fastprot</title>
+
+<para><application>fastprot</application> estimates the evolutionary distance between aligned protein sequences. It implements two methods for calculating the 
+distance between protein sequences, the maximum likelihood of a distance and the expected distance (see further paper by <ulink url="http://www.ncbi.nlm.nih.gov/pubmed/8697232">Agarwal and States</ulink>).
+</para>
+
+
+  <sect4 id="fastprot_command_line_options">
+    <title>Command line options</title>
+
+
+<para>
+
+Type <userinput>fastprot --help</userinput> to see the command line options
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastprot_help">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastprot_help">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+</para></sect4>
+
+
+
+
+  <sect4 id="fastprot_input_file_formats">
+    <title>fastprot input file formats</title>
+
+<para>
+
+<table frame='all'><title>fastprot input file formats</title>
+<tgroup cols='3' align='left' colsep='1' rowsep='1'>
+<thead>
+<row>
+<entry>file format</entry>
+<entry>short option</entry>
+<entry>description</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry>fasta format</entry>
+<entry>-I fasta</entry>
+<entry><xref linkend="fasta_format"/></entry>
+</row>
+<row>
+<entry>phylip format</entry>
+<entry>-I phylip</entry>
+<entry><xref linkend="phylip_format"/></entry>
+
+</row>
+<row>
+<entry>fastphylo sequence XML format</entry>
+<entry>-I xml</entry>
+<entry><xref linkend="fastphylo_sequence_xml_format"/></entry>
+
+</row>
+</tbody>
+</tgroup>
+</table>
+
+
+</para>
+
+
+
+
+
+  </sect4>
+
+  <sect4 id="fastprot_output_formats">
+    <title>fastprot output file formats</title>
+
+
+<para>
+
+<table frame='all'><title>fastprot output file formats</title>
+<tgroup cols='3' align='left' colsep='1' rowsep='1'>
+<thead>
+<row>
+<entry>file format</entry>
+<entry>short option</entry>
+<entry>description</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry>fastphylo sequence XML format</entry>
+<entry>-O xml</entry>
+<entry><xref linkend="fastphylo_distance_matrix_xml_format"/></entry>
+
+</row>
+<row>
+<entry>phylip distance matrix format</entry>
+<entry>-O phylip</entry>
+<entry><xref linkend="phylip_distance_matrix_format"/></entry>
+
+</row>
+</tbody>
+</tgroup>
+</table>
+
+
+</para>
+
+
+
+
+
+
+
+  </sect4>
+
+  <sect4 id="fastprot_examples">
+    <title>Examples</title>
+<para>
+<example id="fastprot_phylip"><title>fastprot with input in file phylip format</title><para>
+We use protein sequence file described in <xref linkend="example.phylip"/> as input file. 
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]>
+
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastprot_seq.phylip">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastprot_seq.phylip">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
+
+</para>
+</example>
+<example id="fastprot_seq.fasta"><title>fastprot with input in file fasta format</title><para>
+We use the file described in <xref linkend="protein_seq.fasta"/> as input file. 
+Per default the output is given in XML format 
+
+<programlisting><![CDATA[
+[user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastprot_seq.fasta">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_BINARY_DIR}/xincluded_files/fastprot_seq.fasta">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include>
+</programlisting>
 
 </para>
 </example>
@@ -934,7 +1131,7 @@ We use the file described in <xref linkend="dm.xml"/> as input file. Per default
 
 <example id="example_connecting_fastdist_to_fnj_with_a_pipe"><title>connecting fastdist to fnj with a pipe</title><para>
 
-We use the file described in <xref linkend="seq.phylip"/> as input file. 
+We use the DNA file described in <xref linkend="example.phylip"/> as input file. 
 The file has two data sets. We will bootstrap 3 times.
 
 First we send the data in  phylip format through the pipe:
@@ -1030,9 +1227,9 @@ This software package handles the following file formats
   <sect3 id="fastphylo_sequence_xml_format">
     <title>Fastphylo sequence XML format</title>
 <para>
-The Fastphylo sequence XML format is chosen by the option <userinput>-I xml</userinput> to fastdist. 
+The Fastphylo sequence XML format is chosen by the option <userinput>-I xml</userinput> to fastdist, fastprot or fastprot_mpi. 
 
-Type <userinput>fastdist --print-relaxng-input</userinput> to see its relaxng schema
+For instance, type <userinput>fastdist --print-relaxng-input</userinput> to see its relaxng schema
 
 <programlisting><![CDATA[
 [user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_print_relaxng_input">
@@ -1052,15 +1249,23 @@ Type <userinput>fastdist --print-relaxng-input</userinput> to see its relaxng sc
 The Relax NG schema specifies that the extrainfo element is optional and can be inserted as a child to a seq element. The extrainfo element may contain any content and will be passed on to the output XML format.
 
 
-<example id="seq.xml"><title>seq.xml, an example file in  Fastphylo sequence XML format</title><para>
+<example id="example.xml"><title>Example files in  Fastphylo sequence XML format</title><para>
 
-The example file <ulink url="example_files/seq.xml">seq.xml</ulink> contains 
+The example file <ulink url="example_files/seq.xml">seq.xml</ulink> contains DNA sequences:
 
 <programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.xml">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
 </xi:include></programlisting>
+
+<ulink url="example_files/protein_seq.xml">protein_seq.xml</ulink> contains protein sequences:
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/protein_seq.xml">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include></programlisting>
+
 </para></example>
 
 </para></sect3>
@@ -1071,21 +1276,24 @@ The example file <ulink url="example_files/seq.xml">seq.xml</ulink> contains
 <para>
 The phylip input format is chosen by the option <userinput>-I phylip</userinput> to fastdist. 
 
-This format has an extra option -r ( --number-of-run ) for specifying the number of data sets in the input.
 
 
 
-
-
-<example id="seq.phylip"><title>seq.phylip, an example file in phylip format</title><para>
-The example file <ulink url="example_files/seq.phylip">seq.phylip</ulink> contains
+<example id="example.phylip"><title>Example files in phylip format</title><para>
+The DNA example file <ulink url="example_files/seq.phylip">seq.phylip</ulink> contains two datasets:
 
 <programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.phylip">
 <xi:fallback>
    couldn't xinclude file
 </xi:fallback>
 </xi:include></programlisting>
-The file has two data sets.
+
+The example file <ulink url="example_files/protein_seq.phylip">protein_seq.phylip</ulink> contains protein sequences:
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/protein_seq.phylip">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include></programlisting>
 
 
 
@@ -1104,8 +1312,7 @@ The parser will take the whole header line as the sequence identifier name, i.e.
 
 
 <example id="seq.fasta"><title>seq.fasta, an example file in fasta format</title><para>
-The example file <ulink url="example_files/seq.fasta">seq.fasta</ulink> contains
-
+The example files <ulink url="example_files/seq.fasta">seq.fasta</ulink> contains DNA:
 
 <programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/seq.fasta">
 <xi:fallback>
@@ -1115,15 +1322,25 @@ The example file <ulink url="example_files/seq.fasta">seq.fasta</ulink> contains
 
 </para></example>
 
+<example id="protein_seq.fasta"><title>protein_seq.fasta, an example file in fasta format</title><para>
+The example files <ulink url="example_files/protein_seq.fasta">protein_seq.fasta</ulink> contains protein sequences:
+
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/example_files/prtoein_seq.fasta">
+<xi:fallback>
+   couldn't xinclude file
+</xi:fallback>
+</xi:include></programlisting>
+
+</para></example>
 
 </para></sect3>
 
   <sect3 id="fastphylo_distance_matrix_xml_format">
     <title>Fastphylo distance matrix XML format</title>
 <para>
-The Fastphylo sequence XML format is chosen by the option <userinput>-O xml</userinput> to fastdist and the option <userinput>-I xml</userinput> to fnj. 
+The Fastphylo sequence XML format is chosen by the option <userinput>-O xml</userinput> to fastdist, fastprot, fastprot_mpi and the option <userinput>-I xml</userinput> to fnj. 
 
-Type <userinput>fastdist --print-relaxng-output</userinput> to see its relaxng schema
+For instance type <userinput>fastdist --print-relaxng-output</userinput> to see its relaxng schema
 
 <programlisting><![CDATA[
 [user@saturn ~]$ ]]><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" encoding="UTF-8" href="${CMAKE_CURRENT_SOURCE_DIR}/commands/fastdist_print_relaxng_output">

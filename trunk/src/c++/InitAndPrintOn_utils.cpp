@@ -15,10 +15,6 @@
 #include "file_utils.hpp"
 #include "xml_output_global.hpp"
 
-
-
-
-
 std::istream &
 operator>>(std::istream &in,Sequence_double &strflt){
     //There are three cases:  1. "str:flt" 2. "str" 3. ":flt"

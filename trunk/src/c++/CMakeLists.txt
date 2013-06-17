@@ -185,6 +185,7 @@ ENDIF(WITH_LIBXML)
 SET(FNJ_SRCS programs/fnj/main.cpp
 programs/fnj/DataInputStream.cpp
 programs/fnj/DataOutputStream.cpp
+programs/fnj/TreeTextOutputStream.cpp
 programs/fnj/XmlOutputStream.cpp
 programs/fnj/PhylipDmInputStream.cpp
 programs/fnj/BinaryInputStream.cpp
@@ -208,18 +209,20 @@ SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/genget
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c  PROPERTIES GENERATED true)
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.h  PROPERTIES GENERATED true)
 
-#changes by Mehmood
+#changes by Mehmood/Henric
 SET(FASTPROT_SRCS programs/fastprot/main.cpp
 programs/fastprot/FastaInputStream.cpp
 programs/fastprot/DataOutputStream.cpp
 programs/fastprot/XmlOutputStream.cpp
 programs/fastprot/PhylipMaInputStream.cpp
+programs/fastprot/PhylipDmOutputStream.cpp
 programs/fastprot/ProtDistCalc.cpp
 programs/fastprot/ModelMatrix.cpp
 programs/fastprot/ExpectedDistance.cpp
 programs/fastprot/Matrix.cpp
 programs/fastprot/MaximumLikelihood.cpp
 programs/fastprot/ProtSeqUtils.cpp
+programs/fastprot/BinaryDmOutputStream.cpp
 ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.c
 )
 
@@ -242,6 +245,8 @@ programs/fastprot_mpi/ExpectedDistance.cpp
 programs/fastprot_mpi/Matrix.cpp
 programs/fastprot_mpi/MaximumLikelihood.cpp
 programs/fastprot_mpi/ProtSeqUtils.cpp
+programs/fastprot/PhylipDmOutputStream.cpp
+programs/fastprot/BinaryDmOutputStream.cpp
 ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c
 )
 

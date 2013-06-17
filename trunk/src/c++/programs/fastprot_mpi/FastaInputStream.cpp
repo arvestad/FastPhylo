@@ -2,24 +2,20 @@
 #include <cstdio>
 #include <fstream>
 
-using std::string;
+using namespace std;
 
 FastaInputStream::~FastaInputStream() {
 	if ( file_was_opened )
 		fin.close();
 }
 
-FastaInputStream::FastaInputStream(char * filename = 0 )  
-{ 
+FastaInputStream::FastaInputStream(char * filename) {
 	file_was_opened = false;
-	if ( filename == 0 )
-	{
-		fp = & std::cin;    }
-	else
-	{
-		fin.open(filename, std::ifstream::in );
-		if ( ! fin.good() )
-		{
+	if ( filename == NULL)
+		fp = & cin;
+	else {
+		fin.open(filename, ifstream::in);
+		if ( ! fin.good()) {
 			fin.close();
 			fin.clear();
 			THROW_EXCEPTION("File doesn't exist: \"" << filename << "\"");
@@ -29,12 +25,9 @@ FastaInputStream::FastaInputStream(char * filename = 0 )
 	}
 }
 
-
-
-bool
-FastaInputStream::read( std::vector<Sequence> &seqs, string & runId, std::vector<string> &names,  Extrainfos &extrainfos) 
-{
-	if ( ! readSequences(seqs,runId,extrainfos) ) return false;
+bool FastaInputStream::read(vector<Sequence> &seqs, string & runId, vector<string> &names,  Extrainfos &extrainfos) {
+	if (! readSequences(seqs,runId,extrainfos) )
+		return false;
 	names.clear();
 	names.reserve(seqs.size());
 	for( size_t i=0;i<seqs.size();i++) {
@@ -43,9 +36,7 @@ FastaInputStream::read( std::vector<Sequence> &seqs, string & runId, std::vector
 	return true;
 }
 
-bool
-FastaInputStream::readSeq(std::vector<Sequence> &seqs, string &line, int linesRead) {
-
+bool FastaInputStream::readSeq(vector<Sequence> &seqs, string &line, int linesRead) {
 	linesRead++;
 	seqs.resize(linesRead);
 	string seqStr;
@@ -58,9 +49,8 @@ FastaInputStream::readSeq(std::vector<Sequence> &seqs, string &line, int linesRe
 	else {
 		nameEndPos = findPos-1;
 	}
-
 	s.name = line.substr(1, nameEndPos);
-
+	//std::cerr<<"s.name: "<<s.name<<std::endl;
 	bool readGreaterThan = false;
 	while (  !readGreaterThan && getline ( *fp, line ) ) {
 		//       c != 'n' && line[0] != '\0' && ! fp->eof() && fp->good()
@@ -68,28 +58,35 @@ FastaInputStream::readSeq(std::vector<Sequence> &seqs, string &line, int linesRe
 			if ( line[0] == '>' ) {
 				readGreaterThan = true;
 				readSeq( seqs, line, linesRead );
-			} else {
-				seqStr+=line;
+			}
+			else {
+				/* //      std::cerr<<"line: "<<line<<"\n"<<std::endl;
+				string seqLine;
+				seqLine=line;
+				//      std::cerr<<"seqLine: "<<seqLine<<"\n"<<std::endl;
+				seqStr=seqLine; */
+				seqStr += line;
+		        //std::cerr<<"seqStr1: "<<seqStr<<"\n"<<std::endl;
 			}
 		}
 	}
-// mehmood's changes here
-	if (!fp->eof() && (seqStr.size() == 0 || seqStr.find_first_not_of("abcdefghiklmnopqrstuvwyzxABCDEFGHIKLMNOPQRSTUVWYZX -.?") != string::npos )) {
+	//  std::cerr<<"seqStr: "<<seqStr<<"\n"<<std::endl;
+	if ((seqStr.size() == 0 || seqStr.find_first_not_of("abcdefghiklmnopqrstuvwyzxABCDEFGHIKLMNOPQRSTUVWYZX -.?") != string::npos )) {
 		THROW_EXCEPTION("Malformed Fasta format\n");
 		exit(EXIT_FAILURE);
-	}else {
+	}
+	else {
 		Sequence &s = seqs[linesRead-1];
 		s.seq = seqStr;
+	    //std::cerr<<"seqName= "<<s.name<<"\nseqStr2: "<<seqStr<<std::endl;
 	}
 	return true;
-
 }
 
-bool
-FastaInputStream::readSequences(std::vector<Sequence> &seqs,  std::string & runId, Extrainfos &extrainfos) {
-
-	std::string line;
-	while ( getline ( *fp, line ) ) {
+bool FastaInputStream::readSequences(vector<Sequence> &seqs, string & runId, Extrainfos &extrainfos) {
+	string line;
+	while ( getline (*fp, line)) {
+		line.erase(line.find_last_not_of(" \n\r\t")+1);
 		if ( line.size() > 0 && line[0] == '>' ) {
 			readSeq( seqs , line ,0 );
 			return true;
