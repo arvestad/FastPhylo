@@ -653,8 +653,15 @@ Type <userinput>fastdist --help</userinput> to see the command line options
 <entry>fastphylo sequence XML format</entry>
 <entry>-O xml</entry>
 <entry><xref linkend="fastphylo_distance_matrix_xml_format"/></entry>
-
 </row>
+
+<row>
+<entry>Binary distance matrix format</entry>
+<entry>-O binary</entry>
+<entry><xref linkend="binary_distance_matrix_format"/></entry>
+</row>
+
+
 <row>
 <entry>phylip distance matrix format</entry>
 <entry>-O phylip</entry>
@@ -906,8 +913,14 @@ Type <userinput>fastprot --help</userinput> to see the command line options
 <entry>fastphylo sequence XML format</entry>
 <entry>-O xml</entry>
 <entry><xref linkend="fastphylo_distance_matrix_xml_format"/></entry>
-
 </row>
+
+<row>
+<entry>Binary distance matrix format</entry>
+<entry>-O binary</entry>
+<entry><xref linkend="binary_distance_matrix_format"/></entry>
+</row>
+
 <row>
 <entry>phylip distance matrix format</entry>
 <entry>-O phylip</entry>
@@ -1034,8 +1047,14 @@ Type <userinput>fnj --help</userinput> to see the command line options
 <entry>fastphylo sequence XML format</entry>
 <entry>-I xml</entry>
 <entry><xref linkend="fastphylo_distance_matrix_xml_format"/></entry>
-
 </row>
+
+<row>
+<entry>Binary distance matrix format</entry>
+<entry>-I binary</entry>
+<entry><xref linkend="binary_distance_matrix_format"/></entry>
+</row>
+
 <row>
 <entry>phylip distance matrix format</entry>
 <entry>-I phylip</entry>
@@ -1396,6 +1415,23 @@ It contains two data sets.
 </example>
 
 </para></sect3>
+
+
+
+<sect3 id="binary_distance_matrix_format">
+    <title>Binary distance matrix format</title>
+<para>
+The Binary distance matrix format is chosen by the option <userinput>-O binary</userinput> to fastdist, fastprot and fastprot_mpi or the option  <userinput>-I binary</userinput> to fnj.
+Using the binary format option, fastphylo performs row-wise operations in computing the upper triangular distance matrix. Furthermore, the upper triangular distance matrix 
+is then stored in a binary format instead of plain text. The main advantage of introducing binary format is that it reduces the 
+disk space utilization and speedup the performance of fastphylo since only half of the matrix is computted instead of the whole distance matrix.
+
+In the binnary format output file, we first store fastphylo's current version followed by the number of sequences, then accessions and 
+finally, rows of the upper trianguler distance matrix. We use colon delimiter for binary format to delimit each component separately.
+
+</para></sect3>
+
+
 
   <sect3 id="fastphylo_tree_count_xml_format">
     <title>Fastphylo tree count XML format</title>
