@@ -1,1 +1,0 @@
-cat protein_seq.xml | fastprot -I xml -O xml
