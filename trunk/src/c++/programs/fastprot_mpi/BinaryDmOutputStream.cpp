@@ -36,12 +36,12 @@ void BinaryDmOutputStream::print(StrDblMatrix &dm) {
 
 	const size_t numNodes = dm.getSize();
 	for ( size_t i=0; i<numNodes ; i++)
-		cerr<<"row";
+
 		for ( size_t j=i; j<numNodes; j++) {
 			f=dm.getDistance(i,j);
 			if (!isfinite(f))
 				f=-1.0;
-			cerr<<"\t"<<f<<endl;
+
 			ofs->write(reinterpret_cast<char*>(&f),sizeof(f));
 			}
 	}
@@ -57,7 +57,7 @@ void BinaryDmOutputStream::printHeader( size_t numNodes ) {
 	//int nameSize=10;
 	for(int i = 0; i < numNodes; ++i) {
 		string name = m_names[i];
-		cerr<<"name:\t"<<name<<endl;
+
 		ofs->write(name.c_str(), name.length());
 		ofs->write(":",1);
 	}
