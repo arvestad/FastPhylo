@@ -13,7 +13,7 @@ FIND_PACKAGE(MPI REQUIRED)
 INCLUDE(CMakeForceCompiler)
 #mehmood's changes here
 IF(CMAKE_HOST_APPLE)
-	CMAKE_FORCE_CXX_COMPILER(openmpicxx "MPI C++ Compiler for Apple")
+	CMAKE_FORCE_CXX_COMPILER(mpic++ "MPI C++ Compiler for Apple")
 ELSEIF(CMAKE_HOST_UNIX)
 	CMAKE_FORCE_CXX_COMPILER(mpiCC "MPI C++ Compiler for Linux")
 ENDIF()

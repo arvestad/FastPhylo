@@ -79,10 +79,10 @@ add_custom_command(OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gen
                      DEPENDS   ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot_mpi/gengetopt/cmdline.ggo  ${GENGETOPTDEP}
                      VERBATIM)
 
-INCLUDE (CMakeDetermineCXXCompiler)
-IF(NOT CMAKE_COMPILER_IS_GNUCXX)
-      MESSAGE(SEND_ERROR "Could not find gcc")
-ENDIF(NOT CMAKE_COMPILER_IS_GNUCXX)
+#INCLUDE (CMakeDetermineCXXCompiler)
+#IF(NOT CMAKE_COMPILER_IS_GNUCXX)
+#      MESSAGE(SEND_ERROR "Could not find gcc")
+#ENDIF(NOT CMAKE_COMPILER_IS_GNUCXX)
 
 
 IF(WITH_LIBXML)
