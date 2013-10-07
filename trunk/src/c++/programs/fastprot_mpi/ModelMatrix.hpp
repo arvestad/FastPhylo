@@ -9,7 +9,7 @@
   typedef std::vector<double> DblVec;
   
   //! Enum that specifies the wanted model
-  enum model_type {id, jc, jck, jcss, wag, day, arve, jtt, mvr};
+  enum model_type {id, jc, jck, jcss, wag, day, arve, jtt, mvr, lg};
 
   //! Gets the rate matrix for the specified model
   Matrix get_model_matrix(model_type model);
@@ -35,4 +35,8 @@
   Matrix get_wag();
   //! The WAG equilibrium distribution
   DblVec get_wag_eq();
+  //! The LG rate matrix
+   Matrix get_lg();
+   //! The LG equilibrium distribution
+   DblVec get_lg_eq();
 #endif

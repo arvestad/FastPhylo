@@ -95,6 +95,7 @@ int main (int argc, char **argv){
 			case distance_function_arg_DAY : trans_model.model = day; break;
 			case distance_function_arg_ARVE : trans_model.model = arve; break;
 			case distance_function_arg_MVR : trans_model.model = mvr; break;
+			case distance_function_arg_LG : trans_model.model = lg; break;
 			default: std::cerr << "error: model chosen not available" << std::endl; exit(EXIT_FAILURE);
 			}
 		} else {

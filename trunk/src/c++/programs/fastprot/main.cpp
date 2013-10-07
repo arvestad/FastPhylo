@@ -83,6 +83,9 @@ int main (int argc, char **argv) {
       case distance_function_arg_MVR:
         trans_model.model = mvr;
         break;
+      case distance_function_arg_LG:
+              trans_model.model = lg;
+              break;
       default:
         cerr << "error: model chosen not available" << endl;
         exit(EXIT_FAILURE);

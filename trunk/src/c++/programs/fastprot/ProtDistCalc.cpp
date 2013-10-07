@@ -30,6 +30,7 @@
       case arve:
       case jtt:
       case mvr:
+      case lg:
         if (t_model.ml)
           calculate_ml_dists(sv, dm, t_model.model); 
         else 
