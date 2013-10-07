@@ -1,0 +1,14 @@
+This directory contains helpful Octave (Matlab clone) code.
+
+File and contents:
+paml2fastprot
+
+	One function for converting a PAML matrix to "classic"
+	Markov-chain transition matrix format ("a Q matrix"). We would
+	probably be better off being able to read a PAML matrix
+	natively, but for simplicitly we are using this
+	workaround. The second function in this code outputs the Q
+	matrix in a format suitable for direct inclusion in the
+	code. Look at the FastProt class ModelMatrix for examples of
+	how to add a matrix, it is quite self-explanatory.
+
