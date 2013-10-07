@@ -1,0 +1,31 @@
+more off;
+
+function Q = paml2fastprot(S, eq)
+  # In: a PAML matrix S, size 20x20, and an equilibrium vector
+  # Out: a classic Q matrix, 20x20, such that q_ij = pi_j*s_ij
+  
+  if rows(S) != 20
+    disp("PAML-style diagonal matrix must have 20 rows, first row should be zeros.")
+  endif
+  if size(eq) != [1, 20]
+    disp("EQ vector must be a 20x1 matrix.")
+  endif
+  S = S + transpose(S);
+  D = zeros(20, 20);
+  D = D + diag(eq);
+  Q = S * D;
+  scaling = sum(sum(D * Q));
+  Q = scaling .* Q;
+  Q = Q - diag(sum(Q'));
+  
+endfunction
+
+function writeFastProtMatrix(filename, Q)
+  fd = fopen(filename, "w");
+  fdisp(fd, "double array[] = {");
+  fclose(fd);
+  dlmwrite(filename, Q, ", ", "-append", "newline", ",\n");
+  fd = fopen(filename, "a");
+  fdisp(fd, "};");
+  fclose(fd);
+endfunction
