@@ -20,7 +20,7 @@ option "no-incl-orig" k "If the distance matrix from the original sequences shou
 
 option "seed" R "Random seed. If not specified the current timestamp will be used" int optional
 
-option "distance-function" D "Distance function" values="WAG","JTT","DAY","ARVE","MVR" details="ID outputs percent identity, JC uses a simplistic Jukes-Cantor model, JCK is like JC but uses Kimura's correction, JCSS uses Storm-Sonhammer's correction, WAG uses the WAG matrix (Wheelan and Goldman, 2001), JTT uses the JTT matrix (Jones, Taylor, Thornton, 1992), DAY uses the Dayhoff matrix (Dayhoff et al, 1978), ARVE uses the Arvestad matrix and MVR uses the Muller-Vingron matrix (2000)" enum default="WAG" optional
+option "distance-function" D "Distance function" values="WAG","JTT","DAY","ARVE","MVR","LG" details="ID outputs percent identity, JC uses a simplistic Jukes-Cantor model, JCK is like JC but uses Kimura's correction, JCSS uses Storm-Sonhammer's correction, WAG uses the WAG matrix (Wheelan and Goldman, 2001), JTT uses the JTT matrix (Jones, Taylor, Thornton, 1992), DAY uses the Dayhoff matrix (Dayhoff et al, 1978), ARVE uses the Arvestad matrix and MVR uses the Muller-Vingron matrix (2000) and LG uses Le and Gascuel matrix (2008)" enum default="WAG" optional
 
 option "model-file" F "Read matrix and equilibrium distribution from file, when used --distance-function is disregarded" string typestr="filename" optional 
 
