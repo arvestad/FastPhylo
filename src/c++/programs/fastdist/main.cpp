@@ -155,7 +155,7 @@ main(int argc,
 		}
 
 		//Mehmood's Changes here : email: malagori@kth.se
-		if (args_info.output_format_arg == output_format_arg_binary || args_info.memory_efficient_given ) {
+		if (args_info.output_format_arg == output_format_arg_binary ) {
 			StrFloRow dm;
 			//open infile
 
@@ -182,10 +182,10 @@ main(int argc,
 					ostream->printHeader(numberOfSequences);
 
 					for(size_t i = 0; i < numberOfSequences; ++i){
-						fillMatrixRow(dm, b128seqs, trans_model, i);
+						fillMatrixRow(dm, b128seqs, trans_model, i, false);
 						dm.setIdentifier(names.at(i));
 						if(useFixFactor) applyFixFactorRow(dm,fixfactor);
-						ostream->printRow(dm, names.at(i), i);
+						ostream->printRow(dm, names.at(i), i, false);
 					}
 				}
 				//bootstrapping
@@ -205,10 +205,10 @@ main(int argc,
 					if ( !no_incl_orig ){//create the distance matrix for the original sequences
 						Sequences2DNA_b128(seqs,b128seqs);
 						for(size_t i = 0; i < numberOfSequences; ++i){
-							fillMatrixRow(dm, b128seqs, trans_model, i);
+							fillMatrixRow(dm, b128seqs, trans_model, i, false);
 							dm.setIdentifier(names.at(i));
 							if(useFixFactor) applyFixFactorRow(dm,fixfactor);
-							ostream->printRow(dm, names.at(i), i);
+							ostream->printRow(dm, names.at(i), i, false);
 						}
 					}
 					//start the bootstrapping
@@ -218,15 +218,87 @@ main(int argc,
 						std::cout << numberOfSequences << std::endl;
 						ostream->printBootstrapSpliter(numberOfSequences);
 						for(size_t i = 0; i < numberOfSequences; ++i){
-							fillMatrixRow(dm, b128seqs, trans_model, i);
+							fillMatrixRow(dm, b128seqs, trans_model, i, false);
 							dm.setIdentifier(names.at(i));
 							if(useFixFactor) applyFixFactorRow(dm,fixfactor);
-							ostream->printRow(dm, names.at(i), i);
+							ostream->printRow(dm, names.at(i), i,false);
 						}
 					}
 				}
 				ostream->printEndRun();
 			}//end data set loop
+		} else if ( args_info.memory_efficient_given ) {
+			StrFloRow dm;
+						//open infile
+
+						// THE DATA WE WILL PROCESS
+						std::vector<Sequence> seqs;
+						std::vector<string> names;
+						std::vector<DNA_b128_String> b128seqs;
+
+						Extrainfos extrainfos;
+
+						//for each dataset in the files
+
+
+						for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
+							//no bootstrapping
+							std::string runId("");
+							if ( !no_incl_orig && numboot == 0){//only need to create one distance matrix
+								if ( ! istream->read(b128seqs,runId,names,extrainfos)) {
+									break;
+								}
+
+								const size_t numberOfSequences = b128seqs.size();
+								ostream->printStartRun(names,runId,extrainfos);
+								ostream->printHeader(numberOfSequences);
+
+								for(size_t i = 0; i < numberOfSequences; ++i){
+									fillMatrixRow(dm, b128seqs, trans_model, i, true);
+									dm.setIdentifier(names.at(i));
+									if(useFixFactor) applyFixFactorRow(dm,fixfactor);
+									ostream->printRow(dm, names.at(i), i, true);
+								}
+							}
+							//bootstrapping
+							else{
+								//TODO: implement bootstraping with the improved version of FastDist
+								StrFloRow dm;
+								//read original sequences
+								if ( ! istream->readSequences(seqs,runId,extrainfos)) break;
+								names.clear();names.reserve(seqs.size());
+								for( size_t i=0;i<seqs.size();i++)
+								{
+									names.push_back(seqs[i].name);
+								}
+								const size_t numberOfSequences = seqs.size();
+								ostream->printStartRun(names,runId,extrainfos);
+								ostream->printHeader(numberOfSequences);
+								if ( !no_incl_orig ){//create the distance matrix for the original sequences
+									Sequences2DNA_b128(seqs,b128seqs);
+									for(size_t i = 0; i < numberOfSequences; ++i){
+										fillMatrixRow(dm, b128seqs, trans_model, i, true);
+										dm.setIdentifier(names.at(i));
+										if(useFixFactor) applyFixFactorRow(dm,fixfactor);
+										ostream->printRow(dm, names.at(i), i, true);
+									}
+								}
+								//start the bootstrapping
+								//	  vector<Sequence> bootsequences;
+								for ( int b = 0 ; b < numboot ; b++ ){
+									bootstrapSequences(seqs,b128seqs);
+									std::cout << numberOfSequences << std::endl;
+									ostream->printBootstrapSpliter(numberOfSequences);
+									for(size_t i = 0; i < numberOfSequences; ++i){
+										fillMatrixRow(dm, b128seqs, trans_model, i, true);
+										dm.setIdentifier(names.at(i));
+										if(useFixFactor) applyFixFactorRow(dm,fixfactor);
+										ostream->printRow(dm, names.at(i), i, true);
+									}
+								}
+							}
+							ostream->printEndRun();
+						}//end data set loop
 		}
 		else{
 			StrDblMatrix dm;

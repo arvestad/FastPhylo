@@ -84,24 +84,24 @@ void fillMatrix_TN93(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 //--------- mehmood warka dang---------------
 
 void fillMatrixRow(StrFloRow &dm, std::vector<DNA_b128_String> &b128_strings,
-		sequence_translation_model trans_model, size_t row);
+		sequence_translation_model trans_model, size_t row, bool mem_eff_flag);
 
 //--------------------------------------------------------------------
 //Functions for specific models.
 
 void
 fillMatrixRow_Hamming(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
-		   sequence_translation_model trans_model, size_t row);
+		   sequence_translation_model trans_model, size_t row, bool mem_eff_flag);
 
 void fillMatrixRow_JC(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
-		   sequence_translation_model trans_model, size_t row);
+		   sequence_translation_model trans_model, size_t row, bool mem_eff_flag);
 
 void fillMatrixRow_K2P(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
-		    sequence_translation_model trans_model, size_t row);
+		    sequence_translation_model trans_model, size_t row, bool mem_eff_flag);
 
 void fillMatrixRow_TN93(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 		     DNA_b128_String::base_frequences freqs,
-		     sequence_translation_model trans_model, size_t row);
+		     sequence_translation_model trans_model, size_t row, bool mem_eff_flag);
 
 //-----------
 

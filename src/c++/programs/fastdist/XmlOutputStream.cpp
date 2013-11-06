@@ -25,7 +25,7 @@ XmlOutputStream::print( StrDblMatrix & dm )
 }
 //mehmood changes here... email: malagori@kth.se
 void
-XmlOutputStream::printRow( StrFloRow & dm, string name, int row)
+XmlOutputStream::printRow( StrFloRow & dm, string name, int row, bool mem_eff_flag)
 {
 
 	const size_t numNodes = dm.getColumns();
@@ -39,7 +39,9 @@ XmlOutputStream::printRow( StrFloRow & dm, string name, int row)
   	int entriesPerRow = numNodes;
 
 	fprintf(fp,"    <row>\n" );
-
+	if (mem_eff_flag == true){
+		row=0;
+	}
 	for ( size_t j = row ; j < entriesPerRow ; j++ ){
 
 		float f = dm.getDistance(j);

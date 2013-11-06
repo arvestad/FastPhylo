@@ -15,7 +15,7 @@
 using namespace std;
 
 void
-BinaryDmOutputStream::printRow( StrFloRow & dm, string name, int row) {
+BinaryDmOutputStream::printRow( StrFloRow & dm, string name, int row, bool mem_eff_flag) {
 	int entriesPerRow = dm.getColumns();
 
 	for( size_t j = row ; j < entriesPerRow ; j++ ) {

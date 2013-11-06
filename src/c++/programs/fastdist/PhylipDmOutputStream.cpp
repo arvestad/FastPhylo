@@ -19,7 +19,7 @@ PhylipDmOutputStream::print( StrDblMatrix & dm )
 }
 
 void
-PhylipDmOutputStream::printRow( StrFloRow & dm, string name, int row) {
+PhylipDmOutputStream::printRow( StrFloRow & dm, string name, int row, bool mem_eff_flag) {
 
    const size_t numNodes = dm.getColumns();
 
@@ -33,8 +33,12 @@ PhylipDmOutputStream::printRow( StrFloRow & dm, string name, int row) {
    fprintf(fp,"%-10s", name.c_str());
 
 	float f = 0.0;
-	for(size_t i = 0; i < row; ++i){
-		fprintf(fp, "%10f",f);
+	if (mem_eff_flag == false){
+		for(size_t i = 0; i < row; ++i){
+			fprintf(fp, "%10f",f);
+		}
+	}else{
+		row=0;
 	}
 
    for( size_t j = row ; j < entriesPerRow ; j++ ) {

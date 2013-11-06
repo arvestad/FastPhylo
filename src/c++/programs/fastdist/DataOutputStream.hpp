@@ -21,7 +21,7 @@ public:
   virtual void print( StrDblMatrix & dm )=0;  //Mehmood's Changes here. Email: malagori@kth.se
   virtual void printStartRun(std::vector<std::string> & names, std::string & runId, Extrainfos &extrainfos )=0;
   virtual void printEndRun()=0;
-  virtual void printRow( StrFloRow & dm , std::string name, int row)=0 ;
+  virtual void printRow( StrFloRow & dm , std::string name, int row, bool mem_eff_flag)=0 ;
   virtual void printHeader( size_t numNodes )=0 ;
   virtual void printBootstrapSpliter(size_t numNodes)=0 ;
 
