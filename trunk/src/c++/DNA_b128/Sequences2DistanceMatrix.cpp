@@ -594,7 +594,7 @@ void fillMatrix_TN93(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 //-------- mehmood warka dang---------------
 
 void fillMatrixRow(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
-		sequence_translation_model trans_model, size_t row){
+		sequence_translation_model trans_model, size_t row, bool mem_eff_flag){
 
 	const size_t numSequences = seqs.size();
 	dm.resize(numSequences);
@@ -628,17 +628,17 @@ void fillMatrixRow(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 
 	//CALL DISTANCE COMPUTATION
 	switch( trans_model.model ){
-	case HAMMING_DISTANCE: fillMatrixRow_Hamming(dm,seqs,trans_model, row);break;
-	case JC:  fillMatrixRow_JC(dm,seqs,trans_model, row);break;
-	case K2P:  fillMatrixRow_K2P(dm,seqs,trans_model, row);break;
-	case TN93: fillMatrixRow_TN93(dm,seqs,freqs,trans_model, row);break;
+	case HAMMING_DISTANCE: fillMatrixRow_Hamming(dm,seqs,trans_model, row, mem_eff_flag);break;
+	case JC:  fillMatrixRow_JC(dm,seqs,trans_model, row , mem_eff_flag);break;
+	case K2P:  fillMatrixRow_K2P(dm,seqs,trans_model, row, mem_eff_flag);break;
+	case TN93: fillMatrixRow_TN93(dm,seqs,freqs,trans_model, row, mem_eff_flag);break;
 	default:
 		PROG_ERROR("Non handled model: " << trans_model.model);
 	}
 }
 
 void fillMatrixRow_K2P(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
-		sequence_translation_model trans_model, size_t row){
+		sequence_translation_model trans_model, size_t row, bool mem_eff_flag){
 
 
 	//saves the number of sequences and the length of the first sequence
@@ -675,8 +675,12 @@ void fillMatrixRow_K2P(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 		}
       }
     }*/
-	for ( size_t j = 0 ; j < row ; j++ ){
-		dm.setDistance(j, 0);
+	if (mem_eff_flag == false){
+		for ( size_t j = 0 ; j < row ; j++ ){
+			dm.setDistance(j, 0);
+		}
+	}else{
+		row=-1;
 	}
 
 	//Calculates distances from si to every other sequence. One row of the matrix
@@ -729,7 +733,7 @@ void fillMatrixRow_K2P(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 }
 void
 fillMatrixRow_Hamming(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
-		sequence_translation_model trans_model, size_t row){
+		sequence_translation_model trans_model, size_t row, bool mem_eff_flag){
 
 	const size_t numSequences = seqs.size();
 	const size_t strlen = seqs[0].getNumChars();
@@ -763,7 +767,13 @@ fillMatrixRow_Hamming(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
           }
         }
     }*/
-
+	if (mem_eff_flag == false){
+			for ( size_t j = 0 ; j < row ; j++ ){
+				dm.setDistance(j, 0);
+			}
+		}else{
+			row=-1;
+		}
 	// compute the remaining distances for si
 	for ( size_t j = row+1 ; j < numSequences ; j++ ){
 		//compute distance without using the ambiguities
@@ -808,7 +818,8 @@ fillMatrixRow_Hamming(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 }
 
 void fillMatrixRow_JC(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
-		sequence_translation_model trans_model, size_t row){  const size_t numSequences = seqs.size();
+		sequence_translation_model trans_model, size_t row, bool mem_eff_flag){
+		const size_t numSequences = seqs.size();
 		const size_t strlen = seqs[0].getNumChars();
 
 		dm.resize(numSequences);
@@ -838,7 +849,13 @@ void fillMatrixRow_JC(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
           }
         }
     }*/
-
+		if (!mem_eff_flag == false){
+				for ( size_t j = 0 ; j < row ; j++ ){
+					dm.setDistance(j, 0);
+				}
+			}else{
+				row=-1;
+			}
 
 		ML_string_distance  ml_dist;
 		for ( size_t j = row+1 ; j < numSequences ; j++ ){
@@ -881,7 +898,7 @@ void fillMatrixRow_JC(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 
 void fillMatrixRow_TN93(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 		DNA_b128_String::base_frequences freqs,
-		sequence_translation_model trans_model, size_t row){
+		sequence_translation_model trans_model, size_t row, bool mem_eff_flag){
 	const size_t numSequences = seqs.size();
 	const size_t strlen = seqs[0].getNumChars();
 
@@ -914,6 +931,13 @@ void fillMatrixRow_TN93(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
       }
     }*/
 
+	if (mem_eff_flag == false){
+			for ( size_t j = 0 ; j < row ; j++ ){
+				dm.setDistance(j, 0);
+			}
+		}else{
+			row=-1;
+		}
 
 	ML_string_distance  ml_dist;
 	for ( size_t j = row+1 ; j < numSequences ; j++ ){

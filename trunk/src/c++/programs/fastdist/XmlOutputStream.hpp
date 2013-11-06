@@ -15,7 +15,7 @@ public:
   virtual void printStartRun( std::vector<std::string> & names, std::string & runId, Extrainfos &extrainfos );
   virtual void printEndRun();
   //mehmood changes here... email: malagori@kth.se
-  virtual void printRow( StrFloRow & dm , std::string name, int row);
+  virtual void printRow( StrFloRow & dm , std::string name, int row, bool mem_eff_flag);
   virtual void printHeader( size_t numNodes );
   virtual void printBootstrapSpliter(size_t numNodes);
 };
