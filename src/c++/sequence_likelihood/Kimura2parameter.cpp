@@ -78,11 +78,13 @@ _secant_search(
     float tmp = x1;
     float tmpf = partof_derivative_likelihood(x1,K,a,b,n);
 
+    //    cerr << "x1 = " << x1  << " \tx0 = " << x0 << " \tfx0 = " << fx0 <<endl;
     x1 = x1 - (x1-x0)/(tmpf-fx0)*tmpf;
-    assert ( x1 >= 0 );
+    if (x1 < 0) {
+      x1 = 0;
+    }
     fx0= tmpf;
     x0 = tmp;
-    //cout << "fx0 " << fx0 << "   x0 " << x0 << endl;
     i++;
   }
   
