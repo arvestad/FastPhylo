@@ -64,12 +64,15 @@
       case day:
       case arve:
       case jtt:
+      case lg:
       case mvr:
         if (t_model.ml)
           calculate_ml_dists(sv, dm, t_model.model); 
         else 
           calculate_ed_dists_with_sd(sv, dm, sdm, t_model, true); 
         break;
+    default:
+      throw std::logic_error("Model not implemented");
     }
 
   }
