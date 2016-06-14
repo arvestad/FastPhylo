@@ -45,7 +45,7 @@ readstatus PhylipDmInputStream::readDM(StrDblMatrix &dm, vector<string> & names,
 	string line;
 	int i1,i2,linePos,newSize;
 
-	if (getline(*fp,line)==NULL)
+	if (getline(*fp,line)==0)
 		return END_OF_RUN;
 	newSize=atoi(line.c_str());
 	dm.resize(newSize);
