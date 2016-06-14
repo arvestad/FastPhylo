@@ -20,11 +20,11 @@ ENDIF()
 
 
 # Ignore annoying deprecation warnings for now
-SET(CMAKE_CXX_FLAGS "-Wno-deprecated")
+#SET(CMAKE_CXX_FLAGS "-Wno-deprecated")
 
-OPTION(BUILD_DOCBOOK "build Docbook html documentation" OFF )
-OPTION(WITH_LIBXML "build xml functionality. This adds a dependeny for libxml" ON )
-OPTION(STATIC "build a static binaries. This is mainly intended for the win32-package and the MACOSX-bundle. This is  will download gengetopt, lixml2, zlib and build them. The libxml2-library ( and therefore indirectly zlib ) will be statically linked in" OFF )
+OPTION(BUILD_DOCBOOK "Build Docbook html documentation" OFF )
+OPTION(WITH_LIBXML "Build xml functionality. This adds a dependeny for libxml" ON )
+OPTION(STATIC "Build static binaries. This is mainly intended for the win32-package and the MACOSX-bundle. This is will download gengetopt, lixml2, zlib, and build them. The libxml2-library (and therefore indirectly zlib) will be statically linked in" OFF )
 
 
 add_subdirectory(src/c++)
@@ -40,10 +40,9 @@ SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2 (>= 2.6.16 )")
 
 
 SET(CPACK_SOURCE_GENERATOR TGZ;ZIP)
-# SET(CPACK_RPM_PACKAGE_ARCHITECTURE "i386")
-SET(CPACK_PACKAGE_CONTACT "erik.sjolund@sbc.su.se") 
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "fastphylo is software project containing the implementations of the algorithms \"Fast Computation of Distance Estimators\" and \"Fast Neighbor Joining\".")
-SET(CPACK_PACKAGE_VENDOR "Isaac Elias, Jensl Lagergren, Erik Sjölund")
+SET(CPACK_PACKAGE_CONTACT "arve@su.se") 
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "FastPhylo is software project containing the implementations of the algorithms \"Fast Computation of Distance Estimators\", \"Fast Neighbor Joining\", and more.")
+SET(CPACK_PACKAGE_VENDOR "Isaac Elias, Jensl Lagergren, Erik Sjölund, Lars Arvestad, Mehmood Alam Khan, et al")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_PROJECT_NAME}-${PACKAGE_VERSION}")
