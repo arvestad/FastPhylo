@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <string>
+#include <unordered_set>
 
 #include "InitAndPrintOn_utils.hpp"
 #include <iostream>
@@ -309,7 +310,7 @@ SequenceTree::contractFloatEdgesShorterThan(float bound){
   return numC;
 }
 //---------------------
-typedef __gnu_cxx::hash_map<const std::string, SequenceTree::Node *, hashstr, eqstr> str2node_map;
+typedef std::unordered_map<const std::string, SequenceTree::Node *, hashstr, eqstr> str2node_map;
 
 void
 SequenceTree::mapSequencesOntoTree(char  **nameseqPairs, int numPairs){
@@ -489,7 +490,7 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
 //-------------------
 // ROBINSON-FOULDS
 
-typedef __gnu_cxx::hash_set<BitVector*, objhash_ptr, objeq_ptr> BitVectorPtr_set;
+typedef std::unordered_set<BitVector*, objhash_ptr, objeq_ptr> BitVectorPtr_set;
 
 double
 SequenceTree::computeRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){
@@ -778,7 +779,7 @@ SequenceTree::createLeafNameToLeafIdMap(str2int_hashmap &name2id) const{
   SequenceTree::const_NodeVector leafs;
   addLeafs(leafs);
   name2id.clear();
-  name2id.resize((size_t)(1.5*leafs.size()));
+  name2id.reserve((size_t)(1.5*leafs.size()));
   int leafId = 0;
   
   for(size_t i=0;i<leafs.size();i++)

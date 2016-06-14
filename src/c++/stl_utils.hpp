@@ -7,8 +7,9 @@
 #include <cstring>
 
 #include <list>
-#include <ext/hash_map>
-#include <ext/hash_set>
+//#include <ext/hash_map>
+//#include <ext/hash_set>
+#include <unordered_map>
 #include <map>
 #include <iostream>
 #include <vector>
@@ -114,14 +115,16 @@ struct ltstr
 
 
 struct hashstr{
-  __gnu_cxx::hash<const char *> chhash;
+  std::hash<const char *> chhash;
   size_t operator()(const std::string &s) const{
     return chhash(s.c_str());
   }
 };
 
-typedef __gnu_cxx::hash_map<const std::string, int, hashstr, eqstr> str2int_hashmap;
-typedef __gnu_cxx::hash_map<const std::string, std::string, hashstr, eqstr> str2str_hashmap;
+// typedef __gnu_cxx::hash_map<const std::string, int, hashstr, eqstr> str2int_hashmap;
+// typedef __gnu_cxx::hash_map<const std::string, std::string, hashstr, eqstr> str2str_hashmap;
+typedef std::unordered_map<const std::string, int, hashstr, eqstr> str2int_hashmap;
+typedef std::unordered_map<const std::string, std::string, hashstr, eqstr> str2str_hashmap;
 
 typedef std::map<const std::string, int, ltstr> str2int_map;
 
@@ -133,8 +136,8 @@ print_map(str2int_map &m);
 //---------------------------------------------------------------
 //Object 2 Object Map
 
-typedef __gnu_cxx::hash_map<Object *, Object*, objhash_ptr, objeq_ptr> obj_ptr2obj_ptr_hashmap;
-typedef __gnu_cxx::hash_map<Object , Object, objhash, objeq> obj2obj_hashmap;
+typedef std::unordered_map<Object *, Object*, objhash_ptr, objeq_ptr> obj_ptr2obj_ptr_hashmap;
+typedef std::unordered_map<Object , Object, objhash, objeq> obj2obj_hashmap;
 
 
 #endif // STL_UTILS_HPP

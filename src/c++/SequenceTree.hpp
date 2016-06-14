@@ -181,7 +181,7 @@ public:
 
 };
 
-typedef __gnu_cxx::hash_map<const SequenceTree , int, objhash, objeq> tree2int_map;
+typedef std::unordered_map<const SequenceTree , int, objhash, objeq> tree2int_map;
 
 #endif // SEQUENCETREE_HPP
 
