@@ -9,7 +9,7 @@ FastaInputStream::~FastaInputStream() {
     fin.close();
 }
 
-FastaInputStream::FastaInputStream(char * filename = 0 )  
+FastaInputStream::FastaInputStream(char * filename)  
 { 
   file_was_opened = false;
   if ( filename == 0 )

@@ -98,7 +98,7 @@ PhylipDmOutputStream::printRow( StrFloRow & dm, string name, int row, bool mem_e
 
 void
 PhylipDmOutputStream::printHeader( size_t numNodes ) {
-  fprintf(fp,"%5d\n",numNodes);
+  fprintf(fp,"%5d\n", (int) numNodes);
 }
 
 void PhylipDmOutputStream::printBootstrapSpliter(size_t numNodes){

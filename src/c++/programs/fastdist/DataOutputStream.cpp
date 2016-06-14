@@ -4,7 +4,7 @@
 #include <iostream>
 using namespace std;
 
-DataOutputStream::DataOutputStream(char * filename = 0)
+DataOutputStream::DataOutputStream(char * filename)
 { 
 	fp = NULL;
 

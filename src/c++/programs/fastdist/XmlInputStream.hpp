@@ -25,7 +25,7 @@ typedef struct {  int in_root;
 class XmlInputStream : public DataInputStream
 {
 public:
-   XmlInputStream(char * filename);
+   XmlInputStream(char * filename = NULL);
   ~XmlInputStream();
 
   virtual bool read( std::vector<DNA_b128_String> &b128_strings, std::string & runId, std::vector<std::string> &names, Extrainfos &extrainfos );

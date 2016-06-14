@@ -8,7 +8,7 @@ PhylipMaInputStream::~PhylipMaInputStream() {
     fin.close();
 }
 
-PhylipMaInputStream::PhylipMaInputStream(char * filename = 0 )  
+PhylipMaInputStream::PhylipMaInputStream(char * filename)  
 { 
   file_was_opened = false;
   if ( filename == 0 )

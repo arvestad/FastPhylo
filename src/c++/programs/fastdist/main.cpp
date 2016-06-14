@@ -20,7 +20,7 @@
 #include "file_utils.hpp"
 #include <iomanip>
 #include "log_utils.hpp"
-#include "BinaryDmOutputStream.hpp";
+#include "BinaryDmOutputStream.hpp"
 #include "fastdist_gengetopt.h"
 #include "NeighborJoining.hpp"
 #include "DataInputStream.hpp"
@@ -30,7 +30,7 @@
 #include "Extrainfos.hpp"
 #include "fileFormatSchema.hpp"
 #include "XmlOutputStream.hpp"
-#include "PhylipDmOutputStream.hpp";
+#include "PhylipDmOutputStream.hpp"
 
 #ifdef WITH_LIBXML
 #include "XmlInputStream.hpp"

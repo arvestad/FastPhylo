@@ -15,7 +15,7 @@ XmlInputStream::~XmlInputStream()
   xmlCleanupParser();
 }
 
-XmlInputStream::XmlInputStream(char * filename = 0)  
+XmlInputStream::XmlInputStream(char * filename)  
 {
   //
   //  Re: [xml] Why does "-" read from stdin?
@@ -24,7 +24,7 @@ XmlInputStream::XmlInputStream(char * filename = 0)
   // Comment: The special treatment of the filename "-" in the libxml api, is not  
   // a good designed api, but now when it is there let us use it.
 
-  if ( filename == "-" ) {
+  if (!strncmp(filename,"-",1)) {
     THROW_EXCEPTION("file name \"-\" is not allowed. See \n http://mail.gnome.org/archives/xml/2007-February/msg00005.html \n  ");
   }
 
@@ -159,14 +159,20 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs, std::string & runId,
 	if ( l.in_root && l.in_runs && depth == 2 && xmlStrEqual (name, (const xmlChar *)"run" ))
 	  {
 	    switch (type) {
-	    case XML_READER_TYPE_ELEMENT:  { l.in_run = true; extrainfos.clear(); 
+	    case XML_READER_TYPE_ELEMENT:  {
+	      l.in_run = true;
+	      extrainfos.clear(); 
               xmlChar * id =  xmlTextReaderGetAttribute(reader, (const xmlChar *) "id") ;
               if ( id == 0 ) THROW_EXCEPTION("failed to read attribute \"id\"");
               runId = ( const char *) id;
-              xmlFree(id); continue; }
-	    case XML_READER_TYPE_END_ELEMENT:  l.in_run = false; return true; 
+              xmlFree(id); continue;
+	    }
+	    case XML_READER_TYPE_END_ELEMENT:  {
+	      l.in_run = false; 
+	      return true;
+	    }
             }
-         }
+	  }
       }
     if (ret == 0 ) {
       if ( l.in_root ) {
@@ -177,4 +183,5 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs, std::string & runId,
         return false;
       }
     }
+    return false;		// It cannot be good that we reach here. /arve
 }
