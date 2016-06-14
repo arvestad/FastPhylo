@@ -107,7 +107,7 @@
    *  @return A reference to the element at position (ind) in the datastructure for the matrix
    */
   inline double &Matrix::operator() (const std::size_t ind){
-    if (ind < 0 || ind >= get_cols()*get_rows())
+    if (ind >= get_cols()*get_rows())
       throw std::out_of_range("Indexing outside of matrix");
     return m_data[ind];   
   }
@@ -118,7 +118,7 @@
    *  @return A const copy of the element at position (ind) in the datastructure for the matrix
    */
   inline const double Matrix::operator() (const std::size_t ind) const{
-    if (ind < 0 || ind >= get_cols()*get_rows())
+    if (ind >= get_cols()*get_rows())
       throw std::out_of_range("Indexing outside of matrix");
     return m_data[ind];   
   }

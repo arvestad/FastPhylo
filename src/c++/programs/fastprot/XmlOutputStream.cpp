@@ -5,7 +5,7 @@
 
 using namespace std;
 
-XmlOutputStream::XmlOutputStream(char * filename = 0 ) : DataOutputStream(filename) 
+XmlOutputStream::XmlOutputStream(char * filename) : DataOutputStream(filename) 
 {
   fprintf(fp,"<?xml version=\"1.0\"?>\n<root>\n <runs>\n");
 }
@@ -24,7 +24,7 @@ void XmlOutputStream::printSD( StrDblMatrix & dm ) {
 }
 
 void XmlOutputStream::printStartRun( std::vector<string> & names, std::string & runId, Extrainfos &extrainfos ) {
-  fprintf(fp,"  <run id=\"%s\" dim=\"%i\">\n   <identities>\n", runId.c_str(), names.size() );
+  fprintf(fp,"  <run id=\"%s\" dim=\"%i\">\n   <identities>\n", runId.c_str(), (int) names.size() );
       for(size_t namei=0 ; namei<names.size() ; namei++ )
 	{
 	  // This only works if we constrain the input by a schema to not have "<", "&" and such.
