@@ -279,7 +279,7 @@ void Matrix::printm() const{
 void Matrix::printmi() const{
   for (int i=0; i<get_rows(); i++) {
     for (int j=0; j<get_cols(); j++)
-      printf(" %.3d ", (*this)(i,j));
+      printf(" %.3d ", (int) (*this)(i,j));
     std::cout << std::endl;
   }
 }
