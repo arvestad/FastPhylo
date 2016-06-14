@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<root>
+ <runs>
+  <run id="a" dim="3">
+   <identities>
+    <identity name="Alpha"/>
+    <identity name="Beta"/>
+    <identity name="Gamma"/>
+   </identities>
+   <dms>
+   <dm>
+    <row>
+     <entry>0.000000</entry>
+    </row>
+    <row>
+     <entry>0.299650</entry>
+     <entry>0.000000</entry>
+    </row>
+    <row>
+     <entry>0.733169</entry>
+     <entry>0.309520</entry>
+     <entry>0.000000</entry>
+    </row>
+   </dm>
+   </dms>
+  </run>
+  <run id="b" dim="3">
+   <identities>
+    <identity name="Alpha"/>
+    <identity name="Beta"/>
+    <identity name="Gamma"/>
+   </identities>
+   <dms>
+   <dm>
+    <row>
+     <entry>0.000000</entry>
+    </row>
+    <row>
+     <entry>3.258005</entry>
+     <entry>0.000000</entry>
+    </row>
+    <row>
+     <entry>1.873653</entry>
+     <entry>0.459840</entry>
+     <entry>0.000000</entry>
+    </row>
+   </dm>
+   </dms>
+  </run>
+ </runs>
+</root>

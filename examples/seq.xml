@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<root>
+  <runs>
+    <run id="run1">
+      <seq name="Alpha" seq="AACGTGGCCACAT"/>
+      <seq name="Beta" seq="AAGGTCGCCACAC">
+        <extrainfo myattr="" species="penguin">
+          <foo bar="1"/>
+        </extrainfo>
+      </seq>
+      <seq name="Gamma" seq="CAGTTCGCCACAA"/>
+    </run>
+    <run id="run2">
+      <seq name="Alpha" seq="AACGTGGCCACAT"/>
+      <seq name="Beta" seq="AAGGTCGCCACAC"/>
+      <seq name="Gamma" seq="CAGTTCGCCACAA"/>
+    </run>
+  </runs>
+</root>
