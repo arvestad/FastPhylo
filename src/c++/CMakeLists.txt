@@ -95,7 +95,8 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/script.nsi.cmake ${CMAKE_CURRENT_BINARY_DIR}/script.nsi)
 
 INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
-LINK_DIRECTORIES(${LIBXML2_LIBRARIES})
+#LINK_DIRECTORIES(${LIBXML2_LIBRARIES})
+# Do we need this? It seems to put '-L /usr/lib/libxml2.dynlib' in the linking commands, which is wrong.
 
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/)
@@ -161,7 +162,7 @@ IF(STATIC AND WITH_LIBXML)
 ENDIF(STATIC AND WITH_LIBXML)
 
 #mehmood's changes here
-SET(COMMON_FLAGS  " ${ARCH_FLAGS} -falign-functions -falign-jumps -falign-labels -falign-loops -fcse-follow-jumps -fcse-skip-blocks -fdelete-null-pointer-checks -fexpensive-optimizations -fgcse -fgcse-lm -fgcse-sm -finline-functions -foptimize-sibling-calls -fpeephole2 -fregmove -frename-registers -freorder-blocks -freorder-functions -frerun-cse-after-loop -frerun-loop-opt -fstrength-reduce -fstrict-aliasing ${LIBXML_EXTRA_COMPILE_FLAGS} -O1 -fopenmp " )
+#SET(COMMON_FLAGS  " ${ARCH_FLAGS} -falign-functions -falign-jumps -falign-labels -falign-loops -fcse-follow-jumps -fcse-skip-blocks -fdelete-null-pointer-checks -fexpensive-optimizations -fgcse -fgcse-lm -fgcse-sm -finline-functions -foptimize-sibling-calls -fpeephole2 -fregmove -frename-registers -freorder-blocks -freorder-functions -frerun-cse-after-loop -frerun-loop-opt -fstrength-reduce -fstrict-aliasing ${LIBXML_EXTRA_COMPILE_FLAGS} -O1 -fopenmp " )
 
 SET(FASTDIST_SRCS programs/fastdist/main.cpp
 programs/fastdist/PhylipMaInputStream.cpp
@@ -266,7 +267,7 @@ ENDFOREACH(i)
 
 
 FOREACH(i ${FASTPHYLO_SRCS} ${FASTDIST_SRCS} ${FNJ_SRCS} ${FASTPROT_SRCS}  ${FASTDIST_XML_SRCS} ${FNJ_XML_SRCS} ${FASTPROT_XML_SRCS} ${FASTPROT_MPI_SRCS} ${FASTPROT_MPI_XML_SRCS} )
-  SET_SOURCE_FILES_PROPERTIES(${i} PROPERTIES COMPILE_FLAGS "${COMMON_FLAGS}  -fcaller-saves  -ffast-math  -fno-default-inline  -fprefetch-loop-arrays  -fsched-interblock  -fsched-spec  -fschedule-insns  -fschedule-insns2  -ftracer  -funroll-loops ")
+#  SET_SOURCE_FILES_PROPERTIES(${i} PROPERTIES COMPILE_FLAGS "${COMMON_FLAGS}  -fcaller-saves  -ffast-math  -fno-default-inline  -fprefetch-loop-arrays  -fsched-interblock  -fsched-spec  -fschedule-insns  -fschedule-insns2  -ftracer  -funroll-loops ")
 ENDFOREACH(i)
 
 ADD_LIBRARY(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS})
@@ -311,7 +312,7 @@ FIND_PACKAGE(LAPACK REQUIRED)
 # Link libraries -lmkl* or -llapack depending on what is available
 
 ADD_EXECUTABLE(fastprot_mpi ${FASTPROT_MPI_SRCS} ${FASTPROT_MPI_XML_SRCS} ) 
-TARGET_LINK_LIBRARIES(fastprot_mpi m  ${LIBXML2_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${ZLIB_LIBRARY} -lpthread -lgomp fastphylo)
+TARGET_LINK_LIBRARIES(fastprot_mpi m  ${LIBXML2_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${ZLIB_LIBRARY} -lpthread fastphylo)
 
 #TARGET_LINK_LIBRARIES(fastprot_mpi m  ${LIBXML2_LIBRARIES}  ${ZLIB_LIBRARY} -L/pdc/vol/i-compilers/11.1/icc/mkl/lib/em64t -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread fastphylo )
 
