@@ -17,6 +17,7 @@ typedef enum { DM_READ = 1, END_OF_RUN = 2, END_OF_RUNS = 3, ERROR = 4 } readsta
 class DataInputStream
 {
 public:
+  virtual ~DataInputStream() {};
   virtual readstatus readDM(StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos ) = 0;
   virtual readstatus readDM(StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos) = 0;
 };

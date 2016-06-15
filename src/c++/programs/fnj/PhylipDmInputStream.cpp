@@ -47,10 +47,12 @@ readstatus PhylipDmInputStream::readDM(StrDblMatrix &dm, vector<string> & names,
 
 	if (getline(*fp,line)==0)
 		return END_OF_RUN;
+
 	newSize=atoi(line.c_str());
 	dm.resize(newSize);
 	for (i1=0; i1<newSize; i1++) {
 		getline(*fp,line);
+		//		std::cerr << "Line: " << line << endl;
 		linePos=line.find_first_of(" \n\r\t");
 		dm.setIdentifier(i1,line.substr(0,linePos));
 		line=line.substr(line.find_first_not_of(" \n\r\t",linePos));
@@ -65,8 +67,10 @@ readstatus PhylipDmInputStream::readDM(StrDblMatrix &dm, vector<string> & names,
 			}
 		}
 	names.clear();
-	for(size_t namei=0 ; namei<dm.getSize() ; namei++ )
-		names.push_back(dm.getIdentifier(namei));
+	for(size_t namei=0 ; namei<dm.getSize() ; namei++ ) {
+	  // std::cerr << "Name: " << dm.getIdentifier(namei) << endl; 
+	  names.push_back(dm.getIdentifier(namei));
+	}
 	return DM_READ;
 }
 
