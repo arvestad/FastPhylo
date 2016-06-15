@@ -78,7 +78,7 @@ computeNeighborJoiningTree( DistanceMatrix< TreeNode_type *, double,
     size_t i = 0;
     for (  ; i < origNumNodes ; i++ ){
       double d=dm.getDistance(row,i);
-      if(isfinite(d))
+      if(std::isfinite(d))
 	sum += d;
       else{
 	USER_ERROR("Distance Matrix contains a non finite number: " << d);
@@ -178,7 +178,7 @@ computeFloatNeighborJoiningTree( FloatDistanceMatrix< TreeNode_type *, float,
     size_t i = 0;
     for (  ; i < origNumNodes ; i++ ){
       float d=dm.getDistance(row,i);
-      if(isfinite(d))
+      if(std::isfinite(d))
 	sum += d;
       else{
 	USER_ERROR("Distance Matrix contains a non finite number: " << d);
@@ -297,7 +297,7 @@ computeBioNJTree( DistanceMatrix< TreeNode_type *, double,
     size_t i = 0;
     for (  ; i < origNumNodes ; i++ ){
       double d=dm.getDistance(row,i);
-      if(isfinite(d)){
+      if(std::isfinite(d)){
 	sum += d;
 	sumV += V.getDistance(row,i);
       }else{
@@ -456,7 +456,7 @@ computeFloatBioNJTree( FloatDistanceMatrix< TreeNode_type *, float,
     size_t i = 0;
     for (  ; i < origNumNodes ; i++ ){
       float d=dm.getDistance(row,i);
-      if(isfinite(d)){
+      if(std::isfinite(d)){
 	sum += d;
 	sumV += V.getDistance(row,i);
       }else{
@@ -613,7 +613,7 @@ computeFNJTree( DistanceMatrix< TreeNode_type *, double,
     size_t i = 0;
     for (  ; i < origNumNodes ; i++ ){
       double d=dm.getDistance(row,i);
-      if(isfinite(d))
+      if(std::isfinite(d))
 	sum += d;
       else{
 	USER_ERROR("Distance Matrix contains a non finite number: " << d);
@@ -780,7 +780,7 @@ computeFloatFNJTree( FloatDistanceMatrix< TreeNode_type *, float,
     size_t i = 0;
     for (  ; i < origNumNodes ; i++ ){
       float d=dm.getDistance(row,i);
-      if(isfinite(d))
+      if(std::isfinite(d))
 		sum += d;
       else{
 		USER_ERROR("Distance Matrix contains a non finite number: " << d);
