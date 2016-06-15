@@ -790,13 +790,14 @@ SequenceTree::createLeafNameToLeafIdMap(str2int_hashmap &name2id) const{
 void
 SequenceTree::makeCanonical(const str2int_hashmap &name2id){
   SequenceTree::NodeVector leafs(getNumLeafs());
-  
   SequenceTree::NodeVector  tmpvec;
   addLeafs(tmpvec);
   
   for(size_t i=0;i<tmpvec.size();i++){
     str2int_hashmap::const_iterator find = name2id.find(NAME(tmpvec[i]));
-    if(find==name2id.end()){USER_WARNING("name doesn't exist: \"" << NAME(tmpvec[i])<<"\"");}
+    if (find==name2id.end()) {
+      USER_WARNING("name doesn't exist: \"" << NAME(tmpvec[i])<<"\"");
+    }
     leafs[(*find).second] = tmpvec[i];  
   }
   makeCanonical(leafs);
