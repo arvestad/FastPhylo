@@ -292,7 +292,7 @@ ENDIF(STATIC)
 
 
 # changes by Mehmood here
-enable_language(Fortran)
+#enable_language(Fortran)
 FIND_PACKAGE(BLAS REQUIRED)
 FIND_PACKAGE(LAPACK REQUIRED)
 #message(FATAL_ERROR "mmm ${LAPACK_LIBRARIES} uuuu ${BLAS_LIBRARIES} yyyy${LIBXML2_LIBRARIES}")
@@ -306,14 +306,6 @@ IF(STATIC)
  set_property(TARGET fastprot PROPERTY LINK_SEARCH_END_STATIC ON )
 ENDIF(STATIC)
 
-
-enable_language(Fortran)
-FIND_PACKAGE(BLAS REQUIRED)
-FIND_PACKAGE(LAPACK REQUIRED)
-
-#message(FATAL_ERROR "mmm ${LAPACK_LIBRARIES} uuuu ${BLAS_LIBRARIES} yyyy${LIBXML2_LIBRARIES}")
-#link_libraries(fastprot  ${LAPACK_LIBRARIES} )
-# Link libraries -lmkl* or -llapack depending on what is available
 
 ADD_EXECUTABLE(fastprot_mpi ${FASTPROT_MPI_SRCS} ${FASTPROT_MPI_XML_SRCS} ) 
 TARGET_LINK_LIBRARIES(fastprot_mpi m  ${LIBXML2_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${ZLIB_LIBRARY} -lpthread fastphylo)
