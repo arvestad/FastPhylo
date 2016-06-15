@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+ <root>
+  <runs>
+   <run id="" dim="3">
+    <identities>
+     <identity name="Alpha"/>
+     <identity name="Beta"/>
+     <identity name="Gamma"/>
+    </identities>
+    <tree>
+     <count>8</count>
+     <newick-xml><branch><leaf>Gamma</leaf><leaf>Beta</leaf><leaf>Alpha</leaf></branch></newick-xml>
+     <newick>(Gamma,Beta,Alpha);</newick>
+    </tree>
+   </run>
+   <run id="" dim="3">
+    <identities>
+     <identity name="Alpha"/>
+     <identity name="Beta"/>
+     <identity name="Gamma"/>
+    </identities>
+   </run>
+  </runs>
+ </root>
