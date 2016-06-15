@@ -35,6 +35,7 @@ using namespace std;
 
 template<class T> void buildTrees(T &dm, tree2int_map &tree2count, std::vector<NJ_method> &methods, str2int_hashmap &name2id) {
 	SequenceTree tree;
+
 	for(size_t i=0; i<methods.size(); i++){
 		computeNJTree(dm,tree,methods[i]);
 		tree.makeCanonical(name2id);
@@ -179,8 +180,9 @@ int main (int argc, char **argv) {
 							break;
 							}
 						}
-					for(size_t namei=0; namei<dm.getSize(); namei++)
-						name2id[dm.getIdentifier(namei)] = namei;
+					for(size_t namei=0; namei<dm.getSize(); namei++) {
+					     name2id[dm.getIdentifier(namei)] = namei;
+					}
 					buildTrees(dm, tree2count, methods,name2id);
 				}
 			}
