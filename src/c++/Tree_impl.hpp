@@ -198,7 +198,8 @@ TREE::printOn(std::ostream &os) const{
 
   if(xmlPrint) {
     if(root != NULL)
-         os << root;      
+      os << root;
+    return os;
   } else
     {
       if(root==NULL)
@@ -206,8 +207,6 @@ TREE::printOn(std::ostream &os) const{
 
       return os << root <<";";
     }
- 
-
 }
 
 
