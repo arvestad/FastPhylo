@@ -1,22 +1,34 @@
-See the GitHub wiki for more instructions:
-
-    https://github.com/arvestad/FastPhylo/wiki
-
 Requirements for fastphylo:
 
-* xmlto ( only for -DBUILD_DOCROOT=ON )
+* cmake
+* openmpi (or equivalent)
+* wget
+
+If you want to build the documentation (auto-generated examples, yielding up-to-date help-texts, it is a feature!),
+then you also need:
+
+* xmlto (only for -DBUILD_DOCROOT=ON)
+* lxml, the Python library
+
 
 This package uses the program cmake for building and packaging the software.
 To install into the directory $HOME/inst run these commands:
 
-mkdir $HOME/inst
-cd fastphylo
-mkdir build
-cd build
-cmake -DCMAKE_INSTALL_PREFIX=$HOME/inst ..
+  mkdir $HOME/inst
+  cd fastphylo
+  mkdir build
+  cd build
+  cmake -DCMAKE_INSTALL_PREFIX=$HOME/inst ..
+
+Without the installation prefix option, cmake installs into the
+default path (may be /usr/local/bin).
 
 If you want to install the documentation too, you need to add the flag
-
--DBUILD_DOCBOOK=ON
-
+  -DBUILD_DOCBOOK=ON
 to the cmake command line.
+
+
+See the GitHub wiki for more instructions:
+
+    https://github.com/arvestad/FastPhylo/wiki
+
