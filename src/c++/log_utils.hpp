@@ -107,7 +107,7 @@ if(true){ std::cerr << "************\nPROGRAM ERROR\nfile: "<< __FILE__ <<"\nfun
 // USER_ERR
 #ifndef USER_ERROR
 #define USER_ERROR(EXP) \
-if(true){ std::cerr << "************\nUSER INPUT ERROR\nfile: "<< __FILE__ <<"\nfunc: " << __FUNCTION__<< "\nline: " << __LINE__<< "\n" << EXP << "\n************"<< std::endl ;exit(1);}
+  if(true){ std::cerr << "************\nUSER INPUT ERROR\nfile: "<< __FILE__ <<"\nfunc: " << __FUNCTION__<< "\nline: " << __LINE__<< "\n" << EXP << "\n************"<< std::endl ;std::exit(1);}
 #endif
 
 // USER_WARNING
