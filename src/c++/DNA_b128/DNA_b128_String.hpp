@@ -214,12 +214,12 @@ public:
   //---------------------------------------------------------------------
   // BASE FREQUENCES
   typedef struct{
-    int num_As_;
-    int num_Cs_;
-    int num_Gs_;
-    int num_Ts_;
-    int num_unknowns_;
-    int num_ambiguities_;
+    size_t num_As_;
+    size_t num_Cs_;
+    size_t num_Gs_;
+    size_t num_Ts_;
+    size_t num_unknowns_;
+    size_t num_ambiguities_;
   } base_frequences;
   
   base_frequences getBaseFrequences() const{

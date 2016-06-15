@@ -413,8 +413,8 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
   total_sum_del = add_b128(total_sum_del, shift_bytes_right_b128(total_sum_del,8));
   
   simple_string_distance d= {get_int_0_b128(total_sum_del),
-                   get_int_0_b128(total_sum_ts),
-                   get_int_0_b128(total_sum_tv)};
+			     static_cast<float>(get_int_0_b128(total_sum_ts)),
+			     static_cast<float>(get_int_0_b128(total_sum_tv))};
   
   DEBUG_MAIN( cout << "MAIN_S = "<< d.transitions << endl);
   DEBUG_MAIN( cout << "MAIN_V = "<< d.transversions << endl);

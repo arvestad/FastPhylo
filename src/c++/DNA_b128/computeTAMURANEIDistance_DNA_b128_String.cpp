@@ -418,9 +418,9 @@ DNA_b128_String::computeTAMURANEIDistance(const DNA_b128_String &s1,
   total_sum_del = add_b128(total_sum_del, shift_bytes_right_b128(total_sum_del,8));
   
   TN_string_distance d= {get_int_0_b128(total_sum_del),
-                         get_int_0_b128(total_sum_ts)-get_int_0_b128(total_sum_pyrts),
-                         get_int_0_b128(total_sum_pyrts),
-                         get_int_0_b128(total_sum_tv)};
+                         static_cast<float>(get_int_0_b128(total_sum_ts)-get_int_0_b128(total_sum_pyrts)),
+                         static_cast<float>(get_int_0_b128(total_sum_pyrts)),
+			 static_cast<float>(get_int_0_b128(total_sum_tv))};
   
   DEBUG_MAIN( cout << "PUR_TS = "<< d.purine_transitions << endl);
   DEBUG_MAIN( cout << "PYR_TS = "<< d.pyrimidine_transitions << endl);
