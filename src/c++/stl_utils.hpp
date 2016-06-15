@@ -115,7 +115,7 @@ struct ltstr
 
 
 struct hashstr{
-  std::hash<const char *> chhash;
+  std::hash<std::string> chhash;
   size_t operator()(const std::string &s) const{
     return chhash(s.c_str());
   }
