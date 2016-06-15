@@ -69,3 +69,8 @@ readstatus PhylipDmInputStream::readDM(StrDblMatrix &dm, vector<string> & names,
 		names.push_back(dm.getIdentifier(namei));
 	return DM_READ;
 }
+
+readstatus PhylipDmInputStream::readDM(StrFloMatrix &dm, vector<string> & names, string & runId, Extrainfos &extrainfos) {
+  std::cerr << "PhylipDmInputStream::readDM(StrFloMatrix, ...) -- Not implemented!" << endl;
+  std::exit(-1);
+}

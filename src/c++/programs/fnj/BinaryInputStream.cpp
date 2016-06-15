@@ -86,3 +86,8 @@ readstatus BinaryInputStream::readDM(StrFloMatrix & dm, std::vector<std::string>
 	input_was_read=true;
 	return DM_READ;
 }
+
+readstatus BinaryInputStream::readDM(StrDblMatrix &dm, vector<string> & names, string & runId, Extrainfos &extrainfos) {
+  std::cerr << "BinaryInputStream::readDM(StrDblMatrix, ...) -- Not implemented!" << endl;
+  std::exit(-1);
+}

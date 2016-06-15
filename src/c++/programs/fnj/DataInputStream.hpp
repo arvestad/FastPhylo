@@ -17,17 +17,15 @@ typedef enum { DM_READ = 1, END_OF_RUN = 2, END_OF_RUNS = 3, ERROR = 4 } readsta
 class DataInputStream
 {
 public:
-  readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos ) { return ERROR; };
-  readstatus readDM( StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos)  { return ERROR; };
+  virtual readstatus readDM(StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos ) = 0;
+  virtual readstatus readDM(StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos) = 0;
 };
 
 /*
-  This implementation used to have these two methods as virtual, which is natural with an abstract base class. 
-  However, there were warnings for the methods because they had empty bodies ( i.e., their implementation was "{}"). 
-  The true way to work with an abstract base class is to have the NULL bodies (i.e., the implemention would be "=0"). 
-  But this would lead to compilation errors when subclasses would not implement both methods. 
-
-  My workaround here is to let DataInputStream be a base class and let the default implementations return an error code.
+  This implementation used to have these two methods as virtual, but with empty method bodies ( i.e., their implementation was "{}").
+  That created warnings/errors with more modern compilers. The true way to work with an abstract base class is to have the NULL bodies (i.e., the implemention would be "=0"), which is the current solution. However, to make that work, I have added empty implementations 
+  (although with error messages, should they be called) for the one method per subclass. This is because it is only in
+  BinaryInputStream that we want StrFloMatrix for the first argument.
 
   /arve 2016-06-14
 */

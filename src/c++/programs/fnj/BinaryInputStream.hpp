@@ -22,6 +22,7 @@ public:
   BinaryInputStream(char *filename);
   ~BinaryInputStream();
   readstatus readDM(StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos);
+  readstatus readDM(StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos);
 
 protected:
   istream *fp;

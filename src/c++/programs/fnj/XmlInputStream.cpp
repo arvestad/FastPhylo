@@ -198,3 +198,9 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 	}
 	return ERROR;
 }
+
+
+readstatus  XmlInputStream::readDM( StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos ) {
+  std::cerr << "XmlInputStream::readDM(StrFloMatrix, ...) -- Not implemented!" << endl;
+  std::exit(-1);
+}

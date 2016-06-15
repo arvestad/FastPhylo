@@ -25,6 +25,7 @@ public:
   XmlInputStream(char *filename);
   ~XmlInputStream();
   readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos);
+  readstatus readDM( StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos);
 protected:
   xmlTextReaderPtr reader;
   locator_t l;
