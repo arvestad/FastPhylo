@@ -150,6 +150,10 @@ std_c_utils.c
 xml_output_global.cpp
 )
 
+IF (CMAKE_COMPILER_IS_GNUCXX)
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
+ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+
 SET(FASTPHYLO_SPECIAL_SRCS DNA_b128/sse2_wrapper.c 
                           DNA_b128/computeTAMURANEIDistance_DNA_b128_String.cpp 
                           DNA_b128/computeDistance_DNA_b128_String.cpp) 
