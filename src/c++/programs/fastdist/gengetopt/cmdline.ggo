@@ -22,13 +22,13 @@ option "no-ambiguities" A "Ignore ambiguities" flag off
 option "no-ambig-resolve" R "Specifies that ambigious symbols should not be resolved by nearest neighbor" flag off
 option "no-transprob" t "Specifies that the transition probabilities should not be used in the ambiguity model" flag off
 option "ambiguity-frequency-model" a "Ambiguity frequency model" values="UNI","BASE" enum default="UNI" optional
-option "tstvratio" T "Transition/transvertion ratio for purine transitions ( for the TN model )" float default="2.0" optional
-option "pyrtvratio" P "Transition/transvertion ratio for  pyrimidines transitions ( for the TN model )" float default="2.0" optional   
+option "tstvratio" T "Transition/transvertion ratio for purine transitions (for the TN model)" float default="2.0" optional
+option "pyrtvratio" P "Transition/transvertion ratio for  pyrimidines transitions (for the TN model)" float default="2.0" optional   
 option "no-tstvratio" N "If given fixed ts/tv ratios will not be used" flag off
 option "fixfactor" F "Float specifying what factor to use for saturated data. If not given -1 in the entry." float default="1" optional
-option "number-of-runs" r "nr of runs ( datasets ) in input. This option is only used if the input format is phylip_multialignment." int optional default="1"
-option "print-relaxng-input" p "print the Relax NG schema for the XML input format ( Fastphylo sequence XML format ) and then exit" flag off
-option "print-relaxng-output" w "print the Relax NG schema for the XML output format ( Fastphylo distance matrix XML format ) and then exit." flag off
+option "number-of-runs" r "nr of runs (datasets) in input. This option is only used if the input format is phylip_multialignment." int optional default="1"
+option "print-relaxng-input" p "print the Relax NG schema for the XML input format (Fastphylo sequence XML format) and then exit" flag off
+option "print-relaxng-output" w "print the Relax NG schema for the XML output format (Fastphylo distance matrix XML format) and then exit." flag off
 
 # Not implemented yet....
 # option "bootmode" B "Kind of bootstrapping" values="","" default=""

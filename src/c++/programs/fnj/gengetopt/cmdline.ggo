@@ -22,8 +22,8 @@ option "dm-per-run" d "nr of Distance matrices per run. Is only used if the inpu
 option "number-of-runs" r "nr of runs. Is only used if the input format is phylip" int optional default="1"
 option "bootstraps" b  "number of boot straps" int default="0" optional
 
-option "print-relaxng-input" p "print the Relax NG schema for the XML input format ( Fastphylo distance matrix XML format ) and then exit" flag off
-option "print-relaxng-output" w "print the Relax NG schema for the XML output format ( Fastphylo tree count XML format ) and then exit." flag off
+option "print-relaxng-input" p "print the Relax NG schema for the XML input format (Fastphylo distance matrix XML format) and then exit" flag off
+option "print-relaxng-output" w "print the Relax NG schema for the XML output format (Fastphylo tree count XML format) and then exit." flag off
 
 
 text "
