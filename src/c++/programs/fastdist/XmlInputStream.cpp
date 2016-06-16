@@ -24,11 +24,11 @@ XmlInputStream::XmlInputStream(char * filename)
   // Comment: The special treatment of the filename "-" in the libxml api, is not  
   // a good designed api, but now when it is there let us use it.
 
-  if (!strncmp(filename,"-",1)) {
+  if (filename && !strncmp(filename,"-",1)) {
     THROW_EXCEPTION("file name \"-\" is not allowed. See \n http://mail.gnome.org/archives/xml/2007-February/msg00005.html \n  ");
   }
 
-  if ( filename == 0 ) {
+  if ( filename == NULL ) {
     filename = (char *) "-";
   }
   LIBXML_TEST_VERSION

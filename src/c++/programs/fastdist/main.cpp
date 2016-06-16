@@ -118,18 +118,17 @@ main(int argc,
 	//
 
 	try {
-
-
-		char * inputfilename = 0;
-		char * outputfilename = 0;
+		char * inputfilename = NULL;
+		char * outputfilename = NULL;
 
 		DataInputStream *istream;
 		DataOutputStream *ostream;
 
 		switch( args_info.inputs_num )
-		{  case 0: break; /* inputfilename will be null and indicate stdin as input */
-		case 1: inputfilename =  args_info.inputs[0]; break;
-		default: cerr << "Error: you can at most specify one input filename" << endl; exit(EXIT_FAILURE);
+		  {
+		  case 0: break; /* inputfilename will be null and indicate stdin as input */
+		  case 1: inputfilename =  args_info.inputs[0]; break;
+		  default: cerr << "Error: you can at most specify one input filename" << endl; exit(EXIT_FAILURE);
 		}
 
 		if( args_info.outfile_given )
