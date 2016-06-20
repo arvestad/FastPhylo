@@ -7,6 +7,21 @@ ENDIF(WIN32)
  SET(GENGETOPT "${GENGETOPTDEP}" )
 ENDIF(NOT GENGETOPT)
 
+IF(BUILD_WITH_MPI)
+	# OpenMPI support
+  FIND_PACKAGE(MPI REQUIRED)
+  INCLUDE(CMakeForceCompiler)
+  #mehmood's changes here. This should not be necessary!
+  IF(CMAKE_HOST_APPLE)
+	CMAKE_FORCE_CXX_COMPILER(mpic++ "MPI C++ Compiler for Apple")
+  ELSEIF(CMAKE_HOST_UNIX)
+	CMAKE_FORCE_CXX_COMPILER(mpiCC "MPI C++ Compiler for Linux")
+  ENDIF()
+ENDIF()
+
+
+
+
 IF(STATIC)
  SET(LIBXML2_INCLUDE_DIR  "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2" )
  SET(LIBXML2_LIBRARIES  "${CMAKE_CURRENT_BINARY_DIR}/external/install/lib/libxml2.a" )
@@ -32,7 +47,9 @@ file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/install )
 file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt )
 file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt )
 file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt )
-file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt )
+IF(BUILD_WITH_MPI)
+  file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt )
+ENDIF()
 
 #mehmood changes here
 #SET(ARCH_FLAGS "" )
@@ -73,11 +90,13 @@ add_custom_command(OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengeto
                      COMMAND ${GENGETOPT} -i  ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot/gengetopt/cmdline.ggo  --output-dir=${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt
                      DEPENDS   ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot/gengetopt/cmdline.ggo  ${GENGETOPTDEP}
                      VERBATIM)
-#mehmood's changes here
-add_custom_command(OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c   ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.h
+
+IF(BUILD_WITH_MPI)
+  add_custom_command(OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c   ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.h
                      COMMAND ${GENGETOPT} -i  ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot_mpi/gengetopt/cmdline.ggo  --output-dir=${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt
                      DEPENDS   ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot_mpi/gengetopt/cmdline.ggo  ${GENGETOPTDEP}
                      VERBATIM)
+ENDIF()
 
 #INCLUDE (CMakeDetermineCXXCompiler)
 #IF(NOT CMAKE_COMPILER_IS_GNUCXX)
@@ -109,13 +128,13 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/programs/fnj)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/sequence_likelihood)
-#changes by mehmood
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot_mpi)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt)
-#changes end here
 #INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/aml)
+IF(BUILD_WITH_MPI)
+  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot_mpi)
+  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt)
+ENDIF()
 
 SET(FASTPHYLO_SRCS BitVector.cpp 
 Exception.cpp
@@ -211,10 +230,12 @@ SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/genget
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.h  PROPERTIES GENERATED true)
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.c  PROPERTIES GENERATED true)
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.h  PROPERTIES GENERATED true)
-SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c  PROPERTIES GENERATED true)
-SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.h  PROPERTIES GENERATED true)
+IF(BUILD_WITH_MPI)
+  SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c  PROPERTIES GENERATED true)
+  SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.h  PROPERTIES GENERATED true)
+ENDIF()
 
-#changes by Mehmood/Henric
+
 SET(FASTPROT_SRCS programs/fastprot/main.cpp
 programs/fastprot/FastaInputStream.cpp
 programs/fastprot/DataOutputStream.cpp
@@ -239,31 +260,31 @@ IF(WITH_LIBXML)
  ENDIF(STATIC)
 ENDIF(WITH_LIBXML)
 
-SET(FASTPROT_MPI_SRCS programs/fastprot_mpi/main.cpp
-programs/fastprot_mpi/FastaInputStream.cpp
-programs/fastprot_mpi/DataOutputStream.cpp
-programs/fastprot_mpi/XmlOutputStream.cpp
-programs/fastprot_mpi/PhylipMaInputStream.cpp
-programs/fastprot_mpi/ProtDistCalc.cpp
-programs/fastprot_mpi/ModelMatrix.cpp
-programs/fastprot_mpi/ExpectedDistance.cpp
-programs/fastprot_mpi/Matrix.cpp
-programs/fastprot_mpi/MaximumLikelihood.cpp
-programs/fastprot_mpi/ProtSeqUtils.cpp
-programs/fastprot/PhylipDmOutputStream.cpp
-programs/fastprot/BinaryDmOutputStream.cpp
-${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c
-)
+IF(BUILD_WITH_MPI)
+  SET(FASTPROT_MPI_SRCS programs/fastprot_mpi/main.cpp
+  programs/fastprot_mpi/FastaInputStream.cpp
+  programs/fastprot_mpi/DataOutputStream.cpp
+  programs/fastprot_mpi/XmlOutputStream.cpp
+  programs/fastprot_mpi/PhylipMaInputStream.cpp
+  programs/fastprot_mpi/ProtDistCalc.cpp
+  programs/fastprot_mpi/ModelMatrix.cpp
+  programs/fastprot_mpi/ExpectedDistance.cpp
+  programs/fastprot_mpi/Matrix.cpp
+  programs/fastprot_mpi/MaximumLikelihood.cpp
+  programs/fastprot_mpi/ProtSeqUtils.cpp
+  programs/fastprot/PhylipDmOutputStream.cpp
+  programs/fastprot/BinaryDmOutputStream.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c
+  )
+  IF(WITH_LIBXML)
+    IF(STATIC)
+      SET(FASTPROT_MPI_XML_SRCS programs/fastprot_mpi/XmlInputStream.cpp  "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h" )
+    ELSE(STATIC)
+      SET(FASTPROT_MPI_XML_SRCS programs/fastprot_mpi/XmlInputStream.cpp )
+    ENDIF(STATIC)
+  ENDIF(WITH_LIBXML)
+ENDIF(BUILD_WITH_MPI)
 
-IF(WITH_LIBXML)
- IF(STATIC)
-  SET(FASTPROT_MPI_XML_SRCS programs/fastprot_mpi/XmlInputStream.cpp  "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h" )
- ELSE(STATIC)
-  SET(FASTPROT_MPI_XML_SRCS programs/fastprot_mpi/XmlInputStream.cpp )
- ENDIF(STATIC)
-ENDIF(WITH_LIBXML)
-
-# changes ends here
 
 FOREACH(i ${FASTPHYLO_SPECIAL_SRCS})
   SET_SOURCE_FILES_PROPERTIES(${i} PROPERTIES COMPILE_FLAGS "${COMMON_FLAGS} -DNDEBUG  -fforce-addr  -fno-branch-count-reg  -fomit-frame-pointer ")
@@ -291,7 +312,6 @@ IF(STATIC)
 ENDIF(STATIC)
 
 
-# changes by Mehmood here
 #enable_language(Fortran)
 FIND_PACKAGE(BLAS REQUIRED)
 FIND_PACKAGE(LAPACK REQUIRED)
@@ -307,23 +327,24 @@ IF(STATIC)
 ENDIF(STATIC)
 
 
-ADD_EXECUTABLE(fastprot_mpi ${FASTPROT_MPI_SRCS} ${FASTPROT_MPI_XML_SRCS} ) 
-TARGET_LINK_LIBRARIES(fastprot_mpi m  ${LIBXML2_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${ZLIB_LIBRARY} -lpthread fastphylo)
+IF(BUILD_WITH_MPI)
+  ADD_EXECUTABLE(fastprot_mpi ${FASTPROT_MPI_SRCS} ${FASTPROT_MPI_XML_SRCS} ) 
+  TARGET_LINK_LIBRARIES(fastprot_mpi m  ${LIBXML2_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${ZLIB_LIBRARY} -lpthread fastphylo)
 
 #TARGET_LINK_LIBRARIES(fastprot_mpi m  ${LIBXML2_LIBRARIES}  ${ZLIB_LIBRARY} -L/pdc/vol/i-compilers/11.1/icc/mkl/lib/em64t -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread fastphylo )
 
-IF(STATIC)
- set_property(TARGET fastprot_mpi PROPERTY LINK_SEARCH_END_STATIC ON )
-ENDIF(STATIC)
-# changes ends here
+  IF(STATIC)
+    set_property(TARGET fastprot_mpi PROPERTY LINK_SEARCH_END_STATIC ON )
+  ENDIF(STATIC)
+ENDIF(BUILD_WITH_MPI)
 
 
 INSTALL(TARGETS fastdist DESTINATION bin)
 INSTALL(TARGETS fnj DESTINATION bin)
-#changes by mehmood here
 INSTALL(TARGETS fastprot DESTINATION bin)
-INSTALL(TARGETS fastprot_mpi DESTINATION bin)
-
+IF(BUILD_WITH_MPI)
+  INSTALL(TARGETS fastprot_mpi DESTINATION bin)
+ENDIF(BUILD_WITH_MPI)
 
 
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/${LIBXML2_INCLUDE_DIR}/libxml/xmlreader.h PROPERTIES GENERATED TRUE HEADER_FILE_ONLY TRUE )
