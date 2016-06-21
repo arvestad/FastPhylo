@@ -12,7 +12,7 @@ You can download binaries for Mac and Linux:
 
 ## Source code ##
 
-Source code is available through cloning this repository -- see GitHub links and resources.
+Source code is available through cloning of this repository -- see GitHub links and resources.
 See the file "INSTALL" for compilation and installation instructions!
 
 ## Documentation ##

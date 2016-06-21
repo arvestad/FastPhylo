@@ -1,8 +1,14 @@
 Requirements for fastphylo:
 
 * cmake
-* openmpi (or equivalent)
 * wget
+
+If you want to build the distributed version of fastprot, fastprot_mpi, you also need:
+
+* openmpi (or equivalent), and set the CMAKE flag BUILD_WITH_MPI
+
+Unfortunately, the MPI version does not build without tinkering on all platforms. It has worked for
+us on Ubuntu/Debian using standard packages and on macOS using HomeBrew packages.
 
 If you want to build the documentation (auto-generated examples, yielding up-to-date help-texts, it is a feature!),
 then you also need:
@@ -22,6 +28,10 @@ To install into the directory $HOME/inst run these commands:
 
 Without the installation prefix option, cmake installs into the
 default path (may be /usr/local/bin).
+
+If you want to build and install fastprot_mpi, remember to use the option
+  -DBUILD_WITH_MPI=ON
+in the cmake command.
 
 If you want to install the documentation too, you need to add the flag
   -DBUILD_DOCBOOK=ON
