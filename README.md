@@ -1,7 +1,7 @@
 # Fastphylo #
 
 Fastphylo is software project containing the implementations of the algorithms "Fast Computation of
-Distance Estimators" and "Fast Neighbor Joining". The software is licensed under the MIT license.
+Distance Estimators", "Fast Neighbor Joining", and more. The software is licensed under the MIT license.
 
 
 ## Downloads ##
@@ -17,14 +17,12 @@ See the file "INSTALL" for compilation and installation instructions!
 
 ## Documentation ##
 
-For the moment, we refer to the old web site: fastphylo.sourceforge.net
-
-We will make a PDF available here once we figure out how to do it nicely... 
+For the moment, we refer to the docs at our old web site: fastphylo.sourceforge.net
 
 -------------------------------------------------------------------------------
 
 The directory layout of this package:
 
-src/c++       the c++ sources
-src/docbook   the docbook sources for the html documentation on the homepage
+* src/c++       the c++ sources
+* src/docbook   the docbook sources for the html documentation on the homepage
 
