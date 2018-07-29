@@ -1,7 +1,9 @@
 # Fastphylo #
 
 Fastphylo is software project containing the implementations of the algorithms "Fast Computation of
-Distance Estimators", "Fast Neighbor Joining", and more. The software is licensed under the MIT license.
+Distance Estimators", "Fast Neighbor Joining", and more. See the paper "FastPhylo: Fast tools for phylogenetics" for more information.
+
+The software is licensed under the MIT license.
 
 
 ## Downloads ##
@@ -18,6 +20,10 @@ See the file "INSTALL" for compilation and installation instructions!
 ## Documentation ##
 
 For the moment, we refer to the docs at our old web site: fastphylo.sourceforge.net
+
+### Relevant publications
+
+* [FastPhylo: Fast tools for phylogenetics](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-334)
 
 -------------------------------------------------------------------------------
 
