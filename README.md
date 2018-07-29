@@ -23,7 +23,9 @@ For the moment, we refer to the docs at our old web site: fastphylo.sourceforge.
 
 ### Relevant publications
 
-* [FastPhylo: Fast tools for phylogenetics](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-334)
+* Elias & Lagergren, [Fast Computation of Distance Estimators](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-8-89), BMC Bioinformatics, 2007.
+* Elias & Lagergren, [Fast Neighbor Joining](https://www.sciencedirect.com/science/article/pii/S0304397508009079?via%3Dihub), Theoretical Computer Science, 2009.
+* Khan _et al_, [FastPhylo: Fast tools for phylogenetics](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-334), BMC Bioinformatics, 2013.
 
 -------------------------------------------------------------------------------
 
