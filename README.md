@@ -1,3 +1,5 @@
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/fastphylo/README.html)
+
 # Fastphylo #
 
 Fastphylo is software project containing the implementations of the algorithms "Fast Computation of
