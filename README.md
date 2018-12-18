@@ -8,11 +8,14 @@ Distance Estimators", "Fast Neighbor Joining", and more. See the paper "FastPhyl
 The software is licensed under the MIT license.
 
 
-## Downloads ##
+## Installation ##
 
-You can download binaries for Mac and Linux:
-* Linux (v3.16): https://dl.dropboxusercontent.com/u/29398756/Fastphylo/fastphylo-1.0.2-linux.tar.gz
-* macOS X (11.10, El Capitan): https://dl.dropboxusercontent.com/u/29398756/Fastphylo/fastphylo-1.0.2-Darwin.tar.gz
+There is presently one easy option for installing FastPhylo and that is using BioConda. So,
+
+1. [Set up Bio Conda for your system](https://bioconda.github.io/index.html), including adding the bioconda channel.
+2. [Run the install command](https://bioconda.github.io/recipes/fastphylo/README.html): ```conda install fastphylo```
+
+The alternative is to build the software locally from source.
 
 ## Source code ##
 
