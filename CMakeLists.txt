@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6.0)
+cmake_minimum_required(VERSION 3.2)
 project(fastphylo)
 
 ENABLE_TESTING() # Not that we have any tests... 
