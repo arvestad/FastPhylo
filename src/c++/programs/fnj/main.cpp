@@ -154,7 +154,7 @@ int main (int argc, char **argv) {
 			tree2int_map tree2count((size_t)(args_info.bootstraps_arg * 1.3));
 			str2int_hashmap name2id;
 			if (args_info.input_format_arg==input_format_arg_binary) {
-				StrFloMatrix dm;
+				StrDblMatrix dm;
 				for (int runNo=1; (status = istream->readDM(dm, names, runId, extrainfos))==DM_READ; runNo++) {
 					if (args_info.analyze_run_number_given) {
 						if (runNo<args_info.analyze_run_number_arg)
