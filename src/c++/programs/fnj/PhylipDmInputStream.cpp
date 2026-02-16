@@ -35,37 +35,33 @@ PhylipDmInputStream::PhylipDmInputStream(char *filename) {
 	}
 }
 
-//// check if file is empty or not
-//bool isEmpty(std::ifstream& pFile)
-//{
-//	return pFile.peek() == std::ifstream::traits_type::eof();
-//}
 
 readstatus PhylipDmInputStream::readDM(StrDblMatrix &dm, vector<string> & names, string & runId, Extrainfos &extrainfos) {
 	string line;
-	int i1,i2,linePos,newSize;
+	int    i1, i2, newSize;
 
-	if (getline(*fp,line)==0)
+	if (!getline(*fp,line))
 		return END_OF_RUN;
 
-	newSize=atoi(line.c_str());
+	newSize = std::stoi(line); // First line contains the number of taxa
 	dm.resize(newSize);
 	for (i1=0; i1<newSize; i1++) {
 		getline(*fp,line);
 		//		std::cerr << "Line: " << line << endl;
-		linePos=line.find_first_of(" \n\r\t");
+		size_t linePos=line.find_first_of(" \n\r\t");
 		dm.setIdentifier(i1,line.substr(0,linePos));
 		line=line.substr(line.find_first_not_of(" \n\r\t",linePos));
 		for (i2=0; i2<newSize; i2++) {
 			linePos=line.find_first_of(" \n\r\t");
-			if (linePos>=0) {
-				dm.setDistance(i1,i2,atof(line.substr(0,linePos).c_str()));
+			if (linePos != std::string::npos) {
+			        dm.setDistance(i1, i2, std::stof(line.substr(0,linePos).c_str()));
 				line=line.substr(line.find_first_not_of(" \n\r\t",linePos));
-				}
-			else
+			}
+			else {
 				dm.setDistance(i1,i2,atof(line.c_str()));
 			}
 		}
+	}
 	names.clear();
 	for(size_t namei=0 ; namei<dm.getSize() ; namei++ ) {
 	  // std::cerr << "Name: " << dm.getIdentifier(namei) << endl; 
@@ -74,7 +70,3 @@ readstatus PhylipDmInputStream::readDM(StrDblMatrix &dm, vector<string> & names,
 	return DM_READ;
 }
 
-readstatus PhylipDmInputStream::readDM(StrFloMatrix &dm, vector<string> & names, string & runId, Extrainfos &extrainfos) {
-  std::cerr << "PhylipDmInputStream::readDM(StrFloMatrix, ...) -- Not implemented!" << endl;
-  std::exit(-1);
-}

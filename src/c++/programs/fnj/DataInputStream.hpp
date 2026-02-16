@@ -19,7 +19,7 @@ class DataInputStream
 public:
   virtual ~DataInputStream() {};
   virtual readstatus readDM(StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos ) = 0;
-  virtual readstatus readDM(StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos) = 0;
+//  virtual readstatus readDM(StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos) = 0;
 };
 
 /*

@@ -78,7 +78,7 @@ readstatus BinaryInputStream::readDM(StrFloMatrix & dm, std::vector<std::string>
 	for(int i = 0; i < newSize; ++i) {
 		for(int j = i; j < newSize; ++j) {
 			float f;
-			if (fp->read( reinterpret_cast<char*>( &f ), sizeof(f))==0)
+			if (!fp->read( reinterpret_cast<char*>( &f ), sizeof(f)))
 				return END_OF_RUN;
 			dm.setDistance(i, j, f);
 		}

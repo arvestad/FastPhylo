@@ -18,7 +18,6 @@ public:
   PhylipDmInputStream(char * filename);
   ~PhylipDmInputStream();
   readstatus readDM( StrDblMatrix & dm, vector<string> & names, string & runId, Extrainfos & extrainfos );
-  readstatus readDM( StrFloMatrix & dm, vector<string> & names, string & runId, Extrainfos & extrainfos );
 protected:
   istream * fp;
   ifstream fin;
