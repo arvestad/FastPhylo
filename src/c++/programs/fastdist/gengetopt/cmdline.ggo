@@ -1,5 +1,5 @@
 package "fastdist"
-version "1.0.0"
+version "1.0.10"
 description "Computes distance matrices out of multialignments"
      
 args "--file-name=fastdist_gengetopt --unamed-opts=FILE"
