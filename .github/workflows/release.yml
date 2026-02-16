@@ -18,8 +18,50 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      # --- OS-specific dependencies ---
+      - name: Install BLAS on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libopenblas-dev liblapack-dev
+
+      - name: Install BLAS on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew update
+          brew install openblas
+
+      - name: Setup vcpkg on Windows
+        if: matrix.os == 'windows-latest'
+        uses: microsoft/vcpkg-action@v1
+        with:
+          # Install openblas (or mkl if you prefer)
+          runVcpkgInstall: true
+          vcpkgArguments: openblas
+          # Triplet auto-detected; override via vcpkgTriplet if needed
+
+      # --- Configure & Build ---
+      - name: Configure (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: |
+          # For macOS, Homebrew installs OpenBLAS in a non-system prefix; help CMake find it.
+          if [ "${{ matrix.os }}" = "macos-latest" ]; then
+            export OPENBLAS_PREFIX="$(brew --prefix openblas)"
+            cmake -S . -B build \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DBLA_VENDOR=OpenBLAS \
+              -DCMAKE_PREFIX_PATH="$OPENBLAS_PREFIX"
+          else
+            cmake -S . -B build \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DBLA_VENDOR=OpenBLAS
+          fi
+
+      - name: Configure (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release "-DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" -DBLA_VENDOR=OpenBLAS
 
       - name: Build
         run: cmake --build build --config Release
