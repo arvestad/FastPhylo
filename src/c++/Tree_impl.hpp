@@ -1199,7 +1199,7 @@ TREENODE::getLeftMostDescendantLeaf() const{
 
   const TREENODE *tmp = this;
   while ( ! tmp->isLeaf() )
-    tmp = tmp->getLeftMostChild;
+      tmp = tmp->getLeftMostChild();
 
   return tmp;
 }
@@ -1209,7 +1209,7 @@ TREENODE::getLeftMostDescendantLeaf(){
 
   TREENODE *tmp = this;
   while ( ! tmp->isLeaf() )
-    tmp = tmp->getLeftMostChild;
+      tmp = tmp->getLeftMostChild();
 
   return tmp;
 }
