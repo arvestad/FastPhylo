@@ -10,12 +10,7 @@ The software is licensed under the MIT license.
 
 ## Installation ##
 
-There is presently one easy option for installing FastPhylo and that is using BioConda. So,
-
-1. [Set up Bio Conda for your system](https://bioconda.github.io/index.html), including adding the bioconda channel.
-2. [Run the install command](https://bioconda.github.io/recipes/fastphylo/README.html): ```conda install fastphylo```
-
-The alternative is to build the software locally from source.
+See the file INSTALL.
 
 ## Source code ##
 

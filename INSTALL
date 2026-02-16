@@ -18,13 +18,15 @@ then you also need:
 
 
 This package uses the program cmake for building and packaging the software.
-To install into the directory $HOME/inst run these commands:
+To install into the directory $HOME/bin run these commands:
 
-  mkdir $HOME/inst
+  mkdir $HOME/bin
   cd fastphylo
   mkdir build
   cd build
-  cmake -DCMAKE_INSTALL_PREFIX=$HOME/inst ..
+  cmake -DCMAKE_INSTALL_PREFIX=$HOME/bin ..
+  make
+  make install
 
 Without the installation prefix option, cmake installs into the
 default path (may be /usr/local/bin).
@@ -38,7 +40,4 @@ If you want to install the documentation too, you need to add the flag
 to the cmake command line.
 
 
-See the GitHub wiki for more instructions:
-
-    https://github.com/arvestad/FastPhylo/wiki
 
