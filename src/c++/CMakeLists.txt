@@ -117,6 +117,22 @@ INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
 #LINK_DIRECTORIES(${LIBXML2_LIBRARIES})
 # Do we need this? It seems to put '-L /usr/lib/libxml2.dynlib' in the linking commands, which is wrong.
 
+# DNA_b128/sse2_wrapper.h uses x86 SSE2 intrinsics directly. On non-x86
+# platforms (e.g. Apple Silicon / other ARM), it falls back to simde
+# (https://github.com/simd-everywhere/simde), a header-only library that
+# translates the same _mm_* calls onto NEON. Not needed, and not searched
+# for, on real x86 hardware.
+IF(NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|i.86|AMD64)$"))
+  FIND_PATH(SIMDE_INCLUDE_DIR simde/x86/sse2.h
+    HINTS /opt/homebrew/include /usr/local/include)
+  IF(SIMDE_INCLUDE_DIR)
+    INCLUDE_DIRECTORIES(${SIMDE_INCLUDE_DIR})
+  ELSE()
+    MESSAGE(WARNING "simde not found (needed for SSE2-via-NEON on ${CMAKE_SYSTEM_PROCESSOR}); "
+      "install it (e.g. 'brew install simde') or DNA_b128/sse2_wrapper.h will fail to compile.")
+  ENDIF()
+ENDIF()
+
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/)

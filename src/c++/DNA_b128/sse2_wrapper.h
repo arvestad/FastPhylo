@@ -21,7 +21,15 @@
 extern "C" {
 #endif
 
+// Real SSE2 on x86; simde's NEON-backed translation everywhere else
+// (e.g. Apple Silicon). SIMDE_ENABLE_NATIVE_ALIASES makes simde define the
+// plain _mm_* names this file already calls, instead of simde_mm_*.
+#if defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
 #include <emmintrin.h>
+#else
+#define SIMDE_ENABLE_NATIVE_ALIASES
+#include <simde/x86/sse2.h>
+#endif
 
 
 typedef __m128i b128;
@@ -518,15 +526,31 @@ void print_bits_b128(b128 a);
 void print_blocks_b128(b128 a, int block_size);
 
 
-  // PENTIUM SPECIFIC TICKS COUNTER
+  // HARDWARE TICKS COUNTER
   typedef unsigned long long ticks;
 
+#if defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
   static __inline__ ticks getticks(void)
   {
-    unsigned a, d; 
-    asm volatile("rdtsc" : "=a" (a), "=d" (d)); 
-    return ((ticks)a) | (((ticks)d) << 32); 
+    unsigned a, d;
+    asm volatile("rdtsc" : "=a" (a), "=d" (d));
+    return ((ticks)a) | (((ticks)d) << 32);
   }
+#elif defined(__aarch64__)
+  // ARM equivalent of rdtsc: the virtual counter register, readable from
+  // userspace (EL0) without a syscall.
+  static __inline__ ticks getticks(void)
+  {
+    unsigned long long val;
+    asm volatile("mrs %0, cntvct_el0" : "=r" (val));
+    return (ticks)val;
+  }
+#else
+  static __inline__ ticks getticks(void)
+  {
+    return 0;
+  }
+#endif
 
 
   
