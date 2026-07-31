@@ -265,6 +265,7 @@ programs/fastprot/Matrix.cpp
 programs/fastprot/MaximumLikelihood.cpp
 programs/fastprot/ProtSeqUtils.cpp
 programs/fastprot/ProtSeqCode.cpp
+programs/fastprot/ProtSeqCompare.cpp
 programs/fastprot/BinaryDmOutputStream.cpp
 ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.c
 )
