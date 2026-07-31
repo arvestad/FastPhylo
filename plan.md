@@ -356,16 +356,41 @@ plan rather than being folded in opportunistically.
 
 ## Final verification checklist (before calling this done)
 
-- [ ] All new alphabet/encoding edge cases have passing unit tests.
-- [ ] Differential test suite (old vs. new) passes on synthetic and real
-      data, checked into CI.
-- [ ] End-to-end distance-matrix output matches old implementation on at
-      least one real dataset.
+- [x] All new alphabet/encoding edge cases have passing unit tests.
+      `code_tests/ProtSeqCode_test.cpp`, wired into the CMake build
+      (`ctest`).
+- [x] Differential test suite (old vs. new) passes on synthetic and real
+      data, checked into CI. Ran repeatedly pre-removal (random pairs,
+      full alphabet, edge cases, and end-to-end on real globin data) -
+      see phase0_audit.md/phase1_design.md's Phase 4 sections. Not
+      re-runnable post-Phase-6 since the old path is gone by design
+      (decision 5); durable regression coverage for the surviving new
+      path is `examples/RunExamples.sh` examples 11-15 (checked into
+      `expected_output/`) instead.
+- [x] End-to-end distance-matrix output matches old implementation on at
+      least one real dataset. `examples/globin_family.fasta` (25
+      UniProt-reviewed globin sequences, muscle-aligned) - confirmed
+      byte-identical before Phase 6's removal, now examples/expected_output/ex15.out.
 - [ ] Scalar fallback path is tested and correct on a machine/build
-      without the assumed SIMD extension.
-- [ ] Benchmark results are checked in, reproducible via a single command,
-      and show whether the agreed speedup target was met — separately for
-      mismatch counting, replacement-matrix tally, and end-to-end protein
-      distance.
-- [ ] Old code path fully removed, no dead flags/switches left behind.
-- [ ] Documentation and changelog updated.
+      without the assumed SIMD extension. Partially: the scalar
+      remainder loop (non-multiple-of-16 lengths) is exercised and
+      correct on this arm64/NEON-via-simde machine, but no genuinely
+      SIMD-less build/CPU was available to test - see
+      benchmarks/RESULTS.md's platform caveats.
+- [x] Benchmark results are checked in, reproducible via a single
+      command (`benchmarks/run_benchmarks.sh`), separately for mismatch
+      counting, replacement-matrix tally, and end-to-end protein
+      distance. No target speedup factor was agreed with Lasse before
+      Phase 5; measured numbers (5-7x primitive, 1.8-6x end-to-end) are
+      in benchmarks/RESULTS.md for review rather than a pass/fail.
+- [x] Old code path fully removed, no dead flags/switches left behind -
+      for the scope this round actually covers (ID/JC/JCK/JCSS, built
+      on count_id_dist()). count_replacements()/ED/ML were never wired
+      to a switch in the first place (deprioritized per direction
+      received mid-project - see phase0_audit.md) and are untouched,
+      still on their original implementation. fastprot_mpi is also
+      untouched (separate copy of this code, left on the old path,
+      per Phase 3's stated decision).
+- [x] Documentation and changelog updated. CHANGELOG.md added; this
+      checklist; phase0_audit.md/phase1_design.md/benchmarks/RESULTS.md
+      are the detailed record.

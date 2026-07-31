@@ -86,23 +86,9 @@ Matrix count_replacements(const Sequence &s1, const Sequence &s2){
   return temp;
 }
 
-  /*
-   * Counts the percentage identity, the number of amino acids that are 
-   * the same between two sequences, divided with the length of the sequences
-   * @param s1 Sequence 1
-   * @param s2 Sequence 2
-   * @return The percentage identity
-   */
-  double count_id_dist(const Sequence &s1, const Sequence &s2){
-    double id = 0;
-    std::string::const_iterator it1, it2;
-
-    for (it1 = s1.seq.begin(), it2 = s2.seq.begin(); it1 != s1.seq.end(); it1++, it2++) {
-      if (toupper(*it1) == toupper(*it2))
-        id++;
-    }
-    return id/s1.seq.size();
-  }
+  // count_id_dist() (percentage identity) used to live here; replaced by
+  // ProtSeqCode::count_id_fraction() (ProtSeqCode.hpp/ProtSeqCompare.hpp)
+  // as of speed2026a Phase 6 - see phase0_audit.md/phase1_design.md.
 
 /*
  * Code adapted from Sequences2DistanceMatrix.cpp - bootstrapSequences()
