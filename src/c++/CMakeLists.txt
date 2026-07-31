@@ -364,5 +364,20 @@ IF(BUILD_WITH_MPI)
   INSTALL(TARGETS fastprot_mpi DESTINATION bin)
 ENDIF(BUILD_WITH_MPI)
 
+# Correctness tests for the speed2026a protein-code speedup (plan.md).
+# code_tests/ as a whole isn't wired into this build (see
+# phase0_audit.md); these two are new and specific to this project, so
+# they're wired in directly rather than expanding scope to the rest of
+# code_tests/.
+ENABLE_TESTING()
+
+ADD_EXECUTABLE(ProtSeqCode_test code_tests/ProtSeqCode_test.cpp programs/fastprot/ProtSeqCode.cpp)
+TARGET_INCLUDE_DIRECTORIES(ProtSeqCode_test PRIVATE programs/fastprot)
+ADD_TEST(NAME ProtSeqCode_test COMMAND ProtSeqCode_test)
+
+ADD_EXECUTABLE(ProtSeqCompare_test code_tests/ProtSeqCompare_test.cpp programs/fastprot/ProtSeqCode.cpp programs/fastprot/ProtSeqCompare.cpp)
+TARGET_INCLUDE_DIRECTORIES(ProtSeqCompare_test PRIVATE programs/fastprot)
+ADD_TEST(NAME ProtSeqCompare_test COMMAND ProtSeqCompare_test)
+
 
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/${LIBXML2_INCLUDE_DIR}/libxml/xmlreader.h PROPERTIES GENERATED TRUE HEADER_FILE_ONLY TRUE )
