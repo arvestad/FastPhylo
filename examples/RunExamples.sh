@@ -39,6 +39,14 @@ run_example 12 "fastprot -I fasta protein_seq.fasta -D JC" ex12.out
 run_example 13 "fastprot -I fasta protein_seq.fasta -D JCK" ex13.out
 run_example 14 "fastprot -I fasta protein_seq.fasta -D JCSS" ex14.out
 run_example 15 "fastprot -I fasta globin_family.fasta -D JCK" ex15.out
+# Binary output had no regression coverage at all before this fixture -
+# it was silently crashing on every "-O binary -o <file>" invocation
+# (see phase0_audit.md's output-speedup work). fnj's binary distance-
+# matrix reader is an unimplemented stub (BinaryInputStream.cpp), so
+# there's no round-trip to test against; this is a direct byte-diff of
+# fastprot's binary output instead, same convention as every other
+# example here.
+run_example 16 "fastprot -I fasta protein_seq.fasta -D JCK -O binary" ex16.out
 #run_example 10 "cat seq.phylip | fastdist -I phylip -O phylip -b 3 -r 2 | fnj -I phylip -O xml -r 2 -d 4" ex10.out
 
 echo

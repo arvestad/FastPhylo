@@ -15,7 +15,14 @@ using namespace std;
 BinaryDmOutputStream::BinaryDmOutputStream(char *filename):DataOutputStream(filename) {
 	if(filename != NULL) {
 		writeToCout = false;
-		delete fp;
+		// The base DataOutputStream(filename) constructor already opened fp
+		// via fopen() (open_write_file()); we don't need it (we write
+		// through ofs instead), so close it properly. This used to be
+		// `delete fp` - deleting a FILE* that was never allocated with new -
+		// which corrupted the heap and crashed on every invocation of
+		// `-O binary -o <file>` (it only appeared to work when writing to
+		// stdout, since that path never touches fp).
+		fclose(fp);
 		fp = NULL;
 		file_was_opened = false;
 		ofs = open_write_binary(filename);

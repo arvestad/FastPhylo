@@ -14,7 +14,10 @@ using namespace std;
 BinaryDmOutputStream::BinaryDmOutputStream(char *filename):DataOutputStream(filename) {
 	if(filename != NULL) {
 		writeToCout = false;
-		delete fp;
+		// See fastprot/BinaryDmOutputStream.cpp - this used to be `delete fp`,
+		// deleting a FILE* that was never allocated with new, which
+		// corrupted the heap and crashed on every `-O binary -o <file>`.
+		fclose(fp);
 		fp = NULL;
 		file_was_opened = false;
 		ofs = open_write_binary(filename);
