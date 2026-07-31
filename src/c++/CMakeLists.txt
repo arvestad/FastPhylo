@@ -185,9 +185,13 @@ std_c_utils.c
 xml_output_global.cpp
 )
 
-IF (CMAKE_COMPILER_IS_GNUCXX)
+# Was IF(CMAKE_COMPILER_IS_GNUCXX) only, which never matches Clang/AppleClang
+# - on such compilers the project silently built in each compiler's default
+# (pre-C++11, e.g. AppleClang 15 defaults to C++98) rather than the C++11
+# the codebase is written against. Broadened to cover Clang too.
+IF (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
-ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+ENDIF()
 
 SET(FASTPHYLO_SPECIAL_SRCS DNA_b128/sse2_wrapper.c 
                           DNA_b128/computeTAMURANEIDistance_DNA_b128_String.cpp 
@@ -378,6 +382,12 @@ ADD_TEST(NAME ProtSeqCode_test COMMAND ProtSeqCode_test)
 ADD_EXECUTABLE(ProtSeqCompare_test code_tests/ProtSeqCompare_test.cpp programs/fastprot/ProtSeqCode.cpp programs/fastprot/ProtSeqCompare.cpp)
 TARGET_INCLUDE_DIRECTORIES(ProtSeqCompare_test PRIVATE programs/fastprot)
 ADD_TEST(NAME ProtSeqCompare_test COMMAND ProtSeqCompare_test)
+
+# Phase 5 performance benchmark (plan.md). Not an ADD_TEST() - it prints
+# timing data, not a pass/fail result; see benchmarks/run_benchmarks.sh
+# for the reproducible one-command entry point.
+ADD_EXECUTABLE(bench_primitives ../../benchmarks/bench_primitives.cpp programs/fastprot/ProtSeqCode.cpp programs/fastprot/ProtSeqCompare.cpp)
+TARGET_INCLUDE_DIRECTORIES(bench_primitives PRIVATE programs/fastprot)
 
 
 SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/${LIBXML2_INCLUDE_DIR}/libxml/xmlreader.h PROPERTIES GENERATED TRUE HEADER_FILE_ONLY TRUE )
