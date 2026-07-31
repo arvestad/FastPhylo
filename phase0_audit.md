@@ -139,6 +139,36 @@ numerical models consuming `count_replacements()`'s output, not by
 directly to confirm the split quantitatively, so treat that as directional,
 not verified.
 
+## Post-Phase-3 finding: output writing is the new bottleneck
+
+After Phases 1-3 wired in the SIMD primitive (see phase1_design.md,
+`ProtSeqCompare.hpp`), re-profiling the new path on a larger dataset
+(2500 sequences x 500 residues, `RelWithDebInfo`, macOS `sample`) to
+check for further speedup opportunities turned up a different
+bottleneck: essentially all sampled time (205/206 samples, ~99.5%) is
+now in `PhylipDmOutputStream::printPHYLIPfastSD`
+(`PhylipDmOutputStream.cpp`), not in any residue-comparison code — the
+comparison primitive dropped out of the profile entirely.
+
+Root cause: `PhylipDmOutputStream.cpp:143` calls
+`fwrite(defstr, sizeof(char), 10, out)` **once per matrix entry** — for
+an N x N distance matrix that's N² individual `fwrite` calls (6.25M for
+this 2500-sequence run), each paying `stdio`'s per-call
+lock/unlock overhead. The profile's hottest frames are exactly that
+locking machinery (`flockfile`/`funlockfile`/
+`_pthread_mutex_firstfit_lock_slow`), not the actual byte writes.
+Batching writes (e.g. one `fwrite`/`fputs` per row instead of per
+entry) would very likely be a large win.
+
+**Deliberately not fixed in this pass** — it's a real, separate
+bottleneck outside plan.md's declared scope (which is specifically
+`count_id_dist()`/`count_replacements()`, the comparison primitives),
+the same way the ED/ML Newton-Raphson/`expm()` cost was flagged as a
+separate future project rather than folded in opportunistically.
+Logging it here as a candidate for a future round, alongside the other
+"Future phases" items in plan.md. Confirmed with Lasse (2026-07-31) to
+log and continue rather than pick up now.
+
 ## Bottom line for later phases
 
 - Kimura path: profiling confirms the primitive (`count_id_dist`)
