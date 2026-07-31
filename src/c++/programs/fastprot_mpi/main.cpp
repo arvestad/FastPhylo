@@ -1,3 +1,4 @@
+#include "config.h"
 #include "fastprot_mpi_gengetopt.h"
 #include "log_utils.hpp"
 #include "file_utils.hpp"
