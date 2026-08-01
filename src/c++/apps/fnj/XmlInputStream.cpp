@@ -4,8 +4,9 @@
 using namespace std;
 
 XmlInputStream::~XmlInputStream() {
-  if (reader)
+  if (reader) {
     xmlFreeTextReader(reader);
+}
   xmlCleanupParser();
 }
 
@@ -49,7 +50,8 @@ XmlInputStream::XmlInputStream(char * filename) {
 }
 
 readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos ) {
-  const xmlChar *name, *value;
+  const xmlChar *name;
+  const xmlChar *value;
   bool run_read = false;
   int ret;
   int nr_of_ids = 0;
@@ -99,8 +101,9 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 					continue;
 				case XML_READER_TYPE_END_ELEMENT:
 					l.in_dm = false;
-					for(size_t namei=0; namei < names.size(); namei++)
+					for(size_t namei=0; namei < names.size(); namei++) {
 						dm.setIdentifier(namei,names[namei]);
+}
 					return DM_READ;
 				default:
 					break; // other node types (whitespace, comments, ...) intentionally ignored

@@ -5,15 +5,16 @@
 using namespace std;
 
 FastaSequenceReader::~FastaSequenceReader() {
-  if (file_was_opened)
+  if (file_was_opened) {
     fin.close();
+}
 }
 
 FastaSequenceReader::FastaSequenceReader(char *filename, string allowedChars) : allowedChars(allowedChars) {
   file_was_opened = false;
-  if (filename == nullptr)
+  if (filename == nullptr) { {
     fp = &cin;
-  else {
+  } } else {
     fin.open(filename, ifstream::in);
     if (!fin.good()) {
       fin.close();

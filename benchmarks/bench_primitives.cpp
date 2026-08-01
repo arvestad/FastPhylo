@@ -37,25 +37,30 @@ constexpr std::string_view CANONICAL = "ARNDCQEGHILKMFPSTWYV";
 std::string random_seq(std::size_t len, unsigned int *seed) {
   std::string s;
   s.reserve(len);
-  for (std::size_t i = 0; i < len; i++)
+  for (std::size_t i = 0; i < len; i++) {
     s += CANONICAL[rand_r(seed) % CANONICAL.size()];
+}
   return s;
 }
 
 std::string diverge(const std::string &s, double rate, unsigned int *seed) {
   std::string out = s;
-  for (std::size_t i = 0; i < out.size(); i++)
-    if ((rand_r(seed) / static_cast<double>(RAND_MAX)) < rate)
+  for (std::size_t i = 0; i < out.size(); i++) {
+    if ((rand_r(seed) / static_cast<double>(RAND_MAX)) < rate) {
       out[i] = CANONICAL[rand_r(seed) % CANONICAL.size()];
+}
+}
   return out;
 }
 
 // Mirrors count_id_dist() (ProtSeqUtils.cpp) exactly.
 double old_count_id_dist(const std::string &s1, const std::string &s2) {
   double id = 0;
-  for (std::size_t i = 0; i < s1.size(); i++)
-    if (std::toupper(static_cast<unsigned char>(s1[i])) == std::toupper(static_cast<unsigned char>(s2[i])))
+  for (std::size_t i = 0; i < s1.size(); i++) {
+    if (std::toupper(static_cast<unsigned char>(s1[i])) == std::toupper(static_cast<unsigned char>(s2[i]))) {
       id++;
+}
+}
   return id / static_cast<double>(s1.size());
 }
 
@@ -70,8 +75,9 @@ std::vector<std::size_t> old_count_replacements(const std::string &s1, const std
   for (std::size_t i = 0; i < s1.size(); i++) {
     std::size_t c1 = old_getAAInd(s1[i]);
     std::size_t c2 = old_getAAInd(s2[i]);
-    if (c1 != 100 && c2 != 100)
+    if (c1 != 100 && c2 != 100) {
       counts[c1 * 20 + c2]++;
+}
   }
   return counts;
 }
@@ -94,8 +100,9 @@ Stats summarize(std::vector<double> &samples_us) {
 
 template <typename Fn>
 Stats time_calls(Fn fn, int warmup, int reps) {
-  for (int i = 0; i < warmup; i++)
+  for (int i = 0; i < warmup; i++) {
     fn();
+}
   std::vector<double> samples;
   samples.reserve(reps);
   for (int i = 0; i < reps; i++) {
@@ -123,7 +130,8 @@ int main() { // NOLINT(bugprone-exception-escape) - a benchmark binary crashing 
     std::string s1 = random_seq(len, &seed);
     std::string s2 = diverge(s1, DIVERGENCE, &seed);
 
-    std::vector<std::uint8_t> c1, c2;
+    std::vector<std::uint8_t> c1;
+    std::vector<std::uint8_t> c2;
     encode_sequence(s1, c1);
     encode_sequence(s2, c2);
 
@@ -151,7 +159,8 @@ int main() { // NOLINT(bugprone-exception-escape) - a benchmark binary crashing 
               << new_rep.median_us << "," << new_rep.q1_us << "," << new_rep.q3_us << ","
               << (old_rep.median_us / new_rep.median_us) << "\n";
 
-    if (sink_d == 123456.0 && sink_s == 123456) std::cerr << "unreachable\n"; // prevent over-optimization
+    if (sink_d == 123456.0 && sink_s == 123456) { std::cerr << "unreachable\n"; // prevent over-optimization
+}
   }
 
   return 0;

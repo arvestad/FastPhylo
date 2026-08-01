@@ -247,7 +247,9 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
   const b128 ONE = set_first_int_b128(1);
   
   //Compute the remaining b128s. There are atmost two remaining.
-  b128 diff,del,tmp_tv;
+  b128 diff;
+  b128 del;
+  b128 tmp_tv;
   switch( rest_num_b128s ){
   case 2:
     assert ( equal_b128(total_sum_tv,set_zero_b128()) );//assuming that nothing summed so far.
@@ -305,7 +307,9 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
   //     sum_with_previous_level(total_sum_tv,sum_tv_l1, TWO_BIT_MASK, TWO);
   //     sum_with_previous_level(total_sum_del,sum_del_l1, TWO_BIT_MASK, TWO);
   //   }
-  b128 sum_ts_l1,  sum_tv_l1,  sum_del_l1;
+  b128 sum_ts_l1;
+  b128 sum_tv_l1;
+  b128 sum_del_l1;
   for (  ; num_level_1 != 0 ; num_level_1-- ){    
     dist_level_1(sum_ts_l1, sum_tv_l1, sum_del_l1);
     sum_with_previous_level(total_sum_ts,sum_ts_l1, TWO_BIT_MASK, TWO);
@@ -321,7 +325,9 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
   
   
   //level 2, num_level_2 is atmost 8
-  b128 sum_ts_l2,  sum_tv_l2,  sum_del_l2;
+  b128 sum_ts_l2;
+  b128 sum_tv_l2;
+  b128 sum_del_l2;
   for ( ; num_level_2 != 0 ; num_level_2-- ){
     dist_level_2(sum_ts_l2,  sum_tv_l2,  sum_del_l2);
     sum_with_previous_level(total_sum_ts,sum_ts_l2, FOUR_BIT_MASK, FOUR);
@@ -341,7 +347,9 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
   
   
   //level 3, num_level_3 is atmost 128
-  b128 sum_ts_l3,  sum_tv_l3,  sum_del_l3;
+  b128 sum_ts_l3;
+  b128 sum_tv_l3;
+  b128 sum_del_l3;
   for ( ; num_level_3 != 0 ; num_level_3-- ){
     dist_level_3(sum_ts_l3,  sum_tv_l3,  sum_del_l3);
     //    sum_with_previous_level(total_sum_ts,sum_ts_l3, EIGHT_BIT_MASK, EIGHT);
@@ -364,7 +372,9 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
 
   
   //level 4, num_level_4 is atmost Any number
-  b128 sum_ts_l4,  sum_tv_l4,  sum_del_l4;
+  b128 sum_ts_l4;
+  b128 sum_tv_l4;
+  b128 sum_del_l4;
   for (  ; num_level_4 != 0 ; num_level_4-- ){
     dist_level_4(sum_ts_l4,  sum_tv_l4,  sum_del_l4);
     //    sum_with_previous_level(total_sum_ts,sum_ts_l4, SIXTEEN_BIT_MASK, SIXTEEN);
@@ -412,9 +422,16 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
 
 static __inline void
 dist_level_1(b128 &sum_ts_l1, b128 &sum_tv_l1, b128 &sum_del_l1){
-  b128 diff1,diff2,diff3;
-  b128 del1,del2,del3;
-  b128 *_del_ptr1,*_del_ptr2,*_ptr1,*_ptr2;
+  b128 diff1;
+  b128 diff2;
+  b128 diff3;
+  b128 del1;
+  b128 del2;
+  b128 del3;
+  b128 *_del_ptr1;
+  b128 *_del_ptr2;
+  b128 *_ptr1;
+  b128 *_ptr2;
   
 
   //--------
@@ -482,7 +499,9 @@ dist_level_1(b128 &sum_ts_l1, b128 &sum_tv_l1, b128 &sum_del_l1){
   // The number of deletions are the number of ones given by the del mask.
 
   const b128 ONE = set_first_int_b128(1);
-  b128 _sum_tv_l1,_sum_ts_l1, tmp_tv;
+  b128 _sum_tv_l1;
+  b128 _sum_ts_l1;
+  b128 tmp_tv;
   _sum_tv_l1 = and_b128(shift_each32_bits_right_b128(diff1,ONE),LEAST_SIGNIFCANT_BIT);
   _sum_ts_l1 = andnot_b128(_sum_tv_l1, and_b128(diff1,LEAST_SIGNIFCANT_BIT));
 
@@ -511,7 +530,9 @@ dist_level_1(b128 &sum_ts_l1, b128 &sum_tv_l1, b128 &sum_del_l1){
 //
 void
 dist_level_2(b128 &sum_ts_l2, b128 &sum_tv_l2, b128 &sum_del_l2){
-  b128 sum_ts_l1, sum_tv_l1, sum_del_l1;
+  b128 sum_ts_l1;
+  b128 sum_tv_l1;
+  b128 sum_del_l1;
 
   //  const b128 TWO_BIT_MASK = set_all_ints(0x33333333);
   //const b128 TWO = set_first_int_b128(2);
@@ -546,7 +567,9 @@ dist_level_2(b128 &sum_ts_l2, b128 &sum_tv_l2, b128 &sum_del_l2){
 // level 3.
 void
 dist_level_3(b128 &sum_ts_l3, b128 &sum_tv_l3, b128 &sum_del_l3){
-  b128 sum_ts_l2, sum_tv_l2, sum_del_l2;
+  b128 sum_ts_l2;
+  b128 sum_tv_l2;
+  b128 sum_del_l2;
 
   //  const b128 FOUR_BIT_MASK = set_all_ints(0x0f0f0f0f);
   //const b128 FOUR = set_first_int_b128(4);
@@ -633,7 +656,9 @@ dist_level_3(b128 &sum_ts_l3, b128 &sum_tv_l3, b128 &sum_del_l3){
 //
 void
 dist_level_4(b128 &sum_ts_l4, b128 &sum_tv_l4, b128 &sum_del_l4){
-  b128 sum_ts_l3, sum_tv_l3, sum_del_l3;
+  b128 sum_ts_l3;
+  b128 sum_tv_l3;
+  b128 sum_del_l3;
 
   //  const b128 EIGHT_BIT_MASK = set_all_ints(0x00ff00ff);
   //const b128 EIGHT = set_first_int_b128(8);

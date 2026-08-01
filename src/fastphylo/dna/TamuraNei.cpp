@@ -58,20 +58,20 @@ float VAL=
   (2*tV)/(-1 + exp_2b) +
 
   ///
-  (((-2*(gY))/exp_2b + (2*(gY + (gU)*k1))/powf(E,two_b*(gY + (gU)*k1)))*tU)/
-  (-powf(E,-two_b*(gY + (gU)*k1)) + gU + (gY)/exp_2b) + 
+  (((-2*gY)/exp_2b + (2*(gY + gU*k1))/powf(E,two_b*(gY + gU*k1)))*tU)/
+  (-powf(E,-two_b*(gY + gU*k1)) + gU + gY/exp_2b) + 
   ///
-  (((-4*(gU)*(gY))/exp_2b -
-    (2*gA*gG*((-2*(gY))/exp_2b + (2*(gY + (gU)*k1))/powf(E,two_b*(gY + (gU)*k1))))/(gU) -
-    (2*gC*gT*((-2*(gU))/exp_2b + (2*(gU + (gY)*k2))/powf(E,two_b*(gU + (gY)*k2))))/(gY)
+  (((-4*gU*gY)/exp_2b -
+    (2*gA*gG*((-2*gY)/exp_2b + (2*(gY + gU*k1))/powf(E,two_b*(gY + gU*k1))))/gU -
+    (2*gC*gT*((-2*gU)/exp_2b + (2*(gU + gY*k2))/powf(E,two_b*(gU + gY*k2))))/gY
     )*(n - tV - tU - tY))/
-  (1 - 2*(1 - powf(E,-two_b))*(gU)*(gY) -
-   (2*gC*gT*(-powf(E,-two_b*(gU + (gY)*k2)) + gC + (gU)/exp_2b + gT))/(gY) - 
-   (2*gA*gG*(-powf(E,-two_b*(gY + (gU)*k1)) + gU + (gY)/exp_2b))/(gU)) +
+  (1 - 2*(1 - powf(E,-two_b))*gU*gY -
+   (2*gC*gT*(-powf(E,-two_b*(gU + gY*k2)) + gC + gU/exp_2b + gT))/gY - 
+   (2*gA*gG*(-powf(E,-two_b*(gY + gU*k1)) + gU + gY/exp_2b))/gU) +
 
   ////
-  (((-2*(gU))/exp_2b + (2*(gU + (gY)*k2))/powf(E,two_b*(gU + (gY)*k2)))*tY)/
-  (-powf(E,-two_b*(gU + (gY)*k2)) + gC + (gU)/exp_2b + gT);
+  (((-2*gU)/exp_2b + (2*(gU + gY*k2))/powf(E,two_b*(gU + gY*k2)))*tY)/
+  (-powf(E,-two_b*(gU + gY*k2)) + gC + gU/exp_2b + gT);
 
 // cout << " VAL = " << VAL << endl;
  return VAL;
@@ -187,10 +187,11 @@ secant_search(){
   float x0 = ( (tU/purine_ratio) + (tY/pyrimidine_ratio) + tV)/(6.0*n);
   float fx0 = partof_derivative_likelihood(x0);
   float x1;
-  if ( fx0 < 0 )
+  if ( fx0 < 0 ) {
     x1 = x0/2;
-  else
+  } else {
     x1 = x0*3/2;
+}
   
   //cout << "fx0 " << fx0 << "   x0 " << x0 << endl; 
   int i =0;

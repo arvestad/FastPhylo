@@ -108,8 +108,9 @@ MatVec prior_probability(const Matrix &Q, const DblVec &eq){
     pVec.push_back(Matrix::mult(d_eq, m));
   }
 
-  for (Matrix &m : pVec)
+  for (Matrix &m : pVec) {
     m.mlog();
+}
 
   return pVec;   
 
@@ -151,10 +152,11 @@ double expected_distance(const Matrix &N, bool sd){
 
   // Are the sequences identical? If so, there should only be values on the 
   // main diagonal
-  if (N.sum() == N.sum_diag())
+  if (N.sum() == N.sum_diag()) {
     identical = 1;
-  else 
+  } else { 
     identical = 0;
+}
 
   // Calculate the posterior probability
   DblVec post_prob = posterior_probability(N);
@@ -189,10 +191,11 @@ DblVec posterior_probability(const Matrix &N){
 
   // Intergration  with trapezoid rule for total posterior probability
   double ptot;
-  if (identical)                            // Special treatment for the first value
+  if (identical) {                            // Special treatment for the first value
     ptot = log(1+exp(fnk.front())) - log(2); 
-  else
+  } else {
     ptot = fnk.front() - log(2); // Only half interval
+}
   // For the rest of the values
   for (int i=1; i<nr_distances; i++){
     double term = log_add(fnk[i], fnk[i-1]) + sample_gap(i);
@@ -215,10 +218,11 @@ DblVec posterior_probability(const Matrix &N){
  */
 double integrate(const DblVec fnk){
   double term = 0.0;
-  if (identical)                  // Special treatment for the first value
+  if (identical) {                  // Special treatment for the first value
     term = (1.0+fnk.front()); 
-  else
+  } else {
     term = fnk.front();
+}
   for (int i=1; i<nr_distances; i++) {
     term += (fnk[i]*i + fnk[i-1]*(i-1))*speed*speed;
   }

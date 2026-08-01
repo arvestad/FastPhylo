@@ -1,4 +1,5 @@
 #include "fastphylo/protein/MaximumLikelihood.hpp"
+#include <algorithm>
 #include <cmath>
 #include <cfloat>
 #include <iostream>
@@ -16,8 +17,8 @@
     double d = (n_sum-N.sum_diag())/n_sum;
 
     double adjusted = d + 0.2*pow(d, 2);
-    if (adjusted > 0.854) // Infinite distance
-      adjusted = 0.854;
+    adjusted = std::min(adjusted, 0.854); // Infinite distance
+      
 
     adjusted = -100 * log(1-adjusted);
     return adjusted;
@@ -32,17 +33,20 @@
    * @return The distance with the maximum likelihood
    */
   double likelihood_calc(const Matrix &N, const Matrix &Q, const MatrixExpm &Qdecomp){
-    if (N.sum() - N.sum_diag() < DBL_EPSILON)
+    if (N.sum() - N.sum_diag() < DBL_EPSILON) {
       return 0;
+}
 
     // Starting value for t
     double t = kimura_distance(N);
 
-    if (t == 0)
+    if (t == 0) {
       t = 1;
+}
 
     // Newton-Rhapson
-    double delta, tol;
+    double delta;
+    double tol;
     delta = tol = 0.001;
     int maxit = 50; // max iterations
 
@@ -54,12 +58,15 @@
       double l_new = likelihood_deriv(N, Q, Qdecomp, t+delta);
       double deriv = (l_new - l_d) / delta;
       t = t - l_d / deriv;
-      if (t < 1) // 1 is the smallest possible distance
+      if (t < 1) { // 1 is the smallest possible distance
         return 1;
-      if (t > 500) // 500 is infinity
+}
+      if (t > 500) { // 500 is infinity
         return 500;
-      if (fabs(l_d) < fabs(l_new)) // The derivative is getting larger..
+}
+      if (fabs(l_d) < fabs(l_new)) { // The derivative is getting larger..
         return t;
+}
       l_d = l_new;
     }
     return t;
@@ -98,7 +105,8 @@
     // before, so this is not a numerical approximation.
     double result = 0.0;
     std::size_t n = N.get_rows() * N.get_cols();
-    for (std::size_t k=0; k<n; k++)
+    for (std::size_t k=0; k<n; k++) {
       result += N(k) * direction(k) / pt(k);
+}
     return result;
   }

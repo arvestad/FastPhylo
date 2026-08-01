@@ -16,8 +16,9 @@ DataOutputStream::DataOutputStream(char *filename) {
 }
 
 DataOutputStream::~DataOutputStream() {
-  if (file_was_opened)
+  if (file_was_opened) {
     fclose(fp);
+}
 }
 
 const char DataOutputStream::ONEDIGIT[128] = {

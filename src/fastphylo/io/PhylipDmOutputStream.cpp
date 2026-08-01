@@ -62,12 +62,14 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
       // truncated.
       const string &name = dm.getIdentifier(i);
       row += name;
-      if (name.size() < 10)
+      if (name.size() < 10) {
         row.append(10 - name.size(), ' ');
+}
     }
 
-    if (writeXml || writeXmlSD)
+    if (writeXml || writeXmlSD) {
       (entriesPerRow++);
+}
 
     for (size_t j = 0; j < static_cast<size_t>(entriesPerRow); j++) {
       float f = dm.getDistance(i, j);
@@ -105,19 +107,21 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
         } else {
           n = snprintf(rare, sizeof(rare), "%10f", f);
         }
-        if (n > 0)
+        if (n > 0) {
           row.append(rare, n < static_cast<int>(sizeof(rare)) ? n : static_cast<int>(sizeof(rare)) - 1);
+}
         continue;
       }
       float decimalpart = f - 1.0 * intpart;
       // warning: this isn't enough to get the correct rounding but it is close
-      if (intpart == 0)
+      if (intpart == 0) { {
         defstr[2] = '0';
-      else {
+      } } else {
         defstr[2] = DataOutputStream::ONEDIGIT[intpart];
         intpart = intpart / 10;
-        if (intpart != 0)
+        if (intpart != 0) {
           defstr[1] = DataOutputStream::ONEDIGIT[intpart];
+}
       }
 
       // write 6 decimals part
@@ -177,7 +181,7 @@ void PhylipDmOutputStream::printRow(StrFloRow &dm, string name, int row, bool me
   fprintf(fp, "%-10s", name.c_str());
 
   float f = 0.0;
-  if (mem_eff_flag == false) {
+  if (!mem_eff_flag) {
     for (size_t i = 0; i < static_cast<size_t>(row); ++i) {
       fprintf(fp, "%10f", f);
     }

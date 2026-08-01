@@ -1,4 +1,5 @@
 #include "fastphylo/protein/ProtDistCalc.hpp"
+#include <algorithm>
 #include <cctype> // for toupper()
 #include <cmath>  // for log() and pow()
 #include <string>
@@ -34,8 +35,9 @@ namespace {
   // cost in the loops below doesn't include re-encoding.
   std::vector< std::vector<std::uint8_t> > encode_all(const SeqVec &sv) {
     std::vector< std::vector<std::uint8_t> > encoded(sv.size());
-    for (std::size_t i = 0; i < sv.size(); i++)
+    for (std::size_t i = 0; i < sv.size(); i++) {
       ProtSeqCode::encode_sequence(sv[i].seq, encoded[i]);
+}
     return encoded;
   }
 
@@ -45,9 +47,11 @@ namespace {
   // count_replacements()'s existing (row,col) = (from,to) indexing.
   Matrix tally_to_matrix(const std::vector<std::size_t> &tally) {
     Matrix m(ProtSeqCode::NUM_CANONICAL_AA, ProtSeqCode::NUM_CANONICAL_AA);
-    for (std::size_t a = 0; a < ProtSeqCode::NUM_CANONICAL_AA; a++)
-      for (std::size_t b = 0; b < ProtSeqCode::NUM_CANONICAL_AA; b++)
+    for (std::size_t a = 0; a < ProtSeqCode::NUM_CANONICAL_AA; a++) {
+      for (std::size_t b = 0; b < ProtSeqCode::NUM_CANONICAL_AA; b++) {
         m(a, b) = static_cast<double>(tally[a * ProtSeqCode::NUM_CANONICAL_AA + b]);
+}
+}
     return m;
   }
 
@@ -81,10 +85,11 @@ namespace {
       case jtt:
       case mvr:
       case lg:
-        if (t_model.ml)
+        if (t_model.ml) {
           calculate_ml_dists(sv, dm, t_model.model); 
-        else 
+        } else { 
           calculate_ed_dists_with_sd(sv, dm, dm, t_model, false); 
+}
         break;
     }
   }
@@ -116,10 +121,11 @@ namespace {
       case jtt:
       case lg:
       case mvr:
-        if (t_model.ml)
+        if (t_model.ml) {
           calculate_ml_dists(sv, dm, t_model.model); 
-        else 
+        } else { 
           calculate_ed_dists_with_sd(sv, dm, sdm, t_model, true); 
+}
         break;
     default:
       throw std::logic_error("Model not implemented");
@@ -167,22 +173,25 @@ namespace {
     DblVec eq = get_model_vec(tm.model);
     initialize_ed(tm.tp, tm.step_size, Q, eq);
     dm.resize(sv.size());
-    if (sd)
+    if (sd) {
       sdm.resize(sv.size());
+}
     std::vector< std::vector<std::uint8_t> > encoded = encode_all(sv);
 
     for (int i=0; i<sv.size(); i++) {
       for (int j=i+1; j<sv.size(); j++){
         Matrix N = replacement_tally(encoded[i], encoded[j]);
         double distance;
-        if (sd)
+        if (sd) {
           distance = 0.01 * calculate_ed_with_sd(N);
-        else 
+        } else { 
           distance = 0.01 * calculate_ed(N);
+}
         dm.setDistance(i, j, distance); 
         
-        if (sd)
+        if (sd) {
           sdm.setDistance(i, j, get_standard_deviation());
+}
       }
     }
 
@@ -268,8 +277,7 @@ namespace {
         double diff = 1 - ProtSeqCode::count_id_fraction(encoded[i].data(), encoded[i].size(),
             encoded[j].data(), encoded[j].size());
         double adj_distance = diff + 0.2*diff*diff;
-        if (adj_distance > 0.854)
-          adj_distance = 0.854;
+        adj_distance = std::min(adj_distance, 0.854);
         double distance = - log(1-adj_distance);
         dm.setDistance(i, j, distance);
       }
@@ -289,9 +297,9 @@ void calculate_stormsonnhammer_dists(const SeqVec &sv, StrDblMatrix &dm){
       double diff = 1 - ProtSeqCode::count_id_fraction(encoded[i].data(), encoded[i].size(),
           encoded[j].data(), encoded[j].size());
       double adj_distance;
-      if (diff > 0.916)
+      if (diff > 0.916) { {
         adj_distance = 1000.0;
-      else {
+      } } else {
         adj_distance = - log(1 - 0.95844*diff
             - 0.69957 * pow(diff, 2)
             + 2.4955 * pow(diff, 3)

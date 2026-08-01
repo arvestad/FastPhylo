@@ -38,8 +38,9 @@ int main (int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
 #endif // WITH_LIBXML
-  if (cmdline_parser(argc, argv, &args_info) != 0)
+  if (cmdline_parser(argc, argv, &args_info) != 0) {
     exit(EXIT_FAILURE);
+}
   if (args_info.print_relaxng_input_given && args_info.print_relaxng_output_given) {
     cerr << "error: --print-relaxng-input and --print-relaxng-output can not be used at the same time" << endl;
     exit(EXIT_FAILURE);
@@ -115,10 +116,11 @@ int main (int argc, char **argv) {
     exit(1);
   }
   trans_model.step_size = args_info.speed_arg;
-  if (args_info.pfam_given)
+  if (args_info.pfam_given) {
     trans_model.tp = norm;
-  else 
+  } else { 
     trans_model.tp = flat;
+}
   trans_model.sd = args_info.sd_given;
   trans_model.ml = args_info.maximum_likelihood_given;
   bool remove_indels = args_info.remove_indels_given;
@@ -131,11 +133,12 @@ int main (int argc, char **argv) {
     cerr << "error: No output. No bootstrap or original data will be written" << endl;
     exit(EXIT_FAILURE);
     }
-  if ( args_info.seed_given )
+  if ( args_info.seed_given ) {
     srand(static_cast<unsigned int>(args_info.seed_arg));
-  else
+  } else {
     // NOLINTNEXTLINE(bugprone-random-generator-seed) - bootstrap resampling, not a security context; time-seeding when no explicit --seed is the intended default.
     srand(static_cast<unsigned int>(time(nullptr)));
+}
   try {
     char *inputfilename = nullptr;
     char *outputfilename = nullptr;
@@ -151,8 +154,9 @@ int main (int argc, char **argv) {
         cerr << "Error: you can at most specify one input filename" << endl;
         exit(EXIT_FAILURE);
     }
-    if( args_info.outfile_given )
+    if( args_info.outfile_given ) {
       outputfilename = args_info.outfile_arg;
+}
     switch (args_info.input_format_arg) {
       case input_format_arg_fasta:
         istream = std::make_unique<FastaInputStream>(inputfilename);
@@ -192,37 +196,44 @@ int main (int argc, char **argv) {
 
 		for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
 			string runId;
-			if (! istream->read(seqs, runId, names, extrainfos))
+			if (! istream->read(seqs, runId, names, extrainfos)) {
 				break;
-			if (remove_indels)
+}
+			if (remove_indels) {
 				remove_gaps(seqs);
+}
 			if (!no_incl_orig) {
-				if (trans_model.sd)
+				if (trans_model.sd) {
 					calculate_distances(seqs, dm, trans_model, sdm);
-				else
+				} else {
 					calculate_distances(seqs, dm, trans_model);
+}
 				dm.setIdentifiers(names);
 				ostream->printStartRun(names, runId, extrainfos);
 				ostream->printHeader(seqs.size());
 				ostream->print(dm);
-				if (trans_model.sd && !binary_format_type)
+				if (trans_model.sd && !binary_format_type) {
 					ostream->printSD(sdm);
+}
 			}
 			// Bootstrapping
 			for (int b=0; b < numboot; b++) {
 				vector<Sequence> bseqs;
 				bootstrap_sequences(seqs, bseqs);
-				if (trans_model.sd)
+				if (trans_model.sd) {
 					calculate_distances(bseqs, dm, trans_model, sdm);
-				else
+				} else {
 					calculate_distances(bseqs, dm, trans_model);
+}
 				dm.setIdentifiers(names);
 				ostream->print(dm);
-				if (trans_model.sd && !binary_format_type)
+				if (trans_model.sd && !binary_format_type) {
 					ostream->printSD(sdm);
+}
 			}
-			if (!binary_format_type)
+			if (!binary_format_type) {
 				ostream->printEndRun();
+}
 		}
   }
   catch(...){

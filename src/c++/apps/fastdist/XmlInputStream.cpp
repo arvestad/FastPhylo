@@ -5,8 +5,9 @@ using namespace std;
 
 bool XmlInputStream::read(vector<DNA_b128_String> &b128seqs, string &runId, vector<string> &names, Extrainfos &extrainfos) {
   vector<Sequence> seqs;
-  if (!readSequences(seqs, runId, extrainfos))
+  if (!readSequences(seqs, runId, extrainfos)) {
     return false;
+}
   names.clear();
   names.reserve(seqs.size());
   for (size_t i = 0; i < seqs.size(); i++) {

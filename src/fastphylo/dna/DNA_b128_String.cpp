@@ -87,7 +87,8 @@ DNA_b128_String::DNA_b128_String(const DNA_b128_String &str){
 }
 
 void DNA_b128_String::operator=(const DNA_b128_String &str){
-  if(this == &str) return;
+  if(this == &str) { return;
+}
 
   if(numDatas != str.numDatas){
     _free_mem();
@@ -144,10 +145,11 @@ DNA_b128_String::append(const char *c_str){
   
   b128 c_b128;
   //if this b128 hasn't been used yet null it
-  if ( first_char_in_dataslot(c_pos) )
+  if ( first_char_in_dataslot(c_pos) ) {
     c_b128 = set_zero_b128();
-  else
+  } else {
     c_b128 = get_b128(c_b128_ptr);
+}
   //the int of the b128 we are working on
   int c_int = get_int_b128(c_b128, INT_D_I(c_pos));
   //shift character position c_pos in c_int to the least significant
@@ -327,8 +329,9 @@ DNA_b128_String::getNucleotide(int pos) const{
     for ( ; iter != ambiguities.end() && (*iter).position < pos ; ++iter ){
       //skip until pos
     }
-    if ( iter != ambiguities.end() && (*iter).position == pos )
+    if ( iter != ambiguities.end() && (*iter).position == pos ) {
       return (*iter).ambiguity.n;
+}
   }
   return n;
 }
@@ -413,8 +416,9 @@ DNA_b128_String::setNucleotide(int pos, nucleotide n){
 
     vector<ambiguity_nucleotide_at_position>::iterator iter = ambiguities.begin();
     while ( iter != ambiguities.end() &&
-            (*iter).position < pos )
+            (*iter).position < pos ) {
       ++iter;
+}
     ambiguity_nucleotide_at_position nap = {{n,0,0,0,0}, pos};
     ambiguities.insert(iter, nap );
     n = DNA_A_;
@@ -440,8 +444,9 @@ std::ostream &
 DNA_b128_String::printOn(std::ostream &out) const{
 
   //PENDING VERY SLOW especially when there are ambiguities.
-  for (size_t i = 0 ; i < numChars ; i++ )
+  for (size_t i = 0 ; i < numChars ; i++ ) {
     out << nucleotide2char(getNucleotide(i)) ;
+}
 
   return out;
 }
@@ -458,16 +463,20 @@ bool operator== (const DNA_b128_String::ambiguity_nucleotide_at_position &a,
 bool
 DNA_b128_String::equals(const Object *o) const{
   const DNA_b128_String *s2 = dynamic_cast<const DNA_b128_String *>(o);
-  if ( s2 == nullptr )
+  if ( s2 == nullptr ) {
     return false;
-  if ( getNumChars() != s2->getNumChars() )
+}
+  if ( getNumChars() != s2->getNumChars() ) {
     return false;
+}
 
   //PENDING can probably be improved by using the sse2 instructions for comparing
-  if ( memcmp(data,s2->data,sizeof(b128)*getNumUsedDatas()) != 0 )
+  if ( memcmp(data,s2->data,sizeof(b128)*getNumUsedDatas()) != 0 ) {
     return false;
-  if ( memcmp(unknownData,s2->unknownData,sizeof(b128)*getNumUsedDatas()) != 0 )
+}
+  if ( memcmp(unknownData,s2->unknownData,sizeof(b128)*getNumUsedDatas()) != 0 ) {
     return false;
+}
 
   return equal(ambiguities.begin(), ambiguities.end(), s2->ambiguities.begin());
 }

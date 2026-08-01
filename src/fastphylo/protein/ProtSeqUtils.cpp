@@ -43,8 +43,9 @@ void bootstrap_sequences(const std::vector<Sequence> &seqs, std::vector<Sequence
   bseqs.resize(seqs.size());
 
   const size_t seqlen = seqs[0].seq.length();
-  for ( size_t i = 0 ; i < seqs.size() ; i++ )
+  for ( size_t i = 0 ; i < seqs.size() ; i++ ) {
     bseqs[i].seq.reserve(seqlen);
+}
 
   // Do the bootstrapping
   size_t pos=0;
@@ -56,11 +57,14 @@ void bootstrap_sequences(const std::vector<Sequence> &seqs, std::vector<Sequence
   size_t const stride = 32;
 
   if( stride < seqlen){
-    for( pos=0; pos<(seqlen-stride); pos+= stride)
-      for( size_t i=0; i<stride; i++)
+    for( pos=0; pos<(seqlen-stride); pos+= stride) {
+      for( size_t i=0; i<stride; i++) {
         samplePositions[pos+i] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
-    for (; pos<seqlen; pos++)
+}
+}
+    for (; pos<seqlen; pos++) {
       samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
+}
 
 
     for( seq=0; seq<seqs.size(); seq++){
@@ -74,21 +78,24 @@ void bootstrap_sequences(const std::vector<Sequence> &seqs, std::vector<Sequence
         bseqs[seq].seq.append(buff);
       }
       size_t i;
-      for ( i=0; pos<seqlen; i++,pos++)
+      for ( i=0; pos<seqlen; i++,pos++) {
         buff[i] = s[samplePositions[pos]]; 
+}
       buff[i] = '\0';
       //----------
       bseqs[seq].seq.append(buff);
     }
   }
   else{//seqlen<stride
-    for (pos=0; pos<seqlen; pos++)
+    for (pos=0; pos<seqlen; pos++) {
       samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));    
+}
 
     for( seq=0; seq<seqs.size(); seq++){
       const std::string & s = seqs[seq].seq;
-      for (pos=0; pos<seqlen; pos++)
+      for (pos=0; pos<seqlen; pos++) {
         buff[pos] = s[samplePositions[pos]]; 
+}
       buff[pos]='\0';
       bseqs[seq].seq.append(buff);
     } 

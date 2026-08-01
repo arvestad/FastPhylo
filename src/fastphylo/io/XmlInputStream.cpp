@@ -55,7 +55,8 @@ XmlSequenceReader::XmlSequenceReader(char *filename, const char *relaxngSchemaSt
 }
 
 bool XmlSequenceReader::readSequences(std::vector<Sequence> &seqs, std::string &runId, Extrainfos &extrainfos) {
-  const xmlChar *name, *value;
+  const xmlChar *name;
+  const xmlChar *value;
 
   bool run_read = false;
   int ret;

@@ -28,8 +28,10 @@ file_exists(const char *fname){
 		fclose(ftmp);
 		return 1;
 	}
-	else
+	else { {
 		return 0;
+}
+}
 }
 
 
@@ -64,8 +66,10 @@ open_write_file_interactive(const char *fname){
 		fname = tmp.c_str();
 		return open_write_file(fname);
 	}
-	else
+	else { {
 		return ftmp;
+}
+}
 }
 
 
@@ -78,8 +82,10 @@ open_write_file(const char *fname){
 	if ( ftmp == nullptr ){
 		THROW_EXCEPTION("Couldn't open file \"" << fname << "\"");
 	}
-	else
+	else { {
 		return ftmp;
+}
+}
 }
 
 void
@@ -137,8 +143,9 @@ open_read_file_interactive(const char *fname){
 	string tmp;
 	while ( true ){
 		FILE *ftmp = fopen(fname,"r");
-		if ( ftmp != nullptr )
+		if ( ftmp != nullptr ) {
 			return ftmp;
+}
 
 		cout << "File doesn't exist: \"" << fname << "\"" << endl;
 		cout << "What file do you want to read? " << endl;
@@ -151,8 +158,9 @@ open_read_file_interactive(const char *fname){
 FILE *
 open_read_file(const char *fname){
 	FILE *ftmp = fopen(fname,"r");
-	if ( ftmp != nullptr )
+	if ( ftmp != nullptr ) {
 		return ftmp;
+}
 	THROW_EXCEPTION("File doesn't exist: \"" << fname <<"\"");
 }
 
@@ -178,8 +186,9 @@ open_read_stream_interactive(const char *fname, ifstream &fin){
 	while ( true ){
 		fin.open(fname,ifstream::in);
 
-		if ( fin.good() )
+		if ( fin.good() ) {
 			return;
+}
 		fin.close();
 		fin.clear();
 		cout << "File doesn't exist: \"" << fname << "\"" << endl;
@@ -200,8 +209,9 @@ void
 open_read_stream(const char *fname, ifstream &fin){
 	fin.open(fname,ifstream::in);
 
-	if ( fin.good() )
+	if ( fin.good() ) {
 		return;
+}
 
 	fin.close();
 	fin.clear();
@@ -213,8 +223,9 @@ open_read_stream(const char *fname, ifstream &fin){
 void
 skipWhiteSpace(FILE *f){
 	char c = fgetc(f);
-	while ( isspace(c) )
+	while ( isspace(c) ) {
 		c = fgetc(f);
+}
 
 	ungetc(c,f);
 }

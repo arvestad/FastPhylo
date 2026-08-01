@@ -18,10 +18,7 @@ get_boolean_option_value(int argc, char **argv, char *option_id){
   int i;
 
   i = has_option(argc,argv,option_id);
-  if ( i ){
-      return true;
-  }
-  return false;
+  return i != 0;
 }
 
 
@@ -30,14 +27,17 @@ bool
 get_list_of_args(int argc, char **argv, char *option_id, std::vector<char*> &vec){
 
   int i = HAS_OPTION(option_id);
-  if ( i <= 0 ) return false;
+  if ( i <= 0 ) { return false;
+}
   i++;
   //read all file names that come after option_id until next option.
   for ( ; i < argc ; i++ ){
     if ( argv[i][0] != '-' ){ 
       vec.push_back(argv[i]);
     }
-    else break;
+    else { { break;
+}
+}
   }
 
   return true;
@@ -49,7 +49,8 @@ bool
 get_list_of_ints(int argc, char **argv, char *option_id, std::vector<int> &vec){
 
   int i = HAS_OPTION(option_id);
-  if ( i <= 0 ) return false;
+  if ( i <= 0 ) { return false;
+}
   i++;
   //read all file names that come after option_id until next option.
   for ( ; i < argc ; i++ ){
@@ -60,7 +61,9 @@ get_list_of_ints(int argc, char **argv, char *option_id, std::vector<int> &vec){
         THROW_EXCEPTION("expected an integer argument to \"" << option_id << "\", got \"" << argv[i] << "\"");
       vec.push_back(static_cast<int>(val));
     }
-    else break;
+    else { { break;
+}
+}
   }
 
   return true;
@@ -71,7 +74,8 @@ bool
 get_list_of_floats(int argc, char **argv, char *option_id, std::vector<float> &vec){
 
   int i = HAS_OPTION(option_id);
-  if ( i <= 0 ) return false;
+  if ( i <= 0 ) { return false;
+}
   i++;
   //read all file names that come after option_id until next option.
   for ( ; i < argc ; i++ ){
@@ -82,7 +86,9 @@ get_list_of_floats(int argc, char **argv, char *option_id, std::vector<float> &v
         THROW_EXCEPTION("expected a floating-point argument to \"" << option_id << "\", got \"" << argv[i] << "\"");
       vec.push_back(val);
     }
-    else break;
+    else { { break;
+}
+}
   }
 
   return true;

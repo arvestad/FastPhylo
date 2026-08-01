@@ -75,8 +75,9 @@ Matrix::Matrix(const double array[], std::size_t rows, std::size_t cols): m_data
  *  @param d A reference to a vector containing the diagonal elements
  */
 Matrix::Matrix(const std::vector<double> &d): nr_rows(d.size()), nr_cols(d.size()), m_data(d.size()*d.size()){
-  for (int i=0; i<d.size(); i++)
+  for (int i=0; i<d.size(); i++) {
     m_data[i*d.size()+i] = d[i];
+}
 }
 
 /*! Creates a copy of a matrix
@@ -93,8 +94,9 @@ Matrix &Matrix::operator=(const Matrix &m){
     nr_cols = m.get_cols();
     m_data.clear();
     m_data.reserve(m.get_rows()*m.get_cols());
-    for (int i=0; i<m.get_rows()*m.get_cols(); i++)
+    for (int i=0; i<m.get_rows()*m.get_cols(); i++) {
       m_data.push_back(m(i));
+}
   }
   return *this;
 }
@@ -117,10 +119,12 @@ Matrix Matrix::mult(const Matrix &lhv,const Matrix &rhv) {
  *  @return A const copy with the product lhv*rhv
  */
 Matrix Matrix::mult(const Matrix &lhv, const Matrix &rhv, bool tr_left, bool tr_right) {
-    if (lhv.get_cols() != rhv.get_rows())
+    if (lhv.get_cols() != rhv.get_rows()) {
       throw std::out_of_range("Matrix dimensions doesn't agree");
+}
 
-    char transl, transr;
+    char transl;
+    char transr;
     int left_op_rows = lhv.get_rows();
     int right_op_cols = rhv.get_cols();
     int left_op_cols = lhv.get_cols();
@@ -137,9 +141,9 @@ Matrix Matrix::mult(const Matrix &lhv, const Matrix &rhv, bool tr_left, bool tr_
     // dgemm_ is a BLAS subroutine that multiplies two matrices
     // const_cast<double*> because dgemm_ will not change those arguments 
     dgemm_(&transl, &transr, &left_op_rows, &right_op_cols, &left_op_cols,
-        &dummy_one, const_cast<double *>(&lhv.m_data[0]), &left_op_cols, 
-        const_cast<double *>(&rhv.m_data[0]), &right_op_cols,
-        &dummy_zero, &result.m_data[0], &left_op_rows); 
+        &dummy_one, const_cast<double *>(lhv.m_data.data()), &left_op_cols, 
+        const_cast<double *>(rhv.m_data.data()), &right_op_cols,
+        &dummy_zero, result.m_data.data(), &left_op_rows); 
     return result;
   }
 
@@ -151,9 +155,11 @@ Matrix Matrix::mult(const Matrix &lhv, const Matrix &rhv, bool tr_left, bool tr_
 Matrix Matrix::diag_mult(const std::vector<double> &diag) const{
   Matrix temp(*this);
 
-  for (int i=0; i<get_cols(); i++)
-    for (int j=0; j<get_rows(); j++)
+  for (int i=0; i<get_cols(); i++) {
+    for (int j=0; j<get_rows(); j++) {
       temp(i,j) = (*this)(i*get_rows()+j)*diag[i];  
+}
+}
 
   return temp;
 }
@@ -162,8 +168,9 @@ Matrix Matrix::diag_mult(const std::vector<double> &diag) const{
  */
 void Matrix::mlog(){
   int size = get_rows()*get_cols();
-  for (int i=0; i<size; i++)
+  for (int i=0; i<size; i++) {
     (*this)(i) = log((*this)(i));
+}
 }
 
 /*! 
@@ -194,8 +201,9 @@ MatVec Matrix::expm(const DblVec &s) const {
   MatrixExpm decomp(*this);
   MatVec result;
   result.reserve(s.size());
-  for (double d : s)
+  for (double d : s) {
     result.push_back(decomp.at(d));
+}
   return result;
 }
 
@@ -206,8 +214,9 @@ MatVec Matrix::expm(const DblVec &s) const {
  */
 MatrixExpm::MatrixExpm(const Matrix &Q) {
   // Can only calculate eigenvalues and vectors of square matrices
-  if (Q.get_rows() != Q.get_cols())
+  if (Q.get_rows() != Q.get_cols()) {
     throw std::out_of_range("Matrix needs to be square");
+}
 
   int size = Q.get_rows();
   eigenvalues_real.assign(size, 0); // Real part of eigenvalues
@@ -231,31 +240,31 @@ MatrixExpm::MatrixExpm(const Matrix &Q) {
   //workspace-query
   // SUBROUTINE DGEEV( JOBVL, JOBVR, N, A, LDA, WR, WI, VL, LDVL, VR,
   //               LDVR, WORK, LWORK, INFO )
-  dgeev_(&n, &v, &size, &data[0], &size, &eigenvalues_real[0], &eg_val_im[0], dummy,
-      &dummy_size, &eigenvectors.m_data[0], &size, workspace_size, &w_query, info);
+  dgeev_(&n, &v, &size, data.data(), &size, eigenvalues_real.data(), eg_val_im.data(), dummy,
+      &dummy_size, eigenvectors.m_data.data(), &size, workspace_size, &w_query, info);
 
   DblVec workspace_vec(static_cast<int>(workspace_size[0]), 0);
   int w_size = workspace_size[0];
 
   // Real calculation of eigenvalues and eigenvectors for Q
-  dgeev_(&n, &v, &size, &data[0], &size, &eigenvalues_real[0], &eg_val_im[0], dummy,
-      &dummy_size, &eigenvectors.m_data[0], &size, &workspace_vec[0], &w_size, info);
+  dgeev_(&n, &v, &size, data.data(), &size, eigenvalues_real.data(), eg_val_im.data(), dummy,
+      &dummy_size, eigenvectors.m_data.data(), &size, workspace_vec.data(), &w_size, info);
 
   // Calculating inverse of matrix with eigenvectors
   eigenvectors_inv = Matrix(eigenvectors);
   int ipiv[size];
 
   // LU factorization, eigenvectors_inv.m_data is overwritten with the LU factorization
-  dgetrf_(&size, &size, &eigenvectors_inv.m_data[0], &size, ipiv, info);
+  dgetrf_(&size, &size, eigenvectors_inv.m_data.data(), &size, ipiv, info);
 
   //workspace-query, nothing happens with eigenvectors_inv.m_data
-  dgetri_(&size, &eigenvectors_inv.m_data[0], &size, ipiv, workspace_size, &w_query, info);
+  dgetri_(&size, eigenvectors_inv.m_data.data(), &size, ipiv, workspace_size, &w_query, info);
 
   double workspace_vec2[static_cast<int>(workspace_size[0])];
   w_size = workspace_size[0];
 
   // Inverse calculation from LU values, the inverse is stored in eigenvectors_inv.m_data
-  dgetri_(&size, &eigenvectors_inv.m_data[0], &size, ipiv, workspace_vec2, &w_size, info);
+  dgetri_(&size, eigenvectors_inv.m_data.data(), &size, ipiv, workspace_vec2, &w_size, info);
 }
 
 /*!
@@ -274,8 +283,9 @@ Matrix MatrixExpm::at(double t) const {
   Matrix left(size, size);
   for (std::size_t col=0; col<size; col++) {
     double scale = exp(eigenvalues_real[col]*t);
-    for (std::size_t row=0; row<size; row++)
+    for (std::size_t row=0; row<size; row++) {
       left(row, col) = eigenvectors(row, col) * scale;
+}
   }
   return Matrix::mult(left, eigenvectors_inv);
 }
@@ -285,15 +295,17 @@ Matrix MatrixExpm::at(double t) const {
  */
 void Matrix::printm() const{
   for (int i=0; i<get_rows(); i++) {
-    for (int j=0; j<get_cols(); j++)
+    for (int j=0; j<get_cols(); j++) {
       printf(" %.20e ", (*this)(i,j));
+}
     std::cout << std::endl;
   }
 }
 void Matrix::printmi() const{
   for (int i=0; i<get_rows(); i++) {
-    for (int j=0; j<get_cols(); j++)
+    for (int j=0; j<get_cols(); j++) {
       printf(" %.3lf ", (*this)(i,j));
+}
     std::cout << std::endl;
   }
 }
@@ -311,11 +323,13 @@ double Matrix::sum() const{
  */
 double Matrix::sum_diag() const{
   double sum=0.0;
-  if (get_rows() != get_cols())
+  if (get_rows() != get_cols()) {
     throw std::out_of_range("Matrix needs to be square");
+}
 
-  for (int i=0;i<get_rows();i++)
+  for (int i=0;i<get_rows();i++) {
     sum += (*this)(i,i);
+}
 
   return sum;
 }
@@ -330,13 +344,15 @@ double Matrix::sum_diag() const{
  *  @param A copy of the product
  */
   Matrix elem_mult(const Matrix &lhv, const Matrix &rhv){
-    if (lhv.get_rows() != rhv.get_rows() || lhv.get_cols() != rhv.get_cols())
+    if (lhv.get_rows() != rhv.get_rows() || lhv.get_cols() != rhv.get_cols()) {
       throw std::out_of_range("Matrix dimensions must agree");
+}
 
     Matrix temp(lhv.get_rows(), rhv.get_cols());
 
-    for (int i=0; i<lhv.get_rows()*lhv.get_cols(); i++)
+    for (int i=0; i<lhv.get_rows()*lhv.get_cols(); i++) {
       temp(i) = lhv(i)*rhv(i);
+}
 
     return temp;
 
@@ -350,13 +366,15 @@ double Matrix::sum_diag() const{
  *  @return The quotient
  */ 
   Matrix elem_div(const Matrix &lhv, const Matrix &rhv){
-    if (lhv.get_rows() != rhv.get_rows() || lhv.get_cols() != rhv.get_cols())
+    if (lhv.get_rows() != rhv.get_rows() || lhv.get_cols() != rhv.get_cols()) {
       throw std::out_of_range("Matrix dimensions must agree");
+}
 
     Matrix temp(lhv.get_rows(), lhv.get_cols());
 
-    for (int i=0; i<lhv.get_rows()*lhv.get_cols(); i++)
+    for (int i=0; i<lhv.get_rows()*lhv.get_cols(); i++) {
       temp(i) = lhv(i)/rhv(i);
+}
 
     return temp;
   }

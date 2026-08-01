@@ -47,9 +47,11 @@ std::size_t ref_getAAInd(char c) {
 // len(s1) in this test).
 double ref_count_id_dist(const std::string &s1, const std::string &s2) {
   double id = 0;
-  for (std::size_t i = 0; i < s1.size(); i++)
-    if (std::toupper(static_cast<unsigned char>(s1[i])) == std::toupper(static_cast<unsigned char>(s2[i])))
+  for (std::size_t i = 0; i < s1.size(); i++) {
+    if (std::toupper(static_cast<unsigned char>(s1[i])) == std::toupper(static_cast<unsigned char>(s2[i]))) {
       id++;
+}
+}
   return id / static_cast<double>(s1.size());
 }
 
@@ -60,8 +62,9 @@ std::vector<std::size_t> ref_count_replacements(const std::string &s1, const std
   for (std::size_t i = 0; i < s1.size(); i++) {
     std::size_t c1 = ref_getAAInd(s1[i]);
     std::size_t c2 = ref_getAAInd(s2[i]);
-    if (c1 != 100 && c2 != 100)
+    if (c1 != 100 && c2 != 100) {
       counts[c1 * 20 + c2]++;
+}
   }
   return counts;
 }
@@ -69,16 +72,18 @@ std::vector<std::size_t> ref_count_replacements(const std::string &s1, const std
 void check_against_reference(const std::string &s1, const std::string &s2) {
   assert(s2.size() >= s1.size()); // reference's assumption
 
-  std::vector<std::uint8_t> c1, c2;
+  std::vector<std::uint8_t> c1;
+  std::vector<std::uint8_t> c2;
   encode_sequence(s1, c1);
   encode_sequence(s2, c2);
 
   double got_id = count_id_fraction(c1.data(), c1.size(), c2.data(), c2.size());
   double want_id = ref_count_id_dist(s1, s2);
-  if (s1.empty())
+  if (s1.empty()) {
     assert(std::isnan(got_id) && std::isnan(want_id));
-  else
+  } else {
     assert(std::fabs(got_id - want_id) < 1e-12);
+}
 
   std::vector<std::size_t> got_tally = count_replacement_tally(c1.data(), c1.size(), c2.data(), c2.size());
   std::vector<std::size_t> want_tally = ref_count_replacements(s1, s2);
@@ -88,8 +93,9 @@ void check_against_reference(const std::string &s1, const std::string &s2) {
 std::string random_seq(std::size_t len, unsigned int *seed) {
   std::string s;
   s.reserve(len);
-  for (std::size_t i = 0; i < len; i++)
+  for (std::size_t i = 0; i < len; i++) {
     s += FULL_ALPHABET[rand_r(seed) % FULL_ALPHABET.size()];
+}
   return s;
 }
 
@@ -101,8 +107,9 @@ void test_random_pairs_various_lengths_and_mismatch_rates() {
     std::string s1 = random_seq(len, &seed);
     // low mismatch: copy s1 then perturb a few positions
     std::string s2_low = s1;
-    for (std::size_t k = 0; k < len / 10; k++)
+    for (std::size_t k = 0; k < len / 10; k++) {
       s2_low[rand_r(&seed) % len] = FULL_ALPHABET[rand_r(&seed) % FULL_ALPHABET.size()];
+}
     // high mismatch: independent random sequence
     std::string s2_high = random_seq(len, &seed);
     check_against_reference(s1, s1); // identical
@@ -144,7 +151,8 @@ void test_length_mismatch_defined_behavior() {
   // s2 shorter than s1: old code has UB here, so no reference call.
   // New behavior (phase1_design.md): compare up to min(len1,len2);
   // treat s1's excess tail as mismatches; denominator stays len1.
-  std::vector<std::uint8_t> s1, s2;
+  std::vector<std::uint8_t> s1;
+  std::vector<std::uint8_t> s2;
   encode_sequence("AAAAA", s1);  // len 5
   encode_sequence("AAA", s2);    // len 3, shares "AAA" prefix with s1
 
@@ -156,7 +164,8 @@ void test_length_mismatch_defined_behavior() {
 
   // s2 longer than s1: matches count_id_dist()'s existing (defined, no UB)
   // behavior exactly - only the first len1 characters of s2 are compared.
-  std::vector<std::uint8_t> s3, s4;
+  std::vector<std::uint8_t> s3;
+  std::vector<std::uint8_t> s4;
   encode_sequence("AAA", s3);     // len 3
   encode_sequence("AAAAA", s4);   // len 5, first 3 chars match s3
   assert(count_mismatches(s3.data(), s3.size(), s4.data(), s4.size()) == 0);

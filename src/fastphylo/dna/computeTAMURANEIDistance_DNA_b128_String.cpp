@@ -52,7 +52,10 @@ static b128 *del_ptr2;
 
 static void inline 
 PREFETCH_DATA(size_t numDatas){
-  b128 *_del_ptr1,*_del_ptr2,*_ptr1,*_ptr2;
+  b128 *_del_ptr1;
+  b128 *_del_ptr2;
+  b128 *_ptr1;
+  b128 *_ptr2;
   
   _del_ptr1 = del_ptr1;
   _del_ptr2 = del_ptr2;
@@ -229,7 +232,9 @@ DNA_b128_String::computeTAMURANEIDistance(const DNA_b128_String &s1,
   
   //Compute the remaining b128s. There are atmost two remaining.
   PREFETCH_DATA(rest_num_b128s);
-  b128 diff,del,tmp_tv;
+  b128 diff;
+  b128 del;
+  b128 tmp_tv;
   switch( rest_num_b128s ){
   case 2:
     assert ( equal_b128(total_sum_tv,set_zero_b128()) );//assuming that nothing summed so far.
@@ -295,7 +300,10 @@ DNA_b128_String::computeTAMURANEIDistance(const DNA_b128_String &s1,
   //     sum_with_previous_level(total_sum_tv,sum_tv_l1, TWO_BIT_MASK, TWO);
   //     sum_with_previous_level(total_sum_del,sum_del_l1, TWO_BIT_MASK, TWO);
   //   }
-  b128 sum_ts_l1,  sum_pyrts_l1, sum_tv_l1,  sum_del_l1;
+  b128 sum_ts_l1;
+  b128 sum_pyrts_l1;
+  b128 sum_tv_l1;
+  b128 sum_del_l1;
   PREFETCH_DATA(static_cast<size_t>(num_level_1)*3);
   for (  ; num_level_1 != 0 ; num_level_1-- ){    
     dist_level_1(sum_ts_l1,  sum_pyrts_l1, sum_tv_l1,  sum_del_l1);
@@ -314,7 +322,10 @@ DNA_b128_String::computeTAMURANEIDistance(const DNA_b128_String &s1,
   
   
   //level 2, num_level_2 is atmost 8
-  b128 sum_ts_l2,  sum_pyrts_l2, sum_tv_l2,  sum_del_l2;
+  b128 sum_ts_l2;
+  b128 sum_pyrts_l2;
+  b128 sum_tv_l2;
+  b128 sum_del_l2;
   for ( ; num_level_2 != 0 ; num_level_2-- ){
     dist_level_2(sum_ts_l2,  sum_pyrts_l2, sum_tv_l2,  sum_del_l2);
     sum_with_previous_level(total_sum_ts,sum_ts_l2, FOUR_BIT_MASK, FOUR);
@@ -335,7 +346,10 @@ DNA_b128_String::computeTAMURANEIDistance(const DNA_b128_String &s1,
   
   
   //level 3, num_level_3 is atmost 128
-  b128 sum_ts_l3,  sum_pyrts_l3, sum_tv_l3,  sum_del_l3;
+  b128 sum_ts_l3;
+  b128 sum_pyrts_l3;
+  b128 sum_tv_l3;
+  b128 sum_del_l3;
   for ( ; num_level_3 != 0 ; num_level_3-- ){
     dist_level_3(sum_ts_l3,  sum_pyrts_l3, sum_tv_l3,  sum_del_l3);
     //    sum_with_previous_level(total_sum_ts,sum_ts_l3, EIGHT_BIT_MASK, EIGHT);
@@ -359,7 +373,10 @@ DNA_b128_String::computeTAMURANEIDistance(const DNA_b128_String &s1,
 
   
   //level 4, num_level_4 is atmost Any number
-  b128 sum_ts_l4,  sum_pyrts_l4, sum_tv_l4,  sum_del_l4;
+  b128 sum_ts_l4;
+  b128 sum_pyrts_l4;
+  b128 sum_tv_l4;
+  b128 sum_del_l4;
   for (  ; num_level_4 != 0 ; num_level_4-- ){
     dist_level_4(sum_ts_l4,  sum_pyrts_l4, sum_tv_l4,  sum_del_l4);
     //    sum_with_previous_level(total_sum_ts,sum_ts_l4, SIXTEEN_BIT_MASK, SIXTEEN);
@@ -432,10 +449,19 @@ DNA_b128_String::computeTAMURANEIDistance(const DNA_b128_String &s1,
 
 static void
 dist_level_1(b128 &sum_ts_l1, b128 &sum_pyrts_l1, b128 &sum_tv_l1, b128 &sum_del_l1){
-  b128 diff1,diff2,diff3;
-  b128 ptrand1, ptrand2, ptrand3;
-  b128 del1,del2,del3;
-  b128 *_del_ptr1,*_del_ptr2,*_ptr1,*_ptr2;
+  b128 diff1;
+  b128 diff2;
+  b128 diff3;
+  b128 ptrand1;
+  b128 ptrand2;
+  b128 ptrand3;
+  b128 del1;
+  b128 del2;
+  b128 del3;
+  b128 *_del_ptr1;
+  b128 *_del_ptr2;
+  b128 *_ptr1;
+  b128 *_ptr2;
   
   //--------
   // LOOP 1
@@ -493,7 +519,12 @@ dist_level_1(b128 &sum_ts_l1, b128 &sum_pyrts_l1, b128 &sum_tv_l1, b128 &sum_del
   // here as a required syntax fix for the whole project to compile
   // under C++17 - DNA_b128 itself is out of scope for style
   // modernization this phase (see modernization_plan.md).
-  b128 _sum_del_l1, _sum_tv_l1,_sum_ts_l1, _sum_pyrts_l1, tmp_tv,tmp_ts;
+  b128 _sum_del_l1;
+  b128 _sum_tv_l1;
+  b128 _sum_ts_l1;
+  b128 _sum_pyrts_l1;
+  b128 tmp_tv;
+  b128 tmp_ts;
   _sum_tv_l1 = and_b128(shift_each32_bits_right_b128(diff1,ONE),LEAST_SIGNIFCANT_BIT);
   _sum_del_l1 = and_b128(del1,LEAST_SIGNIFCANT_BIT);
   _sum_ts_l1 = andnot_b128(_sum_tv_l1, and_b128(diff1,LEAST_SIGNIFCANT_BIT));
@@ -537,7 +568,10 @@ dist_level_1(b128 &sum_ts_l1, b128 &sum_pyrts_l1, b128 &sum_tv_l1, b128 &sum_del
 //
 void
 dist_level_2(b128 &sum_ts_l2, b128 &sum_pyrts_l2, b128 &sum_tv_l2, b128 &sum_del_l2){
-  b128 sum_ts_l1, sum_pyrts_l1, sum_tv_l1, sum_del_l1;
+  b128 sum_ts_l1;
+  b128 sum_pyrts_l1;
+  b128 sum_tv_l1;
+  b128 sum_del_l1;
   PREFETCH_DATA(6);
   //----
   // LOOP 1
@@ -571,7 +605,10 @@ dist_level_2(b128 &sum_ts_l2, b128 &sum_pyrts_l2, b128 &sum_tv_l2, b128 &sum_del
 // level 3.
 void
 dist_level_3(b128 &sum_ts_l3, b128 &sum_pyrts_l3, b128 &sum_tv_l3, b128 &sum_del_l3){
-  b128 sum_ts_l2, sum_pyrts_l2, sum_tv_l2, sum_del_l2;
+  b128 sum_ts_l2;
+  b128 sum_pyrts_l2;
+  b128 sum_tv_l2;
+  b128 sum_del_l2;
   //----
   // LOOP 1
   // Call level 2 and add the blocks of size 4 into
@@ -662,7 +699,10 @@ dist_level_3(b128 &sum_ts_l3, b128 &sum_pyrts_l3, b128 &sum_tv_l3, b128 &sum_del
 //
 void
 dist_level_4(b128 &sum_ts_l4, b128 &sum_pyrts_l4, b128 &sum_tv_l4, b128 &sum_del_l4){
-  b128 sum_ts_l3, sum_pyrts_l3, sum_tv_l3, sum_del_l3;
+  b128 sum_ts_l3;
+  b128 sum_pyrts_l3;
+  b128 sum_tv_l3;
+  b128 sum_del_l3;
   //----
   // LOOP 1
   // Call level 3 and add the blocks of size 8 into

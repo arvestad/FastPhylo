@@ -31,8 +31,9 @@ int hamming_distance(const std::string &s1,
   }
   for ( size_t i = 0 ; i < s1.length() ; i++ ){
     //cout << s1[i] << " ? " << s2[i] <<" , ";
-    if ( s1[i] != s2[i] )
+    if ( s1[i] != s2[i] ) {
       ham++;
+}
   }
   
   return ham;
@@ -57,7 +58,8 @@ TN_string_compare(const std::string &s1,
     nucleotide_difference diff = get_nucleotide_difference(n1,n2);
     switch( diff ){
     case EQUAL: break;//do nothing
-    case DELETION: deleted++; if ( n1==n2 ) matchDeletions++; break;
+    case DELETION: deleted++; if ( n1==n2 ) { matchDeletions++; 
+}break;
     case PURINE_TRANSITION: PURTS++; break;
     case PYRIMIDINE_TRANSITION: PYRTS++; break;
     case TRANSVERSION: TV++; break;
@@ -81,11 +83,12 @@ complete_dna_string_compare(float divergence_matrix[4][4],//a 4x4 matrix will be
   int deleted = 0;
   float tmp_matrix[4][4];
   
-  for ( int i = 0 ; i < 4 ; i++)
+  for ( int i = 0 ; i < 4 ; i++) {
     for ( int j = 0 ; j < 4 ; j++ ){
       divergence_matrix[i][j] = 0;
       tmp_matrix[i][j] = 0;
     }
+}
   for ( unsigned int  i = 0 ; i < s1.length() ; i++ ){
     nucleotide n1 = char2nucleotide(s1[i]);
     nucleotide n2 = char2nucleotide(s2[i]);
@@ -135,9 +138,11 @@ complete_dna_string_compare(float divergence_matrix[4][4],//a 4x4 matrix will be
 
   }//end for pos
 
-  for ( int i = 0 ; i <= 3 ; i++ )
-    for ( int j = 0 ; j <=3 ; j++ )
+  for ( int i = 0 ; i <= 3 ; i++ ) {
+    for ( int j = 0 ; j <=3 ; j++ ) {
       divergence_matrix[i][j] = (divergence_matrix[i][j]+tmp_matrix[i][j]);
+}
+}
 
   // cout << "div matrix after update" << endl;
   // print_divergence_matrix(divergence_matrix);

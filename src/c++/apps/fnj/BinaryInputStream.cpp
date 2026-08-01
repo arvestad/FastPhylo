@@ -12,16 +12,17 @@
 using namespace std;
 
 BinaryInputStream::~BinaryInputStream() {
-	if (file_was_opened)
+	if (file_was_opened) {
 		fin.close();
+}
 }
 
 BinaryInputStream::BinaryInputStream(char * filename)  {
 	input_was_read=false;
 	file_was_opened = false;
-	if (filename==nullptr)
+	if (filename==nullptr) { {
 		fp = &cin;
-	else {
+	} } else {
 		fin.open(filename, ios::binary );
 		if (!fin.good()) {
 			fin.close();
@@ -56,7 +57,8 @@ readstatus BinaryInputStream::readDM(StrFloMatrix & dm, std::vector<std::string>
 		for (int i=0; i< newSize; i++) {
 			while(true){
 				fp->read(&c, sizeof(c));
-				if(c == ':') break;
+				if(c == ':') { break;
+}
 				identifier+=c;
 			}
 			// if identifier is empty don't add it to the sequence name vector
@@ -67,19 +69,22 @@ readstatus BinaryInputStream::readDM(StrFloMatrix & dm, std::vector<std::string>
 			identifier= "";
 		}
 		names.clear();
-		for(size_t namei=0 ; namei<dm.getSize() ; namei++ )
+		for(size_t namei=0 ; namei<dm.getSize() ; namei++ ) {
 			names.push_back(dm.getIdentifier(namei));
+}
 	}
 	else {
-		for (int i=0; i<names.size(); i++)
+		for (int i=0; i<names.size(); i++) {
 			dm.setIdentifier(i,names.at(i));
+}
 		}
 	// read each line of the matrix and set the distances
 	for(int i = 0; i < newSize; ++i) {
 		for(int j = i; j < newSize; ++j) {
 			float f;
-			if (!fp->read( reinterpret_cast<char*>( &f ), sizeof(f)))
+			if (!fp->read( reinterpret_cast<char*>( &f ), sizeof(f))) {
 				return END_OF_RUN;
+}
 			dm.setDistance(i, j, f);
 		}
 	}

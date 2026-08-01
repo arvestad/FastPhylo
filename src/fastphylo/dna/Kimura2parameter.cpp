@@ -10,6 +10,7 @@
 //--------------------------------------------------
 
 #include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
+#include <algorithm>
 #include <string>
 #include <iostream>
 #include <cassert>
@@ -64,13 +65,14 @@ secant_search(
               float a,//observed transitions
               float b,//observed transversions
               float n){
-  float x0 = (a/K + b/2)/(n);
+  float x0 = (a/K + b/2)/n;
   float fx0 = partof_derivative_likelihood(x0,K,a,b,n);
   float x1;
-  if ( fx0 < 0 )
+  if ( fx0 < 0 ) {
     x1 = x0/2;
-  else
+  } else {
     x1 = x0*3/2;
+}
   
   //cout << "fx0 " << fx0 << "   x0 " << x0 << endl; 
   int i =0;
@@ -80,9 +82,7 @@ secant_search(
 
     //    cerr << "x1 = " << x1  << " \tx0 = " << x0 << " \tfx0 = " << fx0 <<endl;
     x1 = x1 - (x1-x0)/(tmpf-fx0)*tmpf;
-    if (x1 < 0) {
-      x1 = 0;
-    }
+    x1 = std::max<float>(x1, 0);
     fx0= tmpf;
     x0 = tmp;
     i++;

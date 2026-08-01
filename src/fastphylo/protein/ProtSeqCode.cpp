@@ -55,8 +55,9 @@ namespace ProtSeqCode {
         '-', ' ', '.', '?',
         '?' // OTHER_CODE: no single canonical character, use '?'
       };
-      for (std::size_t i = 0; i < ALPHABET_SIZE; i++)
+      for (std::size_t i = 0; i < ALPHABET_SIZE; i++) {
         table[i] = symbols[i];
+}
       return table;
     }
 
@@ -68,16 +69,18 @@ namespace ProtSeqCode {
 
   char decode_residue(std::uint8_t code) {
     static const std::array<char, ALPHABET_SIZE> table = build_decode_table();
-    if (code >= ALPHABET_SIZE)
+    if (code >= ALPHABET_SIZE) {
       return '?';
+}
     return table[code];
   }
 
   void encode_sequence(const std::string &seq, std::vector<std::uint8_t> &out) {
     out.resize(seq.size());
     const std::array<std::uint8_t, 256> &table = code_table();
-    for (std::size_t i = 0; i < seq.size(); i++)
+    for (std::size_t i = 0; i < seq.size(); i++) {
       out[i] = table[static_cast<unsigned char>(seq[i])];
+}
   }
 
 }

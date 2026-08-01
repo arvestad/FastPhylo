@@ -41,10 +41,11 @@ template<class T> void buildTrees(T &dm, tree2int_map &tree2count, std::vector<N
 		computeNJTree(dm,tree,methods[i]);
 		tree.makeCanonical(name2id);
 		tree2int_map::iterator iter = tree2count.find(tree);
-		if(iter!=tree2count.end())
+		if(iter!=tree2count.end()) {
 			iter->second++;
-		else
+		} else {
 			tree2count[tree] = 1;
+}
 	}
 }
 
@@ -55,8 +56,9 @@ int main (int argc, char **argv) {
     }
 	gengetopt_args_info args_info;
 	TRY_EXCEPTION();
-	if (cmdline_parser (argc, argv, &args_info) != 0)
+	if (cmdline_parser (argc, argv, &args_info) != 0) {
 		exit(EXIT_FAILURE);
+}
 #ifndef WITH_LIBXML
 	if ( args_info.input_format_arg == input_format_arg_xml ) {
 		cerr << "The software was built with WITH_LIBXML=OFF. Please rebuild it if you want XML functionality." << endl;
@@ -112,8 +114,9 @@ int main (int argc, char **argv) {
 		default: cerr << "Error: you can at most specify one input filename" << endl;
 			exit(EXIT_FAILURE);
 		}
-		if( args_info.outfile_given )
+		if( args_info.outfile_given ) {
 			outputfilename = args_info.outfile_arg;
+}
 		switch ( args_info.input_format_arg ) {
 			case input_format_arg_phylip:
 				istream = std::make_unique<PhylipDmInputStream>(inputfilename);
@@ -158,15 +161,17 @@ int main (int argc, char **argv) {
 				StrDblMatrix dm;
 				for (int runNo=1; (status = istream->readDM(dm, names, runId, extrainfos))==DM_READ; runNo++) {
 					if (args_info.analyze_run_number_given) {
-						if (runNo<args_info.analyze_run_number_arg)
+						if (runNo<args_info.analyze_run_number_arg) {
 							continue;
+}
 						if (runNo>args_info.analyze_run_number_arg) {
 							status=END_OF_RUN;
 							break;
 							}
 						}
-					for(size_t namei=0; namei<dm.getSize(); namei++)
+					for(size_t namei=0; namei<dm.getSize(); namei++) {
 						name2id[dm.getIdentifier(namei)] = namei;
+}
 					buildTrees(dm, tree2count, methods,name2id);
 				}
 			}
@@ -174,8 +179,9 @@ int main (int argc, char **argv) {
 				StrDblMatrix dm;
 				for (int runNo=1; (status = istream->readDM(dm, names, runId, extrainfos))==DM_READ; runNo++) {
 					if (args_info.analyze_run_number_given) {
-						if (runNo<args_info.analyze_run_number_arg)
+						if (runNo<args_info.analyze_run_number_arg) {
 							continue;
+}
 						if (runNo>args_info.analyze_run_number_arg) {
 							status=END_OF_RUN;
 							break;
@@ -187,10 +193,12 @@ int main (int argc, char **argv) {
 					buildTrees(dm, tree2count, methods,name2id);
 				}
 			}
-			if (status==END_OF_RUN)
+			if (status==END_OF_RUN) {
 				ostream->print(tree2count,printCounts, runId, names, extrainfos);
-			if (args_info.analyze_run_number_given)
+}
+			if (args_info.analyze_run_number_given) {
 				break;
+}
 		}//end run loop
 	}
 	catch(...){

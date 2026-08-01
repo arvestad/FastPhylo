@@ -53,7 +53,7 @@ void XmlOutputStream::printRow(StrFloRow &dm, string name, int row, bool mem_eff
   int entriesPerRow = numNodes;
 
   fprintf(fp, "    <row>\n");
-  if (mem_eff_flag == true) {
+  if (mem_eff_flag) {
     row = 0;
   }
   for (size_t j = row; j < static_cast<size_t>(entriesPerRow); j++) {

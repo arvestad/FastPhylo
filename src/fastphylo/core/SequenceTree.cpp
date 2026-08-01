@@ -46,8 +46,9 @@ SequenceTree::printNodeData(std::ostream &os){
   addNodesInInfixOrder(vec);
   for ( size_t i = 0 ; i < vec.size() ; i++ ){
     string str = vec[i]->data.s.toString();
-    if ( !str.empty() )
+    if ( !str.empty() ) {
       os << "[" << vec[i]->getNodeId() << "] " << str << endl;
+}
   }
 }
 
@@ -58,8 +59,9 @@ SequenceTree::setNodeNames(){
   addNodesInInfixOrder(vec);
   for ( size_t i = 0 ; i < vec.size() ; i++ ){
     SequenceTree::Node * n = vec[i];
-    if ( NAME(n).empty() )
+    if ( NAME(n).empty() ) {
       NAME(n) = string("n")+n->getNodeId();
+}
   } 
 }
 void
@@ -83,8 +85,9 @@ SequenceTree::printSequences( std::ostream &os){
   addNodesInInfixOrder(vec);
   for ( size_t i = 0 ; i < vec.size() ; i++ ){
     SequenceTree::Node *n = vec[i];
-    if ( NAME(n).empty() )
+    if ( NAME(n).empty() ) {
       continue;
+}
     os << n->data.s << endl;
   } 
 }
@@ -95,8 +98,9 @@ SequenceTree::printSequencesWithoutGaps(std::ostream &os){
   addNodesInInfixOrder(vec);
   for ( size_t i = 0 ; i < vec.size() ; i++ ){
     SequenceTree::Node *n = vec[i];
-    if ( NAME(n).empty() )
+    if ( NAME(n).empty() ) {
       continue;
+}
     os << n->data.s << endl;
   } 
 }
@@ -109,8 +113,9 @@ SequenceTree::sumOfEdgeLengths(){
   addNodesInPrefixOrder(nodes);
   double sum =0;
   //skip the root
-  for(size_t i=1;i<nodes.size();i++)
+  for(size_t i=1;i<nodes.size();i++) {
     sum+=EDGE(nodes[i]);
+}
 
   return sum;
 }
@@ -122,8 +127,9 @@ SequenceTree::sumOfFloatEdgeLengths(){
   addNodesInPrefixOrder(nodes);
   float sum =0;
   //skip the root
-  for(size_t i=1;i<nodes.size();i++)
+  for(size_t i=1;i<nodes.size();i++) {
     sum+=EDGE(nodes[i]);
+}
 
   return sum;
 }
@@ -220,8 +226,10 @@ SequenceTree::compute_loglikelihood(){
       loglikelihood += hamdist*log(optprob/3.0) + (slen - hamdist)*log(1 - optprob);
       EDGE(n) = optprob;
     }
-    else
+    else { {
       EDGE(n) = 0;
+}
+}
     //}
     //cout << "newlog " << loglikelihood << endl;
   }
@@ -263,8 +271,10 @@ SequenceTree::computeFloat_loglikelihood(){
       loglikelihood += hamdist*log(optprob/3.0) + (slen - hamdist)*log(1 - optprob);
       EDGE(n) = optprob;
     }
-    else
+    else { {
       EDGE(n) = 0;
+}
+}
     //}
     //cout << "newlog " << loglikelihood << endl;
   }
@@ -288,7 +298,8 @@ SequenceTree::contractEdgesShorterThan(double bound){
   addNodesInPrefixOrder(nodes);
   int numC=0;
   for(size_t i=1 ; i<nodes.size() ; i++){
-    if(nodes[i]->isLeaf()) continue;
+    if(nodes[i]->isLeaf()) { continue;
+}
     if(EDGE(nodes[i])<=bound){
       shortcutNode(nodes[i]);
       numC++;
@@ -302,7 +313,8 @@ SequenceTree::contractFloatEdgesShorterThan(float bound){
   addNodesInPrefixOrder(nodes);
   int numC=0;
   for(size_t i=1 ; i<nodes.size() ; i++){
-    if(nodes[i]->isLeaf()) continue;
+    if(nodes[i]->isLeaf()) { continue;
+}
     if(EDGE(nodes[i])<=bound){
       shortcutNode(nodes[i]);
       numC++;
@@ -431,8 +443,10 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
         if ( !isspace(c) ){
           USER_ERROR("Bad character \'" << c << "\'");
         }
-        else if ( c != '\n' )
+        else if ( c != '\n' ) { {
           continue;
+}
+}
         //if '\n'
         break;
       }
@@ -451,11 +465,13 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
       char c = fin.peek();
       if ( !isspace(c) ){
         //skip first 10 chars
-        for ( int j = 10 ; j != 0 ; j-- )
+        for ( int j = 10 ; j != 0 ; j-- ) {
           fin.get();
+}
       }
-      while ( c == '\n' )
+      while ( c == '\n' ) {
         c = fin.get();
+}
 
       garbage.clear();
       string *currseq = sequences[i];
@@ -466,8 +482,10 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
           if ( !isspace(c) ){
             USER_ERROR("Bad character \'" << c << "\'");
           }
-          else if ( c != '\n' )//skip space
+          else if ( c != '\n' ) { {//skip space
             continue;
+}
+}
           //if '\n'
           break;
         }
@@ -479,10 +497,11 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
 
 
   // CHECK THAT ALL STRINGS HAVE THE SAME LENGTH
-  for ( size_t i = 0 ; i < nodes.size() ; i++ )
+  for ( size_t i = 0 ; i < nodes.size() ; i++ ) {
     if ( SEQ(nodes[i]).length() != seqlen && !SEQ(nodes[i]).empty() ){
       USER_ERROR("Sequence not of correct length: " << nodes[i]->data.s.name ); 
     }
+}
 
 }
 
@@ -723,8 +742,9 @@ SequenceTree::tree2distanceMatrix(StrDblMatrix &dm){
   addLeafs(leafs);
   for(size_t i=0;i<leafs.size();i++){
     dm.setIdentifier(i,NAME(leafs[i]));
-    for(size_t j=i+1;j<leafs.size();j++)
+    for(size_t j=i+1;j<leafs.size();j++) {
       dm.setDistance(i,j,0);
+}
   }
   
 
@@ -750,8 +770,9 @@ SequenceTree::tree2FloatdistanceMatrix(StrFloMatrix &fdm){
   addLeafs(leafs);
   for(size_t i=0;i<leafs.size();i++){
     fdm.setIdentifier(i,NAME(leafs[i]));
-    for(size_t j=i+1;j<leafs.size();j++)
+    for(size_t j=i+1;j<leafs.size();j++) {
       fdm.setDistance(i,j,0);
+}
   }
 
 
@@ -780,8 +801,9 @@ SequenceTree::createLeafNameToLeafIdMap(str2int_hashmap &name2id) const{
   name2id.reserve(static_cast<size_t>(1.5*leafs.size()));
   int leafId = 0;
   
-  for(size_t i=0;i<leafs.size();i++)
+  for(size_t i=0;i<leafs.size();i++) {
     name2id[NAME(leafs[i])]=leafId++;
+}
 	    
 }
 //the leafs are added in order of their ids in name2id

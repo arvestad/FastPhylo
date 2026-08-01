@@ -6,8 +6,9 @@ FastaInputStream::FastaInputStream(char *filename)
     : reader(filename, "abcdefghiklmnopqrstuvwyzxABCDEFGHIKLMNOPQRSTUVWYZX -.?") {}
 
 bool FastaInputStream::read(vector<Sequence> &seqs, string &runId, vector<string> &names, Extrainfos &extrainfos) {
-  if (!readSequences(seqs, runId, extrainfos))
+  if (!readSequences(seqs, runId, extrainfos)) {
     return false;
+}
   names.clear();
   names.reserve(seqs.size());
   for (size_t i = 0; i < seqs.size(); i++) {

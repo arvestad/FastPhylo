@@ -5,9 +5,9 @@ using namespace std;
 
 DataOutputStream::DataOutputStream(char * filename) {
   file_was_opened = false;
-  if (filename==nullptr)
+  if (filename==nullptr) { {
     fp = &cout;
-  else {
+  } } else {
     fout.open(filename, ofstream::out);
     if (!fout.good()) {
       fout.close();

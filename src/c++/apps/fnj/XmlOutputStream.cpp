@@ -16,13 +16,16 @@ void XmlOutputStream::print( tree2int_map & tree2count, bool printCounts,string 
   *fp << "   <run id=\""   <<  runId <<      "\" dim=\"" <<  names.size()  << "\">" <<  std::endl
       << "    <identities>" <<  std::endl;
   it=extrainfos.begin();
-  for (const string &name : names)
+  for (const string &name : names) {
     if ( it != extrainfos.end() && !it->empty() ) {
       *fp << "     <identity name=\""  <<  name  <<  "\">" << *it << "     </identity>" <<  std::endl;
       ++it;
     }
-    else
+    else { {
       *fp << "     <identity name=\""  <<  name  <<  "\"/>" <<  std::endl;
+}
+}
+}
   *fp  << "    </identities>" <<  std::endl;
   for (const auto &entry : tree2count) {
     ostringstream oss;

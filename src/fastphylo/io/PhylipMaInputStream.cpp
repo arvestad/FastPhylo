@@ -5,8 +5,9 @@
 using namespace std;
 
 PhylipSequenceReader::~PhylipSequenceReader() {
-  if (file_was_opened)
+  if (file_was_opened) {
     fin.close();
+}
 }
 
 PhylipSequenceReader::PhylipSequenceReader(char *filename) {

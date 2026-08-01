@@ -10,15 +10,16 @@
 using namespace std;
 
 PhylipDmInputStream::~PhylipDmInputStream() {
-	if (file_was_opened)
+	if (file_was_opened) {
 		fin.close();
+}
 }
 
 PhylipDmInputStream::PhylipDmInputStream(char *filename) {
 	file_was_opened = false;
-	if (filename ==nullptr)
+	if (filename ==nullptr) { {
 		fp = &cin;
-	else {
+	} } else {
 		fin.open(filename, ifstream::in);
 		if (fin.peek()==ifstream::traits_type::eof()) {
 			fin.close();
@@ -38,10 +39,13 @@ PhylipDmInputStream::PhylipDmInputStream(char *filename) {
 
 readstatus PhylipDmInputStream::readDM(StrDblMatrix &dm, vector<string> & names, string & runId, Extrainfos &extrainfos) {
 	string line;
-	int    i1, i2, newSize;
+	int    i1;
+	int    i2;
+	int    newSize;
 
-	if (!getline(*fp,line))
+	if (!getline(*fp,line)) {
 		return END_OF_RUN;
+}
 
 	newSize = std::stoi(line); // First line contains the number of taxa
 	dm.resize(newSize);

@@ -35,8 +35,9 @@ std::ostream&
 BitVector::printOn(std::ostream& os) const{
  
   for(size_t i=0 ; i<numBits ; i++){
-    if( i%32 == 0 )
+    if( i%32 == 0 ) {
       os << " ";
+}
     os << getBit(i);
   }
   return os;
@@ -122,16 +123,16 @@ BitVector::equals(const Object *o) const{
   // a differently-typed Object is now defined (false), not UB.
   const BitVector *bv = dynamic_cast<const BitVector*>(o);
 
-  if(bv==nullptr) return false;
-  if(numBits!=bv->numBits) return false;
+  if(bv==nullptr) { return false;
+}
+  if(numBits!=bv->numBits) { return false;
+}
   
   for(size_t i = 0 ; i<bits.size()-1 ; i++){
-    if(bits[i]!=bv->bits[i]) return false;
+    if(bits[i]!=bv->bits[i]) { return false;
+}
   }
-  if(getLastHolderWithClearedUnusedBitPositions()!=bv->getLastHolderWithClearedUnusedBitPositions()) 
-    return false;
-
-  return true;
+  return getLastHolderWithClearedUnusedBitPositions() == bv->getLastHolderWithClearedUnusedBitPositions();
 }
 
 

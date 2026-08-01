@@ -37,8 +37,9 @@ void BinaryDmOutputStream::print(StrDblMatrix &dm) {
     row.clear();
     for (size_t j = i; j < numNodes; j++) {
       float f = dm.getDistance(i, j);
-      if (!isfinite(f))
+      if (!isfinite(f)) {
         f = -1.0;
+}
       row.push_back(f);
     }
     ofs->write(reinterpret_cast<char *>(row.data()), row.size() * sizeof(float));

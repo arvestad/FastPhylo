@@ -40,14 +40,17 @@ Sequence& Sequence::operator=(const Sequence &s){
 }
 
 std::ostream& Sequence::printOn(std::ostream& os) const{
-	if ( name.empty() && seq.empty() )
+	if ( name.empty() && seq.empty() ) {
 		return os;
+}
 	if ( name.length() < 10 ){
 		os  << std::setw(10) << std::left;
 		os << name;
 	}
-	else
+	else { {
 		os << name << " ";
+}
+}
 	os << seq;
 	return os;
 }
@@ -66,26 +69,31 @@ std::istream& Sequence::objInitFromStream(std::istream &in){
 }
 
 void Sequence::printWithoutGaps(std::ostream& os) const{
-	if ( name.empty() && seq.empty() )
+	if ( name.empty() && seq.empty() ) {
 		return;
+}
 	if ( name.length() < 10 ){
 		os  << std::setw(10) << std::left;
 		os << name;
 	}
-	else
+	else { {
 		os << name << " ";
+}
+}
 
 	for(size_t i=0 ; i<seq.length() ; i++ ){
-		if(seq[i]!=' ')
+		if(seq[i]!=' ') {
 			os<<seq[i];
+}
 	}
 
 }
 
 // Hashes on the name if it exists otherwise the sequence
 size_t Sequence::hashCode() const {
-	if ( name.empty() )
+	if ( name.empty() ) {
 		return stringhasher(seq);
+}
 	return stringhasher(name);
 }
 // uses the name if it exists otherwise the sequence
@@ -99,23 +107,28 @@ bool Sequence::equals(const Object *o) const {
 	// dead code - see that fix). dynamic_cast plus this new check makes
 	// comparing to a differently-typed Object defined (false), not UB.
 	const Sequence *otherseq = dynamic_cast<const Sequence *>(o);
-	if ( otherseq == nullptr ) return false;
+	if ( otherseq == nullptr ) { return false;
+}
 	if ( name.empty() ){
-		if ( otherseq->name.empty() )
+		if ( otherseq->name.empty() ) {
 			return seq == otherseq->seq;
-		else
+		} else {
 			return false;
+}
 	}
-	if ( otherseq->name.empty() )
+	if ( otherseq->name.empty() ) {
 		return false;
+}
 
 	return name == otherseq->name;
 }
 
 bool Sequence::onlyContains(std::string &chars){
-	for ( size_t i = 0 ; i < seq.size() ; i++ )
-		if ( chars.find(seq[i]) != chars.npos )
+	for ( size_t i = 0 ; i < seq.size() ; i++ ) {
+		if ( chars.find(seq[i]) != std::string::npos ) {
 			return false;
+}
+}
 
 	return true;
 }
@@ -272,7 +285,7 @@ Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin){
 					continue;
 				}
 
-				if (!( fin.fail() && fin.gcount()==MAXLINE-1 )){
+				if ( !fin.fail() || fin.gcount()!=MAXLINE-1 ){
 					appendAllNonChars(s.seq,line, fin.gcount() - (fin.eof()? 0: 1), ' ');
 
 				}
@@ -352,10 +365,11 @@ Sequence::bootstrapSequences(std::vector<Sequence> &seqs, std::vector<Sequence> 
 	const size_t seqlen = seqs[0].seq.length();
 	for ( size_t i = 0 ; i < seqs.size() ; i++ ){
 		boot[i].name = seqs[i].name;
-		if ( boot[i].seq.length() < seqlen )
+		if ( boot[i].seq.length() < seqlen ) {
 			boot[i].seq.assign(seqlen,' ');
-		else if ( boot[i].seq.length() > seqlen )
+		} else if ( boot[i].seq.length() > seqlen ) {
 			boot[i].seq.erase(seqlen);
+}
 
 		assert( boot[i].seq.length() == seqlen );
 	}
@@ -367,11 +381,14 @@ Sequence::bootstrapSequences(std::vector<Sequence> &seqs, std::vector<Sequence> 
 	const size_t stride = 32;
 
 	if( stride < seqlen){
-		for( pos=0; pos<(seqlen-stride); pos+= stride)
-			for( size_t i=0; i<stride; i++)
+		for( pos=0; pos<(seqlen-stride); pos+= stride) {
+			for( size_t i=0; i<stride; i++) {
 				samplePositions[pos+i] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
-		for (; pos<seqlen; pos++)
+}
+}
+		for (; pos<seqlen; pos++) {
 			samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
+}
 
 
 		for( seq=0; seq<seqs.size(); seq++){
@@ -379,22 +396,26 @@ Sequence::bootstrapSequences(std::vector<Sequence> &seqs, std::vector<Sequence> 
 			const string & s = seqs[seq].seq;
 
 			for( pos=0; pos<seqlen-stride; pos+=stride){
-				for( size_t i=0; i<stride; i++)
+				for( size_t i=0; i<stride; i++) {
 					b[pos+i] = s[samplePositions[pos+i]];
+}
 			}
-			for (; pos<seqlen; pos++)
+			for (; pos<seqlen; pos++) {
 				b[pos] = s[samplePositions[pos]];
+}
 		}
 	}
 	else{//seqlen<stride
-		for (pos=0; pos<seqlen; pos++)
+		for (pos=0; pos<seqlen; pos++) {
 			samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
+}
 
 		for( seq=0; seq<seqs.size(); seq++){
 			string & b = boot[seq].seq;
 			const string & s = seqs[seq].seq;
-			for (pos=0; pos<seqlen; pos++)
+			for (pos=0; pos<seqlen; pos++) {
 				b[pos] = s[samplePositions[pos]];
+}
 		}
 	}
 }

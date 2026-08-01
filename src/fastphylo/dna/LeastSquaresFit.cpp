@@ -29,11 +29,12 @@ computeLeastSquaresEdgeLengths(const StrDblMatrix &orig_dm,  SequenceTree &tree)
   size_t rowIndexToNodeId[nodes.size()];
   str2int_hashmap name2Id(static_cast<int>(nodes.size()*1.7));
 
-  for(size_t i=0 ; i<nodes.size() ; i++)
+  for(size_t i=0 ; i<nodes.size() ; i++) {
     if(nodes[i]->isLeaf()){
       //PRINT(NAME(nodes[i]));PRINT(ID(nodes[i]));
       name2Id[NAME(nodes[i])] = ID(nodes[i]);
     }
+}
 
   for(size_t row=0 ; row<dm.getSize() ; row++){
     str2int_hashmap::iterator f = name2Id.find(dm.getIdentifier(row));
@@ -46,14 +47,16 @@ computeLeastSquaresEdgeLengths(const StrDblMatrix &orig_dm,  SequenceTree &tree)
   
   //the number of leafs below each node
   int numNodesBelow[nodes.size()];
-  for(size_t i=0;i<nodes.size();i++)
+  for(size_t i=0;i<nodes.size();i++) {
     numNodesBelow[i]=1;
+}
 
   //--------------------------------
   //BOTTOM UP TRAVERSAL IN TREE
   for(size_t i=0;i<nodes.size()-1;i++){
-    if(nodes[i]->isLeaf())
+    if(nodes[i]->isLeaf()) {
       continue;
+}
 
     //get the children and do the UNJ calculation to get the edge lengths
     SequenceTree::Node *parent = nodes[i];
@@ -69,8 +72,9 @@ computeLeastSquaresEdgeLengths(const StrDblMatrix &orig_dm,  SequenceTree &tree)
     double sum = 0;
     for(size_t row=0;row<dm.getSize();row++){
       if(row==nodeIdToRowIndex[ID(child1)] || 
-	 row==nodeIdToRowIndex[ID(child2)] )
+	 row==nodeIdToRowIndex[ID(child2)] ) {
 	continue;
+}
       sum += numNodesBelow[rowIndexToNodeId[row]]*(dm.getDistance(nodeIdToRowIndex[ID(child1)],row)-
 						   dm.getDistance(nodeIdToRowIndex[ID(child2)],row));				
     }
@@ -191,11 +195,12 @@ computeLeastFloatSquaresEdgeLengths(const StrFloMatrix &orig_dm,  SequenceTree &
   size_t rowIndexToNodeId[nodes.size()];
   str2int_hashmap name2Id(static_cast<int>(nodes.size()*1.7));
 
-  for(size_t i=0 ; i<nodes.size() ; i++)
+  for(size_t i=0 ; i<nodes.size() ; i++) {
     if(nodes[i]->isLeaf()){
       //PRINT(NAME(nodes[i]));PRINT(ID(nodes[i]));
       name2Id[NAME(nodes[i])] = ID(nodes[i]);
     }
+}
 
   for(size_t row=0 ; row<dm.getSize() ; row++){
     str2int_hashmap::iterator f = name2Id.find(dm.getIdentifier(row));
@@ -208,14 +213,16 @@ computeLeastFloatSquaresEdgeLengths(const StrFloMatrix &orig_dm,  SequenceTree &
 
   //the number of leafs below each node
   int numNodesBelow[nodes.size()];
-  for(size_t i=0;i<nodes.size();i++)
+  for(size_t i=0;i<nodes.size();i++) {
     numNodesBelow[i]=1;
+}
 
   //--------------------------------
   //BOTTOM UP TRAVERSAL IN TREE
   for(size_t i=0;i<nodes.size()-1;i++){
-    if(nodes[i]->isLeaf())
+    if(nodes[i]->isLeaf()) {
       continue;
+}
 
     //get the children and do the UNJ calculation to get the edge lengths
     SequenceTree::Node *parent = nodes[i];
@@ -231,8 +238,9 @@ computeLeastFloatSquaresEdgeLengths(const StrFloMatrix &orig_dm,  SequenceTree &
     double sum = 0;
     for(size_t row=0;row<dm.getSize();row++){
       if(row==nodeIdToRowIndex[ID(child1)] ||
-	 row==nodeIdToRowIndex[ID(child2)] )
+	 row==nodeIdToRowIndex[ID(child2)] ) {
 	continue;
+}
       sum += numNodesBelow[rowIndexToNodeId[row]]*(dm.getDistance(nodeIdToRowIndex[ID(child1)],row)-
 						   dm.getDistance(nodeIdToRowIndex[ID(child2)],row));
     }

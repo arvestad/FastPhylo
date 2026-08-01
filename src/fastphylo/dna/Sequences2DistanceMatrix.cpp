@@ -112,7 +112,7 @@ DNA_b128_StringsFromPHYLIP(istream &fin, std::vector<std::string> &names, std::v
 				continue;
 			}
 
-			if (!( fin.fail() && fin.gcount()==MAXLINE-1 )){
+			if ( !fin.fail() || fin.gcount()!=MAXLINE-1 ){
 				s.append(line);
 
 			}
@@ -150,8 +150,9 @@ bootstrapSequences(const std::vector<Sequence> &seqs, std::vector<DNA_b128_Strin
 	b128_strings.resize(seqs.size());
 
 	const size_t seqlen = seqs[0].seq.length();
-	for ( size_t i = 0 ; i < seqs.size() ; i++ )
+	for ( size_t i = 0 ; i < seqs.size() ; i++ ) {
 		b128_strings[i].reInitiate(seqlen);
+}
 
 	// Do the bootstrapping
 	size_t pos=0;
@@ -163,11 +164,14 @@ bootstrapSequences(const std::vector<Sequence> &seqs, std::vector<DNA_b128_Strin
 	size_t const stride = 32;
 
 	if( stride < seqlen){
-		for( pos=0; pos<(seqlen-stride); pos+= stride)
-			for( size_t i=0; i<stride; i++)
+		for( pos=0; pos<(seqlen-stride); pos+= stride) {
+			for( size_t i=0; i<stride; i++) {
 				samplePositions[pos+i] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
-		for (; pos<seqlen; pos++)
+}
+}
+		for (; pos<seqlen; pos++) {
 			samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
+}
 
 
 		for( seq=0; seq<seqs.size(); seq++){
@@ -181,21 +185,24 @@ bootstrapSequences(const std::vector<Sequence> &seqs, std::vector<DNA_b128_Strin
 				b128_strings[seq].append(buff);
 			}
 			size_t i;
-			for ( i=0; pos<seqlen; i++,pos++)
+			for ( i=0; pos<seqlen; i++,pos++) {
 				buff[i] = s[samplePositions[pos]];
+}
 			buff[i] = '\0';
 			//----------
 			b128_strings[seq].append(buff);
 		}
 	}
 	else{//seqlen<stride
-		for (pos=0; pos<seqlen; pos++)
+		for (pos=0; pos<seqlen; pos++) {
 			samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
+}
 
 		for( seq=0; seq<seqs.size(); seq++){
 			const string & s = seqs[seq].seq;
-			for (pos=0; pos<seqlen; pos++)
+			for (pos=0; pos<seqlen; pos++) {
 				buff[pos] = s[samplePositions[pos]];
+}
 			buff[pos]='\0';
 			b128_strings[seq].append(buff);
 		}
@@ -457,10 +464,11 @@ fillMatrix_K2P(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 		for ( size_t j = i+1 ; j < numSequences ; j++ ){
 			simple_string_distance sd = DNA_b128_String::computeDistance(si,seqs[j]);
 			ML_string_distance  ml_dist;
-			if ( trans_model.no_tstvratio )
+			if ( trans_model.no_tstvratio ) {
 				ml_dist = compute_K2P(strlen,sd);
-			else
+			} else {
 				ml_dist = compute_K2P_fixratio(strlen,sd,trans_model.tstvratio);
+}
 
 			dm.setDistance(i,j,ml_dist.distance);
 			extendedDistanceInfo.setDistance(i,j,pair<simple_string_distance,ML_string_distance>(sd,ml_dist));
@@ -486,10 +494,11 @@ fillMatrix_K2P(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 					simple_string_distance sd = extendedDistanceInfo.getDistance(i,j).first;
 					ML_string_distance ml_dist = extendedDistanceInfo.getDistance(i,j).second;
 					sd = DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(sd,ml_dist,si,seqs[j]);
-					if ( trans_model.no_tstvratio )
+					if ( trans_model.no_tstvratio ) {
 						ml_dist = compute_K2P(strlen,sd);
-					else
+					} else {
 						ml_dist = compute_K2P_fixratio(strlen,sd,trans_model.tstvratio);
+}
 
 					dm.setDistance(i,j,ml_dist.distance);
 				}
@@ -542,12 +551,13 @@ void fillMatrix_TN93(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 		for ( size_t j = i+1 ; j < numSequences ; j++ ){
 			TN_string_distance tn = DNA_b128_String::computeTAMURANEIDistance(si,seqs[j]);
 
-			if ( trans_model.no_tstvratio )
+			if ( trans_model.no_tstvratio ) {
 				ml_dist = compute_Tamura_Nei(strlen,tn,freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_);
-			else
+			} else {
 				ml_dist = compute_Tamura_Nei_fixratio(strlen,tn,
 						freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_,
 						trans_model.tstvratio, trans_model.pyrtvratio);
+}
 			dm.setDistance(i,j,ml_dist.distance);
 			extendedDistanceInfo.setDistance(i,j,pair<TN_string_distance,ML_string_distance>(tn,ml_dist));
 
@@ -577,12 +587,13 @@ void fillMatrix_TN93(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 					else {
 						tn = DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(tn,ml_dist,si,seqs[j]);
 					}
-					if ( trans_model.no_tstvratio )
+					if ( trans_model.no_tstvratio ) {
 						ml_dist = compute_Tamura_Nei(strlen,tn,freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_);
-					else
+					} else {
 						ml_dist = compute_Tamura_Nei_fixratio(strlen,tn,
 								freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_,
 								trans_model.tstvratio, trans_model.pyrtvratio);
+}
 
 					dm.setDistance(i,j,ml_dist.distance);
 
@@ -676,7 +687,7 @@ void fillMatrixRow_K2P(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 		}
       }
     }*/
-	if (mem_eff_flag == false){
+	if (!mem_eff_flag){
 		for ( size_t j = 0 ; j < row ; j++ ){
 			dm.setDistance(j, 0);
 		}
@@ -690,10 +701,11 @@ void fillMatrixRow_K2P(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 		ML_string_distance  ml_dist;
 
 		//Controlls if the tstvratio exists for K2P.
-		if ( trans_model.no_tstvratio )
+		if ( trans_model.no_tstvratio ) {
 			ml_dist = compute_K2P(strlen,sd);
-		else
+		} else {
 			ml_dist = compute_K2P_fixratio(strlen,sd,trans_model.tstvratio);
+}
 
 		//Sets distance in the matrix between i and j
 		dm.setDistance(j,ml_dist.distance);
@@ -768,7 +780,7 @@ fillMatrixRow_Hamming(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
           }
         }
     }*/
-	if (mem_eff_flag == false){
+	if (!mem_eff_flag){
 			for ( size_t j = 0 ; j < row ; j++ ){
 				dm.setDistance(j, 0);
 			}
@@ -850,7 +862,7 @@ void fillMatrixRow_JC(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
           }
         }
     }*/
-		if (!mem_eff_flag == false){
+		if (mem_eff_flag){
 				for ( size_t j = 0 ; j < row ; j++ ){
 					dm.setDistance(j, 0);
 				}
@@ -932,7 +944,7 @@ void fillMatrixRow_TN93(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
       }
     }*/
 
-	if (mem_eff_flag == false){
+	if (!mem_eff_flag){
 			for ( size_t j = 0 ; j < row ; j++ ){
 				dm.setDistance(j, 0);
 			}
@@ -944,12 +956,13 @@ void fillMatrixRow_TN93(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 	for ( size_t j = row+1 ; j < numSequences ; j++ ){
 		TN_string_distance tn = DNA_b128_String::computeTAMURANEIDistance(si,seqs[j]);
 
-		if ( trans_model.no_tstvratio )
+		if ( trans_model.no_tstvratio ) {
 			ml_dist = compute_Tamura_Nei(strlen,tn,freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_);
-		else
+		} else {
 			ml_dist = compute_Tamura_Nei_fixratio(strlen,tn,
 					freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_,
 					trans_model.tstvratio, trans_model.pyrtvratio);
+}
 		dm.setDistance(j,ml_dist.distance);
 		extendedDistanceInfo.setDistance(j,pair<TN_string_distance,ML_string_distance>(tn,ml_dist));
 

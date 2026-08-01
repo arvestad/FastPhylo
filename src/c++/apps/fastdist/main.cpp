@@ -56,8 +56,9 @@ main(int argc,
 	}
 #endif // WITH_LIBXML
 
-	if (cmdline_parser (argc, argv, &args_info) != 0)
+	if (cmdline_parser (argc, argv, &args_info) != 0) {
 		exit(EXIT_FAILURE);
+}
 
 	if ( args_info.print_relaxng_input_given && args_info.print_relaxng_output_given ) {
 		cerr << "error: --print-relaxng-input and --print-relaxng-output can not be used at the same time" << endl; exit(EXIT_FAILURE);
@@ -91,11 +92,12 @@ main(int argc,
 	int numboot = args_info.bootstraps_arg;
 	bool no_incl_orig = args_info.no_incl_orig_given;
 
-	if ( args_info.seed_given )
+	if ( args_info.seed_given ) {
 		srand(static_cast<unsigned int>(args_info.seed_arg));
-	else
+	} else {
 		// NOLINTNEXTLINE(bugprone-random-generator-seed) - bootstrap resampling, not a security context; time-seeding when no explicit --seed is the intended default.
 		srand(static_cast<unsigned int>(time(nullptr)));
+}
 
 	//-----------------------------------------------
 	// AMBIGUITIES
@@ -185,7 +187,8 @@ main(int argc,
 					for(size_t i = 0; i < numberOfSequences; ++i){
 						fillMatrixRow(dm, b128seqs, trans_model, i, false);
 						dm.setIdentifier(names.at(i));
-						if(useFixFactor) applyFixFactorRow(dm,fixfactor);
+						if(useFixFactor) { applyFixFactorRow(dm,fixfactor);
+}
 						ostream->printRow(dm, names.at(i), i, false);
 					}
 				}
@@ -194,7 +197,8 @@ main(int argc,
 					//TODO: implement bootstraping with the improved version of FastDist
 					StrFloRow dm;
 					//read original sequences
-					if ( ! istream->readSequences(seqs,runId,extrainfos)) break;
+					if ( ! istream->readSequences(seqs,runId,extrainfos)) { break;
+}
 					names.clear();names.reserve(seqs.size());
 					for( size_t i=0;i<seqs.size();i++)
 					{
@@ -208,7 +212,8 @@ main(int argc,
 						for(size_t i = 0; i < numberOfSequences; ++i){
 							fillMatrixRow(dm, b128seqs, trans_model, i, false);
 							dm.setIdentifier(names.at(i));
-							if(useFixFactor) applyFixFactorRow(dm,fixfactor);
+							if(useFixFactor) { applyFixFactorRow(dm,fixfactor);
+}
 							ostream->printRow(dm, names.at(i), i, false);
 						}
 					}
@@ -221,7 +226,8 @@ main(int argc,
 						for(size_t i = 0; i < numberOfSequences; ++i){
 							fillMatrixRow(dm, b128seqs, trans_model, i, false);
 							dm.setIdentifier(names.at(i));
-							if(useFixFactor) applyFixFactorRow(dm,fixfactor);
+							if(useFixFactor) { applyFixFactorRow(dm,fixfactor);
+}
 							ostream->printRow(dm, names.at(i), i,false);
 						}
 					}
@@ -257,7 +263,8 @@ main(int argc,
 								for(size_t i = 0; i < numberOfSequences; ++i){
 									fillMatrixRow(dm, b128seqs, trans_model, i, true);
 									dm.setIdentifier(names.at(i));
-									if(useFixFactor) applyFixFactorRow(dm,fixfactor);
+									if(useFixFactor) { applyFixFactorRow(dm,fixfactor);
+}
 									ostream->printRow(dm, names.at(i), i, true);
 								}
 							}
@@ -266,7 +273,8 @@ main(int argc,
 								//TODO: implement bootstraping with the improved version of FastDist
 								StrFloRow dm;
 								//read original sequences
-								if ( ! istream->readSequences(seqs,runId,extrainfos)) break;
+								if ( ! istream->readSequences(seqs,runId,extrainfos)) { break;
+}
 								names.clear();names.reserve(seqs.size());
 								for( size_t i=0;i<seqs.size();i++)
 								{
@@ -280,7 +288,8 @@ main(int argc,
 									for(size_t i = 0; i < numberOfSequences; ++i){
 										fillMatrixRow(dm, b128seqs, trans_model, i, true);
 										dm.setIdentifier(names.at(i));
-										if(useFixFactor) applyFixFactorRow(dm,fixfactor);
+										if(useFixFactor) { applyFixFactorRow(dm,fixfactor);
+}
 										ostream->printRow(dm, names.at(i), i, true);
 									}
 								}
@@ -293,7 +302,8 @@ main(int argc,
 									for(size_t i = 0; i < numberOfSequences; ++i){
 										fillMatrixRow(dm, b128seqs, trans_model, i, true);
 										dm.setIdentifier(names.at(i));
-										if(useFixFactor) applyFixFactorRow(dm,fixfactor);
+										if(useFixFactor) { applyFixFactorRow(dm,fixfactor);
+}
 										ostream->printRow(dm, names.at(i), i, true);
 									}
 								}
@@ -315,12 +325,14 @@ main(int argc,
 				//no bootstrapping
 				std::string runId;
 				if ( !no_incl_orig && numboot == 0){//only need to create one distance matrix
-					if ( ! istream->read(b128seqs,runId,names,extrainfos)) break;
+					if ( ! istream->read(b128seqs,runId,names,extrainfos)) { break;
+}
 					fillMatrix(dm, b128seqs, trans_model);
 					ostream->printStartRun(names,runId,extrainfos);
 					//          freeXmlStrings(extrainfos);
 					dm.setIdentifiers(names);
-					if(useFixFactor) applyFixFactor(dm,fixfactor);
+					if(useFixFactor) { applyFixFactor(dm,fixfactor);
+}
 					//	  output << dm;
 					ostream->print(dm);
 				}
@@ -328,11 +340,13 @@ main(int argc,
 				else{
 					//read original sequences
 
-					if ( ! istream->readSequences(seqs,runId,extrainfos)) break;
+					if ( ! istream->readSequences(seqs,runId,extrainfos)) { break;
+}
 
 					names.clear();names.reserve(seqs.size());
-					for( size_t i=0;i<seqs.size();i++)
+					for( size_t i=0;i<seqs.size();i++) {
 						names.push_back(seqs[i].name);
+}
 
 					ostream->printStartRun(names,runId,extrainfos);
 					//          freeXmlStrings(extrainfos);
@@ -340,8 +354,9 @@ main(int argc,
 						Sequences2DNA_b128(seqs,b128seqs);
 						fillMatrix(dm, b128seqs, trans_model);
 						dm.setIdentifiers(names);
-						if(useFixFactor)
+						if(useFixFactor) {
 							applyFixFactor(dm,fixfactor);
+}
 						//       	       output << dm;
 						ostream->print(dm);
 					}
@@ -353,7 +368,8 @@ main(int argc,
 						bootstrapSequences(seqs,b128seqs);
 						fillMatrix(dm, b128seqs, trans_model);
 						dm.setIdentifiers(names);
-						if(useFixFactor) applyFixFactor(dm,fixfactor);
+						if(useFixFactor) { applyFixFactor(dm,fixfactor);
+}
 						ostream->print(dm);
 					}
 				}

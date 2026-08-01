@@ -90,7 +90,8 @@ SequenceTree::computeMostParsimoniousSequences(){
   pTree.addNodesInPostfixOrder(nodes);
 
   for ( size_t i = 0 ; i < numNodes ; i++ ){
-    if ( nodes[i]->isLeaf() ) continue;
+    if ( nodes[i]->isLeaf() ) { continue;
+}
     p_vector &pos = nodes[i]->data;
     pos.resize(seq.length(),defaultVal);
     //for each position in the sequence
@@ -143,8 +144,9 @@ SequenceTree::computeMostParsimoniousSequences(){
   }
   SequenceTree::Node *child = sroot->getRightMostChild();
   ParsimonyTree::Node *childP = proot->getRightMostChild();
-  for ( ; child != nullptr ; child = child->getLeftSibling(), childP = childP->getLeftSibling() )
+  for ( ; child != nullptr ; child = child->getLeftSibling(), childP = childP->getLeftSibling() ) {
     backtrack(child,childP);
+}
   
   //reroot the tree to its old position
   reRootAt(oldRoot);
@@ -157,8 +159,9 @@ SequenceTree::computeMostParsimoniousSequences(){
 static void
 backtrack(SequenceTree::Node *sn, ParsimonyTree::Node *pn){
 
-  if ( sn->isLeaf() )
+  if ( sn->isLeaf() ) {
     return;
+}
 
   
   p_vector &pos = pn->data;
@@ -195,6 +198,7 @@ backtrack(SequenceTree::Node *sn, ParsimonyTree::Node *pn){
   //continue backtracking
   SequenceTree::Node *child = sn->getRightMostChild();
   ParsimonyTree::Node *childP = pn->getRightMostChild();
-  for ( ; child != nullptr ; child = child->getLeftSibling(), childP = childP->getLeftSibling() )
+  for ( ; child != nullptr ; child = child->getLeftSibling(), childP = childP->getLeftSibling() ) {
     backtrack(child,childP);
+}
 }
