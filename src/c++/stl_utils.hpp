@@ -122,10 +122,10 @@ struct hashstr{
 
 // typedef __gnu_cxx::hash_map<const std::string, int, hashstr, eqstr> str2int_hashmap;
 // typedef __gnu_cxx::hash_map<const std::string, std::string, hashstr, eqstr> str2str_hashmap;
-typedef std::unordered_map<const std::string, int, hashstr, eqstr> str2int_hashmap;
-typedef std::unordered_map<const std::string, std::string, hashstr, eqstr> str2str_hashmap;
+using str2int_hashmap = std::unordered_map<const std::string, int, hashstr, eqstr>;
+using str2str_hashmap = std::unordered_map<const std::string, std::string, hashstr, eqstr>;
 
-typedef std::map<const std::string, int, ltstr> str2int_map;
+using str2int_map = std::map<const std::string, int, ltstr>;
 
 void
 print_map(str2int_map &m);
@@ -135,8 +135,8 @@ print_map(str2int_map &m);
 //---------------------------------------------------------------
 //Object 2 Object Map
 
-typedef std::unordered_map<Object *, Object*, objhash_ptr, objeq_ptr> obj_ptr2obj_ptr_hashmap;
-typedef std::unordered_map<Object , Object, objhash, objeq> obj2obj_hashmap;
+using obj_ptr2obj_ptr_hashmap = std::unordered_map<Object *, Object*, objhash_ptr, objeq_ptr>;
+using obj2obj_hashmap = std::unordered_map<Object , Object, objhash, objeq>;
 
 
 

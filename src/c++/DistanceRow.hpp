@@ -95,8 +95,8 @@ private:
 
 //-------------------------
 // A regular distance matrix with strings as identifier and doubles as distance type.
-typedef DistanceRow<std::string, double, Data_init<std::string>, Data_printOn<std::string>, Data_init<double>, Data_printOn<double> > StrDblRow;
-typedef DistanceRow<std::string, float, Data_init<std::string>, Data_printOn<std::string>, Data_init<float>, Data_printOn<float> > StrFloRow;
+using StrDblRow = DistanceRow<std::string, double, Data_init<std::string>, Data_printOn<std::string>, Data_init<double>, Data_printOn<double> >;
+using StrFloRow = DistanceRow<std::string, float, Data_init<std::string>, Data_printOn<std::string>, Data_init<float>, Data_printOn<float> >;
 //Distance for over saturated data ( !isfinite(d) || d<0 ) is set to <int>*maxRealDistance.\n"
 //returns true if some element was changed. 
 bool

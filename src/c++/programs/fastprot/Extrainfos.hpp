@@ -5,7 +5,7 @@
 
 
 
-typedef std::vector< std::string > Extrainfos;
+using Extrainfos = std::vector< std::string >;
 
 //void freeXmlStrings( Extrainfos & extrainfos );
 

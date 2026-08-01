@@ -7,8 +7,8 @@
   // Forward Declarations
   class Matrix;
 
-  typedef std::vector<double> DblVec;
-  typedef std::vector<Matrix> MatVec;
+  using DblVec = std::vector<double>;
+  using MatVec = std::vector<Matrix>;
   
   //! Enum for the type of prior probability distribution
   //! Norm - normal distribution, flat - flat distribution

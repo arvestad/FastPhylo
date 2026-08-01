@@ -310,7 +310,7 @@ SequenceTree::contractFloatEdgesShorterThan(float bound){
   return numC;
 }
 //---------------------
-typedef std::unordered_map<const std::string, SequenceTree::Node *, hashstr, eqstr> str2node_map;
+using str2node_map = std::unordered_map<const std::string, SequenceTree::Node *, hashstr, eqstr>;
 
 void
 SequenceTree::mapSequencesOntoTree(char  **nameseqPairs, int numPairs){
@@ -490,7 +490,7 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
 //-------------------
 // ROBINSON-FOULDS
 
-typedef std::unordered_set<BitVector*, objhash_ptr, objeq_ptr> BitVectorPtr_set;
+using BitVectorPtr_set = std::unordered_set<BitVector*, objhash_ptr, objeq_ptr>;
 
 double
 SequenceTree::computeRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){

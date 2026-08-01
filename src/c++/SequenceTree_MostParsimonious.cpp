@@ -23,9 +23,9 @@ using namespace std;
 
 //The parsimony information is saved in a vector of 4 integers. Each position
 //has one parsimony inforamtion
-typedef vector<size_t> p_info;
+using p_info = vector<size_t>;
 
-typedef vector<p_info> p_vector;
+using p_vector = vector<p_info>;
 
 
 std::istream &
@@ -40,7 +40,7 @@ operator<<(std::ostream & os, p_info  p){
   return os;
 }
 
-typedef Tree<p_vector> ParsimonyTree;
+using ParsimonyTree = Tree<p_vector>;
 
 static void
 backtrack(SequenceTree::Node *sn, ParsimonyTree::Node *pn);

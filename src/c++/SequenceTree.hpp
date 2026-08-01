@@ -142,16 +142,16 @@ public:
   //
   // A distance matrix with identifiers as tree nodes.
   // Used by NJ and Big_AML
-  typedef DistanceMatrix<SequenceTree::Node *,double,
+  using NodeMatrix = DistanceMatrix<SequenceTree::Node *,double,
 			 Data_init<SequenceTree::Node *>,Data_printOn<SequenceTree::Node *>,
-			 Data_init<double>,Data_printOn<double> > NodeMatrix;
-  
-  void tree2distanceMatrix(StrDblMatrix &dm);
-  
+			 Data_init<double>,Data_printOn<double> >;
 
-  typedef FloatDistanceMatrix<SequenceTree::Node *,float,
+  void tree2distanceMatrix(StrDblMatrix &dm);
+
+
+  using NodeFloatMatrix = FloatDistanceMatrix<SequenceTree::Node *,float,
   			 Data_init<SequenceTree::Node *>,Data_printOn<SequenceTree::Node *>,
-  			 Data_init<float>,Data_printOn<float> > NodeFloatMatrix;
+  			 Data_init<float>,Data_printOn<float> >;
 
   void tree2FloatdistanceMatrix(StrFloMatrix &fdm);
   //--------------------------------------
@@ -180,7 +180,7 @@ public:
 
 };
 
-typedef std::unordered_map<const SequenceTree , int, objhash, objeq> tree2int_map;
+using tree2int_map = std::unordered_map<const SequenceTree , int, objhash, objeq>;
 
 
 

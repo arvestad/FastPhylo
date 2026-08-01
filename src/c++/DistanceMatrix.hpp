@@ -119,7 +119,7 @@ private:
 
 //-------------------------
 // A regular distance matrix with strings as identifier and doubles as distance type.
-typedef DistanceMatrix<std::string, double, Data_init<std::string>, Data_printOn<std::string>, Data_init<double>, Data_printOn<double> > StrDblMatrix;
+using StrDblMatrix = DistanceMatrix<std::string, double, Data_init<std::string>, Data_printOn<std::string>, Data_init<double>, Data_printOn<double> >;
 
 //Distance for over saturated data ( !isfinite(d) || d<0 ) is set to <int>*maxRealDistance.\n"
 //returns true if some element was changed. 

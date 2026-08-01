@@ -57,12 +57,12 @@ class Tree : public Object
 {
 public:
   //types used in the tree
-  typedef TREENODE Node;
-  typedef std::vector<const TREENODE *> const_NodeVector;
-  typedef std::vector<TREENODE *> NodeVector;
-  typedef Data Data_type;
-  typedef DataInitializer DataInitializer_type;
-  typedef DataPrintOn DataPrintOn_type;
+  using Node = TREENODE;
+  using const_NodeVector = std::vector<const TREENODE *>;
+  using NodeVector = std::vector<TREENODE *>;
+  using Data_type = Data;
+  using DataInitializer_type = DataInitializer;
+  using DataPrintOn_type = DataPrintOn;
 
   //---------------
   //CONSTRUCTORS
@@ -311,10 +311,10 @@ private:
 TREE_TEMPLATE
 class TreeNode : public Object{
 public:  
-  typedef Data Data_type;
-  typedef DataInitializer DataInitializer_type;
-  typedef DataPrintOn DataPrintOn_type;
-  typedef TREE Tree_type;
+  using Data_type = Data;
+  using DataInitializer_type = DataInitializer;
+  using DataPrintOn_type = DataPrintOn;
+  using Tree_type = TREE;
 
   
   //the user data

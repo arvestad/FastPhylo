@@ -9,8 +9,8 @@
    * Element at matrix[1][2] is accessed with matrix(1,2);
    */
   class Matrix;
-  typedef std::vector<double> DblVec;
-  typedef std::vector<Matrix> MatVec;
+  using DblVec = std::vector<double>;
+  using MatVec = std::vector<Matrix>;
 
   class Matrix {
     public:

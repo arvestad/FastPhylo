@@ -150,7 +150,7 @@ private:
 //-------------------------
 // A regular distance matrix with strings as identifier and doubles as distance type.
 //typedef FloatDistanceMatrix<std::string, double, Data_init<std::string>, Data_printOn<std::string>, Data_init<double>, Data_printOn<double> > StrDblMatrix;
-typedef FloatDistanceMatrix<std::string, float, Data_init<std::string>, Data_printOn<std::string>, Data_init<float>, Data_printOn<float> > StrFloMatrix;
+using StrFloMatrix = FloatDistanceMatrix<std::string, float, Data_init<std::string>, Data_printOn<std::string>, Data_init<float>, Data_printOn<float> >;
 
 //Distance for over saturated data ( !isfinite(d) || d<0 ) is set to <int>*maxRealDistance.\n"
 //returns true if some element was changed.

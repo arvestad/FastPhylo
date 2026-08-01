@@ -9,10 +9,10 @@
 class Sequence;
 class Matrix;
 
-typedef std::vector<Sequence> SeqVec;
+using SeqVec = std::vector<Sequence>;
 
 //! Struct that contains information needed for distance calculations
-typedef struct {
+struct prot_sequence_translation_model {
   //! Specifies what model to use
   model_type model;
   //! If a maximum likelihood computation should be made
@@ -23,7 +23,7 @@ typedef struct {
   int step_size;
   //! What kind of prior probability to be used, normal or flat
   type_prior tp;
-} prot_sequence_translation_model;
+};
 
 
   //! Calculate distances without standard deviation

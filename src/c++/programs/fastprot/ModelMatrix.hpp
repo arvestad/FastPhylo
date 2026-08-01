@@ -5,7 +5,7 @@
   // Forward Declarations
   class Matrix;
 
-  typedef std::vector<double> DblVec;
+  using DblVec = std::vector<double>;
   
   //! Enum that specifies the wanted model
 enum model_type {id, jc, jck, jcss, wag, day, arve, jtt, mvr, lg};
