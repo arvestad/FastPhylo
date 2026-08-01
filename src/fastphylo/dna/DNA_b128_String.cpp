@@ -62,11 +62,11 @@ void DNA_b128_String::reInitiate(size_t capacity){
 
 void
 DNA_b128_String::_free_mem(){
-  if ( data != NULL ){
+  if ( data != nullptr ){
     free_b128(data);
-    data = NULL;
+    data = nullptr;
     free_b128(unknownData);
-    unknownData = NULL;
+    unknownData = nullptr;
   }
 }
 
@@ -80,8 +80,8 @@ DNA_b128_String::DNA_b128_String(int capacity){
 }
 
 DNA_b128_String::DNA_b128_String(const DNA_b128_String &str){
-  data = NULL;
-  unknownData = NULL;
+  data = nullptr;
+  unknownData = nullptr;
   numDatas = 0;
   operator=(str);
 }

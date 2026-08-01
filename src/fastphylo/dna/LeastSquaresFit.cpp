@@ -59,7 +59,7 @@ computeLeastSquaresEdgeLengths(const StrDblMatrix &orig_dm,  SequenceTree &tree)
     SequenceTree::Node *parent = nodes[i];
     SequenceTree::Node *child1 = parent->getRightMostChild();
     SequenceTree::Node *child2 = child1->getLeftSibling();
-    if(child2->getLeftSibling()!=NULL ){
+    if(child2->getLeftSibling()!=nullptr ){
       USER_ERROR("Have to be unrooted binary tree. Parent has " << parent->getNumChildren() << " children");
     }
     numNodesBelow[ID(parent)] = numNodesBelow[ID(child1)] + numNodesBelow[ID(child2)];
@@ -221,7 +221,7 @@ computeLeastFloatSquaresEdgeLengths(const StrFloMatrix &orig_dm,  SequenceTree &
     SequenceTree::Node *parent = nodes[i];
     SequenceTree::Node *child1 = parent->getRightMostChild();
     SequenceTree::Node *child2 = child1->getLeftSibling();
-    if(child2->getLeftSibling()!=NULL ){
+    if(child2->getLeftSibling()!=nullptr ){
       USER_ERROR("Have to be unrooted binary tree. Parent has " << parent->getNumChildren() << " children");
     }
     numNodesBelow[ID(parent)] = numNodesBelow[ID(child1)] + numNodesBelow[ID(child2)];
