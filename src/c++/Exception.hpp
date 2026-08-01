@@ -48,10 +48,10 @@ Exception(const Exception &exc);
   }
   // Modernization Phase 0 (modernization_plan.md): throw() (means
   // "never throws") is the pre-C++11 spelling of noexcept.
-  virtual ~Exception() noexcept {
+  ~Exception() noexcept override {
   }
 
-  virtual std::ostream& printOn(std::ostream& os) const;
+  std::ostream& printOn(std::ostream& os) const override;
 
 };
 

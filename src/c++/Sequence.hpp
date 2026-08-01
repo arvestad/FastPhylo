@@ -40,12 +40,12 @@ public:
 
   Sequence& operator=(const Sequence &s);
 
-  virtual std::istream& objInitFromStream(std::istream &in);  
+  std::istream& objInitFromStream(std::istream &in) override;
 
   //------------------------------------------
   //PRINTING
   //Ex. "HUMAN    agct-agct"
-  virtual std::ostream& printOn(std::ostream& os) const; 
+  std::ostream& printOn(std::ostream& os) const override;
   //print only name
   virtual std::ostream& printShort(std::ostream& os) const;
   virtual void printWithoutGaps(std::ostream& os) const;
@@ -53,9 +53,9 @@ public:
 
   //------------------------------------------
   // Hashes on the name if it exists otherwise the sequence
-  virtual size_t hashCode() const;
+  size_t hashCode() const override;
   // uses the name if it exists otherwise the sequence
-  virtual bool equals(const Object *o) const;
+  bool equals(const Object *o) const override;
 
   //------------------------------------------
   //returns true if all characters in the sequences are in chars.

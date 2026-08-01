@@ -64,11 +64,11 @@ public:
   void bitwiseEqual(const BitVector &bv);
 
 
-  virtual std::ostream& printOn(std::ostream& os) const;
-  virtual std::istream& objInitFromStream(std::istream &is){return is;}
+  std::ostream& printOn(std::ostream& os) const override;
+  std::istream& objInitFromStream(std::istream &is) override {return is;}
 
-  virtual size_t hashCode() const;
-  virtual bool equals(const Object *o) const;
+  size_t hashCode() const override;
+  bool equals(const Object *o) const override;
 
 private:
   std::vector<size_t> bits;

@@ -83,13 +83,13 @@ public:
   Tree(char *newickstr);
   Tree(std::istream &in){_nullVariables(); root = initSubtreeFromStream(in);}
 
-  virtual ~Tree();
+  ~Tree() override;
   TREE& operator=(const TREE&t);
-  
+
 
   //Init the tree from a stream.
-  //Inherited from Object. 
-  virtual std::istream& objInitFromStream(std::istream &is);
+  //Inherited from Object.
+  std::istream& objInitFromStream(std::istream &is) override;
   
   //-----
   //Copy structure of another type of template tree.
@@ -130,7 +130,7 @@ public:
   // PRINTING
   
   // prints in the formate
-  std::ostream& printOn(std::ostream& os) const;
+  std::ostream& printOn(std::ostream& os) const override;
 
   //------------------
   //DRAWING
@@ -261,9 +261,9 @@ public:
   // Checks if the datastructures are identical with respect to the root
   // and node ids. To check if two trees have the same topology the first call
   // makeCanonical on both trees.
-  virtual bool equals(const Object *o) const;
-  // HASH CODE 
-  virtual size_t hashCode() const;
+  bool equals(const Object *o) const override;
+  // HASH CODE
+  size_t hashCode() const override;
 
 
   //just for checking that there are no bugs
@@ -343,7 +343,7 @@ public:
   TREENODE *addChild(Data d);
   
   //printing a subtree.
-  std::ostream& printOn(std::ostream& os) const;
+  std::ostream& printOn(std::ostream& os) const override;
 
   //reRoot
   void setAsRoot();
@@ -435,7 +435,7 @@ private:
   TREENODE& operator=(const TREENODE &n){ PROG_ERROR("Not implemented"); return *this;}
 
   //deletes all children
-  virtual ~TreeNode();
+  ~TreeNode() override;
 
   //copy node structure of other template type
   //creates a copy of the subtree the owner tree is not set

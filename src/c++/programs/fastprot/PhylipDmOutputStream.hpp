@@ -13,8 +13,8 @@
 class PhylipDmOutputStream : public DataOutputStream {
 public:
   PhylipDmOutputStream(char * filename ) : DataOutputStream(filename) {};
-  void print( StrDblMatrix & dm );
-  void printSD( StrDblMatrix & dm );
+  void print( StrDblMatrix & dm ) override;
+  void printSD( StrDblMatrix & dm ) override;
   static void printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, bool writeXml, bool writeXmlSD );
 };
 

@@ -17,9 +17,9 @@ using namespace std;
 class BinaryDmOutputStream: public DataOutputStream {
 public:
 	BinaryDmOutputStream(char * filename);
-	void printHeader( size_t numNodes );
-	void printStartRun(std::vector<std::string> & names, std::string & runId, Extrainfos &extrainfos);
-	void print(StrDblMatrix &dm);
+	void printHeader( size_t numNodes ) override;
+	void printStartRun(std::vector<std::string> & names, std::string & runId, Extrainfos &extrainfos) override;
+	void print(StrDblMatrix &dm) override;
 
 private:
 	// Owns the file when writing to disk; unused (writeToCout) when

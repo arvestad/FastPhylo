@@ -50,7 +50,7 @@ public:
   
   //fills it from the stream. The stream should be on a
   //regular phylip format.
-  virtual std::istream& objInitFromStream(std::istream &is);
+  std::istream& objInitFromStream(std::istream &is) override;
 
   
   //set all the matrix elements and identifiers to the supplied values.
@@ -93,7 +93,7 @@ public:
   void removeLastRow();
   
   //----------------------
-  std::ostream& printOn(std::ostream &out) const;
+  std::ostream& printOn(std::ostream &out) const override;
 
   //------------------- PRIVATE ------------------------
 private:

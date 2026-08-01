@@ -9,11 +9,11 @@ class XmlOutputStream : public DataOutputStream
 public:
   XmlOutputStream();
   XmlOutputStream(char * filename = nullptr);
-  ~XmlOutputStream();
+  ~XmlOutputStream() override;
 
-  void print( StrDblMatrix & dm );
-  void printSD( StrDblMatrix & dm );
-  void printStartRun( std::vector<std::string> & names, std::string & runId, Extrainfos &extrainfos );
-  void printEndRun();
+  void print( StrDblMatrix & dm ) override;
+  void printSD( StrDblMatrix & dm ) override;
+  void printStartRun( std::vector<std::string> & names, std::string & runId, Extrainfos &extrainfos ) override;
+  void printEndRun() override;
 };
 

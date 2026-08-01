@@ -64,7 +64,7 @@ public:
 
   //fills it from the stream. The stream should be on a
   //regular phylip format.
-  virtual std::istream& objInitFromStream(std::istream &is);
+  std::istream& objInitFromStream(std::istream &is) override;
 
   //fills it from the stream which is binary
   //for format details check BinaryOutputStream.hpp/cpp in programs/fastdist
@@ -115,7 +115,7 @@ public:
   void makeQuadratic();
 
   //----------------------
-  std::ostream& printOn(std::ostream &out) const;
+  std::ostream& printOn(std::ostream &out) const override;
 
   //------------------- PRIVATE ------------------------
 private:
