@@ -10,6 +10,7 @@
 //
 //--------------------------------------------------
 #include <cmath>
+#include <vector>
 #include "fastphylo/core/SequenceTree.hpp"
 #include "fastphylo/dna/LeastSquaresFit.hpp"
 
@@ -25,8 +26,8 @@ computeLeastSquaresEdgeLengths(const StrDblMatrix &orig_dm,  SequenceTree &tree)
   const int numOriginalLeafs = dm.getSize();
   SequenceTree::NodeVector nodes;
   tree.recalcNodeIdsPostfixOrderAndAddInOrder(nodes);
-  size_t nodeIdToRowIndex[nodes.size()];
-  size_t rowIndexToNodeId[nodes.size()];
+  std::vector<size_t> nodeIdToRowIndex(nodes.size());
+  std::vector<size_t> rowIndexToNodeId(nodes.size());
   str2int_hashmap name2Id(static_cast<int>(nodes.size()*1.7));
 
   for(size_t i=0 ; i<nodes.size() ; i++) {
@@ -46,7 +47,7 @@ computeLeastSquaresEdgeLengths(const StrDblMatrix &orig_dm,  SequenceTree &tree)
   }
   
   //the number of leafs below each node
-  int numNodesBelow[nodes.size()];
+  std::vector<int> numNodesBelow(nodes.size());
   for(size_t i=0;i<nodes.size();i++) {
     numNodesBelow[i]=1;
 }
@@ -191,8 +192,8 @@ computeLeastFloatSquaresEdgeLengths(const StrFloMatrix &orig_dm,  SequenceTree &
   const int numOriginalLeafs = dm.getSize();
   SequenceTree::NodeVector nodes;
   tree.recalcNodeIdsPostfixOrderAndAddInOrder(nodes);
-  size_t nodeIdToRowIndex[nodes.size()];
-  size_t rowIndexToNodeId[nodes.size()];
+  std::vector<size_t> nodeIdToRowIndex(nodes.size());
+  std::vector<size_t> rowIndexToNodeId(nodes.size());
   str2int_hashmap name2Id(static_cast<int>(nodes.size()*1.7));
 
   for(size_t i=0 ; i<nodes.size() ; i++) {
@@ -212,7 +213,7 @@ computeLeastFloatSquaresEdgeLengths(const StrFloMatrix &orig_dm,  SequenceTree &
   }
 
   //the number of leafs below each node
-  int numNodesBelow[nodes.size()];
+  std::vector<int> numNodesBelow(nodes.size());
   for(size_t i=0;i<nodes.size();i++) {
     numNodesBelow[i]=1;
 }

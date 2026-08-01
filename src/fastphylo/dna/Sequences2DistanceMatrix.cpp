@@ -159,7 +159,7 @@ bootstrapSequences(const std::vector<Sequence> &seqs, std::vector<DNA_b128_Strin
 	size_t seq;
 	vector<int> samplePositions(seqlen);
 	const size_t BUFFSIZE = (16383>seqlen ? seqlen : 16383); //2^14=16384
-	char buff[BUFFSIZE+1];
+	std::vector<char> buff(BUFFSIZE+1);
 	buff[BUFFSIZE]='\0';
 	size_t const stride = 32;
 
@@ -182,7 +182,7 @@ bootstrapSequences(const std::vector<Sequence> &seqs, std::vector<DNA_b128_Strin
 				for( size_t i=0; i<BUFFSIZE; i++){
 					buff[i] = s[samplePositions[pos+i]];
 				}
-				b128_strings[seq].append(buff);
+				b128_strings[seq].append(buff.data());
 			}
 			size_t i;
 			for ( i=0; pos<seqlen; i++,pos++) {
@@ -190,7 +190,7 @@ bootstrapSequences(const std::vector<Sequence> &seqs, std::vector<DNA_b128_Strin
 }
 			buff[i] = '\0';
 			//----------
-			b128_strings[seq].append(buff);
+			b128_strings[seq].append(buff.data());
 		}
 	}
 	else{//seqlen<stride
@@ -204,7 +204,7 @@ bootstrapSequences(const std::vector<Sequence> &seqs, std::vector<DNA_b128_Strin
 				buff[pos] = s[samplePositions[pos]];
 }
 			buff[pos]='\0';
-			b128_strings[seq].append(buff);
+			b128_strings[seq].append(buff.data());
 		}
 	}
 }

@@ -252,19 +252,19 @@ MatrixExpm::MatrixExpm(const Matrix &Q) {
 
   // Calculating inverse of matrix with eigenvectors
   eigenvectors_inv = Matrix(eigenvectors);
-  int ipiv[size];
+  std::vector<int> ipiv(size);
 
   // LU factorization, eigenvectors_inv.m_data is overwritten with the LU factorization
-  dgetrf_(&size, &size, eigenvectors_inv.m_data.data(), &size, ipiv, info);
+  dgetrf_(&size, &size, eigenvectors_inv.m_data.data(), &size, ipiv.data(), info);
 
   //workspace-query, nothing happens with eigenvectors_inv.m_data
-  dgetri_(&size, eigenvectors_inv.m_data.data(), &size, ipiv, workspace_size, &w_query, info);
+  dgetri_(&size, eigenvectors_inv.m_data.data(), &size, ipiv.data(), workspace_size, &w_query, info);
 
-  double workspace_vec2[static_cast<int>(workspace_size[0])];
+  DblVec workspace_vec2(static_cast<int>(workspace_size[0]));
   w_size = workspace_size[0];
 
   // Inverse calculation from LU values, the inverse is stored in eigenvectors_inv.m_data
-  dgetri_(&size, eigenvectors_inv.m_data.data(), &size, ipiv, workspace_vec2, &w_size, info);
+  dgetri_(&size, eigenvectors_inv.m_data.data(), &size, ipiv.data(), workspace_vec2.data(), &w_size, info);
 }
 
 /*!

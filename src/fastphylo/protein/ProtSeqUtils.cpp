@@ -52,7 +52,7 @@ void bootstrap_sequences(const std::vector<Sequence> &seqs, std::vector<Sequence
   size_t seq;  
   std::vector<int> samplePositions(seqlen);
   const size_t BUFFSIZE = (16383>seqlen ? seqlen : 16383); //2^14=16384
-  char buff[BUFFSIZE+1];
+  std::vector<char> buff(BUFFSIZE+1);
   buff[BUFFSIZE]='\0';
   size_t const stride = 32;
 
@@ -75,7 +75,7 @@ void bootstrap_sequences(const std::vector<Sequence> &seqs, std::vector<Sequence
         for( size_t i=0; i<BUFFSIZE; i++){
           buff[i] = s[samplePositions[pos+i]]; 
         }
-        bseqs[seq].seq.append(buff);
+        bseqs[seq].seq.append(buff.data());
       }
       size_t i;
       for ( i=0; pos<seqlen; i++,pos++) {
@@ -83,7 +83,7 @@ void bootstrap_sequences(const std::vector<Sequence> &seqs, std::vector<Sequence
 }
       buff[i] = '\0';
       //----------
-      bseqs[seq].seq.append(buff);
+      bseqs[seq].seq.append(buff.data());
     }
   }
   else{//seqlen<stride
@@ -97,7 +97,7 @@ void bootstrap_sequences(const std::vector<Sequence> &seqs, std::vector<Sequence
         buff[pos] = s[samplePositions[pos]]; 
 }
       buff[pos]='\0';
-      bseqs[seq].seq.append(buff);
+      bseqs[seq].seq.append(buff.data());
     } 
   }
 
