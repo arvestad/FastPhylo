@@ -118,30 +118,70 @@ Staged so no single commit is both large and risky at once - the
 mechanical moves (low risk) happen before the consolidation work (real
 engineering, needs case-by-case review like Phase 2's RAII work did).
 
-### Phase A - Scaffolding
-Create `include/fastphylo/{core,dna,io,protein}/` and
-`src/fastphylo/{core,dna,io,protein}/` empty, wire up
-`target_include_directories`/`target_sources` for the new paths
-alongside the old ones (both work simultaneously), no files moved yet.
-Verify the build is unaffected.
+### Phase A+B - Scaffolding, move `core/` and `dna/` [DONE, 2026-08-01]
 
-### Phase B - Move `core/` and `dna/`
-Pure relocation - both are already single-copy. Move files,
-`#include "X.hpp"` -> `#include <fastphylo/core/X.hpp>` (or `dna/`)
-everywhere they're used, delete the old empty directories, remove the
-old include paths from CMake. Highest-confidence phase - proves the
-new layout end-to-end before the hard parts.
+Done together - empty directories can't be meaningfully verified on
+their own, so scaffolding and the actual move happened in one commit.
+Pure relocation, both single-copy: headers to
+`include/fastphylo/{core,dna}/`, sources to `src/fastphylo/{core,dna}/`.
+`fileFormatSchema.hpp` also moved into `include/fastphylo/io/` as a
+bonus - it was already a single, non-duplicated file, so it didn't need
+Phase C's diff-and-merge treatment. Every `#include` of a moved header
+rewritten project-wide (115 files, including apps not yet touched by
+this plan) via an exact-filename-driven script. Caught and fixed one
+real script bug: naive line-splitting flattened CRLF line endings to
+LF in 20 files that originally used CRLF, which would have made their
+diffs look like every line changed instead of the 1-4 lines that
+actually did - reprocessed preserving original line endings before
+committing. Verified: full clean build (all targets), ctest,
+RunExamples.sh byte-identical.
 
-### Phase C - Consolidate `io/`
-The hard one. Diff each duplicated class across `fastdist`/`fnj`/
-`fastprot` (not `fastprot_mpi` - deferred, see below), identify genuine
-behavioral differences vs. copy-paste drift, design the shared version
-(plain shared implementation where the copies are identical; a small
-extension point - virtual method, template parameter, or strategy
-object - where they're not). Move the result into `io/`, update the
-three apps to use it, delete their duplicates. This is where the
-fastprot/fastdist `BinaryDmOutputStream` bug pattern gets structurally
-prevented, not just individually fixed again.
+### Phase C - Consolidate `io/` [DONE, 2026-08-01]
+
+The hard one, done in two commits (output side, then input side), per
+explicit direction: bring fastdist up to fastprot's faster
+implementation as part of the merge, not just deduplicate two
+behaviorally-frozen copies.
+
+**Output side**: `Extrainfos`, `DataOutputStream`, `PhylipDmOutputStream`,
+`XmlOutputStream`, `BinaryDmOutputStream` merged. fastdist ported from
+its old ~200-line per-entry `printPHYLIPfast()` to fastprot's batched
+`printPHYLIPfastSD()` (speed2026a's output-speedup work) - O(numNodes)
+I/O calls instead of O(numNodes^2). Found a **third independent
+instance** of the file-handle-ownership bug this engagement keeps
+finding: fastdist's `DataOutputStream` had no destructor at all, never
+closing the file it opens. Found and fixed a real regression the merge
+itself introduced, caught by `RunExamples.sh`'s `ex17`, not reasoning
+in advance: fastprot's `main.cpp` relies on `printHeader()` being a
+no-op, fastdist's needs it to actually write - merging produced a
+doubled count line; fixed with a `headerWritten` flag reset in
+`printStartRun()`.
+
+**Input side**: `FastaInputStream`/`PhylipMaInputStream`/`XmlInputStream`
+parsing consolidated via composition (each program's own thin
+`DataInputStream` subclass now owns a shared "reader" and forwards to
+it, since `read()`'s return type - `DNA_b128_String` vs `Sequence` -
+genuinely differs and isn't worth templating over). fastdist's and
+fastprot's FASTA parsers had diverged into two *structurally different
+algorithms* (flat single-pass vs. recursive per-sequence-block) - kept
+fastprot's as canonical, verified byte-identical on both `ex2` and a
+hand-constructed multi-line-sequence file RunExamples.sh doesn't cover.
+Found and fixed a second real bug: fastprot's `XmlInputStream`
+constructor called `strncmp(filename, "-", 1)` before checking
+`filename` for null - a crash on `fastprot -I xml` reading from stdin,
+never exercised by any fixture.
+
+`fnj`'s own input/output classes were **not** merged - confirmed
+genuinely different shape (writes trees from a distance matrix, not a
+distance matrix itself), not naming drift. Only `Extrainfos` (byte-
+identical everywhere) is shared with `fnj` too.
+
+Verified throughout: full rebuild, ctest, RunExamples.sh byte-identical
+after each commit, plus targeted manual checks beyond the regression
+suite (the multi-line FASTA file, `fastdist -e`/memory-efficient
+streaming smoke test, `fastprot -I xml` stdin smoke test, round-trip
+XML tests for both programs) specifically for the paths this merge
+touched that `RunExamples.sh` doesn't cover.
 
 ### Phase D - `programs/` → `apps/`
 Rename, confirm each app directory is now genuinely thin, short
