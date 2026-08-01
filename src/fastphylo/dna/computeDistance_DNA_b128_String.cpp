@@ -102,28 +102,23 @@ static b128 *del_ptr2;
 
 //----------------------
 // LEVEL SUMS etc
-#define DEBUG_MAIN(INP)  if(false){INP;}
 
 // LEVEL 1
-#define DEBUG_L1(INP) if(false){INP;}
 // A mask where the least significant bit in every two block is set.
 static const b128 LEAST_SIGNIFCANT_BIT = set_all_ints(0x55555555);
 static const b128 ONE = set_first_int_b128(1);
 
 //LEVEL 2
-#define DEBUG_L2(INP) if(false){INP;}
 // A mask with every two bits set as follows "..0011011"
 static const b128 TWO_BIT_MASK = set_all_ints(0x33333333);
 static const b128 TWO = set_first_int_b128(2);
 
 //LEVEL 3
-#define DEBUG_L3(INP) if(false){INP;}
 // A mask with every four bits set as follows "..00001111"
 static const b128 FOUR_BIT_MASK = set_all_bytes(0x0f);
 static const b128 FOUR = set_first_int_b128(4);
 
 //LEVEL 4
-#define DEBUG_L4(INP) if(false){INP;}
 // A mask with every eigth bits set as follows "..0000 0000 1111 1111"
 static const b128 EIGHT_BIT_MASK = set_all_shorts(0x00ff);
 static const b128 EIGHT = set_first_int_b128(8);
@@ -213,7 +208,6 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
   // We now compute the number of times each level should be called:
   
   int rest_num_b128s = s1.getNumUsedDatas();
-  DEBUG_MAIN( cout << "Total datas: " << rest_num_b128s << endl; );
 
   int num_level_4 = rest_num_b128s / 6144; 
   rest_num_b128s = rest_num_b128s % 6144;  
@@ -240,7 +234,6 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
   const b128 ONE = set_first_int_b128(1);
   
   //Compute the remaining b128s. There are atmost two remaining.
-  DEBUG_MAIN( cout << "rest loop " << rest_num_b128s << endl;);
   b128 diff,del,tmp_tv;
   switch( rest_num_b128s ){
   case 2:
@@ -274,21 +267,14 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
     ++del_ptr1;++del_ptr2;
   }
 
-  DEBUG_MAIN( cout << "MAIN_S = "; print_blocks_b128(total_sum_ts,2));
-  DEBUG_MAIN( cout << "MAIN_V = "; print_blocks_b128(total_sum_tv,2));
-  DEBUG_MAIN( cout << "MAIN_D = "; print_blocks_b128(total_sum_del,2));
 
   //update the block size to size 4
   CONVERT_SUM(total_sum_ts,total_sum_ts,TWO_BIT_MASK,TWO);
   CONVERT_SUM(total_sum_tv,total_sum_tv,TWO_BIT_MASK,TWO);
   CONVERT_SUM(total_sum_del,total_sum_del,TWO_BIT_MASK,TWO);
   
-  DEBUG_MAIN( cout << "MAIN_S = "; print_blocks_b128(total_sum_ts,4));
-  DEBUG_MAIN( cout << "MAIN_V = "; print_blocks_b128(total_sum_tv,4));
-  DEBUG_MAIN( cout << "MAIN_D = "; print_blocks_b128(total_sum_del,4));
   
   //level 1, num_level_1 is atmost 2
-  DEBUG_MAIN( cout << "level 1 loop " << num_level_1 << endl;);
   //   switch ( num_level_1 ){
   //   case 2:
   //     dist_level_1();
@@ -309,21 +295,14 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
     SUM_WITH_PREVIOUS_LEVEL(total_sum_del,sum_del_l1, TWO_BIT_MASK, TWO);
   }
 
-  DEBUG_MAIN( cout << "MAIN_S = "; print_blocks_b128(total_sum_ts,4));
-  DEBUG_MAIN( cout << "MAIN_V = "; print_blocks_b128(total_sum_tv,4));
-  DEBUG_MAIN( cout << "MAIN_D = "; print_blocks_b128(total_sum_del,4));
   
   //update the block size to size 8
   CONVERT_SUM(total_sum_ts,total_sum_ts,FOUR_BIT_MASK,FOUR);
   CONVERT_SUM(total_sum_tv,total_sum_tv,FOUR_BIT_MASK,FOUR);
   CONVERT_SUM(total_sum_del,total_sum_del,FOUR_BIT_MASK,FOUR);
   
-  DEBUG_MAIN( cout << "MAIN_S = "; print_blocks_b128(total_sum_ts,8));
-  DEBUG_MAIN( cout << "MAIN_V = "; print_blocks_b128(total_sum_tv,8));
-  DEBUG_MAIN( cout << "MAIN_D = "; print_blocks_b128(total_sum_del,8));
   
   //level 2, num_level_2 is atmost 8
-  DEBUG_MAIN( cout << "level 2 loop " << num_level_2 << endl;);
   b128 sum_ts_l2,  sum_tv_l2,  sum_del_l2;
   for ( ; num_level_2 != 0 ; num_level_2-- ){
     dist_level_2(sum_ts_l2,  sum_tv_l2,  sum_del_l2);
@@ -332,9 +311,6 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
     SUM_WITH_PREVIOUS_LEVEL(total_sum_del,sum_del_l2, FOUR_BIT_MASK, FOUR);
   }
 
-  DEBUG_MAIN( cout << "MAIN_S = "; print_blocks_b128(total_sum_ts,8));
-  DEBUG_MAIN( cout << "MAIN_V = "; print_blocks_b128(total_sum_tv,8));
-  DEBUG_MAIN( cout << "MAIN_D = "; print_blocks_b128(total_sum_del,8));
   
 
   //update the block size to size 16
@@ -345,12 +321,8 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
   CONVERT_SUM_IMMEDIATEBYTESHIFT(total_sum_tv,total_sum_tv,EIGHT_BIT_MASK,1);
   CONVERT_SUM_IMMEDIATEBYTESHIFT(total_sum_del,total_sum_del,EIGHT_BIT_MASK,1);
   
-  DEBUG_MAIN( cout << "MAIN_S = "; print_blocks_b128(total_sum_ts,16));
-  DEBUG_MAIN( cout << "MAIN_V = "; print_blocks_b128(total_sum_tv,16));
-  DEBUG_MAIN( cout << "MAIN_D = "; print_blocks_b128(total_sum_del,16));
   
   //level 3, num_level_3 is atmost 128
-  DEBUG_MAIN( cout << "level 3 loop " << num_level_3 << endl;);
   b128 sum_ts_l3,  sum_tv_l3,  sum_del_l3;
   for ( ; num_level_3 != 0 ; num_level_3-- ){
     dist_level_3(sum_ts_l3,  sum_tv_l3,  sum_del_l3);
@@ -362,9 +334,6 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
     SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT(total_sum_del,sum_del_l3, EIGHT_BIT_MASK,1);        
   }
   
-  DEBUG_MAIN( cout << "MAIN_S = "; print_blocks_b128(total_sum_ts,16));
-  DEBUG_MAIN( cout << "MAIN_V = "; print_blocks_b128(total_sum_tv,16));
-  DEBUG_MAIN( cout << "MAIN_D = "; print_blocks_b128(total_sum_del,16));
   
   //update the block size to size 32
 
@@ -375,12 +344,8 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
   CONVERT_SUM_IMMEDIATEBYTESHIFT(total_sum_tv,total_sum_tv, SIXTEEN_BIT_MASK,2);
   CONVERT_SUM_IMMEDIATEBYTESHIFT(total_sum_del,total_sum_del, SIXTEEN_BIT_MASK,2);
 
-  DEBUG_MAIN( cout << "MAIN_S = "; print_blocks_b128(total_sum_ts,32));
-  DEBUG_MAIN( cout << "MAIN_V = "; print_blocks_b128(total_sum_tv,32));
-  DEBUG_MAIN( cout << "MAIN_D = "; print_blocks_b128(total_sum_del,32));
   
   //level 4, num_level_4 is atmost Any number
-  DEBUG_MAIN( cout << "level 4 loop " << num_level_4 << endl;);
   b128 sum_ts_l4,  sum_tv_l4,  sum_del_l4;
   for (  ; num_level_4 != 0 ; num_level_4-- ){
     dist_level_4(sum_ts_l4,  sum_tv_l4,  sum_del_l4);
@@ -393,9 +358,6 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
 
   }
 
-  DEBUG_MAIN( cout << "MAIN_S = "; print_blocks_b128(total_sum_ts,32));
-  DEBUG_MAIN( cout << "MAIN_V = "; print_blocks_b128(total_sum_tv,32));
-  DEBUG_MAIN( cout << "MAIN_D = "; print_blocks_b128(total_sum_del,32));
 
   
   
@@ -416,9 +378,6 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
 			     static_cast<float>(get_int_0_b128(total_sum_ts)),
 			     static_cast<float>(get_int_0_b128(total_sum_tv))};
   
-  DEBUG_MAIN( cout << "MAIN_S = "<< d.transitions << endl);
-  DEBUG_MAIN( cout << "MAIN_V = "<< d.transversions << endl);
-  DEBUG_MAIN( cout << "MAIN_D = "<< d.deletedPositions << endl);
   
   return d;
 }
@@ -491,7 +450,6 @@ dist_level_1(b128 &sum_ts_l1, b128 &sum_tv_l1, b128 &sum_del_l1){
 
   //_mm_lfence();
                 
-  //  DEBUG_L2( cout << "diff ";print_blocks_b128(diff,2));
 
   // in diff for each 2 bit block
   // XY  - the bit positions in the block
@@ -552,8 +510,6 @@ dist_level_2(b128 &sum_ts_l2, b128 &sum_tv_l2, b128 &sum_del_l2){
   CONVERT_SUM(sum_tv_l2,sum_tv_l1, TWO_BIT_MASK, TWO);
   CONVERT_SUM(sum_del_l2,sum_del_l1, TWO_BIT_MASK, TWO);
   
-  DEBUG_L2( cout << "TV2 = "; print_blocks_b128(sum_tv_l2,4));
-  DEBUG_L2( cout << "TS2 = "; print_blocks_b128(sum_ts_l2,4));
   //----
   // LOOP 2
   dist_level_1(sum_ts_l1, sum_tv_l1, sum_del_l1);
@@ -561,8 +517,6 @@ dist_level_2(b128 &sum_ts_l2, b128 &sum_tv_l2, b128 &sum_del_l2){
   SUM_WITH_PREVIOUS_LEVEL(sum_tv_l2,sum_tv_l1, TWO_BIT_MASK, TWO);
   SUM_WITH_PREVIOUS_LEVEL(sum_del_l2,sum_del_l1, TWO_BIT_MASK, TWO);
   
-  DEBUG_L2( cout << "TV2 = "; print_blocks_b128(sum_tv_l2,4));
-  DEBUG_L2( cout << "TS2 = "; print_blocks_b128(sum_ts_l2,4));
 }
 
 
@@ -590,9 +544,6 @@ dist_level_3(b128 &sum_ts_l3, b128 &sum_tv_l3, b128 &sum_del_l3){
   CONVERT_SUM(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
   CONVERT_SUM(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
-  DEBUG_L3( cout << "TV3 = "; print_blocks_b128(sum_tv_l3,8));
-  DEBUG_L3( cout << "TS3 = "; print_blocks_b128(sum_ts_l3,8));
-  DEBUG_L3( cout << "DL3 = "; print_blocks_b128(sum_del_l3,8));
 
   //----
   // LOOP 2
@@ -601,9 +552,6 @@ dist_level_3(b128 &sum_ts_l3, b128 &sum_tv_l3, b128 &sum_del_l3){
   SUM_WITH_PREVIOUS_LEVEL(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
   SUM_WITH_PREVIOUS_LEVEL(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
-  DEBUG_L3( cout << "TV3 = "; print_blocks_b128(sum_tv_l3,8));
-  DEBUG_L3( cout << "TS3 = "; print_blocks_b128(sum_ts_l3,8));
-  DEBUG_L3( cout << "DL3 = "; print_blocks_b128(sum_del_l3,8));
 
   
   //----
@@ -613,9 +561,6 @@ dist_level_3(b128 &sum_ts_l3, b128 &sum_tv_l3, b128 &sum_del_l3){
   SUM_WITH_PREVIOUS_LEVEL(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
   SUM_WITH_PREVIOUS_LEVEL(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
-  DEBUG_L3( cout << "TV3 = "; print_blocks_b128(sum_tv_l3,8));
-  DEBUG_L3( cout << "TS3 = "; print_blocks_b128(sum_ts_l3,8));
-  DEBUG_L3( cout << "DL3 = "; print_blocks_b128(sum_del_l3,8));
   
   //----
   // LOOP 4
@@ -624,9 +569,6 @@ dist_level_3(b128 &sum_ts_l3, b128 &sum_tv_l3, b128 &sum_del_l3){
   SUM_WITH_PREVIOUS_LEVEL(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
   SUM_WITH_PREVIOUS_LEVEL(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
-  DEBUG_L3( cout << "TV3 = "; print_blocks_b128(sum_tv_l3,8));
-  DEBUG_L3( cout << "TS3 = "; print_blocks_b128(sum_ts_l3,8));
-  DEBUG_L3( cout << "DL3 = "; print_blocks_b128(sum_del_l3,8));
 
   
   //----
@@ -636,9 +578,6 @@ dist_level_3(b128 &sum_ts_l3, b128 &sum_tv_l3, b128 &sum_del_l3){
   SUM_WITH_PREVIOUS_LEVEL(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
   SUM_WITH_PREVIOUS_LEVEL(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
-  DEBUG_L3( cout << "TV3 = "; print_blocks_b128(sum_tv_l3,8));
-  DEBUG_L3( cout << "TS3 = "; print_blocks_b128(sum_ts_l3,8));
-  DEBUG_L3( cout << "del3 = "; print_blocks_b128(sum_del_l3,8));
   
   //----
   // LOOP 6
@@ -647,9 +586,6 @@ dist_level_3(b128 &sum_ts_l3, b128 &sum_tv_l3, b128 &sum_del_l3){
   SUM_WITH_PREVIOUS_LEVEL(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
   SUM_WITH_PREVIOUS_LEVEL(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
-  DEBUG_L3( cout << "TV3 = "; print_blocks_b128(sum_tv_l3,8));
-  DEBUG_L3( cout << "TS3 = "; print_blocks_b128(sum_ts_l3,8));
-  DEBUG_L3( cout << "DL3 = "; print_blocks_b128(sum_del_l3,8));
   
   //----
   // LOOP 7
@@ -658,9 +594,6 @@ dist_level_3(b128 &sum_ts_l3, b128 &sum_tv_l3, b128 &sum_del_l3){
   SUM_WITH_PREVIOUS_LEVEL(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
   SUM_WITH_PREVIOUS_LEVEL(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
-  DEBUG_L3( cout << "TV3 = "; print_blocks_b128(sum_tv_l3,8));
-  DEBUG_L3( cout << "TS3 = "; print_blocks_b128(sum_ts_l3,8));
-  DEBUG_L3( cout << "DL3 = "; print_blocks_b128(sum_del_l3,8));
   
   //----
   // LOOP 8
@@ -669,9 +602,6 @@ dist_level_3(b128 &sum_ts_l3, b128 &sum_tv_l3, b128 &sum_del_l3){
   SUM_WITH_PREVIOUS_LEVEL(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
   SUM_WITH_PREVIOUS_LEVEL(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
-  DEBUG_L3( cout << "TV3 = "; print_blocks_b128(sum_tv_l3,8));
-  DEBUG_L3( cout << "TS3 = "; print_blocks_b128(sum_ts_l3,8));
-  DEBUG_L3( cout << "DL3 = "; print_blocks_b128(sum_del_l3,8));
   
 }//END LEVEL 3
 
@@ -704,9 +634,6 @@ dist_level_4(b128 &sum_ts_l4, b128 &sum_tv_l4, b128 &sum_del_l4){
   CONVERT_SUM_IMMEDIATEBYTESHIFT(sum_tv_l4,sum_tv_l3, EIGHT_BIT_MASK, 1);
   CONVERT_SUM_IMMEDIATEBYTESHIFT(sum_del_l4,sum_del_l3, EIGHT_BIT_MASK, 1);
   
-  DEBUG_L4( cout << "TV4 = "; print_blocks_b128(sum_tv_l4,16));
-  DEBUG_L4( cout << "TS4 = "; print_blocks_b128(sum_ts_l4,16));
-  DEBUG_L4( cout << "DL4 = "; print_blocks_b128(sum_del_l4,16));
 
   //----
   // LOOP 2-128
@@ -720,9 +647,6 @@ dist_level_4(b128 &sum_ts_l4, b128 &sum_tv_l4, b128 &sum_del_l4){
     SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT(sum_tv_l4,sum_tv_l3, EIGHT_BIT_MASK, 1);
     SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT(sum_del_l4,sum_del_l3, EIGHT_BIT_MASK, 1);
     
-    DEBUG_L4( cout << "TV4 = "; print_blocks_b128(sum_tv_l4,16));
-    DEBUG_L4( cout << "TS4 = "; print_blocks_b128(sum_ts_l4,16));
-    DEBUG_L4( cout << "DL4 = "; print_blocks_b128(sum_del_l4,16));
   }
 }
 

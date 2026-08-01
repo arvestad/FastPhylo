@@ -346,11 +346,15 @@ endforeach(i)
 # replaces the old global include_directories() calls (every translation
 # unit in the project used to get every directory below, regardless of
 # whether it needed it). fastphylo's own directories are PUBLIC because
-# fastdist/fnj/fastprot/fastprot_mpi #include core-library and DNA_b128/
-# distance_methods/sequence_likelihood headers by bare filename (e.g.
-# "SequenceTree.hpp", "NeighborJoining.hpp") - confirmed by grep before
-# this rewrite, not assumed - so consumers linking fastphylo need these
-# on their include path too, which PUBLIC gives them transitively.
+# fastdist/fnj/fastprot/fastprot_mpi #include core-library headers by
+# bare filename (e.g. "SequenceTree.hpp", "NeighborJoining.hpp") -
+# confirmed by grep before this rewrite, not assumed - so consumers
+# linking fastphylo need these on their include path too, which PUBLIC
+# gives them transitively. (DNA_b128/ and sequence_likelihood/ - once
+# also part of this bare-filename include path - are gone: their
+# surviving content moved into include/fastphylo/dna/ in
+# project_layout_plan.md, and the rest was confirmed-dead and deleted
+# in lint_plan.md's Phase 0.)
 add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS} ${FASTPHYLO_IO_SRCS} ${FASTPHYLO_IO_XML_SRCS} ${FASTPHYLO_PROTEIN_SRCS})
 # Modernization Phase B (project_layout_plan.md): the public API lives
 # under include/fastphylo/{core,dna,io,protein}/ now, consumed as
