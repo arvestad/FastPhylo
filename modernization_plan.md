@@ -85,7 +85,42 @@ unrelated protein code). Say so if this should be wider.
 
 ## Phases
 
-### Phase 0 - Tooling first
+### Phase 0 - Tooling first [DONE, 2026-08-01]
+
+Commits: "Phase 0: tooling..." and "Add basic CI...". Delivered:
+`.clang-format` (LLVM-based, undocumented existing style so this is a
+fresh baseline, not applied to existing files yet), `.clang-tidy`
+(report-only, verified reasonable noise on both an old and a recent
+file), `.gitignore` (none existed - `build/` had been cluttering every
+`git status` all engagement), `CMAKE_CXX_STANDARD 17` replacing the old
+hand-appended flag string, `cmake_minimum_required` bumped 3.2 -> 3.16,
+and a first CI workflow (build + `ctest` + `RunExamples.sh`, Ubuntu,
+unverified by an actual GitHub Actions run since that needs a push).
+
+Getting to real C++17 (not just declared) required two **necessary**
+fixes, both project-wide blockers rather than style choices: removing
+`file_utils.hpp/.cpp`'s dynamic exception specifications
+(`throw(Exception)`, removed entirely in C++17 - only occurrence
+anywhere in the tree) and `DNA_b128/computeTAMURANEIDistance_
+DNA_b128_String.cpp`'s `register` keyword (also removed in C++17) -
+the latter despite `DNA_b128` being explicitly out of this phase's
+style-modernization scope, because it's part of `libfastphylo.a`,
+which every program links against, so it was blocking the whole build,
+not just its own directory. Worth noting as a general lesson for later
+phases: the C++17 *language standard* applies project-wide the moment
+it's turned on, even though *style* modernization is scoped
+incrementally - a file can be out of scope for style changes and still
+need a minimal, required syntax fix to keep compiling.
+
+Full rebuild + `RunExamples.sh` + `ctest` verified byte-identical
+throughout (same discipline as speed2026a).
+
+Not yet started: CMake target-based migration (`target_include_
+directories`/`target_compile_features` for `fastphylo`/`fastprot`) -
+Phase 0's plan included this but it wasn't reached this round; carrying
+it forward rather than treating it as silently dropped.
+
+### Phase 0 (original plan text, for reference)
 
 Do this before any code changes, so subsequent phases get consistent
 formatting/linting as they go instead of reformatting twice.
