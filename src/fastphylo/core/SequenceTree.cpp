@@ -424,7 +424,7 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
 
     string *currseq = sequences[i];
     
-    while (1){
+    while (true){
       char c = fin.get();
       nucleotide n = char2nucleotide(c);
       if ( DNA_NOT_ALLOWED == n ){
@@ -459,7 +459,7 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
 
       garbage.clear();
       string *currseq = sequences[i];
-      while (1){
+      while (true){
         c = fin.get();
         nucleotide n = char2nucleotide(c);
         if ( DNA_NOT_ALLOWED == n ){

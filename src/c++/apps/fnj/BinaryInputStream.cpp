@@ -37,7 +37,7 @@ readstatus BinaryInputStream::readDM(StrFloMatrix & dm, std::vector<std::string>
 	long converter;
 	char t;
 	int tagLength=11;
-	string tag = "";
+	string tag;
 
 	if (!input_was_read) {
 		for (int l=0; l< tagLength; ++l) {
@@ -52,7 +52,7 @@ readstatus BinaryInputStream::readDM(StrFloMatrix & dm, std::vector<std::string>
 	dm.resize(newSize);
 	if (!input_was_read) {
 		char c;
-		string identifier = "";
+		string identifier;
 		for (int i=0; i< newSize; i++) {
 			while(true){
 				fp->read(&c, sizeof(c));

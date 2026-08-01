@@ -193,7 +193,7 @@ open_read_stream_interactive(const char *fname, ifstream &fin){
 
 void
 open_read_stream(const string fname, ofstream &fin){
-	open_read_stream(fname.c_str(),fin);
+	open_read_stream(fname,fin);
 }
 
 void

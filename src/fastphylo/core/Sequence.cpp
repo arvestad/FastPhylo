@@ -85,8 +85,8 @@ void Sequence::printWithoutGaps(std::ostream& os) const{
 // Hashes on the name if it exists otherwise the sequence
 size_t Sequence::hashCode() const {
 	if ( name.size() == 0 )
-		return stringhasher(seq.c_str());
-	return stringhasher(name.c_str());
+		return stringhasher(seq);
+	return stringhasher(name);
 }
 // uses the name if it exists otherwise the sequence
 bool Sequence::equals(const Object *o) const {

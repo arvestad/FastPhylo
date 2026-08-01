@@ -3,8 +3,8 @@
 #include "fastphylo/dna/NeighborJoining.hpp"
 #include "fastphylo/core/Sequence.hpp"
 
-typedef DistanceMatrix<SequenceTree::Node *,double,Data_init<SequenceTree::Node *>,Data_printOn<SequenceTree::Node *>,Data_init<double>,Data_printOn<double> > NJMatrix;
-typedef FloatDistanceMatrix<SequenceTree::Node *,float,Data_init<SequenceTree::Node *>,Data_printOn<SequenceTree::Node *>,Data_init<float>,Data_printOn<float> > NJFloMatrix;
+using NJMatrix = DistanceMatrix<SequenceTree::Node *,double,Data_init<SequenceTree::Node *>,Data_printOn<SequenceTree::Node *>,Data_init<double>,Data_printOn<double> >;
+using NJFloMatrix = FloatDistanceMatrix<SequenceTree::Node *,float,Data_init<SequenceTree::Node *>,Data_printOn<SequenceTree::Node *>,Data_init<float>,Data_printOn<float> >;
 
 
 void

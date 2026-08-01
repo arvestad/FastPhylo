@@ -172,7 +172,7 @@ main(int argc,
 
 			for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
 				//no bootstrapping
-				std::string runId("");
+				std::string runId;
 				if ( !no_incl_orig && numboot == 0){//only need to create one distance matrix
 					if ( ! istream->read(b128seqs,runId,names,extrainfos)) {
 						break;
@@ -244,7 +244,7 @@ main(int argc,
 
 						for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
 							//no bootstrapping
-							std::string runId("");
+							std::string runId;
 							if ( !no_incl_orig && numboot == 0){//only need to create one distance matrix
 								if ( ! istream->read(b128seqs,runId,names,extrainfos)) {
 									break;
@@ -313,7 +313,7 @@ main(int argc,
 			//for each dataset in the files
 			for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
 				//no bootstrapping
-				std::string runId("");
+				std::string runId;
 				if ( !no_incl_orig && numboot == 0){//only need to create one distance matrix
 					if ( ! istream->read(b128seqs,runId,names,extrainfos)) break;
 					fillMatrix(dm, b128seqs, trans_model);

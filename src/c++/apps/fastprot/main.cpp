@@ -191,7 +191,7 @@ int main (int argc, char **argv) {
 		Extrainfos extrainfos;
 
 		for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
-			string runId("");
+			string runId;
 			if (! istream->read(seqs, runId, names, extrainfos))
 				break;
 			if (remove_indels)
