@@ -26,17 +26,11 @@ BinaryDmOutputStream::BinaryDmOutputStream(char *filename):DataOutputStream(file
 		fclose(fp);
 		fp = nullptr;
 		file_was_opened = false;
-		ofs = open_write_binary(filename);
+		file_stream.reset(open_write_binary(filename));
+		ofs = file_stream.get();
 	} else {
 		ofs = &cout;
 		writeToCout = true;
-	}
-}
-
-BinaryDmOutputStream::~BinaryDmOutputStream() {
-	if(ofs != nullptr && !writeToCout) {
-		delete ofs;
-		ofs = nullptr;
 	}
 }
 
