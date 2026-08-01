@@ -249,13 +249,13 @@ DNA_b128_String::computeTAMURANEIDistance(const DNA_b128_String &s1,
 
     ++ptr1;++ptr2;
     ++del_ptr1;++del_ptr2;
-  case 1:
+  case 1: {
     del = or_b128(get_b128(del_ptr1),get_b128(del_ptr2));
 
     diff = andnot_b128(del,xor_b128(get_b128(ptr1),get_b128(ptr2)));
 
     total_sum_del = add_b128(total_sum_del, and_b128(del,LEAST_SIGNIFCANT_BIT));
- 
+
     tmp_tv = and_b128(shift_each32_bits_right_b128(diff,ONE),LEAST_SIGNIFCANT_BIT);
     total_sum_tv = add_b128(total_sum_tv, tmp_tv);
     b128 tmp_ts = andnot_b128(tmp_tv, and_b128(diff,LEAST_SIGNIFCANT_BIT));
@@ -264,8 +264,15 @@ DNA_b128_String::computeTAMURANEIDistance(const DNA_b128_String &s1,
 
     ++ptr1;++ptr2;
     ++del_ptr1;++del_ptr2;
+    break;
   }
-  
+  case 0:
+    break; // nothing left to sum
+  default:
+    assert(false && "rest_num_b128s must be 0, 1 or 2");
+    break;
+  }
+
 
 
   //update the block size to size 4

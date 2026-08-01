@@ -118,6 +118,8 @@ bool XmlSequenceReader::readSequences(std::vector<Sequence> &seqs, std::string &
       case XML_READER_TYPE_END_ELEMENT:
         l.in_root = false;
         break;
+      default:
+        break; // other node types (whitespace, comments, ...) intentionally ignored
       }
     }
 
@@ -129,6 +131,8 @@ bool XmlSequenceReader::readSequences(std::vector<Sequence> &seqs, std::string &
       case XML_READER_TYPE_END_ELEMENT:
         l.in_runs = false;
         continue;
+      default:
+        break; // other node types (whitespace, comments, ...) intentionally ignored
       }
     }
 
@@ -147,6 +151,8 @@ bool XmlSequenceReader::readSequences(std::vector<Sequence> &seqs, std::string &
       case XML_READER_TYPE_END_ELEMENT:
         l.in_run = false;
         return true;
+      default:
+        break; // other node types (whitespace, comments, ...) intentionally ignored
       }
     }
   }

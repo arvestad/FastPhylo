@@ -82,6 +82,8 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 				case XML_READER_TYPE_END_ELEMENT:
 					l.in_row = false;
 					continue;
+				default:
+					break; // other node types (whitespace, comments, ...) intentionally ignored
 	    }
 	  }
 		if ( l.in_root && l.in_runs && l.in_run && l.in_dms && depth == 4 &&
@@ -97,6 +99,8 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 					for(size_t namei=0; namei < names.size(); namei++)
 						dm.setIdentifier(namei,names[namei]);
 					return DM_READ;
+				default:
+					break; // other node types (whitespace, comments, ...) intentionally ignored
 	    }
 	  }
 		if ( l.in_root && l.in_runs && l.in_run && l.in_identities &&
@@ -116,6 +120,8 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 				case XML_READER_TYPE_END_ELEMENT:
 					l.in_identity = false;
 					continue;
+				default:
+					break; // other node types (whitespace, comments, ...) intentionally ignored
 			}
 		}
 		if ( l.in_root && l.in_runs && l.in_run && l.in_identities && l.in_identity &&
@@ -129,6 +135,8 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 					continue;
 				case XML_READER_TYPE_END_ELEMENT:
 					continue;
+				default:
+					break; // other node types (whitespace, comments, ...) intentionally ignored
 	    }
 		}
 		if ( l.in_root && l.in_runs && l.in_run && depth == 3 &&
@@ -140,6 +148,8 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 				case XML_READER_TYPE_END_ELEMENT:
 					l.in_dms = false;
 					continue;
+				default:
+					break; // other node types (whitespace, comments, ...) intentionally ignored
 	    }
 	  }
 		if (  l.in_root && l.in_runs && depth == 2 && xmlStrEqual (name, reinterpret_cast<const xmlChar *>("run") )) {
@@ -173,6 +183,8 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 				case XML_READER_TYPE_END_ELEMENT:
 					l.in_identities = false;
 					continue;
+				default:
+					break; // other node types (whitespace, comments, ...) intentionally ignored
 	    }
 	  }
 		if ( l.in_root && depth == 1 &&  xmlStrEqual (name, reinterpret_cast<const xmlChar *>("runs") )) {
@@ -183,6 +195,8 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 				case XML_READER_TYPE_END_ELEMENT:
 					l.in_runs = false;
 					return END_OF_RUNS;
+				default:
+					break; // other node types (whitespace, comments, ...) intentionally ignored
 	    }
 	  }
 		if ( depth == 0 &&  xmlStrEqual (name, reinterpret_cast<const xmlChar *>("root") )) {
@@ -193,6 +207,8 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 				case XML_READER_TYPE_END_ELEMENT:
 					l.in_root = false;
 					continue;
+				default:
+					break; // other node types (whitespace, comments, ...) intentionally ignored
 	    }
 	  }
 	}

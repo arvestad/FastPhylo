@@ -278,6 +278,11 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
 
     ++ptr1;++ptr2;
     ++del_ptr1;++del_ptr2;
+  case 0:
+    break; // nothing left to sum
+  default:
+    assert(false && "rest_num_b128s must be 0, 1 or 2");
+    break;
   }
 
 
