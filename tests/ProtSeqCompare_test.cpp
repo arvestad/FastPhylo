@@ -56,7 +56,7 @@ double ref_count_id_dist(const std::string &s1, const std::string &s2) {
 // Mirrors count_replacements() exactly (same s2-not-shorter-than-s1
 // assumption).
 std::vector<std::size_t> ref_count_replacements(const std::string &s1, const std::string &s2) {
-  std::vector<std::size_t> counts(20 * 20, 0);
+  std::vector<std::size_t> counts(std::size_t{20} * 20, 0);
   for (std::size_t i = 0; i < s1.size(); i++) {
     std::size_t c1 = ref_getAAInd(s1[i]);
     std::size_t c2 = ref_getAAInd(s2[i]);

@@ -66,7 +66,7 @@ std::size_t old_getAAInd(char c) {
 
 // Mirrors count_replacements() (ProtSeqUtils.cpp) exactly.
 std::vector<std::size_t> old_count_replacements(const std::string &s1, const std::string &s2) {
-  std::vector<std::size_t> counts(20 * 20, 0);
+  std::vector<std::size_t> counts(std::size_t{20} * 20, 0);
   for (std::size_t i = 0; i < s1.size(); i++) {
     std::size_t c1 = old_getAAInd(s1[i]);
     std::size_t c2 = old_getAAInd(s2[i]);

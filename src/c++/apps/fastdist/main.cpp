@@ -94,6 +94,7 @@ main(int argc,
 	if ( args_info.seed_given )
 		srand((unsigned int )args_info.seed_arg);
 	else
+		// NOLINTNEXTLINE(bugprone-random-generator-seed) - bootstrap resampling, not a security context; time-seeding when no explicit --seed is the intended default.
 		srand((unsigned int)time(nullptr));
 
 	//-----------------------------------------------

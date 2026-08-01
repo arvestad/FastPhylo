@@ -5,6 +5,18 @@
 #include <sstream>
 #include <math.h>
 
+// This file's system() calls (bugprone-command-processor) invoke
+// external simulation tools (beep/Seq-Gen/rose/gnuplot) via hardcoded,
+// developer-local paths (the ~/10giga_volume/... constants below).
+// Only CreateSimulatedData.cpp and BootstrapStats.cpp call into this
+// file - both are researcher-invoked, offline simulation tools with no
+// exposure to untrusted/network input; every value interpolated into a
+// command string here is either a fixed constant or a numeric
+// parameter from that same researcher's own invocation, never a
+// user-supplied filename or string. Not a command-injection risk in
+// this file's actual usage, confirmed by checking all call sites
+// rather than assumed.
+
 #define BEEP "~/10giga_volume/beep/beep_generateTree"
 #define BEEP_OUT "beep_outfile.txt"
 #define SEQGEN "~/10giga_volume/Seq-Gen.v1.3.2/source/seq-gen"
@@ -36,7 +48,7 @@ createRandomTreeUsingBeep(SequenceTree &tree, int numLeafs, int ultrametricDevia
   beep_str = beep_str+numLeafs;
   
   cout<< " about to execute: " << beep_str<< endl;
-  system(beep_str.c_str() );  
+  system(beep_str.c_str() ); // NOLINT(bugprone-command-processor) - see file header.
   //*********************
   //Read the tree string
   ifstream beep_outfile;
@@ -81,7 +93,7 @@ evolveSequencesUsingSeqGen(SequenceTree &tree, int seqlen, float diameterFactor,
           SEQGEN_IN " > " SEQGEN_OUT,
           seqlen, (writeAncestral ? " -wa " : "") ,diameterFactor);
   cout << "about to execute: " << str << endl;
-  system(str);
+  system(str); // NOLINT(bugprone-command-processor) - see file header.
 
   ifstream seqgen_outfile;
   open_read_stream(SEQGEN_OUT,seqgen_outfile);
@@ -159,7 +171,7 @@ evolveSequencesUsingROSE(SequenceTree &tree,int seqlen, double exp_sub, double e
   rose_str += " " ROSE_IN;
 
   cout<< " about to execute: " << rose_str<< endl;
-  system(rose_str.c_str() );  
+  system(rose_str.c_str() ); // NOLINT(bugprone-command-processor) - see file header.
 
   //---
   //map sequences onto tree
@@ -198,7 +210,7 @@ createGnuplotFromDatFile(const char *datfilename,
 
   
   ofstream out;
-  system("rm -f ddd1234.txt");
+  system("rm -f ddd1234.txt"); // NOLINT(bugprone-command-processor) - see file header.
   open_write_stream("ddd1234.txt",out);
   out.precision(2);
   out << "reset\n"
@@ -224,7 +236,7 @@ createGnuplotFromDatFile(const char *datfilename,
   string gnu(GNUPLOT " ddd1234.txt");
 
   cout<< " about to execute: " << gnu<< endl;
-  system(gnu.c_str());
+  system(gnu.c_str()); // NOLINT(bugprone-command-processor) - see file header.
 }
 
 

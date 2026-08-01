@@ -131,9 +131,10 @@ int main (int argc, char **argv) {
     cerr << "error: No output. No bootstrap or original data will be written" << endl;
     exit(EXIT_FAILURE);
     }
-  if ( args_info.seed_given ) 
+  if ( args_info.seed_given )
     srand((unsigned int )args_info.seed_arg);
   else
+    // NOLINTNEXTLINE(bugprone-random-generator-seed) - bootstrap resampling, not a security context; time-seeding when no explicit --seed is the intended default.
     srand((unsigned int)time(nullptr));
   try {
     char *inputfilename = nullptr;

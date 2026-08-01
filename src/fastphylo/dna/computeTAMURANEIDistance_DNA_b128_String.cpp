@@ -296,7 +296,7 @@ DNA_b128_String::computeTAMURANEIDistance(const DNA_b128_String &s1,
   //     sum_with_previous_level(total_sum_del,sum_del_l1, TWO_BIT_MASK, TWO);
   //   }
   b128 sum_ts_l1,  sum_pyrts_l1, sum_tv_l1,  sum_del_l1;
-  PREFETCH_DATA(num_level_1*3);
+  PREFETCH_DATA(static_cast<size_t>(num_level_1)*3);
   for (  ; num_level_1 != 0 ; num_level_1-- ){    
     dist_level_1(sum_ts_l1,  sum_pyrts_l1, sum_tv_l1,  sum_del_l1);
     sum_with_previous_level(total_sum_ts,sum_ts_l1, TWO_BIT_MASK, TWO);
