@@ -1,8 +1,8 @@
-#include "MaximumLikelihood.hpp"
+#include "fastphylo/protein/MaximumLikelihood.hpp"
 #include <cmath>
 #include <cfloat>
 #include <iostream>
-#include "Matrix.hpp"
+#include "fastphylo/protein/Matrix.hpp"
 
   /*! 
    * Kimura distance, not corrected, used as a starting value for Newton's

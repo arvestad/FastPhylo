@@ -23,8 +23,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "ProtSeqCode.hpp"
-#include "ProtSeqCompare.hpp"
+#include "fastphylo/protein/ProtSeqCode.hpp"
+#include "fastphylo/protein/ProtSeqCompare.hpp"
 
 using namespace ProtSeqCode;
 using namespace std::chrono;

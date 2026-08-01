@@ -1,8 +1,8 @@
 #pragma once
 
 #include <vector>
-#include "ExpectedDistance.hpp"        // for type_prior
-#include "ModelMatrix.hpp"             // for model_type
+#include "fastphylo/protein/ExpectedDistance.hpp"        // for type_prior
+#include "fastphylo/protein/ModelMatrix.hpp"             // for model_type
 #include "fastphylo/core/DistanceMatrix.hpp"
 
   // Forward Declarations

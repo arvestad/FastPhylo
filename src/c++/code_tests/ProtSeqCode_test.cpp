@@ -11,7 +11,7 @@
 #include <cctype>
 #include <iostream>
 #include <set>
-#include "ProtSeqCode.hpp"
+#include "fastphylo/protein/ProtSeqCode.hpp"
 
 using namespace ProtSeqCode;
 

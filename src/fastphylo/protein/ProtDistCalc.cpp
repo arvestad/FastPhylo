@@ -1,12 +1,12 @@
-#include "ProtDistCalc.hpp"
+#include "fastphylo/protein/ProtDistCalc.hpp"
 #include <cctype> // for toupper()
 #include <cmath>  // for log() and pow()
 #include <string>
-#include "MaximumLikelihood.hpp"
-#include "ProtSeqUtils.hpp"
-#include "ProtSeqCode.hpp"
-#include "ProtSeqCompare.hpp"
-#include "Matrix.hpp"
+#include "fastphylo/protein/MaximumLikelihood.hpp"
+#include "fastphylo/protein/ProtSeqUtils.hpp"
+#include "fastphylo/protein/ProtSeqCode.hpp"
+#include "fastphylo/protein/ProtSeqCompare.hpp"
+#include "fastphylo/protein/Matrix.hpp"
 #include "fastphylo/core/Sequence.hpp"
 
 // ID, JC, JCK (Kimura), JCSS, ED and ML all reduce to a function of either

@@ -1,5 +1,5 @@
-#include "ProtSeqCompare.hpp"
-#include "ProtSeqCode.hpp"
+#include "fastphylo/protein/ProtSeqCompare.hpp"
+#include "fastphylo/protein/ProtSeqCode.hpp"
 #include <algorithm>
 
 // Real SSE2 on x86; simde's NEON-backed translation everywhere else

@@ -1,4 +1,4 @@
-#include "ProtSeqCode.hpp"
+#include "fastphylo/protein/ProtSeqCode.hpp"
 #include <array>
 #include <cctype>
 

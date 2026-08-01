@@ -10,8 +10,8 @@
 #include "fastphylo/io/PhylipDmOutputStream.hpp"
 #include "fastphylo/io/XmlOutputStream.hpp"
 #include "fastphylo/io/fileFormatSchema.hpp"
-#include "ProtDistCalc.hpp"
-#include "ProtSeqUtils.hpp"
+#include "fastphylo/protein/ProtDistCalc.hpp"
+#include "fastphylo/protein/ProtSeqUtils.hpp"
 #include "fastphylo/core/DistanceMatrix.hpp"
 #include <memory>
 #include <string>

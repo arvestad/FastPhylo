@@ -1,4 +1,4 @@
-#include "ProtSeqUtils.hpp"
+#include "fastphylo/protein/ProtSeqUtils.hpp"
 #include <string>
 #include <set>
 #include "fastphylo/core/Sequence.hpp"

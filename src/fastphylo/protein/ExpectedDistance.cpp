@@ -1,8 +1,8 @@
-#include "ExpectedDistance.hpp"
+#include "fastphylo/protein/ExpectedDistance.hpp"
 #include <algorithm>
 #include <iostream>
 #include <numeric>
-#include "Matrix.hpp"
+#include "fastphylo/protein/Matrix.hpp"
 
   double op_pow2(double i){return std::pow(i, 2);}
   double op_pow3(double i){return std::pow(i, 3);}

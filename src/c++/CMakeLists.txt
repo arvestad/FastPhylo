@@ -269,17 +269,27 @@ if(BUILD_WITH_MPI)
 endif()
 
 
+# Layout Phase C2 (project_layout_plan.md): fastprot's protein-specific
+# "library" pieces, moved into the shared fastphylo library (same
+# treatment as dna/ - domain-specific code that still belongs in the
+# central library, not duplicated per-program). fastprot_mpi has its own
+# separate, untouched copies of these files (out of this plan's scope,
+# deferred - see that plan doc's "Deferred: fastprot_mpi" section).
+set(FASTPHYLO_PROTEIN_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/protein)
+set(FASTPHYLO_PROTEIN_SRCS
+${FASTPHYLO_PROTEIN_DIR}/ProtDistCalc.cpp
+${FASTPHYLO_PROTEIN_DIR}/ModelMatrix.cpp
+${FASTPHYLO_PROTEIN_DIR}/ExpectedDistance.cpp
+${FASTPHYLO_PROTEIN_DIR}/Matrix.cpp
+${FASTPHYLO_PROTEIN_DIR}/MaximumLikelihood.cpp
+${FASTPHYLO_PROTEIN_DIR}/ProtSeqUtils.cpp
+${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp
+${FASTPHYLO_PROTEIN_DIR}/ProtSeqCompare.cpp
+)
+
 set(FASTPROT_SRCS programs/fastprot/main.cpp
 programs/fastprot/FastaInputStream.cpp
 programs/fastprot/PhylipMaInputStream.cpp
-programs/fastprot/ProtDistCalc.cpp
-programs/fastprot/ModelMatrix.cpp
-programs/fastprot/ExpectedDistance.cpp
-programs/fastprot/Matrix.cpp
-programs/fastprot/MaximumLikelihood.cpp
-programs/fastprot/ProtSeqUtils.cpp
-programs/fastprot/ProtSeqCode.cpp
-programs/fastprot/ProtSeqCompare.cpp
 ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.c
 )
 
@@ -341,7 +351,7 @@ endforeach(i)
 # "SequenceTree.hpp", "NeighborJoining.hpp") - confirmed by grep before
 # this rewrite, not assumed - so consumers linking fastphylo need these
 # on their include path too, which PUBLIC gives them transitively.
-add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS} ${FASTPHYLO_IO_SRCS} ${FASTPHYLO_IO_XML_SRCS})
+add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS} ${FASTPHYLO_IO_SRCS} ${FASTPHYLO_IO_XML_SRCS} ${FASTPHYLO_PROTEIN_SRCS})
 # Modernization Phase B (project_layout_plan.md): the public API lives
 # under include/fastphylo/{core,dna,io,protein}/ now, consumed as
 # #include "fastphylo/<bucket>/X.hpp" - this is the one include root
@@ -428,17 +438,19 @@ enable_testing()
 # ProtSeqCompare.cpp needs FASTPHYLO_EXTRA_INCLUDE_DIRS (simde) directly:
 # these three targets compile it as a plain extra source rather than
 # linking the fastphylo library target, so they don't inherit it via
-# fastphylo's PUBLIC target_include_directories.
-add_executable(ProtSeqCode_test code_tests/ProtSeqCode_test.cpp programs/fastprot/ProtSeqCode.cpp)
-target_include_directories(ProtSeqCode_test PRIVATE programs/fastprot ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
+# fastphylo's PUBLIC target_include_directories. Likewise need
+# ${CMAKE_SOURCE_DIR}/include directly (Layout Phase C2) now that
+# ProtSeqCode.hpp/ProtSeqCompare.hpp live under include/fastphylo/protein/.
+add_executable(ProtSeqCode_test code_tests/ProtSeqCode_test.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp)
+target_include_directories(ProtSeqCode_test PRIVATE ${CMAKE_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
 add_test(NAME ProtSeqCode_test COMMAND ProtSeqCode_test)
 
-add_executable(ProtSeqCompare_test code_tests/ProtSeqCompare_test.cpp programs/fastprot/ProtSeqCode.cpp programs/fastprot/ProtSeqCompare.cpp)
-target_include_directories(ProtSeqCompare_test PRIVATE programs/fastprot ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
+add_executable(ProtSeqCompare_test code_tests/ProtSeqCompare_test.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCompare.cpp)
+target_include_directories(ProtSeqCompare_test PRIVATE ${CMAKE_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
 add_test(NAME ProtSeqCompare_test COMMAND ProtSeqCompare_test)
 
 # Phase 5 performance benchmark (plan.md). Not an add_test() - it prints
 # timing data, not a pass/fail result; see benchmarks/run_benchmarks.sh
 # for the reproducible one-command entry point.
-add_executable(bench_primitives ../../benchmarks/bench_primitives.cpp programs/fastprot/ProtSeqCode.cpp programs/fastprot/ProtSeqCompare.cpp)
-target_include_directories(bench_primitives PRIVATE programs/fastprot ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
+add_executable(bench_primitives ../../benchmarks/bench_primitives.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCompare.cpp)
+target_include_directories(bench_primitives PRIVATE ${CMAKE_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})

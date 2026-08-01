@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <cmath>
-#include "Matrix.hpp"
+#include "fastphylo/protein/Matrix.hpp"
 
   // Forward Declarations
   class Matrix;

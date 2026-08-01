@@ -1,5 +1,5 @@
-#include "ModelMatrix.hpp"
-#include "Matrix.hpp"
+#include "fastphylo/protein/ModelMatrix.hpp"
+#include "fastphylo/protein/Matrix.hpp"
 
   /*!
    * Function that gets the rate matrix for the specified model 

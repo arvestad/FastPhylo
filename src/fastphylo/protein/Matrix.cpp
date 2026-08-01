@@ -1,4 +1,4 @@
-#include "Matrix.hpp"
+#include "fastphylo/protein/Matrix.hpp"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
