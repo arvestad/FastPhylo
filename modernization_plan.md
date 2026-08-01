@@ -143,21 +143,49 @@ formatting/linting as they go instead of reformatting twice.
   `RunExamples.sh` + `ctest` on push/PR. There is none today - this is
   new safety net, not a replacement for local verification.
 
-### Phase 1 - Mechanical, low-risk modernization
+### Phase 1 - Mechanical, low-risk modernization [DONE, 2026-08-01]
 
-Changes with no semantic ambiguity, verifiable by build + full
-regression pass, ideally partially automatable via `clang-tidy --fix`
-once Phase 0's config exists (verify its suggested diffs before trusting
-them, per this codebase's track record):
+Commits: "Phase 1: convert include guards...", "Phase 1: NULL ->
+nullptr...", "Phase 1: typedef -> using...", "Phase 1: C-style
+casts...", and "Fix latent UB: Object::equals()...". Delivered:
 
-- `#ifndef`/`#define` include guards -> `#pragma once`.
-- `NULL` -> `nullptr`.
-- C-style casts -> `static_cast`/`reinterpret_cast`/`const_cast` as
-  appropriate (verify each - a cast doing an implicit narrowing or
-  pointer-type change needs the right one, not a mechanical swap).
-- `typedef` -> `using`.
-- `0`/`false` used where `nullptr` is meant (pointer comparisons/
-  assignments specifically, not integer 0).
+- 40 headers converted from `#ifndef`/`#define` guards to
+  `#pragma once`, via a small script (not blind regex) that tracks
+  `#if`/`#ifdef`/`#ifndef` nesting depth to find the guard's *matching*
+  `#endif` - verified against the most nested file (40 conditional
+  directives) before running broadly. Also had to handle one
+  non-UTF-8-encoded file (a legacy Latin-1 byte in a comment) via
+  lossless round-tripping rather than erroring or corrupting it.
+- 138 `NULL` -> `nullptr` (18 files) and 19 C-style casts -> the
+  correct `static_cast`/`reinterpret_cast`/`const_cast`/`dynamic_cast`
+  per clang-tidy's own categorization of each finding, not a blind
+  `static_cast` sweep.
+- 37 `typedef` -> `using` (14 files) - done **by hand**, not
+  `clang-tidy --fix`: the automated fix-it corrupted 5 of the 37 sites,
+  pasting in unrelated surrounding source (a class body, a commented-out
+  code block) instead of the intended one-line replacement, when
+  generating replacements near macros or unusual comments. Caught by
+  the full rebuild (undefined-type errors), not by trusting the tool's
+  output. Two anonymous typedef-struct/typedef-enum idioms were given
+  real names directly (the more idiomatic modern-C++ equivalent) rather
+  than mechanically wrapped in a `using` - deliberately did *not*
+  convert the enum to a scoped `enum class`, since that changes every
+  call site referencing its values, which belongs in Phase 3.
+- **Found and fixed a real, disclosed bug along the way** (not silently
+  bundled into the "no behavior change" cast-modernization commit):
+  `BitVector::equals()`/`Sequence::equals()` downcast `const Object*`
+  with a C-style cast, which for a base-to-derived polymorphic
+  conversion is an *unchecked* cast - comparing to a differently-typed
+  `Object` was undefined behavior, not a defined "not equal". Fixed
+  with `dynamic_cast` (BitVector's existing null check was dead code
+  before this; added the equivalent check to Sequence, which didn't
+  have one at all). Verified with a standalone cross-type comparison
+  test, not just "the existing tests still pass" (they don't exercise
+  this path at all).
+
+Lesson reinforced for later phases: don't trust `clang-tidy --fix`
+output blindly on this codebase, even for checks that look purely
+mechanical - verify by rebuilding, not by reading the diff alone.
 
 ### Phase 2 - RAII / ownership
 
