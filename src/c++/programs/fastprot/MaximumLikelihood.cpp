@@ -31,13 +31,13 @@
    * @param Q Rate matrix for replacements from one amino acid to another
    * @return The distance with the maximum likelihood
    */
-  double likelihood_calc(const Matrix &N, const Matrix &Q){
+  double likelihood_calc(const Matrix &N, const Matrix &Q, const MatrixExpm &Qdecomp){
     if (N.sum() - N.sum_diag() < DBL_EPSILON)
       return 0;
-    
+
     // Starting value for t
     double t = kimura_distance(N);
-    
+
     if (t == 0)
       t = 1;
 
@@ -46,12 +46,12 @@
     delta = tol = 0.001;
     int maxit = 50; // max iterations
 
-    double l_d = likelihood_deriv(N, Q, t);
+    double l_d = likelihood_deriv(N, Q, Qdecomp, t);
     for (int i=0; i<maxit; i++){
       if (fabs(l_d) < tol){ // If the derivative is small enough
         return t;
       }
-      double l_new = likelihood_deriv(N, Q, t+delta);
+      double l_new = likelihood_deriv(N, Q, Qdecomp, t+delta);
       double deriv = (l_new - l_d) / delta;
       t = t - l_d / deriv;
       if (t < 1) // 1 is the smallest possible distance
@@ -80,11 +80,14 @@
    * @param t The distance
    * @return The derivative
    */
-  double likelihood_deriv(const Matrix &N, const Matrix &Q, double t){
+  double likelihood_deriv(const Matrix &N, const Matrix &Q, const MatrixExpm &Qdecomp, double t){
 
-    // P(t) = e^Qt
-    Matrix pt = Q.expm(DblVec(1, t))[0];
-    
+    // P(t) = e^Qt, via the cached decomposition of Q (see Matrix.hpp's
+    // MatrixExpm) instead of Q.expm(), which would re-decompose Q (the
+    // expensive part) on every call - and this is called on every
+    // Newton-Raphson iteration, for every pair, all for the same Q.
+    Matrix pt = Qdecomp.at(t);
+
     // P'(t) = e^Qt * (Qt)' 
     Matrix direction = Matrix::mult(pt, Q);
     

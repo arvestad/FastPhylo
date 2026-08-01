@@ -346,3 +346,72 @@ benchmarking, timing runs were showing signs of thermal throttling
 minutes and was still running when checked later), so a number measured
 now would not be trustworthy. Not chasing it further given the profile
 already establishes the expected magnitude (small).
+
+## ML speedup round (2026-08-01): cache Q's eigendecomposition
+
+Lasse's reaction to the count_replacements() profiling: not interested
+in ED, but ML's `Matrix::expm()`/LAPACK cost (already flagged in
+plan.md's "Future phases") was "very interesting." Audited
+`MaximumLikelihood.cpp` and `Matrix::expm()` before touching anything.
+
+**Root cause, precisely** (plan.md's "Future phases" note was a
+reasonable guess written before reading this code closely - worth
+correcting now that it's been read): `likelihood_calc()`'s
+Newton-Raphson loop calls `likelihood_deriv()` once per iteration (not
+twice as originally guessed - `l_new` from one iteration is reused as
+`l_d` for the next), up to 50 iterations, and *every* call does
+`Q.expm(DblVec(1,t))[0]` - a full eigendecomposition of `Q` (LAPACK
+`dgeev_` for eigenvalues/eigenvectors, `dgetrf_`/`dgetri_` to invert the
+eigenvector matrix). But `Q` (the WAG/JTT/... rate matrix) is identical
+across every Newton iteration *and every pair* within one
+`calculate_ml_dists()` call - only the final step of `expm()`
+(`T·diag(e^(λt))·T⁻¹`, two small matrix multiplies) actually depends on
+`t`. The expensive part was being redone from scratch up to 50×
+per pair, for every pair, for no reason. The ED path already avoids
+this (`initialize_ed()` calls `Q.expm(DSamples)` once with the whole
+vector of candidate distances) - ML's `likelihood_deriv()` just never
+got that treatment, since it's called with one `t` at a time from
+inside the Newton loop rather than batched up front (the loop is
+inherently sequential - each `t` depends on the previous iteration's
+result - so batching doesn't apply, but *decomposing once* still does).
+
+**Fix**: added `MatrixExpm` (`Matrix.hpp`/`.cpp`) - decomposes a matrix
+once in its constructor, then `.at(t)` evaluates `exp(Q·t)` cheaply from
+the cached decomposition. `Matrix::expm(const DblVec&)` refactored to
+build one internally and loop `.at(t)` over it (pure deduplication, ED's
+behavior/performance unchanged - it already had exactly one
+decomposition per call). `calculate_ml_dists()` now constructs one
+`MatrixExpm` before its pairwise loop and threads it through
+`likelihood_calc()`/`likelihood_deriv()` (signatures updated, both take
+`Qdecomp` as an extra parameter) instead of each Newton iteration
+calling `Q.expm()` independently. `fastprot_mpi`'s separate copies of
+`Matrix.cpp`/`MaximumLikelihood.cpp` untouched, same as every previous
+round - it wasn't built in this environment (`BUILD_WITH_MPI=OFF`) so
+couldn't be verified.
+
+Verified byte-identical (LAPACK is deterministic for fixed input, so
+this is expected to be, and is, a pure performance change, not a
+numerical approximation): all 6 models in ML mode on the small fixture,
+plus WAG/JTT in ED mode (exercises the refactored `expm()`) - both
+match pre-change output exactly.
+
+**Confirmed via profiling that the fix works as intended**: the new
+profile has *no* LAPACK symbols anywhere in its top 20 leaf functions -
+`DGEEV`/`DLAHQR`/`DTREVC`/etc. are gone entirely. The bottleneck moved
+to `Matrix::operator()`'s bounds-checking and `elem_mult()`/`elem_div()`
+'s heap-allocated temporaries inside the remaining per-iteration
+arithmetic - structurally the same finding as the ED profiling above.
+That's real, further, *not yet acted on* headroom (same "fuse
+elem_mult+sum instead of allocating a temporary Matrix" idea already
+identified for ED, applicable here too) - noting it, not picking it up
+this round.
+
+**Measured end-to-end speedup**: ~2.3x, consistent at two dataset sizes
+(60 and 120 sequences, WAG model, interleaved OLD/NEW runs to reduce
+exposure to the thermal-throttling drift seen earlier in this session).
+Smaller than the "up to 50x fewer LAPACK calls" framing might suggest,
+because the per-iteration `Matrix` arithmetic left over (see previous
+paragraph) turned out to already be a substantial cost in its own right
+- the original profile's LAPACK dominance was large enough to mask that
+second cost, not eliminate it. Real, verified, worth having; not the
+end of the story if ML speed matters further.

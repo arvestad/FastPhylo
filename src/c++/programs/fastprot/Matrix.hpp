@@ -68,7 +68,37 @@
       std::size_t nr_rows;
       //! The columns
       std::size_t nr_cols;
-      
+
+      friend class MatrixExpm;
+  };
+
+  /*!
+   * A cached eigendecomposition of a square matrix Q, letting exp(Q*t) be
+   * evaluated for many different t values without re-decomposing Q each
+   * time: Q = T*diag(eigenvalues)*T^-1, so exp(Q*t) =
+   * T*diag(exp(eigenvalues*t))*T^-1 - only this last, cheap step (two
+   * matrix multiplies) depends on t. The decomposition itself (dgeev_
+   * for eigenvalues/eigenvectors, dgetrf_/dgetri_ to invert the
+   * eigenvector matrix - the expensive LAPACK calls) is done once, in
+   * the constructor.
+   *
+   * Added because likelihood_deriv() (MaximumLikelihood.cpp) evaluates
+   * exp(Q*t) at a new t on every Newton-Raphson iteration, for the same
+   * Q, for every pair in a run - see phase0_audit.md's "ML speedup
+   * round" for the profiling behind this.
+   */
+  class MatrixExpm {
+    public:
+      //! Decomposes Q. Imaginary parts of Q's eigenvalues are discarded,
+      //! matching expm()'s existing behavior (valid for the real,
+      //! diagonalizable rate matrices this is used for).
+      explicit MatrixExpm(const Matrix &Q);
+      //! Evaluates exp(Q*t) using the cached decomposition.
+      Matrix at(double t) const;
+    private:
+      Matrix eigenvectors;     // T
+      Matrix eigenvectors_inv; // T^-1
+      DblVec eigenvalues_real; // real part of Q's eigenvalues
   };
 
   //Non-member functions

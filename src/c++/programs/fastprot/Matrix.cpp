@@ -191,18 +191,30 @@ Matrix Matrix::expm() const{
  *            value in s
  */
 MatVec Matrix::expm(const DblVec &s) const {
+  MatrixExpm decomp(*this);
+  MatVec result;
+  result.reserve(s.size());
+  for (DblVec::const_iterator it=s.begin(); it != s.end(); it++)
+    result.push_back(decomp.at(*it));
+  return result;
+}
 
+/*!
+ *  Decomposes Q = T*diag(eigenvalues)*T^-1 once (the expensive LAPACK
+ *  part of expm()), so at() can evaluate exp(Q*t) for many t values
+ *  cheaply. See the class comment in Matrix.hpp.
+ */
+MatrixExpm::MatrixExpm(const Matrix &Q) {
   // Can only calculate eigenvalues and vectors of square matrices
-  if (get_rows() != get_cols())
+  if (Q.get_rows() != Q.get_cols())
     throw std::out_of_range("Matrix needs to be square");
 
-  int size = get_rows();
-  DblVec eg_val_real(size, 0); // Real part of eigenvalues
-  DblVec eg_val_im(size, 0);   // Imaginary part of eigenvalues
-                               // should be zero
+  int size = Q.get_rows();
+  eigenvalues_real.assign(size, 0); // Real part of eigenvalues
+  DblVec eg_val_im(size, 0);        // Imaginary part of eigenvalues
+                                     // should be zero
   double dummy[1];
   int dummy_size = 1;
-  double dummy_one = 1;
   int info[1];
   char n = 'N';   // Do not want to use this argument
   char v = 'V';   // Want to use this argument
@@ -211,58 +223,53 @@ MatVec Matrix::expm(const DblVec &s) const {
 
   // Need to make a copy of the data in Q to send into dgeev_ because
   // the data sent in is overwritten
-  int data_size = get_rows()*get_cols();
-  DblVec data(m_data);
+  DblVec data(Q.m_data);
 
-  // Matrix for the eigenvectors  
-  Matrix t_mat = Matrix(size, size);
+  // Matrix for the eigenvectors
+  eigenvectors = Matrix(size, size);
 
   //workspace-query
   // SUBROUTINE DGEEV( JOBVL, JOBVR, N, A, LDA, WR, WI, VL, LDVL, VR,
   //               LDVR, WORK, LWORK, INFO )
-  dgeev_(&n, &v, &size, &data[0], &size, &eg_val_real[0], &eg_val_im[0], dummy, 
-      &dummy_size, &t_mat.m_data[0], &size, workspace_size, &w_query, info);
+  dgeev_(&n, &v, &size, &data[0], &size, &eigenvalues_real[0], &eg_val_im[0], dummy,
+      &dummy_size, &eigenvectors.m_data[0], &size, workspace_size, &w_query, info);
 
   DblVec workspace_vec((int)workspace_size[0], 0);
   int w_size = workspace_size[0];
 
   // Real calculation of eigenvalues and eigenvectors for Q
-  dgeev_(&n, &v, &size, &data[0], &size, &eg_val_real[0], &eg_val_im[0], dummy, 
-      &dummy_size, &t_mat.m_data[0], &size, &workspace_vec[0], &w_size, info);
+  dgeev_(&n, &v, &size, &data[0], &size, &eigenvalues_real[0], &eg_val_im[0], dummy,
+      &dummy_size, &eigenvectors.m_data[0], &size, &workspace_vec[0], &w_size, info);
 
   // Calculating inverse of matrix with eigenvectors
-  Matrix t_mat_inv(t_mat);
+  eigenvectors_inv = Matrix(eigenvectors);
   int ipiv[size];
 
-  // LU factorization, t_mat_inv.m_data is overwritten with the LU factorization
-  dgetrf_(&size, &size, &t_mat_inv.m_data[0], &size, ipiv, info);
+  // LU factorization, eigenvectors_inv.m_data is overwritten with the LU factorization
+  dgetrf_(&size, &size, &eigenvectors_inv.m_data[0], &size, ipiv, info);
 
-  //workspace-query, nothing happens with t_mat_inv.m_data
-  dgetri_(&size, &t_mat_inv.m_data[0], &size, ipiv, workspace_size, &w_query, info);
+  //workspace-query, nothing happens with eigenvectors_inv.m_data
+  dgetri_(&size, &eigenvectors_inv.m_data[0], &size, ipiv, workspace_size, &w_query, info);
 
   double workspace_vec2[(int)workspace_size[0]];
   w_size = workspace_size[0];
 
-  // Inverse calculation from LU values, the inverse is stored in t_mat_inv.m_data
-  dgetri_(&size, &t_mat_inv.m_data[0], &size, ipiv, workspace_vec2, &w_size, info);
+  // Inverse calculation from LU values, the inverse is stored in eigenvectors_inv.m_data
+  dgetri_(&size, &eigenvectors_inv.m_data[0], &size, ipiv, workspace_vec2, &w_size, info);
+}
 
-  MatVec result;
-  result.reserve(s.size());
-
-  // e^(this) = T*D*T^-1
-  // T = matrix with eigenvectors (t_mat), D = matrix with exponentiated eigenvalues
-  // Calculate for every value in incoming vector s
-  DblVec eg_val_exp; 
+/*!
+ *  Evaluates exp(Q*t) = T*diag(exp(eigenvalues*t))*T^-1 using the
+ *  cached decomposition - no LAPACK calls, just two matrix multiplies.
+ */
+Matrix MatrixExpm::at(double t) const {
+  std::size_t size = eigenvalues_real.size();
+  DblVec eg_val_exp;
   eg_val_exp.reserve(size);
-  for (DblVec::const_iterator it=s.begin(); it != s.end(); it++){
-    for (int i=0; i<size; i++)
-      eg_val_exp.push_back(exp(eg_val_real[i]*(*it)));
-    Matrix left = Matrix::mult(t_mat, Matrix(eg_val_exp));
-    Matrix res = Matrix::mult( left, t_mat_inv);
-    result.push_back(res);
-    eg_val_exp.clear();
-  }
-  return result;
+  for (std::size_t i=0; i<size; i++)
+    eg_val_exp.push_back(exp(eigenvalues_real[i]*t));
+  Matrix left = Matrix::mult(eigenvectors, Matrix(eg_val_exp));
+  return Matrix::mult(left, eigenvectors_inv);
 }
 
 /*! 
