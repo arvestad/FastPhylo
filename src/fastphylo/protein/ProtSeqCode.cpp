@@ -11,7 +11,7 @@ namespace ProtSeqCode {
       table.fill(OTHER_CODE);
 
       // Canonical amino acids, same order as getAAInd() (ProtSeqUtils.cpp).
-      const char canonical[NUM_CANONICAL_AA] = {
+      const std::array<char, NUM_CANONICAL_AA> canonical = {
         'A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I',
         'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V'
       };
@@ -23,8 +23,8 @@ namespace ProtSeqCode {
       }
 
       // Other FASTA-legal letters that aren't canonical amino acids.
-      const char other_letters[] = { 'B', 'O', 'U', 'X', 'Z' };
-      for (std::size_t i = 0; i < sizeof(other_letters); i++) {
+      const std::array<char, 5> other_letters = { 'B', 'O', 'U', 'X', 'Z' };
+      for (std::size_t i = 0; i < other_letters.size(); i++) {
         auto up = static_cast<unsigned char>(other_letters[i]);
         auto lo = static_cast<unsigned char>(std::tolower(up));
         auto code = static_cast<std::uint8_t>(NUM_CANONICAL_AA + i);
@@ -48,7 +48,7 @@ namespace ProtSeqCode {
     // Canonical uppercase representative for each code, for decode_residue().
     std::array<char, ALPHABET_SIZE> build_decode_table() {
       std::array<char, ALPHABET_SIZE> table;
-      const char symbols[ALPHABET_SIZE] = {
+      const std::array<char, ALPHABET_SIZE> symbols = {
         'A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I',
         'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V',
         'B', 'O', 'U', 'X', 'Z',

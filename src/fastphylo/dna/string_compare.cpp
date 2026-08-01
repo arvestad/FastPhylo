@@ -75,14 +75,14 @@ TN_string_compare(const std::string &s1,
 
 
 int
-complete_dna_string_compare(float divergence_matrix[4][4],//a 4x4 matrix will be filled in with the frequences
+complete_dna_string_compare(divergence_matrix_t &divergence_matrix,//a 4x4 matrix will be filled in with the frequences
                             const std::string &s1,
                             const std::string &s2){
 
   vector<int> ambig_pos;
   int deleted = 0;
-  float tmp_matrix[4][4];
-  
+  divergence_matrix_t tmp_matrix;
+
   for ( int i = 0 ; i < 4 ; i++) {
     for ( int j = 0 ; j < 4 ; j++ ){
       divergence_matrix[i][j] = 0;
@@ -153,7 +153,7 @@ complete_dna_string_compare(float divergence_matrix[4][4],//a 4x4 matrix will be
 
 
 TN_string_distance
-divergence_matrix_2_TN_distance(float divergence_matrix[4][4], int deleted){
+divergence_matrix_2_TN_distance(const divergence_matrix_t &divergence_matrix, int deleted){
 
   float pu = divergence_matrix[DNA_A_][DNA_G_] +
     divergence_matrix[DNA_G_][DNA_A_];
@@ -176,7 +176,7 @@ divergence_matrix_2_TN_distance(float divergence_matrix[4][4], int deleted){
 
 
 void
-print_divergence_matrix(std::ostream &out, float div_matrix[4][4]){
+print_divergence_matrix(std::ostream &out, const divergence_matrix_t &div_matrix){
 
 
   out << "     ";
