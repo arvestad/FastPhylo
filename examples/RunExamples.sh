@@ -55,6 +55,12 @@ run_example 16 "fastprot -I fasta protein_seq.fasta -D JCK -O binary" ex16.out
 # instead of the compiler's printf("%-10s", ...) padding logic, so it's
 # exactly the kind of edge case that's easy to get subtly wrong.
 run_example 17 "fastprot -I fasta protein_longnames.fasta -D JCK -O phylip" ex17.out
+# calculate_ml_dists (-m, maximum likelihood) had no regression coverage
+# at all before this fixture - examples 6/7 exercise the default WAG
+# model, but only its non-ML (expected-distance) path. Added when
+# count_replacements() was wired to the byte-encoded primitive (see
+# phase0_audit.md); ML now uses that primitive too.
+run_example 18 "fastprot -I fasta protein_seq.fasta -D WAG -m" ex18.out
 #run_example 10 "cat seq.phylip | fastdist -I phylip -O phylip -b 3 -r 2 | fnj -I phylip -O xml -r 2 -d 4" ex10.out
 
 echo

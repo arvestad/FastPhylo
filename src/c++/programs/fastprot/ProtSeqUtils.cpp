@@ -1,44 +1,9 @@
 #include "ProtSeqUtils.hpp"
 #include <string>
 #include <set>
-#include "Matrix.hpp"
 #include "../../Sequence.hpp"
 
-/*
- * Function that translates an amino acid to a specific index
- * If the character given is not in the amino acid alphabet specified
- * below, 100 is return. Therefore the return value needs to be checked.
- * Amino acid order is: A, R, N, D, C, Q, E, G, H, I, L, K, M, F, P, S, T, W, Y, V
- * @param c The aminoacid
- * @return The index
- */
-  std::size_t getAAInd(char c){
-    switch (c) {
-      case 'A': return 0; 
-      case 'R': return 1; 
-      case 'N': return 2; 
-      case 'D': return 3; 
-      case 'C': return 4; 
-      case 'Q': return 5; 
-      case 'E': return 6; 
-      case 'G': return 7; 
-      case 'H': return 8; 
-      case 'I': return 9; 
-      case 'L': return 10; 
-      case 'K': return 11; 
-      case 'M': return 12; 
-      case 'F': return 13; 
-      case 'P': return 14; 
-      case 'S': return 15; 
-      case 'T': return 16; 
-      case 'W': return 17; 
-      case 'Y': return 18; 
-      case 'V': return 19; 
-      default: return 100;
-    }
-  }
-
-  /* 
+  /*
    * Saves the positions for all indels in the given sequences and
    * then erases all of them from every sequence.
    * @param sv A vector with sequences
@@ -67,28 +32,11 @@
       }
     }
   }
-/*
- * Counts all replacements from one amino acid to another in two sequences
- * @param s1 The first sequence
- * @param s2 The second sequence
- * @return A replacement count matrix
- */
-Matrix count_replacements(const Sequence &s1, const Sequence &s2){
-  Matrix temp(20,20);
-  std::string::const_iterator it1, it2;
-  for (it1 = s1.seq.begin(), it2 = s2.seq.begin(); it1 != s1.seq.end(); it1++, it2++) {
-    int c1 = getAAInd(toupper(*it1));
-    int c2 = getAAInd(toupper(*it2));
-    if (c1 != 100 && c2 != 100){
-      temp(c1, c2)++;
-    }
-  }
-  return temp;
-}
-
-  // count_id_dist() (percentage identity) used to live here; replaced by
-  // ProtSeqCode::count_id_fraction() (ProtSeqCode.hpp/ProtSeqCompare.hpp)
-  // as of speed2026a Phase 6 - see phase0_audit.md/phase1_design.md.
+  // getAAInd()/count_id_dist()/count_replacements() used to live here;
+  // replaced by ProtSeqCode::count_id_fraction()/count_replacement_tally()
+  // (ProtSeqCode.hpp/ProtSeqCompare.hpp) as of speed2026a Phase 6 (id) and
+  // the count_replacements wiring round (replacements) - see
+  // phase0_audit.md/phase1_design.md.
 
 /*
  * Code adapted from Sequences2DistanceMatrix.cpp - bootstrapSequences()

@@ -259,3 +259,90 @@ binaries verified distinct this way.
 - ED/ML/`count_replacements()` deprioritized this round per direction
   received; revisit profiling them specifically if/when that path
   becomes a priority.
+
+## count_replacements() wiring round (2026-08-01)
+
+Lasse asked for profiling + code/algorithm commentary on
+`count_replacements()` specifically. Profiled both consumers on a
+600x350 dataset (ED, ~180K pairs) and the smaller 300x350 one (ML, too
+slow at 600 seqs to profile conveniently):
+
+- **ED (`-D WAG`, non-ML)**: `count_replacements()` itself is only
+  **~1.3%** of wall time. The real cost is `posterior_probability()`
+  (`ExpectedDistance.cpp`): `for (i in nr_distances) fnk[i] =
+  elem_mult(N, prior_prob[i]).sum() + ...` runs ~40-100 times *per
+  pair* (`nr_distances` scales with the `--speed` flag), and every
+  iteration heap-allocates a fresh 20x20 `Matrix` for what's
+  mathematically a single dot product over two flat 400-element arrays.
+  `Matrix::sum()` (~45%), matrix zeroing/`memset` (~20%), `elem_mult()`
+  (~14%), and malloc/free (~10%) dominate — not the replacement tally.
+  This is new scope (`ExpectedDistance.cpp`, not `count_replacements()`)
+  and explicitly **not picked up this round** per direction received -
+  ED isn't a priority right now.
+- **ML (`-D WAG -m`)**: `count_replacements()` doesn't register in the
+  top 20 leaf functions at all. Completely dominated by LAPACK
+  (`DLAHQR`, `DTREVC`, `DGEBAL`, BLAS) - the eigendecomposition inside
+  `Matrix::expm()`, called from `likelihood_calc()`'s Newton-Raphson
+  loop. This confirms, rather than adds to, the "Newton-Raphson solver
+  for the ML protein models" item already in plan.md's "Future phases"
+  section.
+
+**`count_replacements()` itself**, code/algorithm commentary:
+
+```cpp
+Matrix count_replacements(const Sequence &s1, const Sequence &s2){
+  Matrix temp(20,20);
+  for (...) {
+    int c1 = getAAInd(toupper(*it1));
+    int c2 = getAAInd(toupper(*it2));
+    if (c1 != 100 && c2 != 100) temp(c1, c2)++;
+  }
+  return temp;
+}
+```
+
+Same two structural inefficiencies Phase 0 found in `count_id_dist()`,
+just never fixed here: `toupper()` twice per position instead of once
+per sequence at load time, and `Matrix::operator()`'s bounds-check
+(`if (row>=get_rows()||col>=get_cols()) throw...`) paid on every
+increment despite `c1,c2<20` always holding by construction.
+`getAAInd()`'s `switch` over 20 sparse-but-dense-range char values
+(65-89) is not the problem - that's a strong jump-table candidate for
+any reasonable compiler.
+
+**Wired in** `ProtSeqCode::count_replacement_tally()` (built and
+benchmarked in Phase 2, never used until now) into
+`calculate_ed_dists`/`calculate_ed_dists_with_sd`/`calculate_ml_dists`
+- same pattern as Phase 3's `count_id_dist` wiring: encode each
+sequence once per `calculate_*_dists()` call, then a small
+`tally_to_matrix()` helper converts the primitive's flat
+`std::vector<size_t>` tally into the `Matrix` type
+`ExpectedDistance.cpp`/`MaximumLikelihood.cpp` expect. Old
+`count_replacements()`/`getAAInd()` removed from `fastprot`'s
+`ProtSeqUtils.cpp`/`.hpp` (not `fastprot_mpi`'s separate copy, same
+scope decision as Phase 6). `calculate_ed_dists` (the version without
+`_with_sd`) turned out to be dead code - never called by either
+`calculate_distances()` dispatcher - but updated anyway for
+consistency, since leaving one function on the old primitive while its
+near-identical siblings moved to the new one would be confusing for
+anyone reading this file later.
+
+Verified byte-identical: all 6 models (WAG/JTT/DAY/ARVE/MVR/LG) in both
+ED and ML modes on the small fixture (12/12 combinations), WAG and JTT
+additionally on the larger 300-seq dataset, and WAG-ED on the real
+`globin_family.fasta` data. `RunExamples.sh` example 18 added - `-m`
+(maximum likelihood) had zero regression coverage before this; examples
+6/7 only ever exercised the default WAG model's non-ML path.
+
+Primitive-level speedup (already measured in Phase 5,
+`benchmarks/RESULTS.md`, before this primitive was ever wired anywhere):
+1.4x (50 residues) to 6.1x (2000 residues) - real, but per the profiling
+above, not expected to move ED/ML's *end-to-end* time noticeably, since
+`count_replacements()` was never the bottleneck in either pipeline. A
+fresh end-to-end number for this specific change wasn't captured
+reliably - by this point in a very long session of sustained heavy
+benchmarking, timing runs were showing signs of thermal throttling
+(the same WAG-ED case that profiled at ~8s wall time earlier took
+minutes and was still running when checked later), so a number measured
+now would not be trustworthy. Not chasing it further given the profile
+already establishes the expected magnitude (small).

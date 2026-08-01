@@ -9,16 +9,26 @@
 #include "Matrix.hpp"
 #include "../../Sequence.hpp"
 
-// ID, JC, JCK (Kimura) and JCSS all reduce to a corrected function of the
-// identity fraction between two sequences. As of speed2026a Phase 6 this
-// is always computed via the byte-encoded SIMD primitive
-// (ProtSeqCode.hpp/ProtSeqCompare.hpp) - see phase0_audit.md/
-// phase1_design.md/benchmarks/RESULTS.md for the profiling, design and
-// benchmark work behind this, and plan.md for the original brief. The old
-// scalar count_id_dist() (toupper()+compare) has been validated
-// byte-identical against it and removed from this file; ED and ML (built
-// on count_replacements(), untouched by this project) still use the
-// original scalar primitives below.
+// ID, JC, JCK (Kimura), JCSS, ED and ML all reduce to a function of either
+// the identity fraction or the replacement tally between two sequences.
+// As of speed2026a these are always computed via the byte-encoded SIMD/
+// encoded-array primitives (ProtSeqCode.hpp/ProtSeqCompare.hpp) - see
+// phase0_audit.md/phase1_design.md/benchmarks/RESULTS.md for the
+// profiling, design and benchmark work behind this, and plan.md for the
+// original brief. The old scalar count_id_dist()/count_replacements()
+// (toupper()+compare, or toupper()+getAAInd()+bounds-checked Matrix
+// increments) have been validated byte-identical against their
+// replacements and removed from this file.
+//
+// Note on scope: profiling ED (calculate_ed_dists_with_sd) and ML
+// (calculate_ml_dists) found count_replacements() itself was only ~1.3%
+// of ED's wall time (dominated by posterior_probability()'s per-pair
+// elem_mult()+sum() allocation churn in ExpectedDistance.cpp) and
+// didn't register at all in ML's profile (dominated by Matrix::expm()'s
+// LAPACK eigendecomposition). Wiring in the faster primitive here is a
+// real, safe win on the primitive itself (see benchmarks/RESULTS.md),
+// not a fix for either of those larger, separate bottlenecks - neither
+// is in scope for this change.
 namespace {
   // Encodes every sequence in sv once (ProtSeqCode.hpp), so the per-pair
   // cost in the loops below doesn't include re-encoding.
@@ -27,6 +37,22 @@ namespace {
     for (std::size_t i = 0; i < sv.size(); i++)
       ProtSeqCode::encode_sequence(sv[i].seq, encoded[i]);
     return encoded;
+  }
+
+  // Converts ProtSeqCode::count_replacement_tally()'s flat
+  // NUM_CANONICAL_AA x NUM_CANONICAL_AA tally into the Matrix type
+  // ExpectedDistance.cpp/MaximumLikelihood.cpp expect, matching
+  // count_replacements()'s existing (row,col) = (from,to) indexing.
+  Matrix tally_to_matrix(const std::vector<std::size_t> &tally) {
+    Matrix m(ProtSeqCode::NUM_CANONICAL_AA, ProtSeqCode::NUM_CANONICAL_AA);
+    for (std::size_t a = 0; a < ProtSeqCode::NUM_CANONICAL_AA; a++)
+      for (std::size_t b = 0; b < ProtSeqCode::NUM_CANONICAL_AA; b++)
+        m(a, b) = static_cast<double>(tally[a * ProtSeqCode::NUM_CANONICAL_AA + b]);
+    return m;
+  }
+
+  Matrix replacement_tally(const std::vector<std::uint8_t> &e1, const std::vector<std::uint8_t> &e2) {
+    return tally_to_matrix(ProtSeqCode::count_replacement_tally(e1.data(), e1.size(), e2.data(), e2.size()));
   }
 }
 
@@ -110,16 +136,17 @@ namespace {
   void calculate_ed_dists(const SeqVec &sv, StrDblMatrix &dm, 
       const prot_sequence_translation_model &tm){
 
-    Matrix Q(get_model_matrix(tm.model)); 
+    Matrix Q(get_model_matrix(tm.model));
     DblVec eq = get_model_vec(tm.model);
-    initialize_ed(tm.tp, tm.step_size, Q, eq); 
+    initialize_ed(tm.tp, tm.step_size, Q, eq);
     dm.resize(sv.size());
+    std::vector< std::vector<std::uint8_t> > encoded = encode_all(sv);
 
     for (int i=0; i<sv.size(); i++) {
       for (int j=i+1; j<sv.size(); j++){
-        Matrix N = count_replacements(sv[i], sv[j]);
+        Matrix N = replacement_tally(encoded[i], encoded[j]);
         double distance = 0.01 * calculate_ed(N);
-        dm.setDistance(i, j, distance); 
+        dm.setDistance(i, j, distance);
       }
     }
 
@@ -136,16 +163,17 @@ namespace {
   void calculate_ed_dists_with_sd(const SeqVec &sv, StrDblMatrix &dm, StrDblMatrix &sdm, 
       const prot_sequence_translation_model &tm, bool sd){
 
-    Matrix Q = get_model_matrix(tm.model); 
+    Matrix Q = get_model_matrix(tm.model);
     DblVec eq = get_model_vec(tm.model);
-    initialize_ed(tm.tp, tm.step_size, Q, eq); 
+    initialize_ed(tm.tp, tm.step_size, Q, eq);
     dm.resize(sv.size());
     if (sd)
       sdm.resize(sv.size());
+    std::vector< std::vector<std::uint8_t> > encoded = encode_all(sv);
 
     for (int i=0; i<sv.size(); i++) {
       for (int j=i+1; j<sv.size(); j++){
-        Matrix N = count_replacements(sv[i], sv[j]);
+        Matrix N = replacement_tally(encoded[i], encoded[j]);
         double distance;
         if (sd)
           distance = 0.01 * calculate_ed_with_sd(N);
@@ -169,12 +197,13 @@ namespace {
    * @param mt Specifies which model to use for the calculations
    */
   void calculate_ml_dists(const SeqVec &sv, StrDblMatrix &dm, model_type mt){
-    Matrix Q = get_model_matrix(mt); 
+    Matrix Q = get_model_matrix(mt);
     dm.resize(sv.size());
+    std::vector< std::vector<std::uint8_t> > encoded = encode_all(sv);
 
     for (int i=0; i<sv.size(); i++) {
       for (int j=i+1; j<sv.size(); j++){
-        Matrix N = count_replacements(sv[i], sv[j]);
+        Matrix N = replacement_tally(encoded[i], encoded[j]);
         double distance = 0.01 * likelihood_calc(N, Q);
         dm.setDistance(i, j, distance);
       }
