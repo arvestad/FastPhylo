@@ -239,18 +239,59 @@ Same verification discipline throughout: full rebuild + `RunExamples.sh`
 `ex4`/`ex10` mismatches confirmed present before this phase too, not
 caused by it).
 
-### Phase 3 - Modern idioms
+### Phase 3 - Modern idioms [DONE, 2026-08-01]
 
-- Iterator-loop patterns (`for (it = x.begin(); it != x.end(); it++)`,
-  common throughout this codebase per direct observation this session)
-  -> range-based `for` where the loop body doesn't need the iterator
-  itself.
-- `override`/`= default`/`= delete` on virtual/special member functions
-  where applicable.
-- `auto` where it improves readability without obscuring an
-  important type.
-- Algorithm-header usage (`<algorithm>`) in place of manual loops where
-  it's a clear readability win, not a stylistic detour.
+Commits: "Phase 3: convert manual iterator for-loops to range-based
+for...", "Phase 3: annotate virtual overrides with override...",
+"Phase 3: use auto where it avoids duplicating a static_cast's target
+type...". Delivered:
+
+- **Range-based for**: 6 sites (`SequenceTree.cpp` x3, `stl_utils.cpp`,
+  `ExpectedDistance.cpp` x2, `Matrix.cpp`, `ProtSeqUtils.cpp` x2) where
+  the classic `for (it = x.begin(); it != x.end(); it++)` loop body
+  only ever dereferenced the iterator. Also removed the now-unnecessary
+  iterator variables that had been hoisted above their loop. Left one
+  loop (`ProtSeqUtils.cpp`'s gap-removal, iterating `positions.rbegin()`
+  /`rend()`) as a manual loop with `auto` for the iterator type instead
+  of range-based for, since it deliberately iterates in reverse (erasing
+  higher string positions before lower ones so indices don't shift) -
+  there's no range-based for syntax for reverse iteration without a
+  wrapper type.
+- **`override`**: added to every virtual function in scope that
+  genuinely overrides a base virtual - `Object`'s
+  printOn/objInitFromStream/hashCode/equals/destructor as overridden by
+  `BitVector`, `Sequence`, `Exception`, `DistanceMatrix`,
+  `FloatDistanceMatrix`, `Tree`, `TreeNode`; and
+  `DataInputStream`'s/`DataOutputStream`'s
+  destructor/read/readSequences/print/printSD/printStartRun/printEndRun
+  /printHeader as overridden by the six fastprot stream classes.
+  Deliberately did **not** add it to virtual functions a derived class
+  merely *introduces* (e.g. `Sequence::printShort`/`printWithoutGaps`
+  have no base declaration to override) or to the base classes' own
+  first declarations - getting this right required reading each base
+  class, not pattern-matching "virtual" near "public Base". Full
+  rebuild (including `fastdist`/`fnj`, which share the touched
+  core-library headers but are out of this plan's scope) came back
+  clean with no `-Winconsistent-missing-override` warnings.
+- **`auto`**: applied only where it removes a duplicated type name (6
+  sites, `unsigned char up = static_cast<unsigned char>(...)` ->
+  `auto up = static_cast<unsigned char>(...)`, in speed2026a's SIMD
+  comparison code). Deliberately left `Sequence.cpp`'s
+  `dynamic_cast`-typed variable alone (the explicit type is load-bearing
+  context for the comment explaining that bug fix) and skipped a
+  `double matches = static_cast<double>(a) - static_cast<double>(b);`
+  site (a computed expression, not a bare same-type cast, so `auto`
+  wouldn't remove any duplication) - matches the plan's caution about
+  not obscuring an important type.
+- **`<algorithm>`**: searched the full phase scope; found no manual
+  loops that were a clear readability win to replace beyond what
+  speed2026a's work already introduced (`std::min`,
+  `std::accumulate`). Not forcing conversions here, per the plan's own
+  "not a stylistic detour" caution.
+
+Same verification discipline throughout: full rebuild + `RunExamples.sh`
++ `ctest` byte-identical after each commit (same two pre-existing,
+unrelated `ex4`/`ex10` mismatches as every prior phase).
 
 ### Phase 4 - Verification and sign-off
 
