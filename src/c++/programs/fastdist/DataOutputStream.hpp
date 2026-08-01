@@ -3,9 +3,9 @@
 #include <cstdio>
 #include <vector>
 #include <string>
-#include "Exception.hpp"
-#include "DistanceMatrix.hpp"
-#include "DistanceRow.hpp" //Mehmood's Changes here. Email: malagori@kth.se
+#include "fastphylo/core/Exception.hpp"
+#include "fastphylo/core/DistanceMatrix.hpp"
+#include "fastphylo/core/DistanceRow.hpp" //Mehmood's Changes here. Email: malagori@kth.se
 
 //#include "FloatDistanceMatrix.hpp"
 #include "Extrainfos.hpp"

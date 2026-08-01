@@ -1,7 +1,7 @@
 #include "ProtSeqUtils.hpp"
 #include <string>
 #include <set>
-#include "../../Sequence.hpp"
+#include "fastphylo/core/Sequence.hpp"
 
   /*
    * Saves the positions for all indels in the given sequences and

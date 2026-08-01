@@ -4,10 +4,10 @@
 #include <vector>
 #include <string>
 #include <math.h>
-#include "Exception.hpp"
-#include "DistanceMatrix.hpp"
+#include "fastphylo/core/Exception.hpp"
+#include "fastphylo/core/DistanceMatrix.hpp"
 #include "DataOutputStream.hpp"
-#include "DistanceRow.hpp"
+#include "fastphylo/core/DistanceRow.hpp"
 #include "Extrainfos.hpp"
 
 class PhylipDmOutputStream : public DataOutputStream {

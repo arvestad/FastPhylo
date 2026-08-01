@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdio>
-#include "Sequences2DistanceMatrix.hpp"
-#include "Exception.hpp"
+#include "fastphylo/dna/Sequences2DistanceMatrix.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include "Extrainfos.hpp"
 
 #include <iostream>

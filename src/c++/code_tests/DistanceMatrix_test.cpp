@@ -9,10 +9,10 @@
 //
 //--------------------------------------------------
 
-#include "DistanceMatrix.hpp"
+#include "fastphylo/core/DistanceMatrix.hpp"
 #include <fstream>
 #include <iostream>
-#include "file_utils.hpp"
+#include "fastphylo/core/file_utils.hpp"
 
 using namespace std;
 

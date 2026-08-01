@@ -9,13 +9,13 @@
 //
 //--------------------------------------------------
 
-#include "Tree.hpp"
+#include "fastphylo/core/Tree.hpp"
 #include <iostream>
 #include <string>
-#include "SequenceTree.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
 #include "AML_LeafLifting.hpp"
 #include <math.h>
-#include "SequenceTree.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
 #include "AML_local_improve.hpp"
 #include "AML_given_edge_probabilities.hpp"
 

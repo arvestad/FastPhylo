@@ -11,7 +11,7 @@
 
 #include <string>
 
-#include "DNA_b128_String.hpp"
+#include "fastphylo/dna/DNA_b128_String.hpp"
 #include <iostream>
 
 using namespace std;

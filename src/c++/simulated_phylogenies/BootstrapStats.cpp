@@ -4,24 +4,24 @@
 #include <fstream>
 #include <stdlib.h>
 #include <string>
-#include "file_utils.hpp"
-#include "log_utils.hpp"
-#include "stl_utils.hpp"
+#include "fastphylo/core/file_utils.hpp"
+#include "fastphylo/core/log_utils.hpp"
+#include "fastphylo/core/stl_utils.hpp"
 #include <string>
 #include <fstream>
 #include <time.h>
-#include "SequenceTree.hpp"
-#include "Sequence.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
+#include "fastphylo/core/Sequence.hpp"
 #include "SequenceParsimony.hpp"
-#include "LeastSquaresFit.hpp"
-#include "NeighborJoining.hpp"
-#include "Simulator.hpp"
-#include "Sequences2DistanceMatrix.hpp"
+#include "fastphylo/dna/LeastSquaresFit.hpp"
+#include "fastphylo/dna/NeighborJoining.hpp"
+#include "fastphylo/core/Simulator.hpp"
+#include "fastphylo/dna/Sequences2DistanceMatrix.hpp"
 
-#include "arg_utils_ext.hpp"
+#include "fastphylo/core/arg_utils_ext.hpp"
 
 #include <vector>
-#include "arg_utils.h"
+#include "fastphylo/core/arg_utils.h"
 
 using namespace std;
 

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "DataOutputStream.hpp"
-#include "Exception.hpp"
-#include "SequenceTree.hpp"
+#include "fastphylo/core/Exception.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
 #include "Extrainfos.hpp"
 
 #include <iostream>

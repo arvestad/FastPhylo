@@ -1,7 +1,7 @@
 #include "config.h"
 #include "fastprot_gengetopt.h"
-#include "log_utils.hpp"
-#include "file_utils.hpp"
+#include "fastphylo/core/log_utils.hpp"
+#include "fastphylo/core/file_utils.hpp"
 #include "PhylipMaInputStream.hpp"
 #include "DataInputStream.hpp"
 #include "FastaInputStream.hpp"
@@ -9,10 +9,10 @@
 #include "DataOutputStream.hpp"
 #include "PhylipDmOutputStream.hpp"
 #include "XmlOutputStream.hpp"
-#include "fileFormatSchema.hpp"
+#include "fastphylo/io/fileFormatSchema.hpp"
 #include "ProtDistCalc.hpp"
 #include "ProtSeqUtils.hpp"
-#include "../../DistanceMatrix.hpp"
+#include "fastphylo/core/DistanceMatrix.hpp"
 #include <memory>
 #include <string>
 #include <vector>

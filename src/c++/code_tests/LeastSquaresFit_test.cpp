@@ -1,6 +1,6 @@
 
-#include "LeastSquaresFit.hpp"
-#include "log_utils.hpp"
+#include "fastphylo/dna/LeastSquaresFit.hpp"
+#include "fastphylo/core/log_utils.hpp"
 #include <iostream>
 
 using  namespace std;

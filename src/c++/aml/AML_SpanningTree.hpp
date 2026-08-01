@@ -13,7 +13,7 @@
 
 #include <string>
 #include <vector>
-#include "SequenceTree.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
 
 
 //Creates a maximum likeliy spanning tree of the input sequences

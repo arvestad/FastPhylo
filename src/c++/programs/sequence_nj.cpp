@@ -11,8 +11,8 @@
 
 #include <string>
 #include <time.h>
-#include "arg_utils_ext.hpp"
-#include "file_utils.hpp"
+#include "fastphylo/core/arg_utils_ext.hpp"
+#include "fastphylo/core/file_utils.hpp"
 #include <iostream>
 
 #include "SequenceBasedNJ.hpp"

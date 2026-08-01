@@ -12,7 +12,7 @@
 #define AML_STAR_HPP
 
 #include <string>
-#include "dna_pairwise_sequence_likelihood.hpp"
+#include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
 
 //Fills in center with the most likely center string
 //of a b and c. Returns the likelihood of the star

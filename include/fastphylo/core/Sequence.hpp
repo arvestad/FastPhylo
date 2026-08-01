@@ -1,0 +1,86 @@
+//--------------------------------------------------
+//                                        
+// File: Sequence.hpp                             
+//                             
+// Author: Isaac Elias         
+// e-mail: isaac@nada.kth.se   
+//                             
+// cvs: $Id: Sequence.hpp,v 1.9 2006/12/25 18:40:39 isaac Exp $                                 
+//
+//--------------------------------------------------
+#pragma once
+
+#include <string>
+#include "fastphylo/core/stl_utils.hpp"
+#include "fastphylo/core/Object.hpp"
+#include "fastphylo/core/log_utils.hpp"
+#include <fstream>
+#include "fastphylo/core/file_utils.hpp"
+
+//
+// A simple class for handling named sequences.
+// 
+// This class allows for reading and writing of PHYLIP sequence files
+// and also bootstrapping.
+//
+//
+
+
+class Sequence : public Object{
+public:
+
+  static hashstr stringhasher;
+  
+  std::string name;
+  std::string seq;
+  
+  Sequence();
+  Sequence(std::string n, std::string s);
+  Sequence(const Sequence &s);
+
+  Sequence& operator=(const Sequence &s);
+
+  std::istream& objInitFromStream(std::istream &in) override;
+
+  //------------------------------------------
+  //PRINTING
+  //Ex. "HUMAN    agct-agct"
+  std::ostream& printOn(std::ostream& os) const override;
+  //print only name
+  virtual std::ostream& printShort(std::ostream& os) const;
+  virtual void printWithoutGaps(std::ostream& os) const;
+
+
+  //------------------------------------------
+  // Hashes on the name if it exists otherwise the sequence
+  size_t hashCode() const override;
+  // uses the name if it exists otherwise the sequence
+  bool equals(const Object *o) const override;
+
+  //------------------------------------------
+  //returns true if all characters in the sequences are in chars.
+  bool onlyContains(std::string &chars);
+
+  //----------------------------
+  // READING PHYLIP SEQUENCEFILE
+  // The vector is cleared of all sequences and new  sequences are added
+  static void readSequences(std::vector<Sequence> &seqs, std::istream &in);
+  static void printSequences(std::vector<Sequence> &seqs, std::ofstream &out);
+
+  //-------------------------------------------
+  //BOOTSTRAPPING
+  //creates a bootstrapped data set from the sequences in seqs.
+  static void bootstrapSequences(std::vector<Sequence> &seqs, std::vector<Sequence> &boot);
+
+};
+
+
+
+
+
+
+
+
+
+
+

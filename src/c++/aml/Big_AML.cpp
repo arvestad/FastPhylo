@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include "LikelihoodMatrix.hpp"
 #include "DistanceMethodMatrix.hpp"
-#include "NeighborJoining.hpp"
+#include "fastphylo/dna/NeighborJoining.hpp"
 #include <iostream>
 #include "AML_local_improve.hpp"
 

@@ -12,7 +12,7 @@
 #define SEQUENCEBASEDNJ_HPP
 
 #include <vector>
-#include "SequenceTree.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
 
 void
 computeSequenceBasedNJ(std::vector<Sequence> &seqs, SequenceTree &resultTree);

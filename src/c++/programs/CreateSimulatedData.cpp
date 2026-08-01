@@ -15,15 +15,15 @@
 
 #include <string>
 #include <time.h>
-#include "arg_utils_ext.hpp"
-#include "file_utils.hpp"
+#include "fastphylo/core/arg_utils_ext.hpp"
+#include "fastphylo/core/file_utils.hpp"
 #include <iostream>
 #include <vector>
-#include "Simulator.hpp"
-#include "SequenceTree.hpp"
+#include "fastphylo/core/Simulator.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
 
 #include <fstream>
-#include "stl_utils.hpp"
+#include "fastphylo/core/stl_utils.hpp"
 
 using namespace std; 
 

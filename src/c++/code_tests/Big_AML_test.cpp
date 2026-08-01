@@ -17,8 +17,8 @@
 #include <string>
 #include <iostream>
 
-#include "log_utils.hpp"
-#include "dna_pairwise_sequence_likelihood.hpp"
+#include "fastphylo/core/log_utils.hpp"
+#include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
 
 using namespace std;
 

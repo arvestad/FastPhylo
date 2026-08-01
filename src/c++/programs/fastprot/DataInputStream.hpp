@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdio>
-#include "../../Exception.hpp"
-#include "../../Sequence.hpp"
+#include "fastphylo/core/Exception.hpp"
+#include "fastphylo/core/Sequence.hpp"
 #include "Extrainfos.hpp"
 
 

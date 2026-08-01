@@ -11,8 +11,8 @@
 #ifndef AML_LOCAL_IMPROVE_HPP
 #define AML_LOCAL_IMPROVE_HPP
 
-#include "SequenceTree.hpp"
-#include "dna_pairwise_sequence_likelihood.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
+#include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
 
 void
 AML_local_improve(SequenceTree &t, sequence_model m);

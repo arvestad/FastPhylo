@@ -10,12 +10,12 @@
 //--------------------------------------------------
 
 #include "AML_star.hpp"
-#include "string_compare.hpp"
+#include "fastphylo/dna/string_compare.hpp"
 #include "LikelihoodMatrix.hpp"
 #include <string>
-#include "log_utils.hpp"
-#include "SequenceTree.hpp"
-#include "dna_pairwise_sequence_likelihood.hpp"
+#include "fastphylo/core/log_utils.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
+#include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
 
 static char
 parsimony_star(char a, char b, char c){

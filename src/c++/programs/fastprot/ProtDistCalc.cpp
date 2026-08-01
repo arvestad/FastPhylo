@@ -7,7 +7,7 @@
 #include "ProtSeqCode.hpp"
 #include "ProtSeqCompare.hpp"
 #include "Matrix.hpp"
-#include "../../Sequence.hpp"
+#include "fastphylo/core/Sequence.hpp"
 
 // ID, JC, JCK (Kimura), JCSS, ED and ML all reduce to a function of either
 // the identity fraction or the replacement tally between two sequences.

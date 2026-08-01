@@ -11,19 +11,19 @@
 
 #include <string>
 #include <time.h>
-#include "arg_utils_ext.hpp"
-#include "file_utils.hpp"
+#include "fastphylo/core/arg_utils_ext.hpp"
+#include "fastphylo/core/file_utils.hpp"
 #include <iostream>
 
-#include "Sequences2DistanceMatrix.hpp"
+#include "fastphylo/dna/Sequences2DistanceMatrix.hpp"
 
 #include <string>
 #include <iostream>
 #include <time.h>
 #include <fstream>
-#include "NeighborJoining.hpp"
-#include "stl_utils.hpp"
-#include "log_utils.hpp"
+#include "fastphylo/dna/NeighborJoining.hpp"
+#include "fastphylo/core/stl_utils.hpp"
+#include "fastphylo/core/log_utils.hpp"
 
 typedef __gnu_cxx::hash_map<const SequenceTree , int, objhash, objeq> tree2int_map;
 

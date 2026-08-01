@@ -11,9 +11,9 @@
 
 #include "SequenceBasedNJ.hpp"
 #include <string>
-#include "DNA_b128_String.hpp"
-#include "log_utils.hpp"
-#include "Tree.hpp"
+#include "fastphylo/dna/DNA_b128_String.hpp"
+#include "fastphylo/core/log_utils.hpp"
+#include "fastphylo/core/Tree.hpp"
 #include <iostream>
 #include <float.h>
 

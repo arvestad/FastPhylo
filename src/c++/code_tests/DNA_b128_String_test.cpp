@@ -10,12 +10,12 @@
 //--------------------------------------------------
 
 
-#include "DNA_b128_String.hpp"
-#include "string_compare.hpp"
+#include "fastphylo/dna/DNA_b128_String.hpp"
+#include "fastphylo/dna/string_compare.hpp"
 #include <string>
 #include <iostream>
 #include <math.h>
-#include "log_utils.hpp"
+#include "fastphylo/core/log_utils.hpp"
 
 //we want the assertions to work here
 #undef NDEBUG

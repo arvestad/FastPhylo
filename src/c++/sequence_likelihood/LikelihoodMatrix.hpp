@@ -11,15 +11,15 @@
 #ifndef LIKELIHOODMATRIX_HPP
 #define LIKELIHOODMATRIX_HPP
 
-#include "DistanceMatrix.hpp"
+#include "fastphylo/core/DistanceMatrix.hpp"
 
 //#include "FloatDistanceMatrix.hpp"
 #include <string>
 #include <vector>
-#include "InitAndPrintOn_utils.hpp"
-#include "dna_pairwise_sequence_likelihood.hpp"
+#include "fastphylo/core/InitAndPrintOn_utils.hpp"
+#include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
 #include <iostream>
-#include "string_compare.hpp"
+#include "fastphylo/dna/string_compare.hpp"
 
 //
 // Takes a vector of sequences and computes the pairwise liklihoods.

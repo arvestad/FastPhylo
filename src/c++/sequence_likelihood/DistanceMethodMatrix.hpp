@@ -14,8 +14,8 @@
 
 #include <string>
 #include <iostream>
-#include "string_compare.hpp"
-#include "dna_pairwise_sequence_likelihood.hpp"
+#include "fastphylo/dna/string_compare.hpp"
+#include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
 
 //WARNING when we compute the liklihood we don't allow for more than
 //prob 1/2 but since these values are going to be used together with

@@ -11,8 +11,8 @@
 #ifndef AML_GIVEN_EDGE_PROBABILITIES_HPP
 #define AML_GIVEN_EDGE_PROBABILITIES_HPP
 
-#include "SequenceTree.hpp"
-#include "dna_pairwise_sequence_likelihood.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
+#include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
 
 
 double

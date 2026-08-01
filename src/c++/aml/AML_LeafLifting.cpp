@@ -11,7 +11,7 @@
 
 #include "AML_LeafLifting.hpp"
 #include <iostream>
-#include "stl_utils.hpp"
+#include "fastphylo/core/stl_utils.hpp"
 #include <string>
 #include <float.h>
 #include "LikelihoodMatrix.hpp"

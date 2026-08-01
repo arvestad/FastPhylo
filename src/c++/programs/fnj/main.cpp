@@ -7,11 +7,11 @@
 #include <unistd.h>
 
 #include "config.h"
-#include "file_utils.hpp"
-#include "NeighborJoining.hpp"
+#include "fastphylo/core/file_utils.hpp"
+#include "fastphylo/dna/NeighborJoining.hpp"
 #include <ctime>
 #include <time.h>
-#include "log_utils.hpp"
+#include "fastphylo/core/log_utils.hpp"
 #include "fnj_gengetopt.h"
 
 #include "DataInputStream.hpp"
@@ -19,7 +19,7 @@
 #include "TreeTextOutputStream.hpp"
 #include "XmlOutputStream.hpp"
 #include "Extrainfos.hpp"
-#include "fileFormatSchema.hpp"
+#include "fastphylo/io/fileFormatSchema.hpp"
 #include "PhylipDmInputStream.hpp"
 #include "BinaryInputStream.hpp"
 

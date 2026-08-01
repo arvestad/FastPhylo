@@ -12,9 +12,9 @@
 #include "AML_given_edge_probabilities.hpp"
 
 #include <string>
-#include "nucleotide.hpp"
+#include "fastphylo/core/nucleotide.hpp"
 #include <vector>
-#include "log_utils.hpp"
+#include "fastphylo/core/log_utils.hpp"
 #include <iostream>
 
 using namespace std;

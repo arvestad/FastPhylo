@@ -143,37 +143,41 @@ if(NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|i.86|AMD64)$"))
   endif()
 endif()
 
-set(FASTPHYLO_SRCS BitVector.cpp
-Exception.cpp
-InitAndPrintOn_utils.cpp
-Object.cpp
-Sequence.cpp
-SequenceTree.cpp
-SequenceTree_MostParsimonious.cpp
-Simulator.cpp
-arg_utils_ext.cpp
-file_utils.cpp
-stl_utils.cpp
-DNA_b128/DNA_b128_String.cpp
-DNA_b128/Sequences2DistanceMatrix.cpp
-#aml/AML_LeafLifting.cpp
-#aml/AML_given_edge_probabilities.cpp
-#aml/AML_local_improve.cpp
-#aml/AML_star.cpp
-#aml/Big_AML.cpp
-distance_methods/LeastSquaresFit.cpp
-distance_methods/NeighborJoining.cpp
-sequence_likelihood/Kimura2parameter.cpp
-sequence_likelihood/TamuraNei.cpp
-sequence_likelihood/ambiguity_nucleotide.cpp
-sequence_likelihood/dna_pairwise_sequence_likelihood.cpp
-sequence_likelihood/string_compare.cpp 
-DistanceMatrix.cpp
-FloatDistanceMatrix.cpp
-DistanceRow.cpp
-arg_utils.c
-std_c_utils.c
-xml_output_global.cpp
+# Modernization Phase B (project_layout_plan.md): sources now live under
+# src/fastphylo/{core,dna}/, mirroring the public headers under
+# include/fastphylo/{core,dna}/ - see that plan doc for the rationale
+# (a discoverable public API, and a step toward de-duplicating the I/O
+# stream classes still living per-program under programs/).
+set(FASTPHYLO_CORE_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/core)
+set(FASTPHYLO_DNA_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/dna)
+
+set(FASTPHYLO_SRCS
+${FASTPHYLO_CORE_DIR}/BitVector.cpp
+${FASTPHYLO_CORE_DIR}/Exception.cpp
+${FASTPHYLO_CORE_DIR}/InitAndPrintOn_utils.cpp
+${FASTPHYLO_CORE_DIR}/Object.cpp
+${FASTPHYLO_CORE_DIR}/Sequence.cpp
+${FASTPHYLO_CORE_DIR}/SequenceTree.cpp
+${FASTPHYLO_CORE_DIR}/SequenceTree_MostParsimonious.cpp
+${FASTPHYLO_CORE_DIR}/Simulator.cpp
+${FASTPHYLO_CORE_DIR}/arg_utils_ext.cpp
+${FASTPHYLO_CORE_DIR}/file_utils.cpp
+${FASTPHYLO_CORE_DIR}/stl_utils.cpp
+${FASTPHYLO_DNA_DIR}/DNA_b128_String.cpp
+${FASTPHYLO_DNA_DIR}/Sequences2DistanceMatrix.cpp
+${FASTPHYLO_DNA_DIR}/LeastSquaresFit.cpp
+${FASTPHYLO_DNA_DIR}/NeighborJoining.cpp
+${FASTPHYLO_DNA_DIR}/Kimura2parameter.cpp
+${FASTPHYLO_DNA_DIR}/TamuraNei.cpp
+${FASTPHYLO_DNA_DIR}/ambiguity_nucleotide.cpp
+${FASTPHYLO_DNA_DIR}/dna_pairwise_sequence_likelihood.cpp
+${FASTPHYLO_DNA_DIR}/string_compare.cpp
+${FASTPHYLO_CORE_DIR}/DistanceMatrix.cpp
+${FASTPHYLO_CORE_DIR}/FloatDistanceMatrix.cpp
+${FASTPHYLO_CORE_DIR}/DistanceRow.cpp
+${FASTPHYLO_CORE_DIR}/arg_utils.c
+${FASTPHYLO_CORE_DIR}/std_c_utils.c
+${FASTPHYLO_CORE_DIR}/xml_output_global.cpp
 )
 
 # C++ standard is now set project-wide via CMAKE_CXX_STANDARD in the
@@ -183,9 +187,10 @@ xml_output_global.cpp
 # all until a fix earlier on this branch's parent, speed2026a - see that
 # branch's "Fix silent C++98 build on Clang" commit).
 
-set(FASTPHYLO_SPECIAL_SRCS DNA_b128/sse2_wrapper.c
-                          DNA_b128/computeTAMURANEIDistance_DNA_b128_String.cpp
-                          DNA_b128/computeDistance_DNA_b128_String.cpp)
+set(FASTPHYLO_SPECIAL_SRCS
+${FASTPHYLO_DNA_DIR}/sse2_wrapper.c
+${FASTPHYLO_DNA_DIR}/computeTAMURANEIDistance_DNA_b128_String.cpp
+${FASTPHYLO_DNA_DIR}/computeDistance_DNA_b128_String.cpp)
 
 if(STATIC AND WITH_LIBXML)
  set(LIBXML_EXTRA_COMPILE_FLAGS " -DLIBXML_STATIC ")
@@ -306,12 +311,14 @@ endforeach(i)
 # this rewrite, not assumed - so consumers linking fastphylo need these
 # on their include path too, which PUBLIC gives them transitively.
 add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS})
+# Modernization Phase B (project_layout_plan.md): the public API lives
+# under include/fastphylo/{core,dna,io,protein}/ now, consumed as
+# #include "fastphylo/<bucket>/X.hpp" - this is the one include root
+# that needs to be on the path for that, replacing the four
+# scattered src/c++-relative directories this used to list.
 target_include_directories(fastphylo PUBLIC
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/distance_methods
-  ${CMAKE_CURRENT_SOURCE_DIR}/DNA_b128
-  ${CMAKE_CURRENT_SOURCE_DIR}/sequence_likelihood
+  ${CMAKE_SOURCE_DIR}/include
   ${FASTPHYLO_EXTRA_INCLUDE_DIRS}
 )
 

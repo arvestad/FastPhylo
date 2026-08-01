@@ -8,7 +8,7 @@
 // Email: isaac@nada.kth.se, malagori@kth.se //
 ///////////////////////////////////////////////
 
-#include "Sequences2DistanceMatrix.hpp"
+#include "fastphylo/dna/Sequences2DistanceMatrix.hpp"
 
 #include <memory>
 #include <string>
@@ -18,18 +18,18 @@
 #include <assert.h>
 
 #include "config.h"
-#include "file_utils.hpp"
+#include "fastphylo/core/file_utils.hpp"
 #include <iomanip>
-#include "log_utils.hpp"
+#include "fastphylo/core/log_utils.hpp"
 #include "BinaryDmOutputStream.hpp"
 #include "fastdist_gengetopt.h"
-#include "NeighborJoining.hpp"
+#include "fastphylo/dna/NeighborJoining.hpp"
 #include "DataInputStream.hpp"
 #include "PhylipMaInputStream.hpp"
 #include "FastaInputStream.hpp"
 #include "DataOutputStream.hpp"
 #include "Extrainfos.hpp"
-#include "fileFormatSchema.hpp"
+#include "fastphylo/io/fileFormatSchema.hpp"
 #include "XmlOutputStream.hpp"
 #include "PhylipDmOutputStream.hpp"
 

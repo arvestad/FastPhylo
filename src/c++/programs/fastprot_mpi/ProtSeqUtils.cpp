@@ -2,7 +2,7 @@
 #include <string>
 #include <set>
 #include "Matrix.hpp"
-#include "../../Sequence.hpp"
+#include "fastphylo/core/Sequence.hpp"
 
 /*
  * Function that translates an amino acid to a specific index

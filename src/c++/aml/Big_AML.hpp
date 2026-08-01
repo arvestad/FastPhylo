@@ -11,14 +11,14 @@
 #ifndef BIG_AML_HPP
 #define BIG_AML_HPP
 
-#include "dna_pairwise_sequence_likelihood.hpp"
-#include "SequenceTree.hpp"
+#include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
 #include <vector>
-#include "Sequence.hpp"
+#include "fastphylo/core/Sequence.hpp"
 #include <string>
-#include "InitAndPrintOn_utils.hpp"
-#include "DistanceMatrix.hpp"
-#include "FloatDistanceMatrix.hpp"
+#include "fastphylo/core/InitAndPrintOn_utils.hpp"
+#include "fastphylo/core/DistanceMatrix.hpp"
+#include "fastphylo/core/FloatDistanceMatrix.hpp"
 
 
 //

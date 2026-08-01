@@ -11,8 +11,8 @@
 #ifndef AML_LEAFLIFTING_HPP
 #define AML_LEAFLIFTING_HPP
 
-#include "SequenceTree.hpp"
-#include "dna_pairwise_sequence_likelihood.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
+#include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
 
 // OPTIMAL LEAF LIFTING
 // Returns the likelihood of the optimal leaf lifting.

@@ -13,7 +13,7 @@
 
 #include <string>
 #include <iostream>
-#include "log_utils.hpp"
+#include "fastphylo/core/log_utils.hpp"
 
 using namespace std;
 

@@ -15,10 +15,10 @@
 
 #include "LikelihoodMatrix.hpp"
 #include <iostream>
-#include "dna_pairwise_sequence_likelihood.hpp"
-#include "string_compare.hpp"
+#include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
+#include "fastphylo/dna/string_compare.hpp"
 
-#include "NeighborJoining.hpp"
+#include "fastphylo/dna/NeighborJoining.hpp"
 
 using namespace std;
 

@@ -5,7 +5,7 @@
 #include <fstream>
 #include <libxml/xmlreader.h>
 #include "DataInputStream.hpp"
-#include "fileFormatSchema.hpp"
+#include "fastphylo/io/fileFormatSchema.hpp"
 
 struct locator_t {
   bool in_root;

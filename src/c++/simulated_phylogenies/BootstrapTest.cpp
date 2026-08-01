@@ -14,19 +14,19 @@
 #include <fstream>
 #include <stdlib.h>
 #include <string>
-#include "file_utils.hpp"
-#include "log_utils.hpp"
-#include "stl_utils.hpp"
+#include "fastphylo/core/file_utils.hpp"
+#include "fastphylo/core/log_utils.hpp"
+#include "fastphylo/core/stl_utils.hpp"
 #include <string>
 #include <fstream>
 #include <time.h>
-#include "SequenceTree.hpp"
-#include "Sequence.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
+#include "fastphylo/core/Sequence.hpp"
 #include "SequenceParsimony.hpp"
-#include "LeastSquaresFit.hpp"
+#include "fastphylo/dna/LeastSquaresFit.hpp"
 
 #include <vector>
-#include "arg_utils.h"
+#include "fastphylo/core/arg_utils.h"
 
 #define TESTDIR "testfiles/"
 

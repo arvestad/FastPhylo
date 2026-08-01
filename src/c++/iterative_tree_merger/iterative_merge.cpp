@@ -1,20 +1,20 @@
 
-#include "Tree.hpp"
-#include "DistanceMatrix.hpp"
+#include "fastphylo/core/Tree.hpp"
+#include "fastphylo/core/DistanceMatrix.hpp"
 
-#include "FloatDistanceMatrix.hpp"
+#include "fastphylo/core/FloatDistanceMatrix.hpp"
 #include <string>
 
-#include "arg_utils.h"
-#include "log_utils.hpp"
+#include "fastphylo/core/arg_utils.h"
+#include "fastphylo/core/log_utils.hpp"
 #include <iostream>
 #include <float.h>
 #include <vector>
 #include <algorithm>
-#include "stl_utils.hpp"
-#include "file_utils.hpp"
+#include "fastphylo/core/stl_utils.hpp"
+#include "fastphylo/core/file_utils.hpp"
 #include <fstream>
-#include "NeighborJoining.hpp"
+#include "fastphylo/dna/NeighborJoining.hpp"
 using namespace std;
 
 //-------------------------------------------------------------

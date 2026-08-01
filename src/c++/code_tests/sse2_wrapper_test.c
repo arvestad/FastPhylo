@@ -1,5 +1,5 @@
 
-#include "sse2_wrapper.h"
+#include "fastphylo/dna/sse2_wrapper.h"
 #include <stdio.h>
 #include <assert.h>
 

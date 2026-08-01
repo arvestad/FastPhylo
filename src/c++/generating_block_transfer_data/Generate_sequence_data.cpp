@@ -1,16 +1,16 @@
 
 #include <math.h>
-#include "arg_utils_ext.hpp"
-#include "stl_utils.hpp"
+#include "fastphylo/core/arg_utils_ext.hpp"
+#include "fastphylo/core/stl_utils.hpp"
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
 #include <string>
-#include "SequenceTree.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
 #include <algorithm>  // Include algorithms
 #include <functional>
-#include "stl_utils.hpp"
+#include "fastphylo/core/stl_utils.hpp"
 #include <list>
 
 using namespace std;

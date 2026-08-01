@@ -3,7 +3,7 @@
 #include <vector>
 #include "ExpectedDistance.hpp"        // for type_prior
 #include "ModelMatrix.hpp"             // for model_type
-#include "../../DistanceMatrix.hpp"
+#include "fastphylo/core/DistanceMatrix.hpp"
 
   // Forward Declarations
 class Sequence;

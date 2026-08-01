@@ -14,9 +14,9 @@
 #include <fstream>
 #include <stdlib.h>
 #include <string>
-#include "file_utils.hpp"
-#include "log_utils.hpp"
-#include "stl_utils.hpp"
+#include "fastphylo/core/file_utils.hpp"
+#include "fastphylo/core/log_utils.hpp"
+#include "fastphylo/core/stl_utils.hpp"
 #include <string>
 #include <fstream>
 

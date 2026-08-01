@@ -3,7 +3,7 @@
  *      Auther: Mehmood Alam Khan Email: malagori@kth.se
  */
 #include "PhylipDmInputStream.hpp"
-#include "DistanceMatrix.hpp"
+#include "fastphylo/core/DistanceMatrix.hpp"
 
 #include <assert.h>
 
