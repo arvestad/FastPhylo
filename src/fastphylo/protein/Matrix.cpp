@@ -1,5 +1,6 @@
 #include "fastphylo/protein/Matrix.hpp"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <numeric>
@@ -64,7 +65,7 @@ Matrix::Matrix(std::size_t rows, std::size_t cols): nr_rows(rows), nr_cols(cols)
  *  @param rows The amount of rows
  *  @param cols The amount of cols
  */
-Matrix::Matrix(const double array[], std::size_t rows, std::size_t cols): m_data(rows*cols, 0), nr_rows(rows), nr_cols(cols){
+Matrix::Matrix(const double *array, std::size_t rows, std::size_t cols): m_data(rows*cols, 0), nr_rows(rows), nr_cols(cols){
   for (int i=0; i<cols; i++) {
     for (int j=0; j<rows; j++) {
       m_data[(i*rows) + j] = array[(j*cols) + i];
@@ -222,12 +223,12 @@ MatrixExpm::MatrixExpm(const Matrix &Q) {
   eigenvalues_real.assign(size, 0); // Real part of eigenvalues
   DblVec eg_val_im(size, 0);        // Imaginary part of eigenvalues
                                      // should be zero
-  double dummy[1];
+  std::array<double, 1> dummy{};
   int dummy_size = 1;
-  int info[1];
+  std::array<int, 1> info{};
   char n = 'N';   // Do not want to use this argument
   char v = 'V';   // Want to use this argument
-  double workspace_size[1];
+  std::array<double, 1> workspace_size{};
   int w_query = -1;
 
   // Need to make a copy of the data in Q to send into dgeev_ because
@@ -240,31 +241,31 @@ MatrixExpm::MatrixExpm(const Matrix &Q) {
   //workspace-query
   // SUBROUTINE DGEEV( JOBVL, JOBVR, N, A, LDA, WR, WI, VL, LDVL, VR,
   //               LDVR, WORK, LWORK, INFO )
-  dgeev_(&n, &v, &size, data.data(), &size, eigenvalues_real.data(), eg_val_im.data(), dummy,
-      &dummy_size, eigenvectors.m_data.data(), &size, workspace_size, &w_query, info);
+  dgeev_(&n, &v, &size, data.data(), &size, eigenvalues_real.data(), eg_val_im.data(), dummy.data(),
+      &dummy_size, eigenvectors.m_data.data(), &size, workspace_size.data(), &w_query, info.data());
 
   DblVec workspace_vec(static_cast<int>(workspace_size[0]), 0);
   int w_size = workspace_size[0];
 
   // Real calculation of eigenvalues and eigenvectors for Q
-  dgeev_(&n, &v, &size, data.data(), &size, eigenvalues_real.data(), eg_val_im.data(), dummy,
-      &dummy_size, eigenvectors.m_data.data(), &size, workspace_vec.data(), &w_size, info);
+  dgeev_(&n, &v, &size, data.data(), &size, eigenvalues_real.data(), eg_val_im.data(), dummy.data(),
+      &dummy_size, eigenvectors.m_data.data(), &size, workspace_vec.data(), &w_size, info.data());
 
   // Calculating inverse of matrix with eigenvectors
   eigenvectors_inv = Matrix(eigenvectors);
   std::vector<int> ipiv(size);
 
   // LU factorization, eigenvectors_inv.m_data is overwritten with the LU factorization
-  dgetrf_(&size, &size, eigenvectors_inv.m_data.data(), &size, ipiv.data(), info);
+  dgetrf_(&size, &size, eigenvectors_inv.m_data.data(), &size, ipiv.data(), info.data());
 
   //workspace-query, nothing happens with eigenvectors_inv.m_data
-  dgetri_(&size, eigenvectors_inv.m_data.data(), &size, ipiv.data(), workspace_size, &w_query, info);
+  dgetri_(&size, eigenvectors_inv.m_data.data(), &size, ipiv.data(), workspace_size.data(), &w_query, info.data());
 
   DblVec workspace_vec2(static_cast<int>(workspace_size[0]));
   w_size = workspace_size[0];
 
   // Inverse calculation from LU values, the inverse is stored in eigenvectors_inv.m_data
-  dgetri_(&size, eigenvectors_inv.m_data.data(), &size, ipiv.data(), workspace_vec2.data(), &w_size, info);
+  dgetri_(&size, eigenvectors_inv.m_data.data(), &size, ipiv.data(), workspace_vec2.data(), &w_size, info.data());
 }
 
 /*!

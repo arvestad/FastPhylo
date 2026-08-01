@@ -11,6 +11,7 @@
 
 #include "fastphylo/dna/Sequences2DistanceMatrix.hpp"
 #include "fastphylo/dna/DNA_b128_String.hpp"
+#include <array>
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -41,11 +42,11 @@ DNA_b128_StringsFromPHYLIP(istream &fin, std::vector<std::string> &names, std::v
 	int numSequences;
 	int seqlen;
 	const int MAXLINE = 16384;
-	char line[MAXLINE];
+	std::array<char, MAXLINE> line{};
 	do{//skip lines that does not contain two integers
-		fin.getline(line,MAXLINE);
+		fin.getline(line.data(),MAXLINE);
 		// NOLINTNEXTLINE(bugprone-unchecked-string-to-number-conversion) - the while condition below is exactly that check.
-	} while( sscanf(line,"%d %d",&numSequences,&seqlen) != 2 );
+	} while( sscanf(line.data(),"%d %d",&numSequences,&seqlen) != 2 );
 
 
 	names.clear();
@@ -57,29 +58,29 @@ DNA_b128_StringsFromPHYLIP(istream &fin, std::vector<std::string> &names, std::v
 	}
 	//phylip has name lenght 10.
 	//read the names and map the sequences onto the tree
-	char tmpName[11];
+	std::array<char, 11> tmpName{};
 	for ( int i = 0 ; i < numSequences ; i++ ){
 		DNA_b128_String &s = b128_strings[i];
 
-		fin.getline(tmpName,11);//reads atmost 10 chars
+		fin.getline(tmpName.data(),11);//reads atmost 10 chars
 		//skip lines without 10 chars per line
 		if( !fin.fail() ){
 			if( fin.eof() ) THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
 			i--;
 			continue;
 		}
-		appendUntil(names[i],tmpName,fin.gcount(), ' ');
+		appendUntil(names[i],tmpName.data(),fin.gcount(), ' ');
 
 		fin.clear();
-		fin.getline(line,MAXLINE);
+		fin.getline(line.data(),MAXLINE);
 
 		while( fin.fail() && fin.gcount()==MAXLINE-1 ){//didn't read all the line
-			s.append(line);
+			s.append(line.data());
 			fin.clear();
-			fin.getline(line,MAXLINE);
+			fin.getline(line.data(),MAXLINE);
 		}
 		if( !fin.fail()) {//we read it all including the newline char unless it ended with eof
-			s.append(line);
+			s.append(line.data());
 		}
 		else //fail
 			THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
@@ -100,10 +101,10 @@ DNA_b128_StringsFromPHYLIP(istream &fin, std::vector<std::string> &names, std::v
 		for ( int i = 0 ; i < numSequences ; i++ ){
 			DNA_b128_String &s = b128_strings[i];
 
-			fin.getline(line,MAXLINE);
+			fin.getline(line.data(),MAXLINE);
 
 			std::string myStr;
-			myStr=line;
+			myStr=line.data();
 
 			if (myStr.empty()){
 				if( fin.eof() )
@@ -113,7 +114,7 @@ DNA_b128_StringsFromPHYLIP(istream &fin, std::vector<std::string> &names, std::v
 			}
 
 			if ( !fin.fail() || fin.gcount()!=MAXLINE-1 ){
-				s.append(line);
+				s.append(line.data());
 
 			}
 

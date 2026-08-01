@@ -1,4 +1,5 @@
 #include "fastphylo/io/XmlOutputStream.hpp"
+#include <array>
 #include <cstdio>
 #include <cmath>
 
@@ -45,7 +46,7 @@ void XmlOutputStream::printRow(StrFloRow &dm, string name, int row, bool mem_eff
 
   const size_t numNodes = dm.getColumns();
 
-  char defstr[11];
+  std::array<char, 11> defstr{};
   defstr[0] = ' ';
   defstr[3] = '.';
   defstr[10] = 0;

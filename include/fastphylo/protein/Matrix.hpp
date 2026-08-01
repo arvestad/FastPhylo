@@ -21,7 +21,7 @@
       //! Constructor for rectangular matrix
       Matrix(std::size_t rows, std::size_t cols);
       //! Creates full matrix from array
-      Matrix(const double[], std::size_t, std::size_t);
+      Matrix(const double *, std::size_t, std::size_t);
       //! Creates diagonal matrix from std::vector
       Matrix(const DblVec &);
       //! Copy constructor

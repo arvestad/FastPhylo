@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdio>
 #include <vector>
 #include <string>
@@ -47,8 +48,8 @@ public:
 
   // Fast float-to-PHYLIP-field lookup tables, shared by PhylipDmOutputStream
   // and XmlOutputStream's formatting code.
-  static const char ONEDIGIT[128];
-  static const char TENDIGIT[128];
+  static const std::array<char, 128> ONEDIGIT;
+  static const std::array<char, 128> TENDIGIT;
 
 protected:
   bool file_was_opened;

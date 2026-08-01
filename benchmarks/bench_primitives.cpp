@@ -120,7 +120,7 @@ int main() { // NOLINT(bugprone-exception-escape) - a benchmark binary crashing 
   const int WARMUP = 3;
   const int REPS = 21;
   const double DIVERGENCE = 0.25; // representative mid-range divergence
-  const std::size_t lengths[] = { 50, 300, 2000 }; // short / typical / long
+  const std::array<std::size_t, 3> lengths = { 50, 300, 2000 }; // short / typical / long
 
   std::cout << "primitive,length,old_median_us,old_q1_us,old_q3_us,new_median_us,new_q1_us,new_q3_us,speedup\n";
 

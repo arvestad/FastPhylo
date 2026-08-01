@@ -21,7 +21,7 @@ DataOutputStream::~DataOutputStream() {
 }
 }
 
-const char DataOutputStream::ONEDIGIT[128] = {
+const std::array<char, 128> DataOutputStream::ONEDIGIT = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -36,7 +36,7 @@ const char DataOutputStream::ONEDIGIT[128] = {
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     '0', '1', '2', '3', '4', '5', '6', '7'};
 
-const char DataOutputStream::TENDIGIT[128] = {
+const std::array<char, 128> DataOutputStream::TENDIGIT = {
     '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
     '1', '1', '1', '1', '1', '1', '1', '1', '1', '1',
     '2', '2', '2', '2', '2', '2', '2', '2', '2', '2',

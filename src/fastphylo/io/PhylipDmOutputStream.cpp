@@ -1,4 +1,5 @@
 #include "fastphylo/io/PhylipDmOutputStream.hpp"
+#include <array>
 #include <cstdio>
 #include <cmath>
 
@@ -34,7 +35,7 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
     fprintf(out, "%5lu\n", numNodes);
   }
 
-  char defstr[11]; // = "   .      ";
+  std::array<char, 11> defstr{}; // = "   .      ";
   defstr[0] = ' ';
   defstr[3] = '.';
   defstr[10] = 0;
@@ -94,21 +95,21 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
         // regardless (unlike the fixed-size defstr fast path below,
         // this is not the hot path - values this large are already
         // unusual, matching the original fprintf()'s "rare" framing).
-        char rare[128];
+        std::array<char, 128> rare{};
         int n;
         if (f - (intpart * 1.0) < 0.000001) {
           if (writeXml || writeXmlSD) {
-            n = snprintf(rare, sizeof(rare), "     <entry>%10d</entry>\n", intpart);
+            n = snprintf(rare.data(), rare.size(), "     <entry>%10d</entry>\n", intpart);
           } else {
-            n = snprintf(rare, sizeof(rare), "%10d", intpart);
+            n = snprintf(rare.data(), rare.size(), "%10d", intpart);
           }
         } else if (writeXml || writeXmlSD) {
-          n = snprintf(rare, sizeof(rare), "     <entry>%10f</entry>\n", f);
+          n = snprintf(rare.data(), rare.size(), "     <entry>%10f</entry>\n", f);
         } else {
-          n = snprintf(rare, sizeof(rare), "%10f", f);
+          n = snprintf(rare.data(), rare.size(), "%10f", f);
         }
         if (n > 0) {
-          row.append(rare, n < static_cast<int>(sizeof(rare)) ? n : static_cast<int>(sizeof(rare)) - 1);
+          row.append(rare.data(), n < static_cast<int>(rare.size()) ? n : static_cast<int>(rare.size()) - 1);
 }
         continue;
       }
@@ -144,7 +145,7 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
         row += &defstr[skip];
         row += "</entry>\n";
       } else {
-        row.append(defstr, 10);
+        row.append(defstr.data(), 10);
       }
     }
 
@@ -172,7 +173,7 @@ void PhylipDmOutputStream::printRow(StrFloRow &dm, string name, int row, bool me
 
   const size_t numNodes = dm.getColumns();
 
-  char defstr[11];
+  std::array<char, 11> defstr{};
   defstr[0] = ' ';
   defstr[3] = '.';
   defstr[10] = 0;
@@ -230,7 +231,7 @@ void PhylipDmOutputStream::printRow(StrFloRow &dm, string name, int row, bool me
       defstr[deci++] = ONEDIGIT[index];
     }
 
-    fwrite(defstr, sizeof(char), 10, fp);
+    fwrite(defstr.data(), sizeof(char), 10, fp);
   }
 
   fprintf(fp, "\n");

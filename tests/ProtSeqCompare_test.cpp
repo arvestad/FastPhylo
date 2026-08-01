@@ -17,6 +17,7 @@
 //     ../src/fastphylo/protein/ProtSeqCompare.cpp -o /tmp/t && /tmp/t
 
 #undef NDEBUG
+#include <array>
 #include <cassert>
 #include <cctype>
 #include <cmath>
@@ -101,7 +102,7 @@ std::string random_seq(std::size_t len, unsigned int *seed) {
 
 void test_random_pairs_various_lengths_and_mismatch_rates() {
   unsigned int seed = 12345;
-  const std::size_t lengths[] = { 0, 1, 2, 17, 31, 32, 33, 100, 347, 1000, 3001 };
+  const std::array<std::size_t, 11> lengths = { 0, 1, 2, 17, 31, 32, 33, 100, 347, 1000, 3001 };
   for (unsigned long len : lengths) {
     std::string s1 = random_seq(len, &seed);
     // low mismatch: copy s1 then perturb a few positions
