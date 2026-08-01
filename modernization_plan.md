@@ -355,17 +355,113 @@ except the two disclosed, intentional bug fixes; every commit verified
 independently. What's next is explicitly out of this plan's scope, see
 below.
 
+### Phase 5 - CMake target-based migration [DONE, 2026-08-01]
+
+Deferred from Phase 0 ("wait with that" - do Phase 1 first); picked
+back up per Lasse's explicit request, and widened to cover every
+target in `src/c++/CMakeLists.txt` (`fastphylo`, `fastdist`, `fnj`,
+`fastprot`, `fastprot_mpi`) rather than just `fastphylo`/`fastprot`,
+since they're all defined in the one file anyway and the global
+`include_directories()` calls being replaced affected all of them
+regardless. Commit: "Phase 5: CMake target-based migration...".
+
+- **`cmake_minimum_required` bumped 3.16 -> 3.18** (still a
+  conservative, widely-available floor): the version `FindBLAS`/
+  `FindLAPACK` reliably started providing `BLAS::BLAS`/`LAPACK::LAPACK`
+  imported targets (`FindLibXml2`'s `LibXml2::LibXml2` has existed
+  since 3.12, so it wasn't the constraint).
+- **Global `include_directories()` -> `target_include_directories()`**,
+  scoped per target instead of applying to every translation unit in
+  the project regardless of need. `fastphylo`'s own directories (source
+  root, binary root for `config.h`, `distance_methods`, `DNA_b128`,
+  `sequence_likelihood`, the conditional simde dir) are `PUBLIC` -
+  confirmed by grep, not assumed, that `fastdist`/`fnj`/`fastprot`/
+  `fastprot_mpi` `#include` core-library headers by bare filename (e.g.
+  `"SequenceTree.hpp"`, `"NeighborJoining.hpp"`), so consumers linking
+  `fastphylo` need these on their own include path too - `PUBLIC` gives
+  them that transitively. Each program target gets only its own
+  `programs/<name>` + generated-gengetopt-header dir, `PRIVATE` (the
+  previously-global `programs/` directory itself was dropped - grepped
+  for any `#include "fastdist/..."`-style cross-program include first;
+  none exist, so it was dead weight, not load-bearing).
+  **One real bug caught by actually building, not just configuring**:
+  `ProtSeqCode_test`/`ProtSeqCompare_test`/`bench_primitives` compile
+  `programs/fastprot/ProtSeqCompare.cpp` (which needs simde on ARM)
+  directly as an extra source rather than linking the `fastphylo`
+  target, so they don't inherit simde's include dir through
+  `fastphylo`'s `PUBLIC` propagation - needed it added to those three
+  targets directly. Caught by a full build failing with `'simde/x86/
+  sse2.h' file not found`, not by reasoning about the dependency graph
+  in advance.
+- **Imported targets in place of raw variables**: `LibXml2::LibXml2`,
+  `BLAS::BLAS`, `LAPACK::LAPACK`, and `Threads::Threads` (via
+  `find_package(Threads REQUIRED)`, replacing a hardcoded `-lpthread`
+  that isn't portable to every platform) instead of
+  `${LIBXML2_LIBRARIES}`/`${BLAS_LIBRARIES}`/`${LAPACK_LIBRARIES}`/
+  `-lpthread`. `STATIC`'s self-built libxml2 can't use the imported
+  target (it deliberately bypasses `find_package`'s system detection),
+  so it's wrapped in a small `INTERFACE` library
+  (`fastphylo_libxml2`) exposing the same `FASTPHYLO_XML_LIBS` name
+  every consumer links regardless of `STATIC` - preserves the
+  pre-existing `STATIC`-vs-`find_package` behavior exactly rather than
+  trying to fix whatever interaction there may be between the two
+  (out of this pass's scope; `STATIC` is untested in this environment).
+- **Replaced a genuinely deprecated pattern**: `BUILD_WITH_MPI`'s
+  `include(CMakeForceCompiler)` / `CMAKE_FORCE_CXX_COMPILER(mpic++/
+  mpiCC ...)` - CMake's own docs describe `CMakeForceCompiler` as "once
+  intended for... cross-compiling toolchain files", long superseded -
+  replaced with `find_package(MPI REQUIRED)` + linking `MPI::MPI_CXX`,
+  the standard modern pattern. Verified the failure mode instead of the
+  success path (no MPI installed in this environment, and
+  `BUILD_WITH_MPI` defaults OFF): configuring with `-DBUILD_WITH_MPI=ON`
+  now fails immediately and clearly ("Could NOT find MPI"), instead of
+  the old hack silently forcing the compiler to a binary
+  (`mpic++`/`mpiCC`) that might not even exist and failing confusingly
+  later at compile/link time - a real usability improvement even
+  though the success path couldn't be exercised here.
+- **Lowercased CMake commands throughout both `CMakeLists.txt` files**
+  for consistency (CMake commands are case-insensitive; the codebase
+  mixed `SET`/`IF` with Phase 0's own `set`/`option` additions).
+- **Two small disclosed cleanups, not silently bundled**: dropped
+  `-fforce-addr` from `DNA_b128`'s special compile flags (a GCC flag
+  removed decades ago; every build this entire engagement already
+  proved Clang only warns "not supported" and ignores it - inert, not
+  behavior-changing) and dropped a trailing `set_source_files_properties`
+  line for `xmlreader.h` that referenced `${LIBXML2_INCLUDE_DIR}`
+  incorrectly (double-prefixed with `CMAKE_CURRENT_BINARY_DIR`, so it
+  never actually matched the real generated file even under `STATIC`) -
+  found while directly touching the surrounding lines for the
+  include-directory rewrite, not gone looking for extra cleanup.
+
+**Verified**: full clean configure + build (all targets, `-j` parallel)
+from a deleted `build/`, `ctest`, and `RunExamples.sh` (all 15 active
+examples byte-identical). Also verified the three optional toggles at
+configure time: `-DWITH_LIBXML=OFF` configures and builds completely
+(fastdist/fnj/fastprot all link and run without libxml2); `-DSTATIC=ON`
+configures without error (can't fully build-test - the FTP-hosted
+dependency downloads are unverified, see below); `-DBUILD_WITH_MPI=ON`
+fails at configure time with a clear message (no MPI installed here) -
+the correct, improved failure mode described above, not a regression
+from a previously-working state (the old code path was never
+build-tested in this environment either).
+
 ## What's explicitly deferred, not forgotten
 
 - `DNA_b128`/`distance_methods`/`sequence_likelihood` (own future
   phase, per the scoping decision above).
-- `fastdist`, `fnj`, `fastprot_mpi`, and the smaller remaining programs
-  (`buildtree`, `CreateSimulatedData`, `sequence_nj`) - not touched this
-  phase.
+- The smaller remaining programs (`buildtree`, `CreateSimulatedData`,
+  `sequence_nj`) - `fastdist`/`fnj` picked up CMake modernization in
+  Phase 5 above, but their own source-level modernization (Phases 1-3's
+  treatment) hasn't started.
 - The `Matrix` class's heap-allocation-per-instance design (flagged
   separately in memory - `MatrixExpm`/Eigen investigation) - that's a
   performance-motivated redesign, distinct from this plan's style
   modernization, though Phase 2's RAII work here may touch related code.
-- Full CMake target-based migration for every target (`fastdist`, `fnj`,
-  `fastprot_mpi`, docbook) - Phase 0 only starts this for `fastphylo`/
-  `fastprot`.
+- `STATIC`'s self-built gengetopt/libxml2/zlib toolchain (2009-2011-era
+  library versions from FTP mirrors of unverified current availability)
+  and docbook's `GET_TARGET_PROPERTY(... LOCATION)` (deprecated CMake
+  API, `BUILD_DOCBOOK` defaults OFF) - both flagged during Phase 5's
+  audit as likely candidates for the upcoming linting/code-smell pass,
+  not touched now since neither is exercised by this project's regular
+  builds and both are non-trivial enough to deserve their own review
+  rather than a drive-by fix.
