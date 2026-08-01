@@ -88,11 +88,17 @@
     // Newton-Raphson iteration, for every pair, all for the same Q.
     Matrix pt = Qdecomp.at(t);
 
-    // P'(t) = e^Qt * (Qt)' 
+    // P'(t) = e^Qt * (Qt)'
     Matrix direction = Matrix::mult(pt, Q);
-    
-    Matrix temp = elem_mult(N, direction);
-    Matrix temp2 = elem_div(temp, pt);
 
-    return temp2.sum();
+    // sum(N .* direction ./ pt), fused into one pass instead of
+    // elem_mult()+elem_div()+sum() (each allocating a full temporary
+    // Matrix just to be summed and discarded) - same per-element
+    // operation order (multiply then divide) and summation order as
+    // before, so this is not a numerical approximation.
+    double result = 0.0;
+    std::size_t n = N.get_rows() * N.get_cols();
+    for (std::size_t k=0; k<n; k++)
+      result += N(k) * direction(k) / pt(k);
+    return result;
   }

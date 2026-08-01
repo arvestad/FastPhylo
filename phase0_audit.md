@@ -415,3 +415,50 @@ paragraph) turned out to already be a substantial cost in its own right
 - the original profile's LAPACK dominance was large enough to mask that
 second cost, not eliminate it. Real, verified, worth having; not the
 end of the story if ML speed matters further.
+
+## ML speedup round, part 2 (2026-08-01): the allocation/bounds-check layer
+
+Lasse asked to keep going on ML performance. The post-caching profile
+above (no LAPACK, dominated by `Matrix::operator()` bounds-checking and
+`elem_mult()`/`elem_div()`'s heap-allocated temporaries) pointed
+directly at two fixes:
+
+1. **`MatrixExpm::at(t)`** built a full 20x20 matrix (`Matrix(eg_val_exp)`)
+   that's 95% zeros just to represent a 20-element diagonal, then ran it
+   through a full dense matrix multiply to apply it. For a diagonal
+   right-hand factor, `(A*D)(row,col) = A(row,col)*D(col,col)` -
+   mathematically just "scale column `col` of A by a number." Replaced
+   with a direct column-scale loop: no extra `Matrix` allocation, no
+   multiply for that step. (There's an existing `Matrix::diag_mult()`
+   that looks like it was meant for exactly this - checked, it has zero
+   callers anywhere in the codebase, and its indexing looks wrong on
+   inspection (mixes the row/col two-arg accessor with a column-major
+   linear-index read in a way that doesn't correspond to any consistent
+   convention). Left it alone rather than fix or use unverified dead
+   code while trying to speed up something else - wrote a fresh,
+   verified replacement instead, scoped to this one use site.)
+2. **`likelihood_deriv()`**'s `elem_mult(N, direction)` then
+   `elem_div(temp, pt)` then `.sum()` each allocated a full temporary
+   `Matrix` just to be summed and immediately discarded. Fused into one
+   loop computing `sum += N(k)*direction(k)/pt(k)` directly - same
+   per-element operation order (multiply then divide) and summation
+   order as before, so not a numerical approximation, just skipping the
+   two intermediate `Matrix` allocations.
+
+Verified byte-identical: all 6 models x both ED and ML modes on the
+small fixture (12/12), interleaved-binary method (see the build-cache
+pitfall noted earlier in this file) to make sure "old" and "new" were
+actually different binaries before trusting any comparison.
+
+**Measured**: a further ~1.75x (consistent at 60 and 120 sequences,
+stacking with part 1's ~2.3x for **~4.1x total** vs. this morning's
+pre-ML-work baseline, also consistent at both sizes). Re-profiled after:
+still dominated by `std::vector<double>` allocation/destruction, now
+from 3 remaining `Matrix` temporaries per `likelihood_deriv()` call
+(`left`, `pt`, `direction` - down from 6 before either ML fix).
+Eliminating those further would mean changing how `Matrix` stores its
+data for these tiny fixed-size (20x20) cases - stack allocation or an
+object pool instead of a heap-backed `std::vector` per instance - which
+touches every `Matrix` user in the codebase, not just ML. That's a
+materially bigger, riskier change than either fix in this round;
+stopping here rather than reaching for it opportunistically.

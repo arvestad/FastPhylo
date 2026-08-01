@@ -264,11 +264,19 @@ MatrixExpm::MatrixExpm(const Matrix &Q) {
  */
 Matrix MatrixExpm::at(double t) const {
   std::size_t size = eigenvalues_real.size();
-  DblVec eg_val_exp;
-  eg_val_exp.reserve(size);
-  for (std::size_t i=0; i<size; i++)
-    eg_val_exp.push_back(exp(eigenvalues_real[i]*t));
-  Matrix left = Matrix::mult(eigenvectors, Matrix(eg_val_exp));
+  // T * diag(exp(eigenvalues*t)): for a diagonal right-hand factor,
+  // (A*D)(row,col) = A(row,col)*D(col,col) - scaling each column of T
+  // directly is mathematically identical to going through
+  // Matrix::mult() with a materialized diagonal matrix (as this used
+  // to), but skips building a 20x20 matrix that's 95% zeros just to
+  // represent a 20-element diagonal, and the dense multiply LAPACK
+  // would otherwise do to apply it.
+  Matrix left(size, size);
+  for (std::size_t col=0; col<size; col++) {
+    double scale = exp(eigenvalues_real[col]*t);
+    for (std::size_t row=0; row<size; row++)
+      left(row, col) = eigenvectors(row, col) * scale;
+  }
   return Matrix::mult(left, eigenvectors_inv);
 }
 
