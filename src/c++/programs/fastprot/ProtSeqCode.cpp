@@ -16,8 +16,8 @@ namespace ProtSeqCode {
         'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V'
       };
       for (std::size_t i = 0; i < NUM_CANONICAL_AA; i++) {
-        unsigned char up = static_cast<unsigned char>(canonical[i]);
-        unsigned char lo = static_cast<unsigned char>(std::tolower(up));
+        auto up = static_cast<unsigned char>(canonical[i]);
+        auto lo = static_cast<unsigned char>(std::tolower(up));
         table[up] = static_cast<std::uint8_t>(i);
         table[lo] = static_cast<std::uint8_t>(i);
       }
@@ -25,9 +25,9 @@ namespace ProtSeqCode {
       // Other FASTA-legal letters that aren't canonical amino acids.
       const char other_letters[] = { 'B', 'O', 'U', 'X', 'Z' };
       for (std::size_t i = 0; i < sizeof(other_letters); i++) {
-        unsigned char up = static_cast<unsigned char>(other_letters[i]);
-        unsigned char lo = static_cast<unsigned char>(std::tolower(up));
-        std::uint8_t code = static_cast<std::uint8_t>(NUM_CANONICAL_AA + i);
+        auto up = static_cast<unsigned char>(other_letters[i]);
+        auto lo = static_cast<unsigned char>(std::tolower(up));
+        auto code = static_cast<std::uint8_t>(NUM_CANONICAL_AA + i);
         table[up] = code;
         table[lo] = code;
       }

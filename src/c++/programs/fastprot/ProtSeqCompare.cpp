@@ -28,7 +28,7 @@ namespace ProtSeqCode {
         __m128i va = _mm_loadu_si128(reinterpret_cast<const __m128i *>(a + i));
         __m128i vb = _mm_loadu_si128(reinterpret_cast<const __m128i *>(b + i));
         __m128i eq = _mm_cmpeq_epi8(va, vb);
-        unsigned int eq_mask = static_cast<unsigned int>(_mm_movemask_epi8(eq));
+        auto eq_mask = static_cast<unsigned int>(_mm_movemask_epi8(eq));
         unsigned int mismatch_mask = (~eq_mask) & 0xFFFFu;
         mismatches += static_cast<std::size_t>(__builtin_popcount(mismatch_mask));
       }
