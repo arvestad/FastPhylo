@@ -66,7 +66,10 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
         depth == 6 &&  xmlStrEqual (name, reinterpret_cast<const xmlChar *>("entry") )  && type == XML_READER_TYPE_ELEMENT) {
       l.entry_nr++;
       xmlChar * distanceStr = xmlTextReaderReadString(reader);
-      float distance =  atof( reinterpret_cast<char *>(distanceStr) );
+      char *endptr = nullptr;
+      float distance = strtof(reinterpret_cast<char *>(distanceStr), &endptr);
+      if (endptr == reinterpret_cast<char *>(distanceStr))
+        THROW_EXCEPTION("expected a floating-point distance, got \"" << distanceStr << "\"");
       dm.setDistance(l.row_nr,l.entry_nr, distance );
       xmlFree(distanceStr);
       continue;
@@ -161,7 +164,12 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 					THROW_EXCEPTION("failed to read attribute \"dim\"");
 				if ( idStr == nullptr )
 					THROW_EXCEPTION("failed to read attribute \"id\"");
-				dmSize=atoi(reinterpret_cast<const char *>(dimStr));
+				{
+					char *dimEndptr = nullptr;
+					dmSize = strtol(reinterpret_cast<const char *>(dimStr), &dimEndptr, 10);
+					if (dimEndptr == reinterpret_cast<const char *>(dimStr))
+						THROW_EXCEPTION("expected an integer \"dim\" attribute, got \"" << dimStr << "\"");
+				}
 				runId = reinterpret_cast<const char *>(idStr);
 				xmlFree(idStr);
 				xmlFree(dimStr);

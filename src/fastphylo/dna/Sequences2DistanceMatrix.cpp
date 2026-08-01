@@ -44,6 +44,7 @@ DNA_b128_StringsFromPHYLIP(istream &fin, std::vector<std::string> &names, std::v
 	char line[MAXLINE];
 	do{//skip lines that does not contain two integers
 		fin.getline(line,MAXLINE);
+		// NOLINTNEXTLINE(bugprone-unchecked-string-to-number-conversion) - the while condition below is exactly that check.
 	} while( sscanf(line,"%d %d",&numSequences,&seqlen) != 2 );
 
 

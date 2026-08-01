@@ -58,7 +58,7 @@ readstatus PhylipDmInputStream::readDM(StrDblMatrix &dm, vector<string> & names,
 				line=line.substr(line.find_first_not_of(" \n\r\t",linePos));
 			}
 			else {
-				dm.setDistance(i1,i2,atof(line.c_str()));
+				dm.setDistance(i1,i2,std::stof(line));
 			}
 		}
 	}

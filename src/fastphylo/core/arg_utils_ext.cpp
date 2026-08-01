@@ -10,6 +10,7 @@
 //--------------------------------------------------
 
 #include "fastphylo/core/arg_utils_ext.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include <cstdlib>
 
 bool
@@ -52,8 +53,12 @@ get_list_of_ints(int argc, char **argv, char *option_id, std::vector<int> &vec){
   i++;
   //read all file names that come after option_id until next option.
   for ( ; i < argc ; i++ ){
-    if ( argv[i][0] != '-' ){ 
-      vec.push_back(atoi(argv[i]));
+    if ( argv[i][0] != '-' ){
+      char *endptr = nullptr;
+      long val = strtol(argv[i], &endptr, 10);
+      if ( endptr == argv[i] )
+        THROW_EXCEPTION("expected an integer argument to \"" << option_id << "\", got \"" << argv[i] << "\"");
+      vec.push_back(static_cast<int>(val));
     }
     else break;
   }
@@ -70,8 +75,12 @@ get_list_of_floats(int argc, char **argv, char *option_id, std::vector<float> &v
   i++;
   //read all file names that come after option_id until next option.
   for ( ; i < argc ; i++ ){
-    if ( argv[i][0] != '-' ){ 
-      vec.push_back(atof(argv[i]));
+    if ( argv[i][0] != '-' ){
+      char *endptr = nullptr;
+      float val = strtof(argv[i], &endptr);
+      if ( endptr == argv[i] )
+        THROW_EXCEPTION("expected a floating-point argument to \"" << option_id << "\", got \"" << argv[i] << "\"");
+      vec.push_back(val);
     }
     else break;
   }

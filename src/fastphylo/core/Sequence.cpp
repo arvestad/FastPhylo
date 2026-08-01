@@ -207,6 +207,7 @@ Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin){
 	char line[MAXLINE];
 	do {//skip lines which does not contain two numbers.
 		fin.getline(line,MAXLINE);
+		// NOLINTNEXTLINE(bugprone-unchecked-string-to-number-conversion) - the while condition below is exactly that check.
 	}while(sscanf(line,"%d %d",&numSequences,&seqlen) != 2 );
 
 	seqs.resize(numSequences);
