@@ -289,7 +289,7 @@ private:
 
   //Nulls all the instance variables.
   void _nullVariables(){
-    root = NULL; nodeId = 0;
+    root = nullptr; nodeId = 0;
     numNodes = 0; numLeafs = 0;
   }
 
@@ -325,8 +325,8 @@ public:
 
   //----------- SPECIFIC NODE QUESTIONS ------------------------  
   //the root is not a leaf nomatter if it only has one neighbor
-  bool isLeaf() const { return rightMostChild == NULL;}
-  bool isRoot() const { return parent == NULL;}
+  bool isLeaf() const { return rightMostChild == nullptr;}
+  bool isRoot() const { return parent == nullptr;}
 
   bool isRightMostChild() const { return ( !isRoot() && parent->rightMostChild == this);}
   bool isDescendantOf(TREENODE *n){
@@ -403,7 +403,7 @@ public:
   void addChildren(std::vector<TREENODE *> &nodes) {
     
     TREENODE *c=rightMostChild;
-    while(c!=NULL) {
+    while(c!=nullptr) {
       nodes.push_back(c);
       c = c->leftSibling;
     }

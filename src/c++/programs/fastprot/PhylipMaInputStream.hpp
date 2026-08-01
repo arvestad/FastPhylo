@@ -10,7 +10,7 @@ using namespace std;
 class PhylipMaInputStream : public DataInputStream
 {
 public:
-  PhylipMaInputStream(char * filename = NULL);
+  PhylipMaInputStream(char * filename = nullptr);
   ~PhylipMaInputStream();
 
   virtual bool read( std::vector<Sequence> &seqs, std::string & runId, std::vector<std::string> &names, Extrainfos &extrainfos );

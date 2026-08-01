@@ -11,7 +11,7 @@ FastaInputStream::~FastaInputStream() {
 
 FastaInputStream::FastaInputStream(char * filename) {
 	file_was_opened = false;
-	if ( filename == NULL)
+	if ( filename == nullptr)
 		fp = & cin;
 	else {
 		fin.open(filename, ifstream::in);

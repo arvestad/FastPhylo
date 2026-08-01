@@ -8,7 +8,7 @@ class XmlOutputStream : public DataOutputStream
 {
 public:
   XmlOutputStream();
-  XmlOutputStream(char * filename = NULL);
+  XmlOutputStream(char * filename = nullptr);
   ~XmlOutputStream();
 
   void print( StrDblMatrix & dm );

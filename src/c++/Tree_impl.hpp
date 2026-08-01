@@ -67,10 +67,10 @@ TREE::Tree(const Tree<Data2,DataInit2,DataPrintOn2> &t, Data defaultData){
 }
 
 TREE_TEMPLATE TREE& TREE::operator=(const TREE &t){
-  if ( root != NULL )
+  if ( root != nullptr )
     delete root;
-  if( t.root == NULL )
-    root = NULL;
+  if( t.root == nullptr )
+    root = nullptr;
   else{
   root = new TREENODE(*(t.root));
   
@@ -99,7 +99,7 @@ TREE_TEMPLATE TREE& TREE::operator=(const TREE &t){
 }
 
 TREE_TEMPLATE TREE::~Tree(){
-  if ( root != NULL )
+  if ( root != nullptr )
     delete root;
 }
 
@@ -109,7 +109,7 @@ TREE_TEMPLATE TREE::~Tree(){
 
 TREE_TEMPLATE std::istream&
 TREE::objInitFromStream(std::istream &is){
-  if ( root != NULL )
+  if ( root != nullptr )
     delete root;
   _nullVariables();
 
@@ -181,7 +181,7 @@ TREE::initSubtreeFromStream(std::istream &in){
      TREENODE *node = new TREENODE(d,this);
      numNodes++;
      node->rightMostChild = rightChild;
-     while ( rightChild != NULL ){
+     while ( rightChild != nullptr ){
        rightChild->parent = node;
        rightChild = rightChild->leftSibling;
      }
@@ -196,12 +196,12 @@ TREE_TEMPLATE std::ostream&
 TREE::printOn(std::ostream &os) const{
 
   if(xmlPrint) {
-    if(root != NULL)
+    if(root != nullptr)
       os << root;
     return os;
   } else
     {
-      if(root==NULL)
+      if(root==nullptr)
 	return os << "NULLTREE";
 
       return os << root <<";";
@@ -212,7 +212,7 @@ TREE::printOn(std::ostream &os) const{
 TREE_TEMPLATE void
 TREE::drawSubtree(std::ostream &os, const TREENODE *n,std::string &prefix) const{
   if ( n == root ){
-    if ( root == NULL ){
+    if ( root == nullptr ){
       os << "NULL TREE\n";
       return;
     }
@@ -220,9 +220,9 @@ TREE::drawSubtree(std::ostream &os, const TREENODE *n,std::string &prefix) const
     dataPrintOn(os,n->data) << "\n";
     prefix.append("*");
     const TREENODE *c = n->getRightMostChild();
-    while ( c != NULL ){
+    while ( c != nullptr ){
       this->drawSubtree(os, c, prefix);
-      if ( c->getLeftSibling() != NULL )
+      if ( c->getLeftSibling() != nullptr )
         os << prefix << "\n";
       c = c->getLeftSibling();
     }
@@ -236,14 +236,14 @@ TREE::drawSubtree(std::ostream &os, const TREENODE *n,std::string &prefix) const
   
     os << prefix << "-------["<< n->nodeId<< "] ";
     dataPrintOn(os, n->data) << "\n";
-    if ( n->getLeftSibling() == NULL && prefix.size() > 0){
+    if ( n->getLeftSibling() == nullptr && prefix.size() > 0){
       prefix.replace(prefix.size()-1,sizeof(char),1,' ');
     }
     prefix.append("       *");
     const TREENODE *c = n->getRightMostChild();
-    while ( c != NULL ){
+    while ( c != nullptr ){
       this->drawSubtree(os, c, prefix);
-      if ( c->getLeftSibling() != NULL )
+      if ( c->getLeftSibling() != nullptr )
         os << prefix << "\n";
       c = c->getLeftSibling();
     }
@@ -501,12 +501,12 @@ TREENODE::detachFromParent(){
   else
     rightSibling->leftSibling = leftSibling;
     
-  if ( leftSibling != NULL )
+  if ( leftSibling != nullptr )
     leftSibling->rightSibling = rightSibling;
  
-  leftSibling = NULL;
-  rightSibling = NULL;
-  parent = NULL;
+  leftSibling = nullptr;
+  rightSibling = nullptr;
+  parent = nullptr;
 }
 
 
@@ -514,7 +514,7 @@ TREE_TEMPLATE void
 TREE::removeAndDelete(TREENODE *n){
 
   if ( n->isRoot() ){
-    root = NULL;
+    root = nullptr;
     delete n;
     numNodes = 0;
     numLeafs = 0;
@@ -525,7 +525,7 @@ TREE::removeAndDelete(TREENODE *n){
     else
       n->rightSibling->leftSibling = n->leftSibling;
     
-    if ( n->leftSibling != NULL )
+    if ( n->leftSibling != nullptr )
       n->leftSibling->rightSibling = n->rightSibling;
         
     delete n;
@@ -547,7 +547,7 @@ TREE::reRootAt(TREENODE *n){
   //WARNING the root is NOT considered to be a leaf 
   if ( n->isLeaf() )
     numLeafs--;
-  if ( root->rightMostChild->leftSibling == NULL )
+  if ( root->rightMostChild->leftSibling == nullptr )
     numLeafs++;
   
   n->setAsRoot();
@@ -569,7 +569,7 @@ TREENODE::setAsRoot(){
   else
     rightSibling->leftSibling = leftSibling;
     
-  if ( leftSibling != NULL )
+  if ( leftSibling != nullptr )
     leftSibling->rightSibling = rightSibling;
 
   //3. Add parent to the children
@@ -582,9 +582,9 @@ TREENODE::setAsRoot(){
   parent->parent = this;
   
   //4. Fix so that the node doesn't have any siblings or parent
-  leftSibling = NULL;
-  rightSibling = NULL;
-  parent = NULL;
+  leftSibling = nullptr;
+  rightSibling = nullptr;
+  parent = nullptr;
 }
 
 TREE_TEMPLATE bool
@@ -614,23 +614,23 @@ TREE::shortcutNode(TREENODE *n){
   if ( n->isRoot() ){
     root = n->rightMostChild;
     TREENODE *oldrmchild = root->rightMostChild;
-    root->parent = NULL;
+    root->parent = nullptr;
     //if the child is not an only child
-    if ( root->leftSibling != NULL ){
+    if ( root->leftSibling != nullptr ){
       TREENODE *leftMostSibling = n->getLeftMostChild();
-      if ( oldrmchild != NULL )
+      if ( oldrmchild != nullptr )
       oldrmchild->rightSibling = leftMostSibling;
       else numLeafs--;
       leftMostSibling->leftSibling = oldrmchild;
       root->rightMostChild = root->leftSibling;
-      root->leftSibling->rightSibling = NULL;
-      root->leftSibling = NULL;
+      root->leftSibling->rightSibling = nullptr;
+      root->leftSibling = nullptr;
     }
     //set all the parent pointers
     TREENODE *newchild = root->rightMostChild;
     for ( ; newchild != oldrmchild ; newchild = newchild->leftSibling )
       newchild->parent = root;
-    n->rightMostChild = NULL;
+    n->rightMostChild = nullptr;
     delete n;
     numNodes--;
     TREE_ASSERT(assertTreeStructure());
@@ -641,7 +641,7 @@ TREE::shortcutNode(TREENODE *n){
     n->detachFromParent();
     TREENODE *oldrmchild = parent->rightMostChild;
     //if n is not the only child of the parent
-    if ( oldrmchild != NULL ){
+    if ( oldrmchild != nullptr ){
       TREENODE *leftMostSibling = n->getLeftMostChild();
       oldrmchild->rightSibling = leftMostSibling;
       leftMostSibling->leftSibling = oldrmchild;
@@ -651,10 +651,10 @@ TREE::shortcutNode(TREENODE *n){
     TREENODE *newchild = parent->rightMostChild;
     for ( ; newchild != oldrmchild ; newchild = newchild->leftSibling )
       newchild->parent = parent;
-    n->parent = NULL;
-    n->rightMostChild = NULL;
-    n->leftSibling = NULL;
-    n->rightSibling = NULL;
+    n->parent = nullptr;
+    n->rightMostChild = nullptr;
+    n->leftSibling = nullptr;
+    n->rightSibling = nullptr;
     delete n;
     numNodes--;  
     TREE_ASSERT(assertTreeStructure());
@@ -727,10 +727,10 @@ TREE_TEMPLATE bool TREE::assertTreeStructure() const{
   for ( ; i < numNodes ; i++ ){
     const TREENODE *n = prefixvec[i];
     ASSERT_EQ ( (void *) n->ownertree, (void*)this);
-    if ( n->rightSibling != NULL )
+    if ( n->rightSibling != nullptr )
       ASSERT_EQ ( (void *) n->parent,(void *) n->rightSibling->parent );
     if ( !n->isLeaf() )
-      assert ( n->rightMostChild->rightSibling == NULL );
+      assert ( n->rightMostChild->rightSibling == nullptr );
 
     if ( n->isLeaf()) numLeafsVisited++;
   }
@@ -767,10 +767,10 @@ TREE::makeCanonical(const std::vector<TREENODE *> &leafs){
   }
   
   //reroot at parent of leaf 0
-  TREENODE *newroot = NULL;
-  if( leafs[0]->getParent()==NULL ){
+  TREENODE *newroot = nullptr;
+  if( leafs[0]->getParent()==nullptr ){
     TREENODE *newroot = leafs[0]->getLeftMostChild();
-    if( newroot==NULL )
+    if( newroot==nullptr )
       return;//there is only one node in the whole tree
   }
   else
@@ -797,13 +797,13 @@ TREE::makeCanonical(const std::vector<TREENODE *> &leafs){
 
     nodes[i]->rightMostChild = children[0];
     TREENODE *prevSibling = children[0];
-    children[0]->rightSibling = NULL;
+    children[0]->rightSibling = nullptr;
     for(size_t c=1 ; c<children.size() ; c++){
       children[c]->rightSibling = prevSibling;
       prevSibling->leftSibling = children[c];
       prevSibling = children[c];
     }
-    children[children.size()-1]->leftSibling = NULL;
+    children[children.size()-1]->leftSibling = nullptr;
   }
 
 
@@ -856,34 +856,34 @@ TREE::hashCode() const{
 TREE_TEMPLATE TREENODE::TreeNode(Data d, TREE *owner) : data(d){
   ownertree = owner;
   nodeId = owner->getNewNodeId();
-  parent = NULL;
-  rightSibling = NULL;
-  leftSibling = NULL;
-  rightMostChild = NULL;
+  parent = nullptr;
+  rightSibling = nullptr;
+  leftSibling = nullptr;
+  rightMostChild = nullptr;
 }
 
 TREE_TEMPLATE TREENODE::TreeNode(const TREENODE &n) : data(n.data) {
 
   if ( n.isLeaf() ){
-    parent = NULL;
-    rightMostChild = NULL;
-    rightSibling = NULL;
-    leftSibling = NULL;
+    parent = nullptr;
+    rightMostChild = nullptr;
+    rightSibling = nullptr;
+    leftSibling = nullptr;
   }
   else{
-    parent = NULL;
-    leftSibling = NULL;
-    rightSibling = NULL;
+    parent = nullptr;
+    leftSibling = nullptr;
+    rightSibling = nullptr;
     
     TREENODE *child = n.rightMostChild;
     TREENODE *cpy = new TREENODE(*child);
 
     cpy->parent = this;
-    cpy->rightSibling = NULL;
+    cpy->rightSibling = nullptr;
     rightMostChild = cpy;
 
     child = child->leftSibling;
-    while ( child != NULL ){
+    while ( child != nullptr ){
       TREENODE *nextcpy = new TREENODE(*child);
       nextcpy->parent = this;
       cpy->leftSibling = nextcpy;
@@ -891,7 +891,7 @@ TREE_TEMPLATE TREENODE::TreeNode(const TREENODE &n) : data(n.data) {
       cpy = nextcpy;
       child = child->leftSibling;
     }
-    cpy->leftSibling = NULL;
+    cpy->leftSibling = nullptr;
   }
 }
 
@@ -900,7 +900,7 @@ TREE_TEMPLATE TREENODE::TreeNode(const TREENODE &n) : data(n.data) {
 TREE_TEMPLATE TREENODE::~TreeNode(){
   if ( ! isLeaf() ){
     TREENODE *child = rightMostChild;
-    while ( child != NULL ){
+    while ( child != nullptr ){
       TREENODE *tmp = child;
       child = child->leftSibling;
       delete tmp;
@@ -912,24 +912,24 @@ TREE_TEMPLATE template<class Data2, class DataInit2, class DataPrintOn2>
 TREENODE::TreeNode(const TreeNode<Data2,DataInit2,DataPrintOn2> &n, Data defaultData) : data(defaultData) {
 
   if ( n.isLeaf() ){
-    rightMostChild = NULL;
-    rightSibling = NULL;
-    leftSibling = NULL;
+    rightMostChild = nullptr;
+    rightSibling = nullptr;
+    leftSibling = nullptr;
   }
   else{
-    parent = NULL;
-    leftSibling = NULL;
-    rightSibling = NULL;
+    parent = nullptr;
+    leftSibling = nullptr;
+    rightSibling = nullptr;
     
     const TreeNode<Data2,DataInit2,DataPrintOn2> *child = n.getRightMostChild();
     TREENODE *cpy = new TREENODE(*child,defaultData);
 
     cpy->parent = this;
-    cpy->rightSibling = NULL;
+    cpy->rightSibling = nullptr;
     rightMostChild = cpy;
 
     child = child->getLeftSibling();
-    while ( child != NULL ){
+    while ( child != nullptr ){
       TREENODE *nextcpy = new TREENODE(*child,defaultData);
       nextcpy->parent = this;
       cpy->leftSibling = nextcpy;
@@ -937,7 +937,7 @@ TREENODE::TreeNode(const TreeNode<Data2,DataInit2,DataPrintOn2> &n, Data default
       cpy = nextcpy;
       child = child->getLeftSibling();
     }
-    cpy->leftSibling = NULL;
+    cpy->leftSibling = nullptr;
   }
   
 }
@@ -957,10 +957,10 @@ TREENODE::getNumChildren() const{
 TREE_TEMPLATE size_t
 TREENODE::getDegree() const{
   size_t degree = 0;
-  if ( parent != NULL )
+  if ( parent != nullptr )
     degree++;
   TREENODE *child = rightMostChild;
-  for ( ; child != NULL ; child = child->leftSibling )
+  for ( ; child != nullptr ; child = child->leftSibling )
     degree++;
 
   return degree;
@@ -1011,7 +1011,7 @@ TREENODE::printOn(std::ostream &os) const{
 
     child = child->leftSibling;
     
-    for ( ; child != NULL ; child = child->leftSibling )
+    for ( ; child != nullptr ; child = child->leftSibling )
       {
 	if(xmlPrint) {
 	  os <<  child;
@@ -1132,10 +1132,10 @@ TREENODE::getLeftMostChild() const {
 TREE_TEMPLATE TREENODE *
 TREENODE::getLeftMostChild() {
   TREENODE *tmp = rightMostChild;
-  if ( tmp == NULL )
-    return NULL;
+  if ( tmp == nullptr )
+    return nullptr;
 
-  while ( tmp->leftSibling != NULL )
+  while ( tmp->leftSibling != nullptr )
     tmp = tmp->leftSibling;
   
 
@@ -1219,13 +1219,13 @@ TREENODE::getLeftMostDescendantLeaf(){
 // 
 TREE_TEMPLATE void
 TREE::addNodesInPrefixOrder(std::vector<TREENODE *> &nodes, TREENODE *n) {
-  if ( n == NULL ) return;
+  if ( n == nullptr ) return;
   
   nodes.push_back(n);
 
   if ( !n->isLeaf() ){
     TREENODE *child = n->rightMostChild;
-    for ( ; child != NULL ; child = child->leftSibling )
+    for ( ; child != nullptr ; child = child->leftSibling )
       addNodesInPrefixOrder(nodes,child);    
   }   
 }
@@ -1233,24 +1233,24 @@ TREE::addNodesInPrefixOrder(std::vector<TREENODE *> &nodes, TREENODE *n) {
 
 TREE_TEMPLATE void
 TREE::addNodesInPrefixOrder(std::vector<const TREENODE *> &nodes, const TREENODE *n) {
-  if ( n == NULL ) return;
+  if ( n == nullptr ) return;
   
   nodes.push_back(n);
 
   if ( !n->isLeaf() ){
     const TREENODE *child = n->rightMostChild;
-    for ( ; child != NULL ; child = child->leftSibling )
+    for ( ; child != nullptr ; child = child->leftSibling )
       addNodesInPrefixOrder(nodes,child);    
   }   
 }
 
 TREE_TEMPLATE void
 TREE::addNodesInPostfixOrder(std::vector<TREENODE *> &nodes, TREENODE *n){
-  if ( n == NULL ) return;
+  if ( n == nullptr ) return;
   
   if ( !n->isLeaf() ){
     TREENODE *child = n->rightMostChild;
-    for ( ; child != NULL ; child = child->leftSibling )
+    for ( ; child != nullptr ; child = child->leftSibling )
       addNodesInPostfixOrder(nodes,child);    
   }
   
@@ -1285,7 +1285,7 @@ TREE::addNodesInPrefixOrderLeftRight(std::vector<TREENODE *> &nodes, TREENODE *n
 
 TREE_TEMPLATE void
 TREE::addNodesInInfixOrder(std::vector<TREENODE *> &nodes, TREENODE *n){
-  if ( n == NULL ) return;
+  if ( n == nullptr ) return;
   
   if ( n->isLeaf() ){
     nodes.push_back(n);
@@ -1297,7 +1297,7 @@ TREE::addNodesInInfixOrder(std::vector<TREENODE *> &nodes, TREENODE *n){
     nodes.push_back(n);
     
     child = child->leftSibling;
-    for ( ; child != NULL ; child = child->leftSibling )
+    for ( ; child != nullptr ; child = child->leftSibling )
       addNodesInInfixOrder(nodes,child);    
   }
 }
@@ -1324,26 +1324,26 @@ TREE::addNodesInInfixOrder(std::vector<const TREENODE *> &nodes, const TREENODE 
 
 TREE_TEMPLATE void
 TREE::addLeafs(std::vector<TREENODE *> &nodes, TREENODE *n){
- if ( n == NULL ) return;
+ if ( n == nullptr ) return;
    
   if ( n->isLeaf() )
     nodes.push_back(n);
   else{
     TREENODE *child = n->rightMostChild;
-    for ( ; child != NULL ; child = child->leftSibling )
+    for ( ; child != nullptr ; child = child->leftSibling )
       addLeafs(nodes,child);    
   }
 }
 
 TREE_TEMPLATE void
 TREE::addLeafs(std::vector<const TREENODE *> &nodes, const TREENODE *n){
- if ( n == NULL ) return;
+ if ( n == nullptr ) return;
    
   if ( n->isLeaf() )
     nodes.push_back(n);
   else{
     const TREENODE *child = n->rightMostChild;
-    for ( ; child != NULL ; child = child->leftSibling )
+    for ( ; child != nullptr ; child = child->leftSibling )
       addLeafs(nodes,child);    
   }
 }
@@ -1364,14 +1364,14 @@ TREE::addInternalNodes(std::vector<TREENODE *> &nodes, TREENODE *n){
 
 TREE_TEMPLATE void
 TREE::addNodesWithDegree(std::vector<TREENODE *> &nodes, TREENODE *n, size_t degree){
-  if ( n == NULL ) return;
+  if ( n == nullptr ) return;
   
   if ( n->getDegree() == degree )
     nodes.push_back(n);
   
   if ( ! n->isLeaf() ){
     TREENODE *child = n->rightMostChild;
-    for ( ; child != NULL ; child = child->leftSibling )
+    for ( ; child != nullptr ; child = child->leftSibling )
       addNodesWithDegree(nodes,child,degree);    
   }
 }
@@ -1420,14 +1420,14 @@ TREE::addNodesOnPathExceptLCA(std::vector<TREENODE *> &nodes, TREENODE *n1, TREE
   do {
     tmpvec1.push_back(tmp1);
     tmp1 = tmp1->parent;
-  } while ( tmp1 != NULL );
+  } while ( tmp1 != nullptr );
   
   NodeVector tmpvec2;
   TREENODE *tmp2 = n2;
   do {
     tmpvec2.push_back(tmp2);
     tmp2 = tmp2->parent;
-  } while ( tmp2 != NULL );
+  } while ( tmp2 != nullptr );
 
   int i = tmpvec1.size()-1;
   int j = tmpvec2.size()-1;

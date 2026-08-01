@@ -17,7 +17,7 @@ FLOATDISTANCEMATRIX::assureSize(){
 
   for (size_t i = 0 ; i < rows ; i++ ) {
 
-  	if(D[i] == 0) {
+  	if(D[i] == nullptr) {
   	  D[i] = new std::vector<DistanceType>;
   	}
 

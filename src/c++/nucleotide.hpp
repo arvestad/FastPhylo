@@ -250,7 +250,7 @@ nucleotide2char(nucleotide n){
   case DNA_NOT_ALLOWED: return 'Z';
   default: return 'Z';
   }
-  assert( "shouldn't come here\n" == 0 );
+  assert( "shouldn't come here\n" == nullptr );
   return 'Z';
 }
 

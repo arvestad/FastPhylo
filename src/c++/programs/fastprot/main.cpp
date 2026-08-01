@@ -133,10 +133,10 @@ int main (int argc, char **argv) {
   if ( args_info.seed_given ) 
     srand((unsigned int )args_info.seed_arg);
   else
-    srand((unsigned int)time(NULL));
+    srand((unsigned int)time(nullptr));
   try {
-    char *inputfilename = NULL;
-    char *outputfilename = NULL;
+    char *inputfilename = nullptr;
+    char *outputfilename = nullptr;
     DataInputStream *istream;
     DataOutputStream *ostream;
     switch( args_info.inputs_num ) {

@@ -400,7 +400,7 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
   //doesn't exist in the tree then these sequences are read into a
   //garbage string.
   string garbage;
-  string *actualNodeString = NULL;//used to check that the whole sequence has been read
+  string *actualNodeString = nullptr;//used to check that the whole sequence has been read
   garbage.reserve(seqlen+10);
   std::vector<string> names(numSequences);
   std::vector<string *> sequences(numSequences,&garbage);
@@ -688,7 +688,7 @@ SequenceTree::computeSplittSet(std::vector<BitVector> &splitts, SequenceTree::No
       SequenceTree::Node *child= nodes[i]->getRightMostChild();
       splitts[i] = splitts[child->getNodeId()];//set to first child
       child = child->getLeftSibling();
-      for( ; child!=NULL; child = child->getLeftSibling() ){
+      for( ; child!=nullptr; child = child->getLeftSibling() ){
 	splitts[i].bitwiseEqual(splitts[child->getNodeId()]);//join the splitts
       }
     }

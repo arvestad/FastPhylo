@@ -23,7 +23,7 @@ typedef struct {  int in_root;
 class XmlInputStream : public DataInputStream
 {
 public:
-   XmlInputStream(char * filename = NULL);
+   XmlInputStream(char * filename = nullptr);
   ~XmlInputStream();
 
   virtual bool read( std::vector<Sequence> &seqs, std::string & runId, std::vector<std::string> &names, Extrainfos &extrainfos );

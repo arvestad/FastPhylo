@@ -14,7 +14,7 @@
 using namespace std;
 
 BinaryDmOutputStream::BinaryDmOutputStream(char *filename):DataOutputStream(filename) {
-	if(filename != NULL) {
+	if(filename != nullptr) {
 		writeToCout = false;
 		// The base DataOutputStream(filename) constructor already opened fp
 		// via fopen() (open_write_file()); we don't need it (we write
@@ -24,7 +24,7 @@ BinaryDmOutputStream::BinaryDmOutputStream(char *filename):DataOutputStream(file
 		// `-O binary -o <file>` (it only appeared to work when writing to
 		// stdout, since that path never touches fp).
 		fclose(fp);
-		fp = NULL;
+		fp = nullptr;
 		file_was_opened = false;
 		ofs = open_write_binary(filename);
 	} else {
@@ -34,9 +34,9 @@ BinaryDmOutputStream::BinaryDmOutputStream(char *filename):DataOutputStream(file
 }
 
 BinaryDmOutputStream::~BinaryDmOutputStream() {
-	if(ofs != NULL && !writeToCout) {
+	if(ofs != nullptr && !writeToCout) {
 		delete ofs;
-		ofs = NULL;
+		ofs = nullptr;
 	}
 }
 

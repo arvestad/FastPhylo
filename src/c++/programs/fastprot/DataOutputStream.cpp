@@ -5,9 +5,9 @@
 using namespace std;
 
 DataOutputStream::DataOutputStream(char * filename) {
-  fp = NULL;
+  fp = nullptr;
   file_was_opened = false;
-  if ( filename == NULL) {
+  if ( filename == nullptr) {
     fp = stdout;
     }
   else {

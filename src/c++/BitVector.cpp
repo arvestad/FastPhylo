@@ -115,7 +115,7 @@ bool
 BitVector::equals(const Object *o) const{
   BitVector *bv = (BitVector*) o;
 
-  if(bv==NULL) return false;
+  if(bv==nullptr) return false;
   if(numBits!=bv->numBits) return false;
   
   for(size_t i = 0 ; i<bits.size()-1 ; i++){

@@ -11,7 +11,7 @@ PhylipMaInputStream::~PhylipMaInputStream() {
 PhylipMaInputStream::PhylipMaInputStream(char * filename)  
 { 
   file_was_opened = false;
-  if ( filename == 0 )
+  if ( filename == nullptr )
     {
    fp = & std::cin;    }
   else

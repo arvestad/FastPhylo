@@ -22,7 +22,7 @@ operator>>(std::istream &in,Sequence_double &strflt){
 
     //get the first part
     strflt.s = Sequence();
-    while ( strchr(":),;",in.peek()) == NULL && in.peek() != EOF )
+    while ( strchr(":),;",in.peek()) == nullptr && in.peek() != EOF )
       strflt.s.name += in.get();
 
      
@@ -30,7 +30,7 @@ operator>>(std::istream &in,Sequence_double &strflt){
     if ( in.peek() == ':' ){
       std::string fltstr;
       in.get();//skip :
-      while ( strchr("), ;",in.peek()) == NULL && in.peek() != EOF )
+      while ( strchr("), ;",in.peek()) == nullptr && in.peek() != EOF )
         fltstr += in.get();
       strflt.dbl = atof(fltstr.c_str());
     }
@@ -71,7 +71,7 @@ operator>>(std::istream &in, string_double &strflt){
 
   //get the first part
   strflt.s = std::string();
-  while ( strchr(":),;",in.peek()) == NULL && in.peek() != EOF )
+  while ( strchr(":),;",in.peek()) == nullptr && in.peek() != EOF )
     strflt.s += in.get();
 
      
@@ -79,7 +79,7 @@ operator>>(std::istream &in, string_double &strflt){
   if ( in.peek() == ':' ){
     std::string fltstr;
     in.get();//skip :
-    while ( strchr("), ;",in.peek()) == NULL && in.peek() != EOF )
+    while ( strchr("), ;",in.peek()) == nullptr && in.peek() != EOF )
       fltstr += in.get();
     strflt.dbl = atof(fltstr.c_str());
   }
@@ -111,7 +111,7 @@ operator>>(std::istream &in,int_double &intdbl){
 
   //get the first part
   std::string s;
-  while ( strchr(":),;",in.peek()) == NULL && in.peek() != EOF )
+  while ( strchr(":),;",in.peek()) == nullptr && in.peek() != EOF )
     s += in.get();
   intdbl.i = atoi(s.c_str());
      
@@ -119,7 +119,7 @@ operator>>(std::istream &in,int_double &intdbl){
   if ( in.peek() == ':' ){
     std::string fltstr;
     in.get();//skip :
-    while ( strchr("), ;",in.peek()) == NULL && in.peek() != EOF )
+    while ( strchr("), ;",in.peek()) == nullptr && in.peek() != EOF )
       fltstr += in.get();
     intdbl.dbl = atof(fltstr.c_str());
   }
@@ -148,7 +148,7 @@ operator>>(std::istream &in,string_int &strint){
 
     //get the first part
     strint.s = "";
-    while ( strchr(":),;",in.peek()) == NULL && in.peek() != EOF )
+    while ( strchr(":),;",in.peek()) == nullptr && in.peek() != EOF )
       strint.s += in.get();
 
      
@@ -156,7 +156,7 @@ operator>>(std::istream &in,string_int &strint){
     if ( in.peek() == ':' ){
       std::string fltstr;
       in.get();//skip :
-      while ( strchr("), ;",in.peek()) == NULL && in.peek() != EOF )
+      while ( strchr("), ;",in.peek()) == nullptr && in.peek() != EOF )
         fltstr += in.get();
       strint.i = atoi(fltstr.c_str());
     }

@@ -102,7 +102,7 @@ SequenceTree::computeMostParsimoniousSequences(){
       for ( size_t sym = 0 ; sym < numSymbols ; sym++ ){
         p[sym] = 0;
         ParsimonyTree::Node *child = nodes[i]->getRightMostChild();
-        for ( ; child != NULL ; child = child->getLeftSibling() ){
+        for ( ; child != nullptr ; child = child->getLeftSibling() ){
           p_info &child_p = (child->data)[j];
           size_t score = child_p[0] + (sym != 0 ? 1 : 0);
           for ( size_t symC = 1 ; symC < numSymbols ; symC++ ){
@@ -143,7 +143,7 @@ SequenceTree::computeMostParsimoniousSequences(){
   }
   SequenceTree::Node *child = sroot->getRightMostChild();
   ParsimonyTree::Node *childP = proot->getRightMostChild();
-  for ( ; child != NULL ; child = child->getLeftSibling(), childP = childP->getLeftSibling() )
+  for ( ; child != nullptr ; child = child->getLeftSibling(), childP = childP->getLeftSibling() )
     backtrack(child,childP);
   
   //reroot the tree to its old position
@@ -195,6 +195,6 @@ backtrack(SequenceTree::Node *sn, ParsimonyTree::Node *pn){
   //continue backtracking
   SequenceTree::Node *child = sn->getRightMostChild();
   ParsimonyTree::Node *childP = pn->getRightMostChild();
-  for ( ; child != NULL ; child = child->getLeftSibling(), childP = childP->getLeftSibling() )
+  for ( ; child != nullptr ; child = child->getLeftSibling(), childP = childP->getLeftSibling() )
     backtrack(child,childP);
 }

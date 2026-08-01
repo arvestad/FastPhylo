@@ -24,7 +24,7 @@ using namespace std;
 int
 file_exists(const char *fname){
 	FILE *ftmp = fopen(fname,"r");
-	if ( ftmp != NULL ){
+	if ( ftmp != nullptr ){
 		fclose(ftmp);
 		return 1;
 	}
@@ -57,7 +57,7 @@ open_write_file_interactive(const char *fname){
 
 	string tmp;
 	FILE *ftmp = fopen(fname,mode);
-	if ( ftmp == NULL ){
+	if ( ftmp == nullptr ){
 		cout << "Couldn't open file \"" << fname << "\"" << endl;
 		cout << "What file do you want to write to? " << endl;
 		cin >> tmp;
@@ -75,7 +75,7 @@ open_write_file(const char *fname){
 	const char *mode ="w";
 
 	FILE *ftmp = fopen(fname,mode);
-	if ( ftmp == NULL ){
+	if ( ftmp == nullptr ){
 		THROW_EXCEPTION("Couldn't open file \"" << fname << "\"");
 	}
 	else
@@ -137,7 +137,7 @@ open_read_file_interactive(const char *fname){
 	string tmp;
 	while ( true ){
 		FILE *ftmp = fopen(fname,"r");
-		if ( ftmp != NULL )
+		if ( ftmp != nullptr )
 			return ftmp;
 
 		cout << "File doesn't exist: \"" << fname << "\"" << endl;
@@ -151,7 +151,7 @@ open_read_file_interactive(const char *fname){
 FILE *
 open_read_file(const char *fname){
 	FILE *ftmp = fopen(fname,"r");
-	if ( ftmp != NULL )
+	if ( ftmp != nullptr )
 		return ftmp;
 	THROW_EXCEPTION("File doesn't exist: \"" << fname <<"\"");
 }
@@ -164,7 +164,7 @@ open_write_binary(const char *fname){
 		ofs->close();
 		ofs->clear();
 		THROW_EXCEPTION("Can't open file " << fname);
-		ofs = 0;
+		ofs = nullptr;
 	}
 
 	return ofs;
@@ -230,7 +230,7 @@ skipUntil(std::istream &in, char *chars){
 
 	char c;
 	in.get(c);
-	while ( in.good() && strchr(chars,(char)c) == NULL ){
+	while ( in.good() && strchr(chars,(char)c) == nullptr ){
 		in.get(c);
 	}
 	in.unget();
@@ -252,7 +252,7 @@ void
 appendUntil(std::istream &in, std::string &str,  char *chars){
 	char c;
 	in.get(c);
-	while (  in.good() && strchr(chars,c) == NULL ){
+	while (  in.good() && strchr(chars,c) == nullptr ){
 		str.push_back(c);
 		in.get(c);
 	}
