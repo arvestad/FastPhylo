@@ -519,8 +519,14 @@ dist_level_1(b128 &sum_ts_l1, b128 &sum_pyrts_l1, b128 &sum_tv_l1, b128 &sum_del
   // the computation of pyrimidines is described above.
   //
   // The number of deletions are the number of ones given by the del mask.
-  register b128 _LEAST_SIGNIFCANT_BIT = LEAST_SIGNIFCANT_BIT;
-  register b128 _sum_del_l1, _sum_tv_l1,_sum_ts_l1, _sum_pyrts_l1, tmp_tv,tmp_ts;
+  // Modernization Phase 0 (modernization_plan.md): 'register' was a
+  // no-op hint ignored by all modern compilers well before this; ISO
+  // C++17 removed the keyword entirely, making it a hard error. Removed
+  // here as a required syntax fix for the whole project to compile
+  // under C++17 - DNA_b128 itself is out of scope for style
+  // modernization this phase (see modernization_plan.md).
+  b128 _LEAST_SIGNIFCANT_BIT = LEAST_SIGNIFCANT_BIT;
+  b128 _sum_del_l1, _sum_tv_l1,_sum_ts_l1, _sum_pyrts_l1, tmp_tv,tmp_ts;
   _sum_tv_l1 = and_b128(shift_each32_bits_right_b128(diff1,ONE),_LEAST_SIGNIFCANT_BIT);
   _sum_del_l1 = and_b128(del1,_LEAST_SIGNIFCANT_BIT);
   _sum_ts_l1 = andnot_b128(_sum_tv_l1, and_b128(diff1,_LEAST_SIGNIFCANT_BIT));

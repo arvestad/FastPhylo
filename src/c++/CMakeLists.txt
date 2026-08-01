@@ -185,13 +185,12 @@ std_c_utils.c
 xml_output_global.cpp
 )
 
-# Was IF(CMAKE_COMPILER_IS_GNUCXX) only, which never matches Clang/AppleClang
-# - on such compilers the project silently built in each compiler's default
-# (pre-C++11, e.g. AppleClang 15 defaults to C++98) rather than the C++11
-# the codebase is written against. Broadened to cover Clang too.
-IF (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
-ENDIF()
+# C++ standard is now set project-wide via CMAKE_CXX_STANDARD in the
+# root CMakeLists.txt (modernization_plan.md, Phase 0) - portable across
+# compilers, unlike the hand-appended "--std=c++11" GCC/Clang-only flag
+# string this used to be (which also silently never applied on Clang at
+# all until a fix earlier on this branch's parent, speed2026a - see that
+# branch's "Fix silent C++98 build on Clang" commit).
 
 SET(FASTPHYLO_SPECIAL_SRCS DNA_b128/sse2_wrapper.c 
                           DNA_b128/computeTAMURANEIDistance_DNA_b128_String.cpp 

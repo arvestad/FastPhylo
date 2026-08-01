@@ -1,0 +1,32 @@
+# Modernization Phase 0 (modernization_plan.md). Existing code has no
+# single consistent style (tabs in some files, 2-space in others, mixed
+# brace placement) - this is a fresh baseline for new/reformatted code
+# going forward, not a reflection of what's already there.
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: c++17
+
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ColumnLimit: 100
+
+AccessModifierOffset: -2
+NamespaceIndentation: None
+IndentCaseLabels: true
+
+BreakBeforeBraces: Attach
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+PointerAlignment: Left
+ReferenceAlignment: Left
+DerivePointerAlignment: false
+
+SortIncludes: Never
+IncludeBlocks: Preserve
+
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+Cpp11BracedListStyle: true

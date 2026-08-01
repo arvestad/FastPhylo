@@ -71,7 +71,7 @@ open_write_file_interactive(const char *fname){
 
 
 FILE *
-open_write_file(const char *fname) throw(Exception){
+open_write_file(const char *fname){
 	const char *mode ="w";
 
 	FILE *ftmp = fopen(fname,mode);
@@ -114,12 +114,12 @@ open_write_stream_interactive(const char *fname, ofstream &of){
 }
 
 void
-open_write_stream(const string fname, ofstream &of) throw(Exception){
+open_write_stream(const string fname, ofstream &of){
 	open_write_stream(fname.c_str(),of);
 }
 
 void
-open_write_stream(const char *fname, ofstream &of) throw(Exception){
+open_write_stream(const char *fname, ofstream &of){
 	ofstream::openmode mode = ofstream::out;
 
 	of.open(fname,mode);
@@ -149,7 +149,7 @@ open_read_file_interactive(const char *fname){
 }
 
 FILE *
-open_read_file(const char *fname) throw(Exception){
+open_read_file(const char *fname){
 	FILE *ftmp = fopen(fname,"r");
 	if ( ftmp != NULL )
 		return ftmp;
@@ -158,7 +158,7 @@ open_read_file(const char *fname) throw(Exception){
 
 // Added by Mehmood Khan Malagori; email: malagori@kth.se
 std::ofstream *
-open_write_binary(const char *fname) throw(Exception){
+open_write_binary(const char *fname){
 	ofstream *ofs = new ofstream(fname, ios::binary);
 	if ( !ofs->good() ){
 		ofs->close();
@@ -192,12 +192,12 @@ open_read_stream_interactive(const char *fname, ifstream &fin){
 
 
 void
-open_read_stream(const string fname, ofstream &fin) throw(Exception){
+open_read_stream(const string fname, ofstream &fin){
 	open_read_stream(fname.c_str(),fin);
 }
 
 void
-open_read_stream(const char *fname, ifstream &fin) throw(Exception){
+open_read_stream(const char *fname, ifstream &fin){
 	fin.open(fname,ifstream::in);
 
 	if ( fin.good() )

@@ -47,7 +47,9 @@ Exception(const Exception &exc);
     exc.printOn(out);
     stackTrace += out.str();
   }
-  virtual ~Exception() throw() {
+  // Modernization Phase 0 (modernization_plan.md): throw() (means
+  // "never throws") is the pre-C++11 spelling of noexcept.
+  virtual ~Exception() noexcept {
   }
 
   virtual std::ostream& printOn(std::ostream& os) const;

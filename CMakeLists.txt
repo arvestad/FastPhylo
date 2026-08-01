@@ -1,7 +1,18 @@
-cmake_minimum_required(VERSION 3.2)
+# Modernization Phase 0 (modernization_plan.md): was VERSION 3.2
+# (~2015). 3.16 (2019) is a conservative modern floor - widely
+# available on current Linux distros/macOS/CI images - that supports
+# CMAKE_CXX_STANDARD/target_compile_features cleanly.
+cmake_minimum_required(VERSION 3.16)
 project(fastphylo)
 
-ENABLE_TESTING() # Not that we have any tests... 
+# C++17 floor project-wide (modernization_plan.md). Portable across
+# compilers (GCC/Clang/MSVC), unlike the old hand-appended "--std=c++11"
+# GCC/Clang-only flag string this replaces (see src/c++/CMakeLists.txt).
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+ENABLE_TESTING() # code_tests/ProtSeqCode_test and ProtSeqCompare_test as of speed2026a
 
 SET(CPACK_PACKAGE_VERSION_MAJOR "1")
 SET(CPACK_PACKAGE_VERSION_MINOR "0")
@@ -35,7 +46,7 @@ SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2 (>= 2.6.16 )")
 SET(CPACK_SOURCE_GENERATOR TGZ;ZIP)
 SET(CPACK_PACKAGE_CONTACT "arve@su.se") 
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Fastphylo is software project containing the implementations of the algorithms \"Fast Computation of Distance Estimators\", \"Fast Neighbor Joining\", and more.")
-SET(CPACK_PACKAGE_VENDOR "Isaac Elias, Jensl Lagergren, Erik Sjölund, Lars Arvestad, Mehmood Alam Khan, et al")
+SET(CPACK_PACKAGE_VENDOR "Isaac Elias, Jensl Lagergren, Erik Sjï¿½lund, Lars Arvestad, Mehmood Alam Khan, et al")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_PROJECT_NAME}-${PACKAGE_VERSION}")
