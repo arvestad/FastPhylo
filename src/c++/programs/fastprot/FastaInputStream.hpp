@@ -1,21 +1,18 @@
 #pragma once
 
 #include "DataInputStream.hpp"
-#include <iostream>
+#include "fastphylo/io/FastaInputStream.hpp"
 
-using namespace std;
-
+// Layout Phase C: parsing logic lives in the shared io::FastaSequenceReader
+// (see include/fastphylo/io/FastaInputStream.hpp); this class only adapts
+// it to fastprot's DataInputStream interface.
 class FastaInputStream : public DataInputStream {
 public:
-  FastaInputStream(char * filename );
-  ~FastaInputStream() override;
-  bool read( std::vector<Sequence> &seqs, std::string & runId, std::vector<std::string> &names, Extrainfos &extrainfos ) override;
-  bool readSequences( std::vector<Sequence> &seqs, std::string & runId, Extrainfos &extrainfos ) override;
+  FastaInputStream(char *filename);
 
-protected:
-  bool readSeq(std::vector<Sequence> &seqs, std::string &line, int linesRead);
-  istream * fp;
-  ifstream fin;
-  bool file_was_opened;
+  bool read(std::vector<Sequence> &seqs, std::string &runId, std::vector<std::string> &names, Extrainfos &extrainfos) override;
+  bool readSequences(std::vector<Sequence> &seqs, std::string &runId, Extrainfos &extrainfos) override;
+
+private:
+  FastaSequenceReader reader;
 };
-

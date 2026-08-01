@@ -3,40 +3,11 @@
 
 using namespace std;
 
-PhylipMaInputStream::~PhylipMaInputStream() {
-  if ( file_was_opened ) 
-    fin.close();
+bool PhylipMaInputStream::read(vector<DNA_b128_String> &b128_strings, string &runId, vector<string> &names, Extrainfos &extrainfos) {
+  DNA_b128_StringsFromPHYLIP(*reader.fp, names, b128_strings);
+  return true;
 }
 
-PhylipMaInputStream::PhylipMaInputStream(char * filename)  
-{ 
-  file_was_opened = false;
-  if ( filename == 0 )
-    {
-   fp = & std::cin;    }
-  else
-    {
-     fin.open(filename, ifstream::in );
-     if ( ! fin.good() )
-     {
-       fin.close();
-       fin.clear();
-       THROW_EXCEPTION("File doesn't exist: \"" << filename << "\"");
-     }
-     file_was_opened = true;
-     fp = & fin;
-    }
-}
-
-bool
-PhylipMaInputStream::read( std::vector<DNA_b128_String> &b128_strings, std::string & runId, std::vector<std::string> &names, Extrainfos &extrainfos )  
-{
-DNA_b128_StringsFromPHYLIP( *fp ,names,b128_strings);
- return true;
-}
-
-bool
-PhylipMaInputStream::readSequences(std::vector<Sequence> &seqs, std::string & runId, Extrainfos &extrainfos) {
-  Sequence::readSequences(seqs ,*fp);
- return true;
+bool PhylipMaInputStream::readSequences(vector<Sequence> &seqs, string &runId, Extrainfos &extrainfos) {
+  return reader.readSequences(seqs, runId, extrainfos);
 }

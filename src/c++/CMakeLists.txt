@@ -212,7 +212,17 @@ ${FASTPHYLO_IO_DIR}/DataOutputStream.cpp
 ${FASTPHYLO_IO_DIR}/PhylipDmOutputStream.cpp
 ${FASTPHYLO_IO_DIR}/XmlOutputStream.cpp
 ${FASTPHYLO_IO_DIR}/BinaryDmOutputStream.cpp
+${FASTPHYLO_IO_DIR}/FastaInputStream.cpp
+${FASTPHYLO_IO_DIR}/PhylipMaInputStream.cpp
 )
+
+# XmlInputStream.cpp (input side) uses real libxml2 xmlTextReader APIs,
+# unlike XmlOutputStream.cpp above (hand-rolled fprintf, no libxml2
+# dependency) - needs its own WITH_LIBXML guard so -DWITH_LIBXML=OFF
+# builds (verified working in Phase 5) don't try to compile it.
+if(WITH_LIBXML)
+  set(FASTPHYLO_IO_XML_SRCS ${FASTPHYLO_IO_DIR}/XmlInputStream.cpp)
+endif()
 
 set(FASTDIST_SRCS programs/fastdist/main.cpp
 programs/fastdist/PhylipMaInputStream.cpp
@@ -320,7 +330,7 @@ endforeach(i)
 # "SequenceTree.hpp", "NeighborJoining.hpp") - confirmed by grep before
 # this rewrite, not assumed - so consumers linking fastphylo need these
 # on their include path too, which PUBLIC gives them transitively.
-add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS} ${FASTPHYLO_IO_SRCS})
+add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS} ${FASTPHYLO_IO_SRCS} ${FASTPHYLO_IO_XML_SRCS})
 # Modernization Phase B (project_layout_plan.md): the public API lives
 # under include/fastphylo/{core,dna,io,protein}/ now, consumed as
 # #include "fastphylo/<bucket>/X.hpp" - this is the one include root
@@ -331,6 +341,11 @@ target_include_directories(fastphylo PUBLIC
   ${CMAKE_SOURCE_DIR}/include
   ${FASTPHYLO_EXTRA_INCLUDE_DIRS}
 )
+# fastphylo's own XmlInputStream.cpp (when WITH_LIBXML) needs libxml2's
+# headers to compile; PUBLIC so consumers linking fastphylo (which
+# already separately link ${FASTPHYLO_XML_LIBS} themselves) get it
+# transitively too rather than needing to know to add it twice.
+target_link_libraries(fastphylo PUBLIC ${FASTPHYLO_XML_LIBS})
 
 find_package(Threads REQUIRED)
 

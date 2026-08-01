@@ -1,54 +1,19 @@
 #pragma once
 
 #include "DataInputStream.hpp"
+#include "fastphylo/io/FastaInputStream.hpp"
 
-#include <iostream>
-#include <fstream>
-
-class FastaInputStream : public DataInputStream
-{
+// Layout Phase C: parsing logic lives in the shared io::FastaSequenceReader
+// (see include/fastphylo/io/FastaInputStream.hpp); this class only adapts
+// it to fastdist's DataInputStream interface (read() returning
+// DNA_b128_String, which fastprot's equivalent class doesn't need).
+class FastaInputStream : public DataInputStream {
 public:
-  FastaInputStream(char * filename = nullptr);
-  ~FastaInputStream() override;
+  FastaInputStream(char *filename = nullptr);
 
-  bool read( std::vector<DNA_b128_String> &b128_strings, std::string & runId, std::vector<std::string> &names, Extrainfos &extrainfos ) override;
-  bool readSequences( std::vector<Sequence> &seqs, std::string & runId, Extrainfos &extrainfos ) override;
-protected:
+  bool read(std::vector<DNA_b128_String> &b128_strings, std::string &runId, std::vector<std::string> &names, Extrainfos &extrainfos) override;
+  bool readSequences(std::vector<Sequence> &seqs, std::string &runId, Extrainfos &extrainfos) override;
 
-  bool readSeq(std::vector<Sequence> &seqs, std::string &line, int linesRead);
-  bool readSeqName(std::vector<Sequence> &seqs, std::string &line, int linesRead);
-
-  std::istream * fp;
-  std::ifstream fin;
-  bool file_was_opened;
+private:
+  FastaSequenceReader reader;
 };
-
-
-/*#ifndef FASTAINPUTSTREAM_HPP
-#define FASTAINPUTSTREAM_HPP
-
-#include "DataInputStream.hpp"
-
-#include <iostream>
-#include <fstream>
-
-class FastaInputStream : public DataInputStream
-{
-public:
-  FastaInputStream(char * filename );
-  ~FastaInputStream();
-
-  virtual bool read( std::vector<DNA_b128_String> &b128_strings, std::string & runId, std::vector<std::string> &names, Extrainfos &extrainfos );
-  virtual bool readSequences( std::vector<Sequence> &seqs, std::string & runId, Extrainfos &extrainfos );
-protected:
-
-  bool readSeq(std::vector<Sequence> &seqs, std::string &line, int linesRead);
-
-
-  std::istream * fp;
-  std::ifstream fin;
-  bool file_was_opened;
-};
-
-#endif // FASTAINPUTSTREAM_HPP
-*/
