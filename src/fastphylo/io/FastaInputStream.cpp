@@ -41,7 +41,7 @@ bool FastaSequenceReader::readSeq(vector<Sequence> &seqs, string &line, int line
 
   bool readGreaterThan = false;
   while (!readGreaterThan && getline(*fp, line)) {
-    if (line.size() > 0) {
+    if (!line.empty()) {
       if (line[0] == '>') {
         readGreaterThan = true;
         readSeq(seqs, line, linesRead);
@@ -50,7 +50,7 @@ bool FastaSequenceReader::readSeq(vector<Sequence> &seqs, string &line, int line
       }
     }
   }
-  if (seqStr.size() == 0 || seqStr.find_first_not_of(allowedChars) != string::npos) {
+  if (seqStr.empty() || seqStr.find_first_not_of(allowedChars) != string::npos) {
     THROW_EXCEPTION("Malformed Fasta format\n");
     exit(EXIT_FAILURE);
   } else {
@@ -64,7 +64,7 @@ bool FastaSequenceReader::readSequences(vector<Sequence> &seqs, string &runId, E
   string line;
   while (getline(*fp, line)) {
     line.erase(line.find_last_not_of(" \n\r\t") + 1);
-    if (line.size() > 0 && line[0] == '>') {
+    if (!line.empty() && line[0] == '>') {
       readSeq(seqs, line, 0);
       return true;
     }

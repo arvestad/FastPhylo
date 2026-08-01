@@ -40,7 +40,7 @@ Sequence& Sequence::operator=(const Sequence &s){
 }
 
 std::ostream& Sequence::printOn(std::ostream& os) const{
-	if ( name.size() == 0 && seq.size() == 0 )
+	if ( name.empty() && seq.empty() )
 		return os;
 	if ( name.length() < 10 ){
 		os  << std::setw(10) << std::left;
@@ -66,7 +66,7 @@ std::istream& Sequence::objInitFromStream(std::istream &in){
 }
 
 void Sequence::printWithoutGaps(std::ostream& os) const{
-	if ( name.size() == 0 && seq.size() == 0 )
+	if ( name.empty() && seq.empty() )
 		return;
 	if ( name.length() < 10 ){
 		os  << std::setw(10) << std::left;
@@ -84,7 +84,7 @@ void Sequence::printWithoutGaps(std::ostream& os) const{
 
 // Hashes on the name if it exists otherwise the sequence
 size_t Sequence::hashCode() const {
-	if ( name.size() == 0 )
+	if ( name.empty() )
 		return stringhasher(seq);
 	return stringhasher(name);
 }
@@ -100,13 +100,13 @@ bool Sequence::equals(const Object *o) const {
 	// comparing to a differently-typed Object defined (false), not UB.
 	const Sequence *otherseq = dynamic_cast<const Sequence *>(o);
 	if ( otherseq == nullptr ) return false;
-	if ( name.size() == 0 ){
-		if ( otherseq->name.size() == 0 )
+	if ( name.empty() ){
+		if ( otherseq->name.empty() )
 			return seq == otherseq->seq;
 		else
 			return false;
 	}
-	if ( otherseq->name.size() == 0 )
+	if ( otherseq->name.empty() )
 		return false;
 
 	return name == otherseq->name;

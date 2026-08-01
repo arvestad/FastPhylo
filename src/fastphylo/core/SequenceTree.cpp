@@ -46,7 +46,7 @@ SequenceTree::printNodeData(std::ostream &os){
   addNodesInInfixOrder(vec);
   for ( size_t i = 0 ; i < vec.size() ; i++ ){
     string str = vec[i]->data.s.toString();
-    if ( str.size() > 0 )
+    if ( !str.empty() )
       os << "[" << vec[i]->getNodeId() << "] " << str << endl;
   }
 }
@@ -58,7 +58,7 @@ SequenceTree::setNodeNames(){
   addNodesInInfixOrder(vec);
   for ( size_t i = 0 ; i < vec.size() ; i++ ){
     SequenceTree::Node * n = vec[i];
-    if ( NAME(n).length() == 0 )
+    if ( NAME(n).empty() )
       NAME(n) = string("n")+n->getNodeId();
   } 
 }
@@ -83,7 +83,7 @@ SequenceTree::printSequences( std::ostream &os){
   addNodesInInfixOrder(vec);
   for ( size_t i = 0 ; i < vec.size() ; i++ ){
     SequenceTree::Node *n = vec[i];
-    if ( NAME(n).length() == 0 )
+    if ( NAME(n).empty() )
       continue;
     os << n->data.s << endl;
   } 
@@ -95,7 +95,7 @@ SequenceTree::printSequencesWithoutGaps(std::ostream &os){
   addNodesInInfixOrder(vec);
   for ( size_t i = 0 ; i < vec.size() ; i++ ){
     SequenceTree::Node *n = vec[i];
-    if ( NAME(n).length() == 0 )
+    if ( NAME(n).empty() )
       continue;
     os << n->data.s << endl;
   } 
@@ -325,7 +325,7 @@ SequenceTree::mapSequencesOntoTree(char  **nameseqPairs, int numPairs){
   //build hash map {name,node}
   str2node_map str2node((int)(numnodes*1.5));
   for ( size_t i = 0 ; i < numnodes ; i++ ){
-    if ( NAME(nodes[i]).size() > 0 ){
+    if ( !NAME(nodes[i]).empty() ){
       str2node[NAME(nodes[i])] = nodes[i];
     }
   } 
@@ -354,7 +354,7 @@ SequenceTree::mapSequencesOntoTree( std::vector<Sequence> &seqs){
   //build hash map {name,node}
   str2node_map str2node((int)(numnodes*1.5));
   for ( size_t i = 0 ; i < numnodes ; i++ ){
-    if ( NAME(nodes[i]).size() > 0 ){
+    if ( !NAME(nodes[i]).empty() ){
       str2node[NAME(nodes[i])] = nodes[i];
     }
   } 
@@ -394,7 +394,7 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
   for ( size_t i = 0 ; i < nodes.size() ; i++ ){
     SEQ(nodes[i]).clear();
     SEQ(nodes[i]).reserve(seqlen+10);
-    if ( NAME(nodes[i]).size() > 0 ){
+    if ( !NAME(nodes[i]).empty() ){
       str2node[NAME(nodes[i])] = nodes[i];
     }
   }
@@ -480,7 +480,7 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
 
   // CHECK THAT ALL STRINGS HAVE THE SAME LENGTH
   for ( size_t i = 0 ; i < nodes.size() ; i++ )
-    if ( SEQ(nodes[i]).length() != seqlen && SEQ(nodes[i]).length() != 0 ){
+    if ( SEQ(nodes[i]).length() != seqlen && !SEQ(nodes[i]).empty() ){
       USER_ERROR("Sequence not of correct length: " << nodes[i]->data.s.name ); 
     }
 

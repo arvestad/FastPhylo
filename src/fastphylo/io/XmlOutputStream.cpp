@@ -27,7 +27,7 @@ void XmlOutputStream::printStartRun(std::vector<string> &names, std::string &run
     // Otherwise we need to use xmlEncodeSpecialChars(xmlDocPtr doc, const xmlChar * input)
     fprintf(fp, "    <identity name=\"%s\"", names[namei].c_str());
 
-    if (extrainfos.size() > namei && extrainfos[namei].size() > 0) {
+    if (extrainfos.size() > namei && !extrainfos[namei].empty()) {
       fprintf(fp, ">\n     %s\n    </identity>\n", const_cast<char *>(extrainfos[namei].c_str()));
     } else {
       fprintf(fp, "/>\n");

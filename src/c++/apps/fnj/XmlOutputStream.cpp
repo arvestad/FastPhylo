@@ -17,7 +17,7 @@ void XmlOutputStream::print( tree2int_map & tree2count, bool printCounts,string 
       << "    <identities>" <<  std::endl;
   it=extrainfos.begin();
   for (const string &name : names)
-    if ( it != extrainfos.end() && it->size() > 0 ) {
+    if ( it != extrainfos.end() && !it->empty() ) {
       *fp << "     <identity name=\""  <<  name  <<  "\">" << *it << "     </identity>" <<  std::endl;
       ++it;
     }
