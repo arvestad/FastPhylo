@@ -118,34 +118,41 @@ static b128 SIXTEEN = set_first_int_b128(16);
 
 //------------------------------------
 // CONVERTING LEVELS
-// This macro takes three arguments:
-// SUM_CURRENT  -  The b128 sum of the current level for either TS or TV.
-// SUM_PREVIOUS -  The b128 sum of the previous level for either TS or TV.
-// MASK         -  A mask one ones in all positions of every other block of the previous level.
-// SHIFT        -  The number of positions to right shift the sum of the previous level to get them above each other.
+//
+// sum_current    -  The b128 sum of the current level for either TS or TV.
+// sum_previous   -  The b128 sum of the previous level for either TS or TV.
+// mask           -  A mask with ones in all positions of every other block of the previous level.
+// shift          -  The number of positions to right shift the sum of the previous level to get them above each other.
 //
 // Example usage:
-// LEVEL_SUM(sum_ts_l2, sum_ts_l1, TWO_BIT_MASK, TWO);
+// sum_with_previous_level(sum_ts_l2, sum_ts_l1, TWO_BIT_MASK, TWO);
 // Takes the sums from level 1 and adds them to the approraite blocks of sum_ts_l2.
+static inline void
+sum_with_previous_level(b128 &sum_current, b128 sum_previous, b128 mask, b128 shift){
+  sum_current = add_b128(sum_current,add_b128(and_b128(sum_previous,mask),and_b128(shift_each32_bits_right_b128(sum_previous,shift),mask)));
+}
 
-#define SUM_WITH_PREVIOUS_LEVEL(SUM_CURRENT,SUM_PREVIOUS,MASK,SHIFT)\
-{SUM_CURRENT = add_b128(SUM_CURRENT,add_b128(and_b128(SUM_PREVIOUS,MASK),and_b128(shift_each32_bits_right_b128(SUM_PREVIOUS,SHIFT),MASK)));}
-
-//the same but shifts whole bytes instead of bits it is probably
-//faster than the previous one since it utilzes immediates instead of
-//variables.
+//the same but shifts whole bytes instead of bits, probably faster than
+//the previous one since it utilizes immediates instead of variables.
+//shift_bytes_right_b128()'s byte count must be a compile-time
+//immediate (it wraps _mm_srli_si128, which requires one), so this
+//stays a macro rather than becoming a function like the one above -
+//parenthesized to fix bugprone-macro-parentheses without losing that.
 #define SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT(SUM_CURRENT,SUM_PREVIOUS,MASK,BYTESHIFT)\
-{SUM_CURRENT = add_b128(SUM_CURRENT,add_b128(and_b128(SUM_PREVIOUS,MASK),and_b128(shift_bytes_right_b128(SUM_PREVIOUS,BYTESHIFT),MASK)));}
+{(SUM_CURRENT) = add_b128((SUM_CURRENT),add_b128(and_b128((SUM_PREVIOUS),(MASK)),and_b128(shift_bytes_right_b128((SUM_PREVIOUS),(BYTESHIFT)),(MASK))));}
 
 // CONVERTS THE SUM
 // Takes the sum of the previous level adds all two adjacent blocks into
 // one block of the next level.
-#define CONVERT_SUM(SUM_CURRENT,SUM_PREVIOUS,MASK,SHIFT)\
-{SUM_CURRENT = add_b128(and_b128(SUM_PREVIOUS,MASK),and_b128(shift_each32_bits_right_b128(SUM_PREVIOUS,SHIFT),MASK));}
+static inline void
+convert_sum(b128 &sum_current, b128 sum_previous, b128 mask, b128 shift){
+  sum_current = add_b128(and_b128(sum_previous,mask),and_b128(shift_each32_bits_right_b128(sum_previous,shift),mask));
+}
 
-//the same but shifts whole bytes instead of bits
+//the same but shifts whole bytes instead of bits - stays a macro for
+//the same compile-time-immediate reason as the sibling above.
 #define CONVERT_SUM_IMMEDIATEBYTESHIFT(SUM_CURRENT,SUM_PREVIOUS,MASK,BYTESHIFT)\
-{SUM_CURRENT = add_b128(and_b128(SUM_PREVIOUS,MASK),and_b128(shift_bytes_right_b128(SUM_PREVIOUS,BYTESHIFT),MASK));}
+{(SUM_CURRENT) = add_b128(and_b128((SUM_PREVIOUS),(MASK)),and_b128(shift_bytes_right_b128((SUM_PREVIOUS),(BYTESHIFT)),(MASK)));}
 
 
 
@@ -262,58 +269,58 @@ DNA_b128_String::computeTAMURANEIDistance(const DNA_b128_String &s1,
 
 
   //update the block size to size 4
-  CONVERT_SUM(total_sum_ts,total_sum_ts,TWO_BIT_MASK,TWO);
-  CONVERT_SUM(total_sum_pyrts,total_sum_pyrts,TWO_BIT_MASK,TWO);
-  CONVERT_SUM(total_sum_tv,total_sum_tv,TWO_BIT_MASK,TWO);
-  CONVERT_SUM(total_sum_del,total_sum_del,TWO_BIT_MASK,TWO);
+  convert_sum(total_sum_ts,total_sum_ts,TWO_BIT_MASK,TWO);
+  convert_sum(total_sum_pyrts,total_sum_pyrts,TWO_BIT_MASK,TWO);
+  convert_sum(total_sum_tv,total_sum_tv,TWO_BIT_MASK,TWO);
+  convert_sum(total_sum_del,total_sum_del,TWO_BIT_MASK,TWO);
   
   
   //level 1, num_level_1 is atmost 2
   //   switch ( num_level_1 ){
   //   case 2:
   //     dist_level_1();
-  //     SUM_WITH_PREVIOUS_LEVEL(total_sum_ts,sum_ts_l1, TWO_BIT_MASK, TWO);
-  //     SUM_WITH_PREVIOUS_LEVEL(total_sum_tv,sum_tv_l1, TWO_BIT_MASK, TWO);
-  //     SUM_WITH_PREVIOUS_LEVEL(total_sum_del,sum_del_l1, TWO_BIT_MASK, TWO);
+  //     sum_with_previous_level(total_sum_ts,sum_ts_l1, TWO_BIT_MASK, TWO);
+  //     sum_with_previous_level(total_sum_tv,sum_tv_l1, TWO_BIT_MASK, TWO);
+  //     sum_with_previous_level(total_sum_del,sum_del_l1, TWO_BIT_MASK, TWO);
   //   case 1:
   //     dist_level_1();
-  //     SUM_WITH_PREVIOUS_LEVEL(total_sum_ts,sum_ts_l1, TWO_BIT_MASK, TWO);
-  //     SUM_WITH_PREVIOUS_LEVEL(total_sum_tv,sum_tv_l1, TWO_BIT_MASK, TWO);
-  //     SUM_WITH_PREVIOUS_LEVEL(total_sum_del,sum_del_l1, TWO_BIT_MASK, TWO);
+  //     sum_with_previous_level(total_sum_ts,sum_ts_l1, TWO_BIT_MASK, TWO);
+  //     sum_with_previous_level(total_sum_tv,sum_tv_l1, TWO_BIT_MASK, TWO);
+  //     sum_with_previous_level(total_sum_del,sum_del_l1, TWO_BIT_MASK, TWO);
   //   }
   b128 sum_ts_l1,  sum_pyrts_l1, sum_tv_l1,  sum_del_l1;
   PREFETCH_DATA(num_level_1*3);
   for (  ; num_level_1 != 0 ; num_level_1-- ){    
     dist_level_1(sum_ts_l1,  sum_pyrts_l1, sum_tv_l1,  sum_del_l1);
-    SUM_WITH_PREVIOUS_LEVEL(total_sum_ts,sum_ts_l1, TWO_BIT_MASK, TWO);
-    SUM_WITH_PREVIOUS_LEVEL(total_sum_pyrts,sum_pyrts_l1, TWO_BIT_MASK, TWO);
-    SUM_WITH_PREVIOUS_LEVEL(total_sum_tv,sum_tv_l1, TWO_BIT_MASK, TWO);
-    SUM_WITH_PREVIOUS_LEVEL(total_sum_del,sum_del_l1, TWO_BIT_MASK, TWO);
+    sum_with_previous_level(total_sum_ts,sum_ts_l1, TWO_BIT_MASK, TWO);
+    sum_with_previous_level(total_sum_pyrts,sum_pyrts_l1, TWO_BIT_MASK, TWO);
+    sum_with_previous_level(total_sum_tv,sum_tv_l1, TWO_BIT_MASK, TWO);
+    sum_with_previous_level(total_sum_del,sum_del_l1, TWO_BIT_MASK, TWO);
   }
 
   
   //update the block size to size 8
-  CONVERT_SUM(total_sum_ts,total_sum_ts,FOUR_BIT_MASK,FOUR);
-  CONVERT_SUM(total_sum_pyrts,total_sum_pyrts,FOUR_BIT_MASK,FOUR);
-  CONVERT_SUM(total_sum_tv,total_sum_tv,FOUR_BIT_MASK,FOUR);
-  CONVERT_SUM(total_sum_del,total_sum_del,FOUR_BIT_MASK,FOUR);
+  convert_sum(total_sum_ts,total_sum_ts,FOUR_BIT_MASK,FOUR);
+  convert_sum(total_sum_pyrts,total_sum_pyrts,FOUR_BIT_MASK,FOUR);
+  convert_sum(total_sum_tv,total_sum_tv,FOUR_BIT_MASK,FOUR);
+  convert_sum(total_sum_del,total_sum_del,FOUR_BIT_MASK,FOUR);
   
   
   //level 2, num_level_2 is atmost 8
   b128 sum_ts_l2,  sum_pyrts_l2, sum_tv_l2,  sum_del_l2;
   for ( ; num_level_2 != 0 ; num_level_2-- ){
     dist_level_2(sum_ts_l2,  sum_pyrts_l2, sum_tv_l2,  sum_del_l2);
-    SUM_WITH_PREVIOUS_LEVEL(total_sum_ts,sum_ts_l2, FOUR_BIT_MASK, FOUR);
-    SUM_WITH_PREVIOUS_LEVEL(total_sum_pyrts,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
-    SUM_WITH_PREVIOUS_LEVEL(total_sum_tv,sum_tv_l2, FOUR_BIT_MASK, FOUR);
-    SUM_WITH_PREVIOUS_LEVEL(total_sum_del,sum_del_l2, FOUR_BIT_MASK, FOUR);
+    sum_with_previous_level(total_sum_ts,sum_ts_l2, FOUR_BIT_MASK, FOUR);
+    sum_with_previous_level(total_sum_pyrts,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
+    sum_with_previous_level(total_sum_tv,sum_tv_l2, FOUR_BIT_MASK, FOUR);
+    sum_with_previous_level(total_sum_del,sum_del_l2, FOUR_BIT_MASK, FOUR);
   }
 
   
   //update the block size to size 16
-  //  CONVERT_SUM(total_sum_ts,total_sum_ts,EIGHT_BIT_MASK,EIGHT);
-  //  CONVERT_SUM(total_sum_tv,total_sum_tv,EIGHT_BIT_MASK,EIGHT);
-  //  CONVERT_SUM(total_sum_del,total_sum_del,EIGHT_BIT_MASK,EIGHT);  
+  //  convert_sum(total_sum_ts,total_sum_ts,EIGHT_BIT_MASK,EIGHT);
+  //  convert_sum(total_sum_tv,total_sum_tv,EIGHT_BIT_MASK,EIGHT);
+  //  convert_sum(total_sum_del,total_sum_del,EIGHT_BIT_MASK,EIGHT);  
   CONVERT_SUM_IMMEDIATEBYTESHIFT(total_sum_ts,total_sum_ts,EIGHT_BIT_MASK,1);
   CONVERT_SUM_IMMEDIATEBYTESHIFT(total_sum_pyrts,total_sum_pyrts,EIGHT_BIT_MASK,1);
   CONVERT_SUM_IMMEDIATEBYTESHIFT(total_sum_tv,total_sum_tv,EIGHT_BIT_MASK,1);
@@ -324,9 +331,9 @@ DNA_b128_String::computeTAMURANEIDistance(const DNA_b128_String &s1,
   b128 sum_ts_l3,  sum_pyrts_l3, sum_tv_l3,  sum_del_l3;
   for ( ; num_level_3 != 0 ; num_level_3-- ){
     dist_level_3(sum_ts_l3,  sum_pyrts_l3, sum_tv_l3,  sum_del_l3);
-    //    SUM_WITH_PREVIOUS_LEVEL(total_sum_ts,sum_ts_l3, EIGHT_BIT_MASK, EIGHT);
-    //    SUM_WITH_PREVIOUS_LEVEL(total_sum_tv,sum_tv_l3, EIGHT_BIT_MASK, EIGHT);
-    //    SUM_WITH_PREVIOUS_LEVEL(total_sum_del,sum_del_l3, EIGHT_BIT_MASK, EIGHT);
+    //    sum_with_previous_level(total_sum_ts,sum_ts_l3, EIGHT_BIT_MASK, EIGHT);
+    //    sum_with_previous_level(total_sum_tv,sum_tv_l3, EIGHT_BIT_MASK, EIGHT);
+    //    sum_with_previous_level(total_sum_del,sum_del_l3, EIGHT_BIT_MASK, EIGHT);
     SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT(total_sum_ts,sum_ts_l3, EIGHT_BIT_MASK, 1);
     SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT(total_sum_pyrts,sum_pyrts_l3, EIGHT_BIT_MASK, 1);
     SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT(total_sum_tv,sum_tv_l3, EIGHT_BIT_MASK, 1);
@@ -335,9 +342,9 @@ DNA_b128_String::computeTAMURANEIDistance(const DNA_b128_String &s1,
   
   
   //update the block size to size 32
-  //  CONVERT_SUM(total_sum_ts,total_sum_ts, SIXTEEN_BIT_MASK,SIXTEEN);
-  //  CONVERT_SUM(total_sum_tv,total_sum_tv, SIXTEEN_BIT_MASK,SIXTEEN);
-  //  CONVERT_SUM(total_sum_del,total_sum_del, SIXTEEN_BIT_MASK,SIXTEEN);
+  //  convert_sum(total_sum_ts,total_sum_ts, SIXTEEN_BIT_MASK,SIXTEEN);
+  //  convert_sum(total_sum_tv,total_sum_tv, SIXTEEN_BIT_MASK,SIXTEEN);
+  //  convert_sum(total_sum_del,total_sum_del, SIXTEEN_BIT_MASK,SIXTEEN);
   CONVERT_SUM_IMMEDIATEBYTESHIFT(total_sum_ts,total_sum_ts, SIXTEEN_BIT_MASK,2);
   CONVERT_SUM_IMMEDIATEBYTESHIFT(total_sum_pyrts,total_sum_pyrts, SIXTEEN_BIT_MASK,2);
   CONVERT_SUM_IMMEDIATEBYTESHIFT(total_sum_tv,total_sum_tv, SIXTEEN_BIT_MASK,2);
@@ -348,9 +355,9 @@ DNA_b128_String::computeTAMURANEIDistance(const DNA_b128_String &s1,
   b128 sum_ts_l4,  sum_pyrts_l4, sum_tv_l4,  sum_del_l4;
   for (  ; num_level_4 != 0 ; num_level_4-- ){
     dist_level_4(sum_ts_l4,  sum_pyrts_l4, sum_tv_l4,  sum_del_l4);
-    //    SUM_WITH_PREVIOUS_LEVEL(total_sum_ts,sum_ts_l4, SIXTEEN_BIT_MASK, SIXTEEN);
-    //    SUM_WITH_PREVIOUS_LEVEL(total_sum_tv,sum_tv_l4, SIXTEEN_BIT_MASK, SIXTEEN);
-    //    SUM_WITH_PREVIOUS_LEVEL(total_sum_del,sum_del_l4, SIXTEEN_BIT_MASK, SIXTEEN);
+    //    sum_with_previous_level(total_sum_ts,sum_ts_l4, SIXTEEN_BIT_MASK, SIXTEEN);
+    //    sum_with_previous_level(total_sum_tv,sum_tv_l4, SIXTEEN_BIT_MASK, SIXTEEN);
+    //    sum_with_previous_level(total_sum_del,sum_del_l4, SIXTEEN_BIT_MASK, SIXTEEN);
     SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT(total_sum_ts,sum_ts_l4, SIXTEEN_BIT_MASK, 2);
     SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT(total_sum_pyrts,sum_pyrts_l4, SIXTEEN_BIT_MASK, 2);
     SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT(total_sum_tv,sum_tv_l4, SIXTEEN_BIT_MASK, 2);
@@ -532,18 +539,18 @@ dist_level_2(b128 &sum_ts_l2, b128 &sum_pyrts_l2, b128 &sum_tv_l2, b128 &sum_del
   // a block of size 4.
   dist_level_1(sum_ts_l1, sum_pyrts_l1, sum_tv_l1, sum_del_l1);
 
-  CONVERT_SUM(sum_ts_l2,sum_ts_l1, TWO_BIT_MASK, TWO);
-  CONVERT_SUM(sum_pyrts_l2,sum_pyrts_l1, TWO_BIT_MASK, TWO);
-  CONVERT_SUM(sum_tv_l2,sum_tv_l1, TWO_BIT_MASK, TWO);
-  CONVERT_SUM(sum_del_l2,sum_del_l1, TWO_BIT_MASK, TWO);
+  convert_sum(sum_ts_l2,sum_ts_l1, TWO_BIT_MASK, TWO);
+  convert_sum(sum_pyrts_l2,sum_pyrts_l1, TWO_BIT_MASK, TWO);
+  convert_sum(sum_tv_l2,sum_tv_l1, TWO_BIT_MASK, TWO);
+  convert_sum(sum_del_l2,sum_del_l1, TWO_BIT_MASK, TWO);
   
   //----
   // LOOP 2
   dist_level_1(sum_ts_l1, sum_pyrts_l1, sum_tv_l1, sum_del_l1);
-  SUM_WITH_PREVIOUS_LEVEL(sum_ts_l2,sum_ts_l1, TWO_BIT_MASK, TWO);
-  SUM_WITH_PREVIOUS_LEVEL(sum_pyrts_l2,sum_pyrts_l1, TWO_BIT_MASK, TWO);
-  SUM_WITH_PREVIOUS_LEVEL(sum_tv_l2,sum_tv_l1, TWO_BIT_MASK, TWO);
-  SUM_WITH_PREVIOUS_LEVEL(sum_del_l2,sum_del_l1, TWO_BIT_MASK, TWO);
+  sum_with_previous_level(sum_ts_l2,sum_ts_l1, TWO_BIT_MASK, TWO);
+  sum_with_previous_level(sum_pyrts_l2,sum_pyrts_l1, TWO_BIT_MASK, TWO);
+  sum_with_previous_level(sum_tv_l2,sum_tv_l1, TWO_BIT_MASK, TWO);
+  sum_with_previous_level(sum_del_l2,sum_del_l1, TWO_BIT_MASK, TWO);
   
 }
 
@@ -564,75 +571,75 @@ dist_level_3(b128 &sum_ts_l3, b128 &sum_pyrts_l3, b128 &sum_tv_l3, b128 &sum_del
   // Call level 2 and add the blocks of size 4 into
   // a block of size 8.
   dist_level_2(sum_ts_l2, sum_pyrts_l2, sum_tv_l2, sum_del_l2);
-  CONVERT_SUM(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
-  CONVERT_SUM(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
-  CONVERT_SUM(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
-  CONVERT_SUM(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
+  convert_sum(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
+  convert_sum(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
+  convert_sum(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
+  convert_sum(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
 
   //----
   // LOOP 2
   dist_level_2(sum_ts_l2, sum_pyrts_l2, sum_tv_l2, sum_del_l2);
-  SUM_WITH_PREVIOUS_LEVEL(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
 
   
   //----
   // LOOP 3
   dist_level_2(sum_ts_l2, sum_pyrts_l2, sum_tv_l2, sum_del_l2);
-  SUM_WITH_PREVIOUS_LEVEL(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
   
   //----
   // LOOP 4
   dist_level_2(sum_ts_l2, sum_pyrts_l2, sum_tv_l2, sum_del_l2);
-  SUM_WITH_PREVIOUS_LEVEL(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
 
   
   //----
   // LOOP 5
   dist_level_2(sum_ts_l2, sum_pyrts_l2, sum_tv_l2, sum_del_l2);
-  SUM_WITH_PREVIOUS_LEVEL(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
   
   //----
   // LOOP 6
   dist_level_2(sum_ts_l2, sum_pyrts_l2, sum_tv_l2, sum_del_l2);
-  SUM_WITH_PREVIOUS_LEVEL(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
   
   //----
   // LOOP 7
   dist_level_2(sum_ts_l2, sum_pyrts_l2, sum_tv_l2, sum_del_l2);
-  SUM_WITH_PREVIOUS_LEVEL(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
   
   //----
   // LOOP 8
   dist_level_2(sum_ts_l2, sum_pyrts_l2, sum_tv_l2, sum_del_l2);
-  SUM_WITH_PREVIOUS_LEVEL(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
-  SUM_WITH_PREVIOUS_LEVEL(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_ts_l3,sum_ts_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_pyrts_l3,sum_pyrts_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_tv_l3,sum_tv_l2, FOUR_BIT_MASK, FOUR);
+  sum_with_previous_level(sum_del_l3,sum_del_l2, FOUR_BIT_MASK, FOUR);
   
   
 }//END LEVEL 3
@@ -655,9 +662,9 @@ dist_level_4(b128 &sum_ts_l4, b128 &sum_pyrts_l4, b128 &sum_tv_l4, b128 &sum_del
   // Call level 3 and add the blocks of size 8 into
   // a block of size 16.
   dist_level_3(sum_ts_l3, sum_pyrts_l3, sum_tv_l3, sum_del_l3);
-  //  CONVERT_SUM(sum_ts_l4,sum_ts_l3, EIGHT_BIT_MASK, EIGHT);
-  //  CONVERT_SUM(sum_tv_l4,sum_tv_l3, EIGHT_BIT_MASK, EIGHT);
-  //  CONVERT_SUM(sum_del_l4,sum_del_l3, EIGHT_BIT_MASK, EIGHT);
+  //  convert_sum(sum_ts_l4,sum_ts_l3, EIGHT_BIT_MASK, EIGHT);
+  //  convert_sum(sum_tv_l4,sum_tv_l3, EIGHT_BIT_MASK, EIGHT);
+  //  convert_sum(sum_del_l4,sum_del_l3, EIGHT_BIT_MASK, EIGHT);
   CONVERT_SUM_IMMEDIATEBYTESHIFT(sum_ts_l4,sum_ts_l3, EIGHT_BIT_MASK, 1);
   CONVERT_SUM_IMMEDIATEBYTESHIFT(sum_pyrts_l4,sum_pyrts_l3, EIGHT_BIT_MASK, 1);
   CONVERT_SUM_IMMEDIATEBYTESHIFT(sum_tv_l4,sum_tv_l3, EIGHT_BIT_MASK, 1);
@@ -669,9 +676,9 @@ dist_level_4(b128 &sum_ts_l4, b128 &sum_pyrts_l4, b128 &sum_tv_l4, b128 &sum_del
   //PENDING can of course unroll this loop to
   for ( int i = 127 ; i != 0 ; i-- ){
     dist_level_3(sum_ts_l3, sum_pyrts_l3, sum_tv_l3, sum_del_l3);
-    //    SUM_WITH_PREVIOUS_LEVEL(sum_ts_l4,sum_ts_l3, EIGHT_BIT_MASK, EIGHT);
-    //    SUM_WITH_PREVIOUS_LEVEL(sum_tv_l4,sum_tv_l3, EIGHT_BIT_MASK, EIGHT);
-    //    SUM_WITH_PREVIOUS_LEVEL(sum_del_l4,sum_del_l3, EIGHT_BIT_MASK, EIGHT);
+    //    sum_with_previous_level(sum_ts_l4,sum_ts_l3, EIGHT_BIT_MASK, EIGHT);
+    //    sum_with_previous_level(sum_tv_l4,sum_tv_l3, EIGHT_BIT_MASK, EIGHT);
+    //    sum_with_previous_level(sum_del_l4,sum_del_l3, EIGHT_BIT_MASK, EIGHT);
     SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT(sum_ts_l4,sum_ts_l3, EIGHT_BIT_MASK, 1);
     SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT(sum_pyrts_l4,sum_pyrts_l3, EIGHT_BIT_MASK, 1);
     SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT(sum_tv_l4,sum_tv_l3, EIGHT_BIT_MASK, 1);
