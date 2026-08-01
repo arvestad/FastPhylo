@@ -117,7 +117,7 @@ XmlOutputStream::printStartRun( std::vector<string> & names, std::string & runId
 	  fprintf(fp,"    <identity name=\"%s\"", names[namei].c_str() );
 
 	  if ( extrainfos.size() > namei  && extrainfos[namei].size() > 0 ) {
-	    fprintf(fp,">\n     %s\n    </identity>\n", (char *) extrainfos[namei].c_str() );
+	    fprintf(fp,">\n     %s\n    </identity>\n", const_cast<char *>(extrainfos[namei].c_str()) );
           } 
           else {
 	    fprintf(fp,"/>\n");

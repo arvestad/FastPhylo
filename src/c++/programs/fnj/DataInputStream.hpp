@@ -11,7 +11,7 @@
 #include <string>
 #include <libxml/tree.h>
 
-typedef enum { DM_READ = 1, END_OF_RUN = 2, END_OF_RUNS = 3, ERROR = 4 } readstatus;
+enum readstatus { DM_READ = 1, END_OF_RUN = 2, END_OF_RUNS = 3, ERROR = 4 };
 
 class DataInputStream
 {

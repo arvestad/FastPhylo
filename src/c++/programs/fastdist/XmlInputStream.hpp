@@ -12,13 +12,14 @@
 
 
 
-typedef enum { RUN_NOT_FINISHED = 0, RUN_FINISHED = 1 } streamstatus;
+enum streamstatus { RUN_NOT_FINISHED = 0, RUN_FINISHED = 1 };
 
-typedef struct {  int in_root; 
+struct locator_t {
+  int in_root;
   int in_runs;
   int in_run;
-  int in_seq; 
- } locator_t;
+  int in_seq;
+};
 
 
 class XmlInputStream : public DataInputStream

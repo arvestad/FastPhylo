@@ -7,17 +7,18 @@
 #include "DataInputStream.hpp"
 #include "fileFormatSchema.hpp"
 
-typedef struct { bool in_root; 
+struct locator_t {
+  bool in_root;
   bool in_runs;
-  bool in_run; 
+  bool in_run;
   bool in_identities;
   bool in_identity;
-  bool in_dms; 
+  bool in_dms;
   bool in_dm;
-  bool in_row; 
+  bool in_row;
   int row_nr;
-  int entry_nr; 
- } locator_t;
+  int entry_nr;
+};
 
 class XmlInputStream : public DataInputStream {
 public:
