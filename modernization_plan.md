@@ -187,18 +187,57 @@ Lesson reinforced for later phases: don't trust `clang-tidy --fix`
 output blindly on this codebase, even for checks that look purely
 mechanical - verify by rebuilding, not by reading the diff alone.
 
-### Phase 2 - RAII / ownership
+### Phase 2 - RAII / ownership [DONE, 2026-08-01]
 
-Higher risk, needs per-site review, not blanket automation:
+Commits: "Phase 2 (RAII): FloatDistanceMatrix owns rows by value...",
+"Phase 2 (RAII): BinaryDmOutputStream owns its file stream...", "Phase 2
+(RAII): fastprot main.cpp owns its input/output streams...". Delivered,
+all three raw `new`/`delete` sites found in this phase's file scope:
 
-- Raw `new`/`delete` (24 files) -> `std::unique_ptr`/`std::vector`/RAII
-  wrappers, case by case. Verify ownership/lifetime semantics don't
-  change (a `delete` in a destructor vs. a `delete` transferring
-  ownership elsewhere are different fixes).
-- Given this session already found one heap-corruption bug from
-  exactly this class of code (`delete` on a non-`new`'d `FILE*`), audit
-  every remaining raw `new`/`delete` site for similar mismatches while
-  touching it, not just style.
+- **`FloatDistanceMatrix`**: each row was `std::vector<DistanceType>*`
+  (manually `new`'d in `assureSize()`, `delete`'d in the destructor and
+  `removeLastRow()`), with no actual need for the indirection - nothing
+  aliased a row's address, no polymorphism, no optional rows. Changed to
+  a plain `std::vector<std::vector<DistanceType>>`. This also fixed a
+  **real, previously-undiscovered bug**: `operator=()` resized `D` and
+  immediately dereferenced the new (nullptr-initialized) row pointers
+  without allocating them first, so copy-constructing or copy-assigning
+  a `FloatDistanceMatrix` crashed unconditionally on a null-pointer
+  dereference. The one call site
+  (`distance_methods/LeastSquaresFit.cpp:186`) turned out to be
+  unreachable from any built program, which is presumably why nobody had
+  hit it - but it's a live bug in the library's public API, not
+  theoretical. Removed the hand-written copy constructor/`operator=`
+  entirely (Rule of Zero - correct by construction once every member
+  manages its own storage) rather than just patching the null-deref.
+  Verified with a standalone test exercising copy-construction/
+  assignment directly, since neither `RunExamples.sh` nor `ctest`
+  reaches this path.
+- **`BinaryDmOutputStream`** (fastprot): `ofs` was a raw `ostream*` that
+  sometimes aliased `&cout` (not owned) and sometimes pointed to a
+  heap-allocated `ofstream` (owned, tracked with a separate `bool` and
+  manually `delete`'d). Split ownership from aliasing instead: a new
+  `std::unique_ptr<std::ofstream> file_stream` member owns the file, and
+  `ofs` stays a non-owning observer pointer. Hand-written destructor
+  removed entirely. `open_write_binary()` (`file_utils.cpp`) still
+  returns a raw `ofstream*` - left as-is since `fastdist`'s and
+  `fastprot_mpi`'s `BinaryDmOutputStream` (out of this plan's scope)
+  also call it and assign straight into a raw `ostream*`; changing its
+  signature would force out-of-scope files to change too.
+- **`fastprot/main.cpp`**: `DataInputStream*`/`DataOutputStream*` were
+  `new`'d in a format-selection `switch` and `delete`'d at the end of
+  the `try` block - except the `catch(...){ throw; }` handler re-throws
+  unconditionally, so any exception during read/write (a malformed
+  input file, a full disk) skipped the `delete` calls. Real leak on
+  every error path, not just a theoretical one, given this code parses
+  untrusted user-supplied files. Switched both to `std::unique_ptr`
+  (`std::make_unique` at each assignment site); cleanup is now automatic
+  on every path, including the ones that used to leak.
+
+Same verification discipline throughout: full rebuild + `RunExamples.sh`
++ `ctest` byte-identical after each commit (two pre-existing, unrelated
+`ex4`/`ex10` mismatches confirmed present before this phase too, not
+caused by it).
 
 ### Phase 3 - Modern idioms
 
