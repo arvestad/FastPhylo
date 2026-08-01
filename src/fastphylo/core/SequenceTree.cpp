@@ -323,7 +323,7 @@ SequenceTree::mapSequencesOntoTree(char  **nameseqPairs, int numPairs){
 
     
   //build hash map {name,node}
-  str2node_map str2node((int)(numnodes*1.5));
+  str2node_map str2node(static_cast<int>(numnodes*1.5));
   for ( size_t i = 0 ; i < numnodes ; i++ ){
     if ( !NAME(nodes[i]).empty() ){
       str2node[NAME(nodes[i])] = nodes[i];
@@ -352,7 +352,7 @@ SequenceTree::mapSequencesOntoTree( std::vector<Sequence> &seqs){
 
     
   //build hash map {name,node}
-  str2node_map str2node((int)(numnodes*1.5));
+  str2node_map str2node(static_cast<int>(numnodes*1.5));
   for ( size_t i = 0 ; i < numnodes ; i++ ){
     if ( !NAME(nodes[i]).empty() ){
       str2node[NAME(nodes[i])] = nodes[i];
@@ -387,7 +387,7 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
 
 
   //build hash map {name,node} and reserve mem for the sequences
-  str2node_map str2node((int)(getNumNodes()*1.5));
+  str2node_map str2node(static_cast<int>(getNumNodes()*1.5));
   SequenceTree::NodeVector nodes;
   nodes.reserve(getNumNodes());
   addNodesInPrefixOrder(nodes);
@@ -508,7 +508,7 @@ SequenceTree::computeRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){
   SequenceTree::NodeVector nodes2;
   
   //1. index map for leafs;
-  str2int_hashmap name2index((int)(numLeafs*1.5));
+  str2int_hashmap name2index(static_cast<int>(numLeafs*1.5));
   t1.addLeafs(nodes1);
   for(int i=0 ; i<numLeafs ; i++){
     name2index[NAME(nodes1[i])] = i;
@@ -532,8 +532,8 @@ SequenceTree::computeRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){
   t2.computeSplittSet(splitts2,nodes2,name2index);
   //t2.drawTree(cout);
 
-  BitVectorPtr_set set1((int)(numLeafs*1.5));
-  BitVectorPtr_set set2((int)(numLeafs*1.5));
+  BitVectorPtr_set set1(static_cast<int>(numLeafs*1.5));
+  BitVectorPtr_set set2(static_cast<int>(numLeafs*1.5));
     
  
   for(size_t i=0;i<splitts1.size();i++){
@@ -576,7 +576,7 @@ SequenceTree::computeRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){
   //n-3, since the number of nodes in a rooted binary tree is n-1 and the root is not a
   //splitt node and also the two edges from the root describe the same splitt.
 
-  return ((double) in_1_notin_2 + in_2_notin_1)/( set1.size() + set2.size());
+  return (static_cast<double>(in_1_notin_2) + in_2_notin_1)/( set1.size() + set2.size());
  
 }
 float
@@ -592,7 +592,7 @@ SequenceTree::computeFloatRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){
   SequenceTree::NodeVector nodes2;
 
   //1. index map for leafs;
-  str2int_hashmap name2index((int)(numLeafs*1.5));
+  str2int_hashmap name2index(static_cast<int>(numLeafs*1.5));
   t1.addLeafs(nodes1);
   for(int i=0 ; i<numLeafs ; i++){
     name2index[NAME(nodes1[i])] = i;
@@ -616,8 +616,8 @@ SequenceTree::computeFloatRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){
   t2.computeSplittSet(splitts2,nodes2,name2index);
   //t2.drawTree(cout);
 
-  BitVectorPtr_set set1((int)(numLeafs*1.5));
-  BitVectorPtr_set set2((int)(numLeafs*1.5));
+  BitVectorPtr_set set1(static_cast<int>(numLeafs*1.5));
+  BitVectorPtr_set set2(static_cast<int>(numLeafs*1.5));
 
 
   for(size_t i=0;i<splitts1.size();i++){
@@ -660,7 +660,7 @@ SequenceTree::computeFloatRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){
   //n-3, since the number of nodes in a rooted binary tree is n-1 and the root is not a
   //splitt node and also the two edges from the root describe the same splitt.
 
-  return ((float) in_1_notin_2 + in_2_notin_1)/( set1.size() + set2.size());
+  return (static_cast<float>(in_1_notin_2) + in_2_notin_1)/( set1.size() + set2.size());
 
 }
 
@@ -777,7 +777,7 @@ SequenceTree::createLeafNameToLeafIdMap(str2int_hashmap &name2id) const{
   SequenceTree::const_NodeVector leafs;
   addLeafs(leafs);
   name2id.clear();
-  name2id.reserve((size_t)(1.5*leafs.size()));
+  name2id.reserve(static_cast<size_t>(1.5*leafs.size()));
   int leafId = 0;
   
   for(size_t i=0;i<leafs.size();i++)

@@ -237,13 +237,13 @@ compute_Tamura_Nei_fixratio(int strlen, TN_string_distance sd,
   
   float norm = numAs + numCs + numGs + numTs;
   
-  gA = ((float)numAs)/norm;
+  gA = (static_cast<float>(numAs))/norm;
   gA = ( gA < 0.000001 ? 0.000001 : gA);
-  gC = 0.000001+((float)numCs)/norm;
+  gC = 0.000001+(static_cast<float>(numCs))/norm;
   gC = ( gC < 0.000001 ? 0.000001 : gC);
-  gG = 0.000001+((float)numGs)/norm;
+  gG = 0.000001+(static_cast<float>(numGs))/norm;
   gG = ( gG < 0.000001 ? 0.000001 : gG);
-  gT = 0.000001+((float)numTs)/norm;
+  gT = 0.000001+(static_cast<float>(numTs))/norm;
   gT = ( gT < 0.000001 ? 0.000001 : gT);
   
   gU = gA+gG;

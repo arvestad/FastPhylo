@@ -230,7 +230,7 @@ skipUntil(std::istream &in, char *chars){
 
 	char c;
 	in.get(c);
-	while ( in.good() && strchr(chars,(char)c) == nullptr ){
+	while ( in.good() && strchr(chars,c) == nullptr ){
 		in.get(c);
 	}
 	in.unget();

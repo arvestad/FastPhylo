@@ -45,7 +45,7 @@ std::string random_seq(std::size_t len, unsigned int *seed) {
 std::string diverge(const std::string &s, double rate, unsigned int *seed) {
   std::string out = s;
   for (std::size_t i = 0; i < out.size(); i++)
-    if ((rand_r(seed) / (double)RAND_MAX) < rate)
+    if ((rand_r(seed) / static_cast<double>(RAND_MAX)) < rate)
       out[i] = CANONICAL[rand_r(seed) % CANONICAL.size()];
   return out;
 }

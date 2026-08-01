@@ -60,7 +60,7 @@ createRandomTreeUsingBeep(SequenceTree &tree, int numLeafs, int ultrametricDevia
   tree.addNodesInPrefixOrder(nodes);
   EDGE(nodes[0]) = -1;//the root edge
   for(size_t i=1; i<nodes.size() ; i++){
-    EDGE(nodes[i]) = EDGE(nodes[i])* randomFloat(((float)1)/ultrametricDeviation, 
+    EDGE(nodes[i]) = EDGE(nodes[i])* randomFloat((static_cast<float>(1))/ultrametricDeviation, 
 						ultrametricDeviation);
   }
 }

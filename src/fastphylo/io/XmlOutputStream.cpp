@@ -21,7 +21,7 @@ void XmlOutputStream::printSD(StrDblMatrix &dm) {
 }
 
 void XmlOutputStream::printStartRun(std::vector<string> &names, std::string &runId, Extrainfos &extrainfos) {
-  fprintf(fp, "  <run id=\"%s\" dim=\"%i\">\n   <identities>\n", runId.c_str(), (int)names.size());
+  fprintf(fp, "  <run id=\"%s\" dim=\"%i\">\n   <identities>\n", runId.c_str(), static_cast<int>(names.size()));
   for (size_t namei = 0; namei < names.size(); namei++) {
     // This only works if we constrain the input by a schema to not have "<", "&" and such.
     // Otherwise we need to use xmlEncodeSpecialChars(xmlDocPtr doc, const xmlChar * input)
@@ -67,7 +67,7 @@ void XmlOutputStream::printRow(StrFloRow &dm, string name, int row, bool mem_eff
     }
     f += 0.0000005;
     defstr[1] = ' ';
-    int intpart = (int)f;
+    int intpart = static_cast<int>(f);
     if (intpart > 99) {
       if (f - intpart * 1.0 < 0.000001) {
         fprintf(fp, "     <entry>%d</entry>\n", intpart);
@@ -91,7 +91,7 @@ void XmlOutputStream::printRow(StrFloRow &dm, string name, int row, bool mem_eff
     int deci = 4;
     while (deci <= 9) {
       decimalpart = decimalpart * 100.0;
-      int index = (int)decimalpart;
+      int index = static_cast<int>(decimalpart);
       decimalpart = decimalpart - index;
       defstr[deci++] = TENDIGIT[index];
       defstr[deci++] = ONEDIGIT[index];

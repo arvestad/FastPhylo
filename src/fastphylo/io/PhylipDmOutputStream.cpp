@@ -84,7 +84,7 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
       // warning: this isn't enough to get the correct rounding but it is close
       f += 0.0000005;
       defstr[1] = ' ';
-      int intpart = (int)f;
+      int intpart = static_cast<int>(f);
       if (intpart > 99) {
         // %f on a finite float needs at most ~39 integer digits (near
         // FLT_MAX) + '.' + 6 decimals; 128 is generous headroom over
@@ -106,7 +106,7 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
           n = snprintf(rare, sizeof(rare), "%10f", f);
         }
         if (n > 0)
-          row.append(rare, n < (int)sizeof(rare) ? n : (int)sizeof(rare) - 1);
+          row.append(rare, n < static_cast<int>(sizeof(rare)) ? n : static_cast<int>(sizeof(rare)) - 1);
         continue;
       }
       float decimalpart = f - 1.0 * intpart;
@@ -124,7 +124,7 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
       int deci = 4;
       while (deci <= 9) {
         decimalpart = decimalpart * 100.0;
-        int index = (int)decimalpart;
+        int index = static_cast<int>(decimalpart);
         decimalpart = decimalpart - index;
         defstr[deci++] = DataOutputStream::TENDIGIT[index];
         defstr[deci++] = DataOutputStream::ONEDIGIT[index];
@@ -196,7 +196,7 @@ void PhylipDmOutputStream::printRow(StrFloRow &dm, string name, int row, bool me
     }
     f += 0.0000005;
     defstr[1] = ' ';
-    int intpart = (int)f;
+    int intpart = static_cast<int>(f);
     if (intpart > 99) {
       if (f - intpart * 1.0 < 0.000001) {
         fprintf(fp, "%10d", intpart);
@@ -220,7 +220,7 @@ void PhylipDmOutputStream::printRow(StrFloRow &dm, string name, int row, bool me
     int deci = 4;
     while (deci <= 9) {
       decimalpart = decimalpart * 100.0;
-      int index = (int)decimalpart;
+      int index = static_cast<int>(decimalpart);
       decimalpart = decimalpart - index;
       defstr[deci++] = TENDIGIT[index];
       defstr[deci++] = ONEDIGIT[index];
@@ -233,6 +233,6 @@ void PhylipDmOutputStream::printRow(StrFloRow &dm, string name, int row, bool me
 }
 
 void PhylipDmOutputStream::printHeader(size_t numNodes) {
-  fprintf(fp, "%5d\n", (int)numNodes);
+  fprintf(fp, "%5d\n", static_cast<int>(numNodes));
   headerWritten = true;
 }

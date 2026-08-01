@@ -115,9 +115,9 @@ complete_dna_string_compare(float divergence_matrix[4][4],//a 4x4 matrix will be
 
     float total = 0;
     for ( int i = 0 ; i <= 3 ; i++ ){
-        ambiguity_nucleotide ai = nucleotide2ambiguity_nucleotide((nucleotide)i);
+        ambiguity_nucleotide ai = nucleotide2ambiguity_nucleotide(static_cast<nucleotide>(i));
       for ( int j = 0 ; j <= 3 ; j++ ){
-        ambiguity_nucleotide aj = nucleotide2ambiguity_nucleotide((nucleotide)j);
+        ambiguity_nucleotide aj = nucleotide2ambiguity_nucleotide(static_cast<nucleotide>(j));
         if ( is_ambiguity_contained(ai,a1) && is_ambiguity_contained(aj,a2) ){
           total += divergence_matrix[i][j] + divergence_matrix[j][i];//PENDING
         }
@@ -125,8 +125,8 @@ complete_dna_string_compare(float divergence_matrix[4][4],//a 4x4 matrix will be
     }
     for ( int i = 0 ; i <= 3 ; i++ ){
       for ( int j = 0 ; j <= 3 ; j++ ){
-        ambiguity_nucleotide ai = nucleotide2ambiguity_nucleotide((nucleotide)i);
-        ambiguity_nucleotide aj = nucleotide2ambiguity_nucleotide((nucleotide)j);
+        ambiguity_nucleotide ai = nucleotide2ambiguity_nucleotide(static_cast<nucleotide>(i));
+        ambiguity_nucleotide aj = nucleotide2ambiguity_nucleotide(static_cast<nucleotide>(j));
         if ( is_ambiguity_contained(ai,a1) && is_ambiguity_contained(aj,a2) && total != 0){
           tmp_matrix[i][j] += (divergence_matrix[i][j] + divergence_matrix[j][i])/total;//PENDING
         }
@@ -176,12 +176,12 @@ print_divergence_matrix(std::ostream &out, float div_matrix[4][4]){
 
   out << "     ";
   for ( int i = 0 ; i < 4 ; i++ ){
-    out << setw(10) << nucleotide2char((nucleotide)i);
+    out << setw(10) << nucleotide2char(static_cast<nucleotide>(i));
   }
   out << endl;
 
   for ( int i = 0 ; i < 4 ; i++ ){
-    out <<  nucleotide2char((nucleotide)i) << "    ";
+    out <<  nucleotide2char(static_cast<nucleotide>(i)) << "    ";
     for ( int j = 0 ; j < 4 ; j++ ){
       out << setw(10) << div_matrix[i][j];
     }

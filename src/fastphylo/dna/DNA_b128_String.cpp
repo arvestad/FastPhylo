@@ -341,7 +341,7 @@ DNA_b128_String::getNucleotideNOAMBIGUITY(int pos) const{
   
   int c_int = get_int_b128(c_b128, INT_D_I(pos));
 
-  nucleotide n =  (nucleotide)((c_int >> BIT_INT_I(pos) ) & NUCLEOTIDE_INT_MASK);
+  nucleotide n =  static_cast<nucleotide>((c_int >> BIT_INT_I(pos) ) & NUCLEOTIDE_INT_MASK);
 
   //check that not deleted or ambigious
   if ( n == DNA_A_ ){
@@ -455,9 +455,11 @@ bool operator== (const DNA_b128_String::ambiguity_nucleotide_at_position &a,
     (a.ambiguity.n != b.ambiguity.n);
 }
 
-bool 
+bool
 DNA_b128_String::equals(const Object *o) const{
-  const DNA_b128_String *s2 = (const DNA_b128_String *) o;
+  const DNA_b128_String *s2 = dynamic_cast<const DNA_b128_String *>(o);
+  if ( s2 == nullptr )
+    return false;
   if ( getNumChars() != s2->getNumChars() )
     return false;
 

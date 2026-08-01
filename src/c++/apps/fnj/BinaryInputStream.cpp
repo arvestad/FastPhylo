@@ -47,7 +47,7 @@ readstatus BinaryInputStream::readDM(StrFloMatrix & dm, std::vector<std::string>
 		//converter variable is needed for running the binary output/input
 		//also on 64-bit systems
 		fp->read( reinterpret_cast<char*>( &converter ), sizeof(converter));
-		newSize = (int)converter;
+		newSize = static_cast<int>(converter);
 	}
 	dm.resize(newSize);
 	if (!input_was_read) {

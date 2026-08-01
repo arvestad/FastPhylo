@@ -108,7 +108,7 @@ BitVector::hashCode() const{
   h = ((h << 32) | getLastHolderWithClearedUnusedBitPositions()) % 2654435761U;
 
   //  cout <<( unsigned long) h << endl;
-  return (unsigned long) h;
+  return static_cast<unsigned long>(h);
 }
 
 bool   

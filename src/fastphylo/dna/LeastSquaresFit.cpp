@@ -27,7 +27,7 @@ computeLeastSquaresEdgeLengths(const StrDblMatrix &orig_dm,  SequenceTree &tree)
   tree.recalcNodeIdsPostfixOrderAndAddInOrder(nodes);
   size_t nodeIdToRowIndex[nodes.size()];
   size_t rowIndexToNodeId[nodes.size()];
-  str2int_hashmap name2Id((int)(nodes.size()*1.7));
+  str2int_hashmap name2Id(static_cast<int>(nodes.size()*1.7));
 
   for(size_t i=0 ; i<nodes.size() ; i++)
     if(nodes[i]->isLeaf()){
@@ -159,7 +159,7 @@ computeL2(const StrDblMatrix &A,  const StrDblMatrix &B){
   
   ASSERT_EQ(A.getSize(),B.getSize());
   
-  str2int_hashmap name2Row((int)(A.getSize()*1.7));
+  str2int_hashmap name2Row(static_cast<int>(A.getSize()*1.7));
   for(size_t i=0 ; i<A.getSize() ; i++){
     name2Row[A.getIdentifier(i)] = i;
   }
@@ -189,7 +189,7 @@ computeLeastFloatSquaresEdgeLengths(const StrFloMatrix &orig_dm,  SequenceTree &
   tree.recalcNodeIdsPostfixOrderAndAddInOrder(nodes);
   size_t nodeIdToRowIndex[nodes.size()];
   size_t rowIndexToNodeId[nodes.size()];
-  str2int_hashmap name2Id((int)(nodes.size()*1.7));
+  str2int_hashmap name2Id(static_cast<int>(nodes.size()*1.7));
 
   for(size_t i=0 ; i<nodes.size() ; i++)
     if(nodes[i]->isLeaf()){
@@ -321,7 +321,7 @@ computeFloatL2(const StrFloMatrix &A,  const StrFloMatrix &B){
 
   ASSERT_EQ(A.getSize(),B.getSize());
 
-  str2int_hashmap name2Row((int)(A.getSize()*1.7));
+  str2int_hashmap name2Row(static_cast<int>(A.getSize()*1.7));
   for(size_t i=0 ; i<A.getSize() ; i++){
     name2Row[A.getIdentifier(i)] = i;
   }

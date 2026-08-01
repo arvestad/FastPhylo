@@ -369,9 +369,9 @@ Sequence::bootstrapSequences(std::vector<Sequence> &seqs, std::vector<Sequence> 
 	if( stride < seqlen){
 		for( pos=0; pos<(seqlen-stride); pos+= stride)
 			for( size_t i=0; i<stride; i++)
-				samplePositions[pos+i] = (int) (seqlen*1.0*rand()/(RAND_MAX+1.0));
+				samplePositions[pos+i] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
 		for (; pos<seqlen; pos++)
-			samplePositions[pos] = (int) (seqlen*1.0*rand()/(RAND_MAX+1.0));
+			samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
 
 
 		for( seq=0; seq<seqs.size(); seq++){
@@ -388,7 +388,7 @@ Sequence::bootstrapSequences(std::vector<Sequence> &seqs, std::vector<Sequence> 
 	}
 	else{//seqlen<stride
 		for (pos=0; pos<seqlen; pos++)
-			samplePositions[pos] = (int) (seqlen*1.0*rand()/(RAND_MAX+1.0));
+			samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
 
 		for( seq=0; seq<seqs.size(); seq++){
 			string & b = boot[seq].seq;

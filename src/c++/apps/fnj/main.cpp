@@ -152,7 +152,7 @@ int main (int argc, char **argv) {
 		while (status == END_OF_RUN && (args_info.input_format_arg == input_format_arg_xml || run<args_info.number_of_runs_arg)) {
 			string runId;
 			run++;
-			tree2int_map tree2count((size_t)(args_info.bootstraps_arg * 1.3));
+			tree2int_map tree2count(static_cast<size_t>(args_info.bootstraps_arg * 1.3));
 			str2int_hashmap name2id;
 			if (args_info.input_format_arg==input_format_arg_binary) {
 				StrDblMatrix dm;

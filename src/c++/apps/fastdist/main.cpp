@@ -92,10 +92,10 @@ main(int argc,
 	bool no_incl_orig = args_info.no_incl_orig_given;
 
 	if ( args_info.seed_given )
-		srand((unsigned int )args_info.seed_arg);
+		srand(static_cast<unsigned int>(args_info.seed_arg));
 	else
 		// NOLINTNEXTLINE(bugprone-random-generator-seed) - bootstrap resampling, not a security context; time-seeding when no explicit --seed is the intended default.
-		srand((unsigned int)time(nullptr));
+		srand(static_cast<unsigned int>(time(nullptr)));
 
 	//-----------------------------------------------
 	// AMBIGUITIES

@@ -234,7 +234,7 @@ MatrixExpm::MatrixExpm(const Matrix &Q) {
   dgeev_(&n, &v, &size, &data[0], &size, &eigenvalues_real[0], &eg_val_im[0], dummy,
       &dummy_size, &eigenvectors.m_data[0], &size, workspace_size, &w_query, info);
 
-  DblVec workspace_vec((int)workspace_size[0], 0);
+  DblVec workspace_vec(static_cast<int>(workspace_size[0]), 0);
   int w_size = workspace_size[0];
 
   // Real calculation of eigenvalues and eigenvectors for Q
@@ -251,7 +251,7 @@ MatrixExpm::MatrixExpm(const Matrix &Q) {
   //workspace-query, nothing happens with eigenvectors_inv.m_data
   dgetri_(&size, &eigenvectors_inv.m_data[0], &size, ipiv, workspace_size, &w_query, info);
 
-  double workspace_vec2[(int)workspace_size[0]];
+  double workspace_vec2[static_cast<int>(workspace_size[0])];
   w_size = workspace_size[0];
 
   // Inverse calculation from LU values, the inverse is stored in eigenvectors_inv.m_data
