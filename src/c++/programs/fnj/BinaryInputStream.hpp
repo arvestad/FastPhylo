@@ -19,9 +19,11 @@ using namespace std;
 class BinaryInputStream : public DataInputStream {
 public:
   BinaryInputStream(char *filename);
-  ~BinaryInputStream();
+  ~BinaryInputStream() override;
+  // Not an override - see DataInputStream.hpp's 2016-06-14 comment;
+  // only the StrDblMatrix overload below is part of the base interface.
   readstatus readDM(StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos);
-  readstatus readDM(StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos);
+  readstatus readDM(StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos) override;
 
 protected:
   istream *fp;

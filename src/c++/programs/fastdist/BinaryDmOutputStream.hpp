@@ -36,12 +36,12 @@ public:
 	  	}
 		}
 
-	virtual void print( StrDblMatrix & dm ) {};
-	  virtual void printHeader( size_t numNodes );
-	  virtual void printStartRun(std::vector<std::string> & names, std::string & runId, Extrainfos &extrainfos);
-	  virtual void printRow( StrFloRow & dm, std::string name, int row, bool mem_eff_flag);
-	  virtual void printBootstrapSpliter(size_t numNodes){};
-	  virtual void printEndRun() {};
+	void print( StrDblMatrix & dm ) override {};
+	  void printHeader( size_t numNodes ) override;
+	  void printStartRun(std::vector<std::string> & names, std::string & runId, Extrainfos &extrainfos) override;
+	  void printRow( StrFloRow & dm, std::string name, int row, bool mem_eff_flag) override;
+	  void printBootstrapSpliter(size_t numNodes) override {};
+	  void printEndRun() override {};
 
 	private:
 	  // Owns the file when writing to disk; unused (writeToCout) when

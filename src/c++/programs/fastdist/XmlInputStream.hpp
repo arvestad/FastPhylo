@@ -26,10 +26,10 @@ class XmlInputStream : public DataInputStream
 {
 public:
    XmlInputStream(char * filename = nullptr);
-  ~XmlInputStream();
+  ~XmlInputStream() override;
 
-  virtual bool read( std::vector<DNA_b128_String> &b128_strings, std::string & runId, std::vector<std::string> &names, Extrainfos &extrainfos );
-  virtual bool readSequences( std::vector<Sequence> &seqs, std::string & runId, Extrainfos &extrainfos );
+  bool read( std::vector<DNA_b128_String> &b128_strings, std::string & runId, std::vector<std::string> &names, Extrainfos &extrainfos ) override;
+  bool readSequences( std::vector<Sequence> &seqs, std::string & runId, Extrainfos &extrainfos ) override;
 protected:
   xmlTextReaderPtr reader;
   locator_t l;

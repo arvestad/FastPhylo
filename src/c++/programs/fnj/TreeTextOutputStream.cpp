@@ -5,12 +5,11 @@ using namespace std;
 
 void TreeTextOutputStream::print(tree2int_map & tree2count, bool printCounts,string & runId,vector<string> & names, Extrainfos & extrainfos) {
   //OUTPUT THE TREES
-  tree2int_map::iterator iter = tree2count.begin();
-  for(; iter!=tree2count.end(); iter++) {
+  for (const auto &entry : tree2count) {
     if(printCounts)
-      *fp << iter->second << "  " << iter->first << endl;
+      *fp << entry.second << "  " << entry.first << endl;
     else
-      *fp << iter->first << endl;
+      *fp << entry.first << endl;
   }
 }
 
