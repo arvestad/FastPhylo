@@ -39,7 +39,7 @@ file_exists(const char *fname){
 FILE *
 open_write_file_interactive(const char *fname){
 	const char *mode ="w";
-	if ( file_exists(fname) ){
+	if ( file_exists(fname) != 0 ){
 		while ( true ){
 			cout << "File exists: \"" << fname << "\"" << endl;
 			cout << "Do you want to (w)rite or (a)ppend? "<<endl;
@@ -91,7 +91,7 @@ open_write_file(const char *fname){
 void
 open_write_stream_interactive(const char *fname, ofstream &of){
 	ofstream::openmode mode = ofstream::out;
-	if ( file_exists(fname) ){
+	if ( file_exists(fname) != 0 ){
 		while ( true ){
 			cout << "File exists: \"" << fname << "\"" << endl;
 			cout << "Do you want to (w)rite or (a)ppend? "<<endl;
@@ -223,7 +223,7 @@ open_read_stream(const char *fname, ifstream &fin){
 void
 skipWhiteSpace(FILE *f){
 	char c = fgetc(f);
-	while ( isspace(c) ) {
+	while ( isspace(c) != 0 ) {
 		c = fgetc(f);
 }
 
@@ -251,7 +251,7 @@ void
 appendToken(std::istream &in, std::string &str){
 	char c;
 	in.get(c);
-	while ( in.good() && !isspace(c) ){
+	while ( in.good() && (isspace(c) == 0) ){
 		str.push_back(c);
 		in.get(c);
 	}

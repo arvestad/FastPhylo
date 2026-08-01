@@ -4,7 +4,7 @@
 using namespace std;
 
 XmlInputStream::~XmlInputStream() {
-  if (reader) {
+  if (reader != nullptr) {
     xmlFreeTextReader(reader);
 }
   xmlCleanupParser();
@@ -18,7 +18,7 @@ XmlInputStream::XmlInputStream(char * filename) {
   // Comment: The special treatment of the filename "-" in the libxml api, is not  
   // a good designed api, but now when it is there let us use it.
 
-  if (filename && !strncmp(filename, "-",1) ) {
+  if ((filename != nullptr) && (strncmp(filename, "-",1) == 0) ) {
     THROW_EXCEPTION("file name \"-\" is not allowed. See \n http://mail.gnome.org/archives/xml/2007-February/msg00005.html \n  ");
   }
   if (filename==nullptr) {
@@ -65,7 +65,7 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
     int type = xmlTextReaderNodeType(reader);
     name = xmlTextReaderConstName(reader);
     if (l.in_root && l.in_runs && l.in_run && l.in_dms && l.in_dm &&  l.in_row &&
-        depth == 6 &&  xmlStrEqual (name, reinterpret_cast<const xmlChar *>("entry") )  && type == XML_READER_TYPE_ELEMENT) {
+        depth == 6 &&  (xmlStrEqual (name, reinterpret_cast<const xmlChar *>("entry") ) != 0)  && type == XML_READER_TYPE_ELEMENT) {
       l.entry_nr++;
       xmlChar * distanceStr = xmlTextReaderReadString(reader);
       char *endptr = nullptr;
@@ -77,7 +77,7 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
       continue;
     }
     if (l.in_root && l.in_runs && l.in_run && l.in_dms && l.in_dm &&
-         depth == 5 &&  xmlStrEqual (name, reinterpret_cast<const xmlChar *>("row") )) {
+         depth == 5 &&  (xmlStrEqual (name, reinterpret_cast<const xmlChar *>("row") ) != 0)) {
 	    switch (type) {
 				case XML_READER_TYPE_ELEMENT:
 					l.in_row = true;
@@ -92,7 +92,7 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 	    }
 	  }
 		if ( l.in_root && l.in_runs && l.in_run && l.in_dms && depth == 4 &&
-				 xmlStrEqual (name, reinterpret_cast<const xmlChar *>("dm") )) {
+				 (xmlStrEqual (name, reinterpret_cast<const xmlChar *>("dm") ) != 0)) {
 	    switch (type) {
 				case XML_READER_TYPE_ELEMENT:
 					dm.resize(dmSize);
@@ -110,7 +110,7 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 	    }
 	  }
 		if ( l.in_root && l.in_runs && l.in_run && l.in_identities &&
-				 depth == 4 && xmlStrEqual (name, reinterpret_cast<const xmlChar *>("identity") ) ) {
+				 depth == 4 && (xmlStrEqual (name, reinterpret_cast<const xmlChar *>("identity") ) != 0) ) {
 			switch (type) {
 				case XML_READER_TYPE_ELEMENT:
 					nr_of_ids++;
@@ -131,7 +131,7 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 			}
 		}
 		if ( l.in_root && l.in_runs && l.in_run && l.in_identities && l.in_identity &&
-				 depth == 5 && xmlStrEqual (name, reinterpret_cast<const xmlChar *>("extrainfo") )) {
+				 depth == 5 && (xmlStrEqual (name, reinterpret_cast<const xmlChar *>("extrainfo") ) != 0)) {
 	    switch (type) {
 				case XML_READER_TYPE_ELEMENT:
 					xmlChar *outerStr;
@@ -146,7 +146,7 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 	    }
 		}
 		if ( l.in_root && l.in_runs && l.in_run && depth == 3 &&
-				 xmlStrEqual (name, reinterpret_cast<const xmlChar *>("dms") )) {
+				 (xmlStrEqual (name, reinterpret_cast<const xmlChar *>("dms") ) != 0)) {
 	    switch (type) {
 				case XML_READER_TYPE_ELEMENT:
 					l.in_dms = true;
@@ -158,7 +158,7 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 					break; // other node types (whitespace, comments, ...) intentionally ignored
 	    }
 	  }
-		if (  l.in_root && l.in_runs && depth == 2 && xmlStrEqual (name, reinterpret_cast<const xmlChar *>("run") )) {
+		if (  l.in_root && l.in_runs && depth == 2 && (xmlStrEqual (name, reinterpret_cast<const xmlChar *>("run") ) != 0)) {
 			if (type == XML_READER_TYPE_ELEMENT ) {
 				l.in_run = true;
 	      xmlChar * dimStr = xmlTextReaderGetAttribute(reader,reinterpret_cast<const xmlChar *>("dim") );
@@ -184,7 +184,7 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 			}
 	  }
 		if ( l.in_root && l.in_runs && l.in_run && depth == 3 &&
-				 xmlStrEqual (name, reinterpret_cast<const xmlChar *>("identities") )) {
+				 (xmlStrEqual (name, reinterpret_cast<const xmlChar *>("identities") ) != 0)) {
 	    switch (type) {
 				case XML_READER_TYPE_ELEMENT:
 					l.in_identities = true;
@@ -198,7 +198,7 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 					break; // other node types (whitespace, comments, ...) intentionally ignored
 	    }
 	  }
-		if ( l.in_root && depth == 1 &&  xmlStrEqual (name, reinterpret_cast<const xmlChar *>("runs") )) {
+		if ( l.in_root && depth == 1 &&  (xmlStrEqual (name, reinterpret_cast<const xmlChar *>("runs") ) != 0)) {
 	    switch (type) {
 				case XML_READER_TYPE_ELEMENT:
 					l.in_runs = true;
@@ -210,7 +210,7 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 					break; // other node types (whitespace, comments, ...) intentionally ignored
 	    }
 	  }
-		if ( depth == 0 &&  xmlStrEqual (name, reinterpret_cast<const xmlChar *>("root") )) {
+		if ( depth == 0 &&  (xmlStrEqual (name, reinterpret_cast<const xmlChar *>("root") ) != 0)) {
 	    switch (type) {
 				case XML_READER_TYPE_ELEMENT:
 					l.in_root = true;

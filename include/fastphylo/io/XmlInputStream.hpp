@@ -20,10 +20,10 @@
 enum streamstatus { RUN_NOT_FINISHED = 0, RUN_FINISHED = 1 };
 
 struct locator_t {
-  int in_root;
-  int in_runs;
-  int in_run;
-  int in_seq;
+  bool in_root;
+  bool in_runs;
+  bool in_run;
+  bool in_seq;
 };
 
 class XmlSequenceReader {

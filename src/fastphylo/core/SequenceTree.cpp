@@ -440,7 +440,7 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
       char c = fin.get();
       nucleotide n = char2nucleotide(c);
       if ( DNA_NOT_ALLOWED == n ){
-        if ( !isspace(c) ){
+        if ( isspace(c) == 0 ){
           USER_ERROR("Bad character \'" << c << "\'");
         }
         else if ( c != '\n' ) { {
@@ -463,7 +463,7 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
   while ( actualNodeString->length() < seqlen ){
     for ( int i = 0 ; i < numSequences ; i++ ){
       char c = fin.peek();
-      if ( !isspace(c) ){
+      if ( isspace(c) == 0 ){
         //skip first 10 chars
         for ( int j = 10 ; j != 0 ; j-- ) {
           fin.get();
@@ -479,7 +479,7 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
         c = fin.get();
         nucleotide n = char2nucleotide(c);
         if ( DNA_NOT_ALLOWED == n ){
-          if ( !isspace(c) ){
+          if ( isspace(c) == 0 ){
             USER_ERROR("Bad character \'" << c << "\'");
           }
           else if ( c != '\n' ) { {//skip space

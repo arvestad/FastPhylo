@@ -50,7 +50,7 @@ template<class T> void buildTrees(T &dm, tree2int_map &tree2count, std::vector<N
 }
 
 int main (int argc, char **argv) {
-    if(isatty(STDIN_FILENO) && argc==1) {
+    if((isatty(STDIN_FILENO) != 0) && argc==1) {
       cout<<"No input data or parameters. Use -h,--help for more information"<<endl;
       exit(EXIT_FAILURE);
     }
@@ -65,22 +65,22 @@ int main (int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 #endif // WITH_LIBXML
-	if ( args_info.print_relaxng_input_given && args_info.print_relaxng_output_given ) {
+	if ( (args_info.print_relaxng_input_given != 0u) && (args_info.print_relaxng_output_given != 0u) ) {
 		cerr << "error: --print-relaxng-input and --print-relaxng-output can not be used at the same time" << endl;
 		exit(EXIT_FAILURE);
 	}
-	if ( args_info.print_relaxng_input_given ) {
+	if ( args_info.print_relaxng_input_given != 0u ) {
 		cout << fastphylo_distance_matrix_xml_relaxngstr << std::endl;
 		exit(EXIT_SUCCESS);
 	};
-	if ( args_info.print_relaxng_output_given ) {
+	if ( args_info.print_relaxng_output_given != 0u ) {
 		cout << fastphylo_tree_count_xml_relaxngstr << std::endl;
 		exit(EXIT_SUCCESS);
 	};
 	//----------------------------------------------
 	// DISTANCE METHODS
 	std::vector<NJ_method> methods;
-	if( args_info.number_of_runs_given && args_info.input_format_arg == input_format_arg_xml ) {
+	if( (args_info.number_of_runs_given != 0u) && args_info.input_format_arg == input_format_arg_xml ) {
 		cerr << "error: --number-of-runs can not be used together with input format xml." << endl;
 		exit(EXIT_FAILURE);
 	}
@@ -98,7 +98,7 @@ int main (int argc, char **argv) {
 		cerr << "error: method chosen not available" << endl;
 		exit(EXIT_FAILURE);
 	}
-	bool printCounts = args_info.print_counts_flag;
+	bool printCounts = args_info.print_counts_flag != 0;
 	try {
 		char * inputfilename = nullptr;
 		char * outputfilename = nullptr;
@@ -114,7 +114,7 @@ int main (int argc, char **argv) {
 		default: cerr << "Error: you can at most specify one input filename" << endl;
 			exit(EXIT_FAILURE);
 		}
-		if( args_info.outfile_given ) {
+		if( args_info.outfile_given != 0u ) {
 			outputfilename = args_info.outfile_arg;
 }
 		switch ( args_info.input_format_arg ) {
@@ -160,7 +160,7 @@ int main (int argc, char **argv) {
 			if (args_info.input_format_arg==input_format_arg_binary) {
 				StrDblMatrix dm;
 				for (int runNo=1; (status = istream->readDM(dm, names, runId, extrainfos))==DM_READ; runNo++) {
-					if (args_info.analyze_run_number_given) {
+					if (args_info.analyze_run_number_given != 0u) {
 						if (runNo<args_info.analyze_run_number_arg) {
 							continue;
 }
@@ -178,7 +178,7 @@ int main (int argc, char **argv) {
 			else {
 				StrDblMatrix dm;
 				for (int runNo=1; (status = istream->readDM(dm, names, runId, extrainfos))==DM_READ; runNo++) {
-					if (args_info.analyze_run_number_given) {
+					if (args_info.analyze_run_number_given != 0u) {
 						if (runNo<args_info.analyze_run_number_arg) {
 							continue;
 }
@@ -196,7 +196,7 @@ int main (int argc, char **argv) {
 			if (status==END_OF_RUN) {
 				ostream->print(tree2count,printCounts, runId, names, extrainfos);
 }
-			if (args_info.analyze_run_number_given) {
+			if (args_info.analyze_run_number_given != 0u) {
 				break;
 }
 		}//end run loop

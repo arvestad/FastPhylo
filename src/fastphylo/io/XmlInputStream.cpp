@@ -7,7 +7,7 @@
 using namespace std;
 
 XmlSequenceReader::~XmlSequenceReader() {
-  if (reader) {
+  if (reader != nullptr) {
     xmlFreeTextReader(reader);
   }
   xmlCleanupParser();
@@ -21,7 +21,7 @@ XmlSequenceReader::XmlSequenceReader(char *filename, const char *relaxngSchemaSt
   // Comment: The special treatment of the filename "-" in the libxml api, is not
   // a good designed api, but now when it is there let us use it.
 
-  if (filename && !strncmp(filename, "-", 1)) {
+  if ((filename != nullptr) && (strncmp(filename, "-", 1) == 0)) {
     THROW_EXCEPTION("file name \"-\" is not allowed. See \n http://mail.gnome.org/archives/xml/2007-February/msg00005.html \n  ");
   }
 
@@ -71,7 +71,7 @@ bool XmlSequenceReader::readSequences(std::vector<Sequence> &seqs, std::string &
     int type = xmlTextReaderNodeType(reader);
     name = xmlTextReaderConstName(reader);
 
-    if (l.in_root && l.in_runs && l.in_run && depth == 3 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("seq"))) {
+    if (l.in_root && l.in_runs && l.in_run && depth == 3 && (xmlStrEqual(name, reinterpret_cast<const xmlChar *>("seq")) != 0)) {
       if (type == XML_READER_TYPE_ELEMENT) {
         l.in_seq = true;
         numSequences++;
@@ -99,7 +99,7 @@ bool XmlSequenceReader::readSequences(std::vector<Sequence> &seqs, std::string &
       }
     }
 
-    if (l.in_root && l.in_runs && l.in_run && l.in_seq && depth == 4 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("extrainfo"))) {
+    if (l.in_root && l.in_runs && l.in_run && l.in_seq && depth == 4 && (xmlStrEqual(name, reinterpret_cast<const xmlChar *>("extrainfo")) != 0)) {
       if (type == XML_READER_TYPE_ELEMENT) {
         xmlChar *outerStr = xmlTextReaderReadOuterXml(reader);
         extrainfos.back() = reinterpret_cast<char *>(outerStr);
@@ -111,7 +111,7 @@ bool XmlSequenceReader::readSequences(std::vector<Sequence> &seqs, std::string &
       }
     }
 
-    if (depth == 0 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("root"))) {
+    if (depth == 0 && (xmlStrEqual(name, reinterpret_cast<const xmlChar *>("root")) != 0)) {
       switch (type) {
       case XML_READER_TYPE_ELEMENT:
         l.in_root = true;
@@ -124,7 +124,7 @@ bool XmlSequenceReader::readSequences(std::vector<Sequence> &seqs, std::string &
       }
     }
 
-    if (l.in_root && depth == 1 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("runs"))) {
+    if (l.in_root && depth == 1 && (xmlStrEqual(name, reinterpret_cast<const xmlChar *>("runs")) != 0)) {
       switch (type) {
       case XML_READER_TYPE_ELEMENT:
         l.in_runs = true;
@@ -137,7 +137,7 @@ bool XmlSequenceReader::readSequences(std::vector<Sequence> &seqs, std::string &
       }
     }
 
-    if (l.in_root && l.in_runs && depth == 2 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("run"))) {
+    if (l.in_root && l.in_runs && depth == 2 && (xmlStrEqual(name, reinterpret_cast<const xmlChar *>("run")) != 0)) {
       switch (type) {
       case XML_READER_TYPE_ELEMENT: {
         l.in_run = true;

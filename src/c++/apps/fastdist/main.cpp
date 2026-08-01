@@ -60,14 +60,14 @@ main(int argc,
 		exit(EXIT_FAILURE);
 }
 
-	if ( args_info.print_relaxng_input_given && args_info.print_relaxng_output_given ) {
+	if ( (args_info.print_relaxng_input_given != 0u) && (args_info.print_relaxng_output_given != 0u) ) {
 		cerr << "error: --print-relaxng-input and --print-relaxng-output can not be used at the same time" << endl; exit(EXIT_FAILURE);
 	}
 
-	if ( args_info.print_relaxng_input_given ) {  cout << fastphylo_sequence_xml_relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
-	if ( args_info.print_relaxng_output_given ) {  cout << fastphylo_distance_matrix_xml_relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
+	if ( args_info.print_relaxng_input_given != 0u ) {  cout << fastphylo_sequence_xml_relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
+	if ( args_info.print_relaxng_output_given != 0u ) {  cout << fastphylo_distance_matrix_xml_relaxngstr << std::endl;  exit(EXIT_SUCCESS);   };
 
-	if ( args_info.number_of_runs_given && args_info.input_format_arg != input_format_arg_phylip  ) {
+	if ( (args_info.number_of_runs_given != 0u) && args_info.input_format_arg != input_format_arg_phylip  ) {
 		cerr << "error: --number-of-runs can only be used together with --input-format=phylip " << endl; exit(EXIT_FAILURE);
 	}
 
@@ -83,16 +83,16 @@ main(int argc,
 	default: cerr << "error: model chosen not available" << endl; exit(EXIT_FAILURE);
 	}
 
-	trans_model.no_tstvratio = args_info.no_tstvratio_given;
+	trans_model.no_tstvratio = (args_info.no_tstvratio_given != 0u);
 	trans_model.tstvratio = args_info.tstvratio_arg;
 	trans_model.pyrtvratio =  args_info.pyrtvratio_arg;
 
 	//----------------------------------------------
 	// BOOTSTRAPPING
 	int numboot = args_info.bootstraps_arg;
-	bool no_incl_orig = args_info.no_incl_orig_given;
+	bool no_incl_orig = args_info.no_incl_orig_given != 0u;
 
-	if ( args_info.seed_given ) {
+	if ( args_info.seed_given != 0u ) {
 		srand(static_cast<unsigned int>(args_info.seed_arg));
 	} else {
 		// NOLINTNEXTLINE(bugprone-random-generator-seed) - bootstrap resampling, not a security context; time-seeding when no explicit --seed is the intended default.
@@ -102,9 +102,9 @@ main(int argc,
 	//-----------------------------------------------
 	// AMBIGUITIES
 
-	trans_model.no_ambiguities = args_info.no_ambiguities_given;
-	trans_model.no_ambig_resolve = args_info.no_ambig_resolve_given;
-	trans_model.no_transition_probs = args_info.no_transprob_given;
+	trans_model.no_ambiguities = (args_info.no_ambiguities_given != 0u);
+	trans_model.no_ambig_resolve = (args_info.no_ambig_resolve_given != 0u);
+	trans_model.no_transition_probs = (args_info.no_transprob_given != 0u);
 
 	switch ( args_info.ambiguity_frequency_model_arg )
 	{
@@ -112,7 +112,7 @@ main(int argc,
 	case ambiguity_frequency_model_arg_BASE : trans_model.use_base_freqs = true; break;
 	default: cerr << "programming error 2..." << endl; exit(EXIT_FAILURE);
 	}
-	bool useFixFactor = args_info.fixfactor_given;
+	bool useFixFactor = args_info.fixfactor_given != 0u;
 	float fixfactor=args_info.fixfactor_arg;
 	int ndatasets = args_info.number_of_runs_arg;
 
@@ -135,7 +135,7 @@ main(int argc,
 		  default: cerr << "Error: you can at most specify one input filename" << endl; exit(EXIT_FAILURE);
 		}
 
-		if( args_info.outfile_given )
+		if( args_info.outfile_given != 0u )
 		{  outputfilename = args_info.outfile_arg;  }
 
 		switch ( args_info.input_format_arg )
@@ -234,7 +234,7 @@ main(int argc,
 				}
 				ostream->printEndRun();
 			}//end data set loop
-		} else if ( args_info.memory_efficient_given ) {
+		} else if ( args_info.memory_efficient_given != 0u ) {
 			StrFloRow dm;
 						//open infile
 

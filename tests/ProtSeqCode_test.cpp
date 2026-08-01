@@ -60,7 +60,7 @@ static void test_all_codes_distinct_for_fasta_legal_alphabet() {
     char c = fasta_legal[i];
     char up = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
     std::uint8_t code = encode_residue(c);
-    if (seen_upper.count(up)) { continue; // already checked this identity class
+    if (seen_upper.count(up) != 0u) { continue; // already checked this identity class
 }
     seen_upper.insert(up);
     assert(seen.find(code) == seen.end()); // no collision

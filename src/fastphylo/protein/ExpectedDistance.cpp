@@ -191,7 +191,7 @@ DblVec posterior_probability(const Matrix &N){
 
   // Intergration  with trapezoid rule for total posterior probability
   double ptot;
-  if (identical) {                            // Special treatment for the first value
+  if (identical != 0) {                            // Special treatment for the first value
     ptot = log(1+exp(fnk.front())) - log(2); 
   } else {
     ptot = fnk.front() - log(2); // Only half interval
@@ -218,7 +218,7 @@ DblVec posterior_probability(const Matrix &N){
  */
 double integrate(const DblVec fnk){
   double term = 0.0;
-  if (identical) {                  // Special treatment for the first value
+  if (identical != 0) {                  // Special treatment for the first value
     term = (1.0+fnk.front()); 
   } else {
     term = fnk.front();

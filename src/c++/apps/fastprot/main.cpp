@@ -25,7 +25,7 @@
 using namespace std;
 
 int main (int argc, char **argv) {
-  if(isatty(STDIN_FILENO) && argc==1) {
+  if((isatty(STDIN_FILENO) != 0) && argc==1) {
     cout<<"No input data or parameters. Use -h,--help for more information"<<endl;
     exit(EXIT_FAILURE);
   }
@@ -41,15 +41,15 @@ int main (int argc, char **argv) {
   if (cmdline_parser(argc, argv, &args_info) != 0) {
     exit(EXIT_FAILURE);
 }
-  if (args_info.print_relaxng_input_given && args_info.print_relaxng_output_given) {
+  if ((args_info.print_relaxng_input_given != 0u) && (args_info.print_relaxng_output_given != 0u)) {
     cerr << "error: --print-relaxng-input and --print-relaxng-output can not be used at the same time" << endl;
     exit(EXIT_FAILURE);
   }
-  if (args_info.print_relaxng_input_given) { 
+  if (args_info.print_relaxng_input_given != 0u) { 
     cout << fastphylo_prot_sequence_xml_relaxngstr << endl;
     exit(EXIT_SUCCESS);
   }
-  if (args_info.print_relaxng_output_given) {
+  if (args_info.print_relaxng_output_given != 0u) {
     cout << fastphylo_distance_matrix_xml_relaxngstr << endl;
     exit(EXIT_SUCCESS);
   }
@@ -57,7 +57,7 @@ int main (int argc, char **argv) {
 //--------------------------------------------------------------
 // Read translation model
 // prot_sequence_translation_model trans_model;
-  if (! args_info.model_file_given) {
+  if (args_info.model_file_given == 0u) {
     switch (args_info.distance_function_arg) {
       case distance_function_arg_ID:
         trans_model.model = id;
@@ -96,44 +96,44 @@ int main (int argc, char **argv) {
   } else {
     // read file from args_info.model_file_arg
   }
-  if (args_info.maximum_likelihood_given && 
+  if ((args_info.maximum_likelihood_given != 0u) && 
       (trans_model.model == id || trans_model.model == jc ||
       trans_model.model == jck || trans_model.model == jcss ||
-      args_info.sd_given)) {
+      (args_info.sd_given != 0u))) {
     cerr << "error: --maximum-likelihood can not be used with --distance-function=ID, JC, JCK or JCSS or --sd" << endl;
     exit(EXIT_FAILURE);
   }
-  if (args_info.sd_given && 
+  if ((args_info.sd_given != 0u) && 
       (trans_model.model == id || trans_model.model == jc ||
       trans_model.model == jck || trans_model.model == jcss ||
-      args_info.maximum_likelihood_given)) {
+      (args_info.maximum_likelihood_given != 0u))) {
     cerr << "error: --sd can not be used with --distance-function=ID, JC, JCK or JCSS or --maximum-likelihood" << endl;
     exit(EXIT_FAILURE);
   }
-  if (args_info.sd_given) {
+  if (args_info.sd_given != 0u) {
     // Remove this two lines when sd is working again
     cerr << "Aborting: The std dev feature is not yet implemented." << endl;
     exit(1);
   }
   trans_model.step_size = args_info.speed_arg;
-  if (args_info.pfam_given) {
+  if (args_info.pfam_given != 0u) {
     trans_model.tp = norm;
   } else { 
     trans_model.tp = flat;
 }
-  trans_model.sd = args_info.sd_given;
-  trans_model.ml = args_info.maximum_likelihood_given;
-  bool remove_indels = args_info.remove_indels_given;
+  trans_model.sd = (args_info.sd_given != 0u);
+  trans_model.ml = (args_info.maximum_likelihood_given != 0u);
+  bool remove_indels = args_info.remove_indels_given != 0u;
   int ndatasets= 1;
 //----------------------------------------------
 // BOOTSTRAPPING
   int numboot = args_info.bootstraps_arg;
-  bool no_incl_orig = args_info.no_incl_orig_given;
+  bool no_incl_orig = args_info.no_incl_orig_given != 0u;
   if (numboot==0 && no_incl_orig) {
     cerr << "error: No output. No bootstrap or original data will be written" << endl;
     exit(EXIT_FAILURE);
     }
-  if ( args_info.seed_given ) {
+  if ( args_info.seed_given != 0u ) {
     srand(static_cast<unsigned int>(args_info.seed_arg));
   } else {
     // NOLINTNEXTLINE(bugprone-random-generator-seed) - bootstrap resampling, not a security context; time-seeding when no explicit --seed is the intended default.
@@ -154,7 +154,7 @@ int main (int argc, char **argv) {
         cerr << "Error: you can at most specify one input filename" << endl;
         exit(EXIT_FAILURE);
     }
-    if( args_info.outfile_given ) {
+    if( args_info.outfile_given != 0u ) {
       outputfilename = args_info.outfile_arg;
 }
     switch (args_info.input_format_arg) {
@@ -172,7 +172,7 @@ int main (int argc, char **argv) {
       default:
         exit(EXIT_FAILURE);
     }
-    bool binary_format_type=args_info.memory_efficient_given;
+    bool binary_format_type=args_info.memory_efficient_given != 0u;
     switch (args_info.output_format_arg) {
       case output_format_arg_phylip:
         ostream = std::make_unique<PhylipDmOutputStream>(outputfilename);
