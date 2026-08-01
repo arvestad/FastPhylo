@@ -1,5 +1,4 @@
-#ifndef DATAINPUTSTREAM_HPP
-#define DATAINPUTSTREAM_HPP
+#pragma once
 
 #include <cstdio>
 #include "../../Exception.hpp"
@@ -19,4 +18,3 @@ public:
   virtual bool readSequences( std::vector<Sequence> &seqs, std::string & runId, Extrainfos &extrainfos ) = 0;
 };
 
-#endif // DATAINPUTSTREAM_HPP

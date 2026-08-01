@@ -8,8 +8,7 @@
 //                               
 //
 //--------------------------------------------------
-#ifndef DISTANCEROW_IMPL_HPP
-#define DISTANCEROW_IMPL_HPP
+#pragma once
 
 #include <string>
 #include "file_utils.hpp"
@@ -52,4 +51,3 @@ DISTANCEROW::setDefaultValues(DistanceType &defval, Identifier &defid){
 }
 
 
-#endif // DISTANCEROW_IMPL_HPP

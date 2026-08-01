@@ -1,6 +1,5 @@
 
-#ifndef STD_C_UTILS_H
-#define STD_C_UTILS_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,4 +17,3 @@ float randomFloat(float low, float high);
 }
 #endif
 
-#endif

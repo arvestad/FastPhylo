@@ -1,5 +1,4 @@
-#ifndef _PROTDISTCALC_HPP
-#define _PROTDISTCALC_HPP
+#pragma once
 
 #include <vector>
 #include "ExpectedDistance.hpp"        // for type_prior
@@ -58,4 +57,3 @@ typedef struct {
   //! Calculates the Storm-Sonnhammer corrected distance
   void calculate_stormsonnhammer_dists(const SeqVec &sv, StrDblMatrix &dm);
 
-#endif

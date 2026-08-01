@@ -11,8 +11,7 @@
 //--------------------------------------------------
 
 
-#ifndef TREE_HH
-#define TREE_HH
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -456,7 +455,6 @@ private:
 //----------------------------
 
 
-#endif // TREE_HH
 
 
 

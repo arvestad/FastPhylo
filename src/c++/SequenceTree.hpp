@@ -8,8 +8,7 @@
 // cvs: $Id: SequenceTree.hpp,v 1.22 2006/12/08 11:09:13 isaac Exp $                                 
 //
 //--------------------------------------------------
-#ifndef SEQUENCETREE_HPP
-#define SEQUENCETREE_HPP
+#pragma once
 
 #include "Tree.hpp"
 #include <string>
@@ -183,7 +182,6 @@ public:
 
 typedef std::unordered_map<const SequenceTree , int, objhash, objeq> tree2int_map;
 
-#endif // SEQUENCETREE_HPP
 
 
 

@@ -1,5 +1,4 @@
-#ifndef _PROTSEQCOMPARE_HPP_
-#define _PROTSEQCOMPARE_HPP_
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -42,4 +41,3 @@ namespace ProtSeqCode {
 
 }
 
-#endif // _PROTSEQCOMPARE_HPP_

@@ -1,5 +1,4 @@
-#ifndef FASTAINPUTSTREAM_HPP
-#define FASTAINPUTSTREAM_HPP
+#pragma once
 
 #include "DataInputStream.hpp"
 #include <iostream>
@@ -20,4 +19,3 @@ protected:
   bool file_was_opened;
 };
 
-#endif // FASTAINPUTSTREAM_HPP

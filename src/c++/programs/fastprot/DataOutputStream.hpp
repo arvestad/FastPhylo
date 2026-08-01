@@ -1,5 +1,4 @@
-#ifndef DATAOUTPUTSTREAM_HPP
-#define DATAOUTPUTSTREAM_HPP
+#pragma once
 
 #include <cstdio>
 #include <vector>
@@ -33,4 +32,3 @@ protected:
   FILE * fp;
 };
 
-#endif // DATAOUTPUTSTREAM_HPP

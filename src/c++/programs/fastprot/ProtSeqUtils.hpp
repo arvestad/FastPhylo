@@ -1,5 +1,4 @@
-#ifndef _PROTSEQUTILS_HPP_
-#define _PROTSEQUTILS_HPP_
+#pragma once
 
 #include <vector>
 
@@ -17,4 +16,3 @@
 
   //! Performs bootstrapping
   void bootstrap_sequences(const std::vector<Sequence> &seqs, std::vector<Sequence> &bseqs); 
-#endif

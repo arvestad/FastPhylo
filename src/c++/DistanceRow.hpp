@@ -8,8 +8,7 @@
 //                            
 //
 //--------------------------------------------------
-#ifndef DISTANCEROW_HPP
-#define DISTANCEROW_HPP
+#pragma once
 
 #include "Object.hpp"
 #include <vector>
@@ -105,7 +104,6 @@ applyFixFactorRow(StrFloRow &dm, float fixFactor);
 
 
 
-#endif // DISTANCEROW_HPP
 
 
 

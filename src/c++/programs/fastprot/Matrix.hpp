@@ -1,5 +1,4 @@
-#ifndef _MATRIX_HPP_
-#define _MATRIX_HPP_
+#pragma once
 
 #include <stdexcept>
 #include <vector>
@@ -153,4 +152,3 @@
     return m_data[ind];   
   }
 
-#endif

@@ -8,8 +8,7 @@
 // cvs: $Id: DistanceMatrix_impl.hpp,v 1.10 2006/12/19 12:36:23 isaac Exp $                                 
 //
 //--------------------------------------------------
-#ifndef DISTANCEMATRIX_IMPL_HPP
-#define DISTANCEMATRIX_IMPL_HPP
+#pragma once
 
 #include <string>
 #include "file_utils.hpp"
@@ -193,4 +192,3 @@ DISTANCEMATRIX::removeLastRow(){
 
 
 
-#endif // DISTANCEMATRIX_IMPL_HPP

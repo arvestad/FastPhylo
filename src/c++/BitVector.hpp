@@ -7,8 +7,7 @@
 // cvs: $Id: BitVector.hpp,v 1.6 2006/12/08 11:09:12 isaac Exp $
 ///////////////////////////////////////////////
 
-#ifndef BITVECTOR_HPP
-#define BITVECTOR_HPP
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -89,7 +88,6 @@ private:
 
 };
 
-#endif
 
 
 

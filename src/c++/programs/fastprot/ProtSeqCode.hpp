@@ -1,5 +1,4 @@
-#ifndef _PROTSEQCODE_HPP_
-#define _PROTSEQCODE_HPP_
+#pragma once
 
 #include <cstdint>
 #include <string>
@@ -45,4 +44,3 @@ namespace ProtSeqCode {
 
 }
 
-#endif // _PROTSEQCODE_HPP_

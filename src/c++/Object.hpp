@@ -7,8 +7,7 @@
 // cvs: $Id: Object.hpp,v 1.10 2006/12/08 11:09:12 isaac Exp $
 ///////////////////////////////////////////////
 
-#ifndef OBJECT_HPP
-#define OBJECT_HPP
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -98,7 +97,6 @@ std::string operator + (const std::string & s,  const Object * obj);
 std::string operator + ( const Object & obj, const std::string & s);
 std::string operator + ( const Object * obj, const std::string & s);
 
-#endif // OBJECT_HPP
 
 
 

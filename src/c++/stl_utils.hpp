@@ -1,6 +1,5 @@
 
-#ifndef STL_UTILS_HPP
-#define STL_UTILS_HPP
+#pragma once
 
 
 #include <string>
@@ -140,7 +139,6 @@ typedef std::unordered_map<Object *, Object*, objhash_ptr, objeq_ptr> obj_ptr2ob
 typedef std::unordered_map<Object , Object, objhash, objeq> obj2obj_hashmap;
 
 
-#endif // STL_UTILS_HPP
 
 
 

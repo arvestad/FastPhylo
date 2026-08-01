@@ -1,5 +1,4 @@
-#ifndef PHYLIPDMOUTPUTSTREAM_HPP
-#define PHYLIPDMOUTPUTSTREAM_HPP
+#pragma once
 
 #include <cstdio>
 #include <vector>
@@ -19,4 +18,3 @@ public:
   static void printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, bool writeXml, bool writeXmlSD );
 };
 
-#endif // PHYLIPDMOUTPUTSTREAM_HPP

@@ -10,8 +10,7 @@
 //
 //--------------------------------------------------
 
-#ifndef ARGSUTIL_H
-#define ARGSUTIL_H
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,7 +91,6 @@ set_char_option_value(int argc, char **argv, char *option_id, char **optvariable
 #endif  
 
   
-#endif /*ARGSUTIL.H*/
 
 
 

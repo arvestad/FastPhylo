@@ -8,8 +8,7 @@
 // cvs: $Id: DistanceMatrix.hpp,v 1.12 2006/12/08 11:09:12 isaac Exp $                                 
 //
 //--------------------------------------------------
-#ifndef DISTANCEMATRIX_HPP
-#define DISTANCEMATRIX_HPP
+#pragma once
 
 #include "Object.hpp"
 #include <vector>
@@ -128,7 +127,6 @@ bool
 applyFixFactor(StrDblMatrix &dm, double fixFactor);
 
 
-#endif // DISTANCEMATRIX_HPP
 
 
 

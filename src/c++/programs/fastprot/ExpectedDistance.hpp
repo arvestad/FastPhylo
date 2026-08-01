@@ -1,5 +1,4 @@
-#ifndef _EXPECTMAX_HPP_
-#define _EXPECTMAX_HPP_
+#pragma once
 
 #include <vector>
 #include <cmath>
@@ -127,4 +126,3 @@
     return result;
   }
 
-#endif

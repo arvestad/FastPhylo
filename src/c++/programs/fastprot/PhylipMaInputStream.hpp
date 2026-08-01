@@ -1,5 +1,4 @@
-#ifndef PHYLIPMAINPUTSTREAM_HPP
-#define PHYLIPMAINPUTSTREAM_HPP
+#pragma once
 
 #include "DataInputStream.hpp"
 
@@ -23,4 +22,3 @@ protected:
   bool file_was_opened;
 };
 
-#endif // PHYLIPMAINPUTSTREAM_HPP

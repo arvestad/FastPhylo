@@ -1,5 +1,4 @@
-#ifndef XMLOUTPUTSTREAM_HPP
-#define XMLOUTPUTSTREAM_HPP
+#pragma once
 
 #include <cstdio>
 #include "DataOutputStream.hpp"
@@ -18,4 +17,3 @@ public:
   void printEndRun();
 };
 
-#endif // XMLOUTPUTSTREAM_HPP

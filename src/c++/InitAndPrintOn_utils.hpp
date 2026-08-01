@@ -8,8 +8,7 @@
 // cvs: $Id: InitAndPrintOn_utils.hpp,v 1.10 2006/12/19 09:24:36 isaac Exp $                                 
 //
 //--------------------------------------------------
-#ifndef INITANDPRINTON_UTILS_HPP
-#define INITANDPRINTON_UTILS_HPP
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -128,7 +127,6 @@ operator>>(std::istream &in,int_double &intdbl);
 std::ostream&
 operator<<(std::ostream & os, const int_double &intdble);
 
-#endif // INITANDPRINTON_UTILS_HPP
 
 
 

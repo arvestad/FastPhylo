@@ -6,8 +6,7 @@
  *      Email : malagori@kth.se
  */
 
-#ifndef FLOATDISTANCEMATRIX_HPP_
-#define FLOATDISTANCEMATRIX_HPP_
+#pragma once
 
 #include "Object.hpp"
 #include <vector>
@@ -159,4 +158,3 @@ bool
 applyFixFactor(StrFloMatrix &dm, float fixFactor);
 
 
-#endif /* FLOATDISTANCEMATRIX_HPP_ */

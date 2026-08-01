@@ -8,8 +8,7 @@
 // cvs: $Id: Exception.hpp,v 1.4 2006/12/26 15:18:48 isaac Exp $                                 
 //
 //--------------------------------------------------
-#ifndef EXCEPTION_HPP
-#define EXCEPTION_HPP
+#pragma once
 
 #include "Object.hpp"
 #include <string>
@@ -57,7 +56,6 @@ Exception(const Exception &exc);
 };
 
 
-#endif // EXCEPTION_HPP
 
 
 

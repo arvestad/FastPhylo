@@ -8,8 +8,7 @@
 // cvs: $Id: Sequence.hpp,v 1.9 2006/12/25 18:40:39 isaac Exp $                                 
 //
 //--------------------------------------------------
-#ifndef SEQUENCE_HPP
-#define SEQUENCE_HPP
+#pragma once
 
 #include <string>
 #include "stl_utils.hpp"
@@ -77,7 +76,6 @@ public:
 
 
 
-#endif // SEQUENCE_HPP
 
 
 

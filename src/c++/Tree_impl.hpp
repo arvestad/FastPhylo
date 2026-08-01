@@ -9,8 +9,7 @@
 //
 // Implementation of Tree template in Tree.hpp 
 //--------------------------------------------------
-#ifndef TREE_IMPL_HPP
-#define TREE_IMPL_HPP
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -1609,7 +1608,6 @@ TREE::addNodesInIdOrder(std::vector<const TREENODE *> &nodes) const{
 
 
 
-#endif // TREE_IMPL_HPP
 
 
 

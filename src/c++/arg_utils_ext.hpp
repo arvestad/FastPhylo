@@ -10,8 +10,7 @@
 //
 // Provides extended functionality to command line argument handeling in C++
 //--------------------------------------------------
-#ifndef EXTARGSUTIL_HPP
-#define EXTARGSUTIL_HPP
+#pragma once
 
 #include <vector>
 #include "arg_utils.h"
@@ -44,4 +43,3 @@ get_list_of_floats(int argc, char **argv, char *option_id, std::vector<float> &v
 
 
 
-#endif // EXTARGSUTIL_HPP

@@ -1,5 +1,4 @@
-#ifndef _MODEL_MAT_HPP_
-#define _MODEL_MAT_HPP_
+#pragma once
 
 #include <vector>
 
@@ -39,4 +38,3 @@ enum model_type {id, jc, jck, jcss, wag, day, arve, jtt, mvr, lg};
   Matrix get_lg();
   //! The LG equilibrium distribution
   DblVec get_lg_eq();
-#endif

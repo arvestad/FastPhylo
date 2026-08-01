@@ -5,8 +5,7 @@
  *      Author: Henric Zazzi
  */
 
-#ifndef BINARYDMOUTPUTSTREAM_HPP_
-#define BINARYDMOUTPUTSTREAM_HPP_
+#pragma once
 
 #include "DataOutputStream.hpp"
 #include <cstdio>
@@ -28,4 +27,3 @@ private:
 	bool writeToCout;
 };
 
-#endif /* BINARYDMOUTPUTSTREAM_HPP_ */

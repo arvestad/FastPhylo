@@ -4,8 +4,7 @@
 //
 //
 
-#ifndef SIMULATOR_HPP
-#define SIMULATOR_HPP
+#pragma once
 
 
 #include "stl_utils.hpp"
@@ -44,4 +43,3 @@ createGnuplotFromDatFile(const char *datfilename,
 			 const std::vector<std::string> names, 
 			 const std::string title);
 
-#endif

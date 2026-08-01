@@ -9,8 +9,7 @@
 //
 //--------------------------------------------------
 
-#ifndef FILE_UTILS_HPP
-#define FILE_UTILS_HPP
+#pragma once
 
 
 #include <stdio.h>
@@ -83,4 +82,3 @@ void
 appendUntil(std::istream &in, std::string &str,  char *chars);
 
 
-#endif // FILE_UTILS_HPP

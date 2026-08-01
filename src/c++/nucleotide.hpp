@@ -10,8 +10,7 @@
 //--------------------------------------------------
 
 
-#ifndef NUCLEOTIDE_HPP
-#define NUCLEOTIDE_HPP
+#pragma once
 
 
 #include <assert.h>
@@ -256,4 +255,3 @@ nucleotide2char(nucleotide n){
 }
 
 
-#endif // NUCLEOTIDE_H

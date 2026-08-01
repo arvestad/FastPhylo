@@ -5,8 +5,7 @@
  *      Author: Mehmood Alam Khan
  *      Email : malagori@kth.se
  */
-#ifndef FLOATDISTANCEMATRIX_IMPL_HPP
-#define FLOATDISTANCEMATRIX_IMPL_HPP
+#pragma once
 
 #include <string>
 #include "file_utils.hpp"
@@ -243,4 +242,3 @@ FLOATDISTANCEMATRIX::addRow(){
 
 DM_TEMPLATE void
 FLOATDISTANCEMATRIX::makeQuadratic(){}
-#endif // FLOATDISTANCEMATRIX_IMPL_HPP

@@ -1,5 +1,4 @@
-#ifndef _MAXLIKE_HPP_
-#define _MAXLIKE_HPP_
+#pragma once
 
   // Forward Declarations
   class Matrix;
@@ -15,4 +14,3 @@
   //! Calculates the derivative of likelihood
   double likelihood_deriv(const Matrix &N, const Matrix &Q, const MatrixExpm &Qdecomp, double t);
 
-#endif

@@ -8,8 +8,7 @@
 // cvs: $Id: log_utils.hpp,v 1.12 2006/12/24 08:45:43 isaac Exp $                                 
 //
 //--------------------------------------------------
-#ifndef LOG_UTILS_HPP
-#define LOG_UTILS_HPP
+#pragma once
 
 #include <iostream>
 #include <assert.h>
@@ -128,7 +127,6 @@ if(USE_DEBUG) std::cout << __FILE__ << ":"__LINE__ <<"  (" << #EXP <<") = " << E
 #endif
 
 
-#endif // LOG_UTILS_HPP
 
 
 
