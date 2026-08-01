@@ -429,11 +429,13 @@ if(BUILD_WITH_MPI)
 endif(BUILD_WITH_MPI)
 
 # Correctness tests for the speed2026a protein-code speedup (plan.md).
-# code_tests/ as a whole isn't wired into this build (see
-# phase0_audit.md); these two are new and specific to this project, so
-# they're wired in directly rather than expanding scope to the rest of
-# code_tests/.
+# tests/ (top-level, Layout Phase E - was src/c++/code_tests/) as a
+# whole isn't wired into this build (see phase0_audit.md); these two
+# are new and specific to this project, so they're wired in directly
+# rather than expanding scope to the rest of tests/.
 enable_testing()
+
+set(FASTPHYLO_TESTS_DIR ${CMAKE_SOURCE_DIR}/tests)
 
 # ProtSeqCompare.cpp needs FASTPHYLO_EXTRA_INCLUDE_DIRS (simde) directly:
 # these three targets compile it as a plain extra source rather than
@@ -441,11 +443,11 @@ enable_testing()
 # fastphylo's PUBLIC target_include_directories. Likewise need
 # ${CMAKE_SOURCE_DIR}/include directly (Layout Phase C2) now that
 # ProtSeqCode.hpp/ProtSeqCompare.hpp live under include/fastphylo/protein/.
-add_executable(ProtSeqCode_test code_tests/ProtSeqCode_test.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp)
+add_executable(ProtSeqCode_test ${FASTPHYLO_TESTS_DIR}/ProtSeqCode_test.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp)
 target_include_directories(ProtSeqCode_test PRIVATE ${CMAKE_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
 add_test(NAME ProtSeqCode_test COMMAND ProtSeqCode_test)
 
-add_executable(ProtSeqCompare_test code_tests/ProtSeqCompare_test.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCompare.cpp)
+add_executable(ProtSeqCompare_test ${FASTPHYLO_TESTS_DIR}/ProtSeqCompare_test.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCompare.cpp)
 target_include_directories(ProtSeqCompare_test PRIVATE ${CMAKE_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
 add_test(NAME ProtSeqCompare_test COMMAND ProtSeqCompare_test)
 

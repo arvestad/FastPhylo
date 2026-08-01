@@ -29,7 +29,7 @@ option(STATIC "Build static binaries. This is mainly intended for the win32-pack
 
 
 add_subdirectory(src/c++)
-add_subdirectory(src/docbook)
+add_subdirectory(docs)
 
 
 
