@@ -23,7 +23,7 @@ operator>>(std::istream &in,Sequence_double &strflt){
     //get the first part
     strflt.s = Sequence();
     while ( strchr(":),;",in.peek()) == nullptr && in.peek() != EOF )
-      strflt.s.name += in.get();
+      strflt.s.name += static_cast<char>(in.get());
 
      
     //get the second part
@@ -31,7 +31,7 @@ operator>>(std::istream &in,Sequence_double &strflt){
       std::string fltstr;
       in.get();//skip :
       while ( strchr("), ;",in.peek()) == nullptr && in.peek() != EOF )
-        fltstr += in.get();
+        fltstr += static_cast<char>(in.get());
       strflt.dbl = atof(fltstr.c_str());
     }
     else {
@@ -72,7 +72,7 @@ operator>>(std::istream &in, string_double &strflt){
   //get the first part
   strflt.s = std::string();
   while ( strchr(":),;",in.peek()) == nullptr && in.peek() != EOF )
-    strflt.s += in.get();
+    strflt.s += static_cast<char>(in.get());
 
      
   //get the second part
@@ -80,7 +80,7 @@ operator>>(std::istream &in, string_double &strflt){
     std::string fltstr;
     in.get();//skip :
     while ( strchr("), ;",in.peek()) == nullptr && in.peek() != EOF )
-      fltstr += in.get();
+      fltstr += static_cast<char>(in.get());
     strflt.dbl = atof(fltstr.c_str());
   }
   else {
@@ -112,7 +112,7 @@ operator>>(std::istream &in,int_double &intdbl){
   //get the first part
   std::string s;
   while ( strchr(":),;",in.peek()) == nullptr && in.peek() != EOF )
-    s += in.get();
+    s += static_cast<char>(in.get());
   intdbl.i = atoi(s.c_str());
      
   //get the second part
@@ -120,7 +120,7 @@ operator>>(std::istream &in,int_double &intdbl){
     std::string fltstr;
     in.get();//skip :
     while ( strchr("), ;",in.peek()) == nullptr && in.peek() != EOF )
-      fltstr += in.get();
+      fltstr += static_cast<char>(in.get());
     intdbl.dbl = atof(fltstr.c_str());
   }
   else {
@@ -149,7 +149,7 @@ operator>>(std::istream &in,string_int &strint){
     //get the first part
     strint.s = "";
     while ( strchr(":),;",in.peek()) == nullptr && in.peek() != EOF )
-      strint.s += in.get();
+      strint.s += static_cast<char>(in.get());
 
      
     //get the second part
@@ -157,7 +157,7 @@ operator>>(std::istream &in,string_int &strint){
       std::string fltstr;
       in.get();//skip :
       while ( strchr("), ;",in.peek()) == nullptr && in.peek() != EOF )
-        fltstr += in.get();
+        fltstr += static_cast<char>(in.get());
       strint.i = atoi(fltstr.c_str());
     }
     else {
