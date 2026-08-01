@@ -15,7 +15,7 @@ class DataOutputStream
 {
 public:
   DataOutputStream( );
-  DataOutputStream(char * filename = NULL);
+  DataOutputStream(char * filename = nullptr);
   virtual ~DataOutputStream() {};
   virtual void print( StrDblMatrix & dm )=0;  //Mehmood's Changes here. Email: malagori@kth.se
   virtual void printStartRun(std::vector<std::string> & names, std::string & runId, Extrainfos &extrainfos )=0;

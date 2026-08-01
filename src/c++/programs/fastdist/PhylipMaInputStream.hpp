@@ -7,7 +7,7 @@
 class PhylipMaInputStream : public DataInputStream
 {
 public:
-  PhylipMaInputStream(char * filename = NULL);
+  PhylipMaInputStream(char * filename = nullptr);
   ~PhylipMaInputStream();
 
   virtual bool read( std::vector<DNA_b128_String> &b128_strings, std::string & runId, std::vector<std::string> &names, Extrainfos &extrainfos );

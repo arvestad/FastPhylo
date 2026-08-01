@@ -15,9 +15,9 @@
 class BinaryDmOutputStream: public DataOutputStream {
 public:
 	BinaryDmOutputStream(char * filename ) : DataOutputStream(filename) {
-	  	if(filename != 0) {
+	  	if(filename != nullptr) {
 	  		writeToCout = false;
-	  		fp = 0;
+	  		fp = nullptr;
 	  		delete fp;
 	  		file_was_opened = false;
 	   	ofs = open_write_binary(filename);
@@ -29,9 +29,9 @@ public:
 
 
 	  virtual ~BinaryDmOutputStream() {
-	  	if(ofs != 0 && !writeToCout) {
+	  	if(ofs != nullptr && !writeToCout) {
 	  		delete ofs;
-	  		ofs = 0;
+	  		ofs = nullptr;
 	  	}
 		}
 	virtual void print( StrDblMatrix & dm ) {};

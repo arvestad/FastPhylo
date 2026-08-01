@@ -97,8 +97,8 @@ int main (int argc, char **argv) {
 	}
 	bool printCounts = args_info.print_counts_flag;
 	try {
-		char * inputfilename = NULL;
-		char * outputfilename = NULL;
+		char * inputfilename = nullptr;
+		char * outputfilename = nullptr;
 		DataInputStream *istream;
 		DataOutputStream *ostream;
 

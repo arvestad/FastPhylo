@@ -20,12 +20,12 @@ XmlInputStream::XmlInputStream(char * filename) {
   if (filename && !strncmp(filename, "-",1) ) {
     THROW_EXCEPTION("file name \"-\" is not allowed. See \n http://mail.gnome.org/archives/xml/2007-February/msg00005.html \n  ");
   }
-  if (filename==NULL) {
+  if (filename==nullptr) {
     filename = (char *) "-";
   }
   LIBXML_TEST_VERSION
-  reader = xmlReaderForFile(filename,0, XML_PARSE_COMPACT | XML_PARSE_NONET );
-  if ( reader == 0 )
+  reader = xmlReaderForFile(filename,nullptr, XML_PARSE_COMPACT | XML_PARSE_NONET );
+  if ( reader == nullptr )
     THROW_EXCEPTION("Could not open file");
   l.in_root =  false;
   l.in_runs =  false;
@@ -39,7 +39,7 @@ XmlInputStream::XmlInputStream(char * filename) {
   size_t len = strlen(fastphylo_distance_matrix_xml_relaxngstr);
   parserctxt = xmlRelaxNGNewMemParserCtxt(fastphylo_distance_matrix_xml_relaxngstr,len);
   xmlRelaxNGSetParserErrors(parserctxt,(xmlRelaxNGValidityErrorFunc) fprintf, (xmlRelaxNGValidityWarningFunc) fprintf, stderr);
-  xmlRelaxNGPtr schema = NULL;
+  xmlRelaxNGPtr schema = nullptr;
   schema = xmlRelaxNGParse(parserctxt);
   xmlRelaxNGFreeParserCtxt(parserctxt);
   if ( xmlTextReaderRelaxNGSetSchema( reader,  schema ) != 0 )  { 
@@ -147,9 +147,9 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 				l.in_run = true;
 	      xmlChar * dimStr = xmlTextReaderGetAttribute(reader,(const xmlChar *)"dim" );
 	      xmlChar * idStr = xmlTextReaderGetAttribute(reader,(const xmlChar *)"id" );
-				if ( dimStr == 0 )
+				if ( dimStr == nullptr )
 					THROW_EXCEPTION("failed to read attribute \"dim\"");
-				if ( idStr == 0 )
+				if ( idStr == nullptr )
 					THROW_EXCEPTION("failed to read attribute \"id\"");
 				dmSize=atoi((const char *) dimStr);
 				runId = (const char *) idStr;

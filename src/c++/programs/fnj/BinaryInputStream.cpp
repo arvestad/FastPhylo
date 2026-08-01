@@ -19,7 +19,7 @@ BinaryInputStream::~BinaryInputStream() {
 BinaryInputStream::BinaryInputStream(char * filename)  {
 	input_was_read=false;
 	file_was_opened = false;
-	if (filename==NULL)
+	if (filename==nullptr)
 		fp = &cin;
 	else {
 		fin.open(filename, ios::binary );

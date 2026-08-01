@@ -28,13 +28,13 @@ XmlInputStream::XmlInputStream(char * filename)
     THROW_EXCEPTION("file name \"-\" is not allowed. See \n http://mail.gnome.org/archives/xml/2007-February/msg00005.html \n  ");
   }
 
-  if ( filename == NULL ) {
+  if ( filename == nullptr ) {
     filename = (char *) "-";
   }
   LIBXML_TEST_VERSION
 
-  reader = xmlReaderForFile(filename,0, XML_PARSE_COMPACT | XML_PARSE_NONET );
-  if ( reader == 0 ) { THROW_EXCEPTION("Could not open file"); };
+  reader = xmlReaderForFile(filename,nullptr, XML_PARSE_COMPACT | XML_PARSE_NONET );
+  if ( reader == nullptr ) { THROW_EXCEPTION("Could not open file"); };
 
   l.in_root = false;
   l.in_runs = false;
@@ -45,7 +45,7 @@ XmlInputStream::XmlInputStream(char * filename)
   size_t len = strlen(fastphylo_sequence_xml_relaxngstr);
   parserctxt = xmlRelaxNGNewMemParserCtxt(fastphylo_sequence_xml_relaxngstr,len);
   xmlRelaxNGSetParserErrors(parserctxt,(xmlRelaxNGValidityErrorFunc) fprintf, (xmlRelaxNGValidityWarningFunc) fprintf, stderr);
-  xmlRelaxNGPtr schema = NULL;
+  xmlRelaxNGPtr schema = nullptr;
   schema = xmlRelaxNGParse(parserctxt);
   xmlRelaxNGFreeParserCtxt(parserctxt);
 
@@ -99,8 +99,8 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs, std::string & runId,
               xmlChar * name =  xmlTextReaderGetAttribute(reader, (const xmlChar *) "name") ;
               xmlChar * seq = xmlTextReaderGetAttribute(reader, (const xmlChar *) "seq") ;
             
-              if ( name == 0 ) THROW_EXCEPTION("failed to read attribute \"name\"");
-              if ( seq == 0 ) THROW_EXCEPTION("failed to read attribute \"seq\"");
+              if ( name == nullptr ) THROW_EXCEPTION("failed to read attribute \"name\"");
+              if ( seq == nullptr ) THROW_EXCEPTION("failed to read attribute \"seq\"");
             
               s.name =  ( const char *) name;
               s.seq = ( const char *) seq;
@@ -163,7 +163,7 @@ XmlInputStream::readSequences( std::vector<Sequence> &seqs, std::string & runId,
 	      l.in_run = true;
 	      extrainfos.clear(); 
               xmlChar * id =  xmlTextReaderGetAttribute(reader, (const xmlChar *) "id") ;
-              if ( id == 0 ) THROW_EXCEPTION("failed to read attribute \"id\"");
+              if ( id == nullptr ) THROW_EXCEPTION("failed to read attribute \"id\"");
               runId = ( const char *) id;
               xmlFree(id); continue;
 	    }

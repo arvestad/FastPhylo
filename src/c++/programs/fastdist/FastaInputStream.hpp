@@ -8,7 +8,7 @@
 class FastaInputStream : public DataInputStream
 {
 public:
-  FastaInputStream(char * filename = NULL);
+  FastaInputStream(char * filename = nullptr);
   ~FastaInputStream();
 
   virtual bool read( std::vector<DNA_b128_String> &b128_strings, std::string & runId, std::vector<std::string> &names, Extrainfos &extrainfos );
