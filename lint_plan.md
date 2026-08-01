@@ -124,17 +124,36 @@ overflow risk given actual input sizes.
 
 ### Phase 2 - `bugprone-narrowing-conversions` triage (363)
 
-Too many to review individually one-by-one in a single pass. Plan:
-sample across files/patterns first to characterize what's actually
-there (expect mostly benign `size_t`-in-a-loop-bound-assigned-to-`int`
-patterns, given this codebase's age and style, but verify rather than
-assume - this is exactly the category most likely to hide a real bug
-given the volume). Fix genuinely risky ones (precision-losing
-conversions in actual computation, not loop counters) with explicit
-casts; for the benign bulk, prefer fixing the *type* at the
-declaration site where that's a small, local change (e.g. a loop
-counter declared `int i` iterating a `.size()` should just become
-`size_t i`) over sprinkling `static_cast` everywhere.
+**Status (2026-08-01): mostly deferred to a dedicated follow-up plan,
+`distance_matrix_refactor_plan.md`.** Sampling (as planned below)
+found the bulk (300+) trace back to one root cause: `DistanceMatrix`/
+`FloatDistanceMatrix`/`DistanceRow`'s `int`-typed index accessors
+(`getDistance`/`setDistance`/`getIdentifier`/`setIdentifier`) receiving
+`size_t` at nearly every call site. Widening those parameters isn't a
+safe mechanical fix, though - tracing it turned up a live `size_t
+row = -1;` unsigned-wraparound sentinel trick in `Sequences2Distance
+Matrix.cpp`'s `fillMatrixRow_*` family (and two more `field = -1`
+assignments of unconfirmed status in `DistanceRow`/`FloatDistanceMatrix`'s
+own stream constructors) that a careless widening pass could silently
+break. That, plus the `fillMatrix*`/`fillMatrixRow_*` family being 8
+near-identical, genuinely-too-long functions crying out for
+consolidation (spotted independently by Lasse), made this real design
+work, not a lint-pass line item - see `distance_matrix_refactor_plan.md`
+for the full writeup, inventory, and phased execution plan.
+
+What's fixed here directly (small, safe, confirmed no signed-arithmetic
+risk): `nucleotide2ambiguity_nucleotide()`/`DNA_b128_String::
+calcAmbiguityProbabilities()`'s `int basefreqA/C/G/T` params, widened
+to `size_t` at the source (only ever added/multiplied/divided, never
+subtracted).
+
+What's left after the follow-up plan lands (not yet characterized):
+`compute_Tamura_Nei`/`compute_Tamura_Nei_fixratio`'s `int strlen`/
+`numAs`/etc - these must stay `int` (they subtract:
+`strlen - sd.deletedPositions`) and need per-call-site explicit casts
+instead; whatever remains once the DistanceMatrix-family sites are
+gone will get a fresh sample-and-characterize pass rather than
+assuming it's all the same shape.
 
 ### Phase 3 - Safe mechanical modernize-* cleanup, extending into `dna/`
 
