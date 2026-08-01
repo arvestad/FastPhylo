@@ -27,8 +27,8 @@ public:
   virtual std::istream& objInitFromStream(std::istream &is){return is;}
 
   //overwrite
-  virtual size_t hashCode() const { return (size_t) this;}
-  virtual bool equals(const Object *o) const {return (void *)this == (void*)o;}
+  virtual size_t hashCode() const { return reinterpret_cast<size_t>(this);}
+  virtual bool equals(const Object *o) const {return static_cast<const void *>(this) == static_cast<const void*>(o);}
 
   //don't overwrite
   virtual bool equals(const Object &o) const {return this->equals(&o);}
