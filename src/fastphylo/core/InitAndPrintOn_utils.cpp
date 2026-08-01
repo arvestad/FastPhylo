@@ -10,10 +10,41 @@
 //--------------------------------------------------
 
 #include "fastphylo/core/InitAndPrintOn_utils.hpp"
+#include "fastphylo/core/Exception.hpp"
+#include <cstdlib>
 #include <string>
 #include <cstring>
 #include "fastphylo/core/file_utils.hpp"
 #include "fastphylo/core/xml_output_global.hpp"
+
+namespace {
+
+// atof()/atoi() replacements that, unlike their C-library namesakes,
+// report a genuinely non-numeric token instead of silently treating it
+// as 0. An empty token (a legitimate ":," / ":;" with nothing between,
+// seen throughout this file's "str:flt"/"str:int" parsing) still parses
+// as 0, matching the pre-existing atof()/atoi() behavior on "".
+double parse_double_or_throw(const std::string &s) {
+  if (s.empty())
+    return 0;
+  char *endptr = nullptr;
+  double val = std::strtod(s.c_str(), &endptr);
+  if (endptr == s.c_str())
+    THROW_EXCEPTION("expected a floating-point value, got \"" << s << "\"");
+  return val;
+}
+
+int parse_int_or_throw(const std::string &s) {
+  if (s.empty())
+    return 0;
+  char *endptr = nullptr;
+  long val = std::strtol(s.c_str(), &endptr, 10);
+  if (endptr == s.c_str())
+    THROW_EXCEPTION("expected an integer value, got \"" << s << "\"");
+  return static_cast<int>(val);
+}
+
+} // namespace
 
 std::istream &
 operator>>(std::istream &in,Sequence_double &strflt){
@@ -32,7 +63,7 @@ operator>>(std::istream &in,Sequence_double &strflt){
       in.get();//skip :
       while ( strchr("), ;",in.peek()) == nullptr && in.peek() != EOF )
         fltstr += static_cast<char>(in.get());
-      strflt.dbl = atof(fltstr.c_str());
+      strflt.dbl = parse_double_or_throw(fltstr);
     }
     else {
       strflt.dbl = -1;
@@ -81,7 +112,7 @@ operator>>(std::istream &in, string_double &strflt){
     in.get();//skip :
     while ( strchr("), ;",in.peek()) == nullptr && in.peek() != EOF )
       fltstr += static_cast<char>(in.get());
-    strflt.dbl = atof(fltstr.c_str());
+    strflt.dbl = parse_double_or_throw(fltstr);
   }
   else {
     strflt.dbl = -1;
@@ -113,7 +144,7 @@ operator>>(std::istream &in,int_double &intdbl){
   std::string s;
   while ( strchr(":),;",in.peek()) == nullptr && in.peek() != EOF )
     s += static_cast<char>(in.get());
-  intdbl.i = atoi(s.c_str());
+  intdbl.i = parse_int_or_throw(s);
      
   //get the second part
   if ( in.peek() == ':' ){
@@ -121,7 +152,7 @@ operator>>(std::istream &in,int_double &intdbl){
     in.get();//skip :
     while ( strchr("), ;",in.peek()) == nullptr && in.peek() != EOF )
       fltstr += static_cast<char>(in.get());
-    intdbl.dbl = atof(fltstr.c_str());
+    intdbl.dbl = parse_double_or_throw(fltstr);
   }
   else {
     intdbl.dbl = -1;
@@ -158,7 +189,7 @@ operator>>(std::istream &in,string_int &strint){
       in.get();//skip :
       while ( strchr("), ;",in.peek()) == nullptr && in.peek() != EOF )
         fltstr += static_cast<char>(in.get());
-      strint.i = atoi(fltstr.c_str());
+      strint.i = parse_int_or_throw(fltstr);
     }
     else {
       strint.i = -1;
