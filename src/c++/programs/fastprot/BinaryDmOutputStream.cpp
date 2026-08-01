@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <math.h>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -40,17 +41,26 @@ BinaryDmOutputStream::~BinaryDmOutputStream() {
 }
 
 void BinaryDmOutputStream::print(StrDblMatrix &dm) {
-	float f;
-
+	// One write() per row instead of one per float - same batching
+	// rationale as PhylipDmOutputStream.cpp's printPHYLIPfastSD(), same
+	// output speedup project (see phase0_audit.md). std::vector<float>
+	// is contiguous/tightly-packed, so this writes the exact same bytes
+	// in the exact same order as before, just in numNodes calls instead
+	// of numNodes*(numNodes+1)/2.
 	const size_t numNodes = dm.getSize();
-	for ( size_t i=0; i<numNodes ; i++)
+	vector<float> row;
+	row.reserve(numNodes);
+	for ( size_t i=0; i<numNodes ; i++) {
+		row.clear();
 		for ( size_t j=i; j<numNodes; j++) {
-			f=dm.getDistance(i,j);
+			float f = dm.getDistance(i,j);
 			if (!isfinite(f))
 				f=-1.0;
-			ofs->write(reinterpret_cast<char*>(&f),sizeof(f));
-			}
+			row.push_back(f);
+		}
+		ofs->write(reinterpret_cast<char*>(row.data()), row.size()*sizeof(float));
 	}
+}
 
 void BinaryDmOutputStream::printHeader( size_t numNodes ) {
 	//converter variable is needed for running the binary output/input

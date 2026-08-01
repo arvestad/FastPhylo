@@ -169,6 +169,80 @@ Logging it here as a candidate for a future round, alongside the other
 "Future phases" items in plan.md. Confirmed with Lasse (2026-07-31) to
 log and continue rather than pick up now.
 
+## Output-speedup round (2026-08-01): results were far more modest than this section implied
+
+Lasse asked to pick up the output-writing bottleneck logged above.
+Before touching anything, audited all three output formats
+(`fastprot`'s `-O phylip/xml/binary`):
+
+- **Binary was outright broken, not just unbenchmarked.**
+  `BinaryDmOutputStream`'s constructor called `delete fp` on a `FILE*`
+  opened via `fopen()` (not `new`) — heap corruption, crashing every
+  `-O binary -o <file>` invocation. It only "worked" writing to stdout,
+  since that path never touches `fp`. Same bug, independently, in
+  `fastprot_mpi`'s copy of the same file. Fixed both (`fclose(fp)`
+  instead of `delete fp`); added `RunExamples.sh` example 16 as this
+  format's first-ever regression coverage. This was a correctness bug,
+  not a speed one — fixed first, unconditionally worth doing regardless
+  of what the speed investigation below found.
+- **`fnj`'s binary distance-matrix reader is an unimplemented stub**
+  (`BinaryInputStream.cpp`: `"Not implemented!"`). Noted, not fixed —
+  it's in `fnj`, a different tool, outside this round's scope.
+
+Then batched `PhylipDmOutputStream::printPHYLIPfastSD` (shared by
+phylip and XML) and `BinaryDmOutputStream::print()` from one
+`fwrite()`/`ofs->write()` call **per matrix entry** down to one call
+**per row** — the fix the section above recommended. Byte-identical
+output verified exhaustively (all `RunExamples.sh` fixtures, a
+long-sequence-name edge case that needed care — `%-10s` pads to a
+*minimum* of 10 chars, never truncates — added as example 17, and
+direct old-vs-new diffs on multi-MB synthetic datasets).
+
+**The measured speedup was much smaller than the 99.5%-in-output
+profile above implied — a real methodology lesson, not just a result.**
+Repeated, interleaved, binary-verified A/B timing (see the pitfall
+below) gave:
+
+| Dataset shape | Format | Old (user) | New (user) | Improvement |
+|---|---|---|---|---|
+| 2500x500 (compute-heavy) | phylip | ~7.3s | ~7.1s | ~3-4% |
+| 2500x500 (compute-heavy) | xml | ~7.2s | ~7.0s | ~2.5-3% |
+| 3500x20 (print-heavy relative to compute) | phylip | ~2.2s | ~1.8s | ~17% |
+
+Two things explain the gap between "99.5% of the profile" and "3-17%
+measured speedup":
+
+1. **The original profile was taken on the pre-Phase-3 comparison
+   primitive's speed relative to output** — by the time this round
+   re-profiled the *current* code, `count_mismatches_exact` (the SIMD
+   primitive) was back to dominating most sampled profiles at realistic
+   dataset shapes, not output. The 99.5% figure reflected a specific
+   dataset/build snapshot, not a stable property of the pipeline — a
+   sharper lesson than this doc's Phase-0-era self stated: profile the
+   *current* code before estimating a fix's impact, don't extrapolate
+   from an old profile even a few commits back.
+2. `stdio`'s internal buffering already coalesces most actual `write()`
+   syscalls regardless of `fwrite()`/`fprintf()` call granularity, and
+   the per-entry float-formatting arithmetic (the digit-table lookups,
+   unchanged by this fix) turns out to cost more than the locking/
+   format-string-parsing overhead removed. The fix is real, safe, and
+   worth keeping — just not the dramatic win a shallow read of the
+   original profile suggested.
+
+**Build-cache pitfall hit while measuring this** (worth recording so it
+isn't repeated): `git stash` / `git stash pop` followed by
+`cmake --build` did **not** reliably trigger recompilation in this
+environment — Make's mtime-based dependency check apparently doesn't
+always see the stash-restored file as newer than the existing `.o`,
+even with an explicit `touch` immediately before building. Several
+early timing comparisons in this round were silently comparing two
+copies of the *same* binary (verified after the fact via `md5` — both
+"old" and "new" builds hashed identically). The reliable fix: delete
+the specific `.o` files before rebuilding after a `git stash`/`pop`
+cycle, or use separate build directories per variant, and verify with
+`md5` before trusting any timing number. The table above is from
+binaries verified distinct this way.
+
 ## Bottom line for later phases
 
 - Kimura path: profiling confirms the primitive (`count_id_dist`)

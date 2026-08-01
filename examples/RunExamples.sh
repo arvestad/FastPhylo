@@ -47,6 +47,14 @@ run_example 15 "fastprot -I fasta globin_family.fasta -D JCK" ex15.out
 # fastprot's binary output instead, same convention as every other
 # example here.
 run_example 16 "fastprot -I fasta protein_seq.fasta -D JCK -O binary" ex16.out
+# Phylip's name column is left-justified padded to a MINIMUM of 10
+# chars, not truncated to a maximum - a name >10 chars must print in
+# full. Added when PhylipDmOutputStream.cpp's per-entry fwrite()/
+# fprintf() calls were batched into one fwrite() per row for speed
+# (see phase0_audit.md): the refactor uses this file's own buffer
+# instead of the compiler's printf("%-10s", ...) padding logic, so it's
+# exactly the kind of edge case that's easy to get subtly wrong.
+run_example 17 "fastprot -I fasta protein_longnames.fasta -D JCK -O phylip" ex17.out
 #run_example 10 "cat seq.phylip | fastdist -I phylip -O phylip -b 3 -r 2 | fnj -I phylip -O xml -r 2 -d 4" ex10.out
 
 echo

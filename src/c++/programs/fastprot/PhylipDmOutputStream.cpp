@@ -12,13 +12,19 @@ void PhylipDmOutputStream::printSD( StrDblMatrix & dm ) {
 	printPHYLIPfastSD(dm,fp,true,false);
 }
 
+// Builds each row into an in-memory buffer and issues one fwrite() per
+// row, instead of one fwrite()/fprintf() per matrix entry. Profiling a
+// 2500-sequence run (see phase0_audit.md's "Post-Phase-3 finding") found
+// this function dominated by stdio's per-call lock/unlock overhead
+// (phylip) and fprintf's format-string parsing (XML) - both scale with
+// the number of I/O calls, which this reduces from O(numNodes^2) to
+// O(numNodes). Every formatted byte written is otherwise identical to
+// before; only how it reaches `out` has changed.
 void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, bool writeXml, bool writeXmlSD ) {
 
   const size_t numNodes = dm.getSize();
 
-  //  xmlNodePtr dmNode;
   if ( writeXml ) {
-    //    dmNode = xmlNewNode(0, ( const xmlChar * ) "dm");
     fprintf(out,"   <dm>\n");
   } else if (writeXmlSD) {
     fprintf(out,"   <sdm>\n");
@@ -43,18 +49,24 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
   {
     entriesPerRow = numNodes;
   }
+
+  string row; // reused per row; one fwrite() flushes it at the end of each row
+  row.reserve(( writeXml || writeXmlSD ? numNodes : 0 ) * 26 + 32);
+
   for ( size_t i = 0 ; i < numNodes ; i++ ){
+    row.clear();
 
-    //    xmlNodePtr rowNode;
     if (  writeXml || writeXmlSD )   {
-      //      rowNode = xmlNewChild(dmNode,0, ( const xmlChar * ) "row",0);
-      // xmlSetProp(rowNode, ( const xmlChar * ) "species",( const xmlChar * ) dm.getIdentifier(i).c_str() );
-
-      //      fprintf(out,"    <row species=\"%s\">\n", dm.getIdentifier(i).c_str() );
-      fprintf(out,"    <row>\n" );
+      row += "    <row>\n";
     }
     else {
-      fprintf(out,"%-10s", dm.getIdentifier(i).c_str());
+      // Matches the original fprintf(out,"%-10s", name.c_str()): left-
+      // justify, pad to a MINIMUM width of 10 - longer names are not
+      // truncated.
+      const string &name = dm.getIdentifier(i);
+      row += name;
+      if ( name.size() < 10 )
+        row.append(10 - name.size(), ' ');
     }
 
     if ( writeXml || writeXmlSD )  ( entriesPerRow++ );
@@ -65,11 +77,10 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
         USER_WARNING("warning float not finite (use fix factor) " << f );
 
         if (  writeXml || writeXmlSD ) {
-          //	  xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) "-1" );
-          fprintf(out,"     <entry>-1</entry>\n" );
+          row += "     <entry>-1</entry>\n";
         }
         else {
-          fprintf(out,"        -1");
+          row += "        -1";
         }
         continue;
       }
@@ -78,29 +89,30 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
       defstr[1]=' ';
       int intpart = (int) f;
       if ( intpart > 99 ){
+        // %f on a finite float needs at most ~39 integer digits (near
+        // FLT_MAX) + '.' + 6 decimals; 128 is generous headroom over
+        // that plus the XML tag text. snprintf() is bounds-safe
+        // regardless (unlike the fixed-size defstr fast path below,
+        // this is not the hot path - values this large are already
+        // unusual, matching the original fprintf()'s "rare" framing).
+        char rare[128];
+        int n;
         if ( f-intpart*1.0 <0.000001 ){
           if (  writeXml || writeXmlSD ) {
-            // I guess 20 should be more than enough. Please lower this number if you know how it all works. /Erik Sjolund
-            // char str[20];
-            //	    snprintf(str,20,"%10d",intpart);
-            //	    xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) str );
-            fprintf(out,"     <entry>%10d</entry>\n", intpart );
+            n = snprintf(rare, sizeof(rare), "     <entry>%10d</entry>\n", intpart );
           }
           else {
-            fprintf(out,"%10d",intpart);
+            n = snprintf(rare, sizeof(rare), "%10d", intpart );
           }
-          continue;
         }
-        if (  writeXml || writeXmlSD ) {
-          // I guess 20 should be more than enough. Please lower this number if you know how it all works. /Erik Sjolund
-          //	  char str[20];
-          //  snprintf(str,20,"%10f",f);
-          // xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) str );
-          fprintf(out,"     <entry>%10f</entry>\n", f );
+        else if (  writeXml || writeXmlSD ) {
+          n = snprintf(rare, sizeof(rare), "     <entry>%10f</entry>\n", f );
         }
         else {
-          fprintf(out,"%10f",f);
+          n = snprintf(rare, sizeof(rare), "%10f", f );
         }
+        if ( n > 0 )
+          row.append(rare, n < (int) sizeof(rare) ? n : (int) sizeof(rare) - 1);
         continue;
       }
       //      printf("F:%10.6f\n",f);
@@ -130,32 +142,29 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
 
       if (  writeXml || writeXmlSD ) {
         // skip leading spaces
-        int i = 0;
-        while ( defstr[i] == ' ' ) {
-          i++;
+        int skip = 0;
+        while ( defstr[skip] == ' ' ) {
+          skip++;
         }
-        //	xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) &defstr[i] );
-        fprintf(out,"     <entry>%s</entry>\n", &defstr[i] );
-
-
+        row += "     <entry>";
+        row += &defstr[skip];
+        row += "</entry>\n";
       }
       else {
-        fwrite(defstr,sizeof(char),10,out);
+        row.append(defstr, 10);
       }
     }
 
     if (  writeXml || writeXmlSD )    {
-      fprintf(out,"    </row>\n");
+      row += "    </row>\n";
     } else {
-      fprintf(out,"\n");
+      row += "\n";
     }
 
-
+    fwrite(row.data(), sizeof(char), row.size(), out);
   }
   if (  writeXml ) {
-    //    xmlElemDump(out, 0, dmNode);
     fprintf(out,"   </dm>\n");
-    //  xmlFreeNode(dmNode);
   } else if ( writeXmlSD) {
     fprintf(out,"   </sdm>\n");
   }
