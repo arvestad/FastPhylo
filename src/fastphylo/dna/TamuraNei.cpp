@@ -183,7 +183,7 @@ float VAL=
 
 
 static float
-_secant_search(){
+secant_search(){
   float x0 = ( (tU/purine_ratio) + (tY/pyrimidine_ratio) + tV)/(6.0*n);
   float fx0 = partof_derivative_likelihood(x0);
   float x1;
@@ -256,7 +256,7 @@ compute_Tamura_Nei_fixratio(int strlen, TN_string_distance sd,
   
   float bt_prob;
   //bt_prob = _binary_search();
-  bt_prob = _secant_search();
+  bt_prob = secant_search();
   
   
 

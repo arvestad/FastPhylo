@@ -59,7 +59,7 @@ partof_derivative_likelihood(float x,
 
 
 static float
-_secant_search(
+secant_search(
               float K,//fix ratio
               float a,//observed transitions
               float b,//observed transversions
@@ -129,7 +129,7 @@ compute_K2P_fixratio(int strlen, simple_string_distance sd, float fixRatio){
   }
   else {
     //float bt_prob = _binary_search(K,a,b,n);
-    bt_prob = _secant_search(K,a,b,n);//about 45% of the computation time is spent here
+    bt_prob = secant_search(K,a,b,n);//about 45% of the computation time is spent here
     //float bt_prob = _NEWTON_RAPHSON(K,a,b,n);
     //the distance
     tp.distance =   (K+2)*bt_prob;

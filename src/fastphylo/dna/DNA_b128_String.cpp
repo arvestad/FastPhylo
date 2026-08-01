@@ -87,6 +87,7 @@ DNA_b128_String::DNA_b128_String(const DNA_b128_String &str){
 }
 
 void DNA_b128_String::operator=(const DNA_b128_String &str){
+  if(this == &str) return;
 
   if(numDatas != str.numDatas){
     _free_mem();
