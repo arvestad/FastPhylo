@@ -78,9 +78,8 @@ void
 print_map(str2int_map &m){
 
   cout << "map_size = " << m.size() << endl;
-  str2int_map::iterator i = m.begin();
-  for ( ; i != m.end() ; ++i ){
-    cout << (*i).first << " -> " <<(*i).second << endl; 
+  for (const auto &kv : m) {
+    cout << kv.first << " -> " << kv.second << endl;
   }
 }
 

@@ -104,12 +104,12 @@ MatVec prior_probability(const Matrix &Q, const DblVec &eq){
   Matrix d_eq(eq);
 
   // Calculating the prior probability P(d) = ln(d_eq*e^(Q*d))
-  for(MatVec::const_iterator it = exp_vec.begin(); it != exp_vec.end(); it++){
-    pVec.push_back(Matrix::mult(d_eq, *it));
+  for (const Matrix &m : exp_vec) {
+    pVec.push_back(Matrix::mult(d_eq, m));
   }
 
-  for (MatVec::iterator it = pVec.begin(); it != pVec.end(); it++)
-    it->mlog();
+  for (Matrix &m : pVec)
+    m.mlog();
 
   return pVec;   
 
@@ -128,8 +128,8 @@ DblVec log_norm_prior(){
 
   DblVec result;
   result.reserve(nr_distances);
-  for (DblVec::const_iterator it = DSamples.begin(); it != DSamples.end(); it++){
-    double dividend = pow((*it - norm_mean), 2);
+  for (double d : DSamples) {
+    double dividend = pow((d - norm_mean), 2);
     result.push_back(log(x*exp(-(dividend/divisor))));
   }
   return result; 

@@ -11,24 +11,19 @@
   void remove_gaps(std::vector<Sequence> &sv){
     std::set<int> positions;
 
-    std::vector<Sequence>::iterator it;
-
     // Find all the gaps
-    for (it = sv.begin(); it != sv.end(); it++){
-      std::size_t found;
-
-      found = it->seq.find_first_of('-');
+    for (Sequence &s : sv) {
+      std::size_t found = s.seq.find_first_of('-');
       while (found != std::string::npos){
         positions.insert(found);
-        found = it->seq.find_first_of('-', found+1);
+        found = s.seq.find_first_of('-', found+1);
       }
     }
 
     // Remove all the gaps
-    for (it = sv.begin(); it != sv.end(); it++){
-      std::set<int>::reverse_iterator set_rit;
-      for (set_rit = positions.rbegin(); set_rit != positions.rend(); set_rit++){
-        it->seq.erase(*set_rit, 1);
+    for (Sequence &s : sv) {
+      for (auto rit = positions.rbegin(); rit != positions.rend(); ++rit){
+        s.seq.erase(*rit, 1);
       }
     }
   }

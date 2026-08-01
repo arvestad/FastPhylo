@@ -194,8 +194,8 @@ MatVec Matrix::expm(const DblVec &s) const {
   MatrixExpm decomp(*this);
   MatVec result;
   result.reserve(s.size());
-  for (DblVec::const_iterator it=s.begin(); it != s.end(); it++)
-    result.push_back(decomp.at(*it));
+  for (double d : s)
+    result.push_back(decomp.at(d));
   return result;
 }
 

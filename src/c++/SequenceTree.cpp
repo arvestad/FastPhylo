@@ -550,17 +550,15 @@ SequenceTree::computeRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){
   int in_1_notin_2=0;
   int in_2_notin_1=0;
 
-  BitVectorPtr_set::iterator iter = set1.begin();
-  for( ; iter!= set1.end() ; ++iter){
-    if( set2.find(*iter) == set2.end()){
-      //      PRINT("1 didn't find");PRINT(*iter);printSplitt(**iter,name2index);
+  for (BitVector *bv : set1) {
+    if( set2.find(bv) == set2.end()){
+      //      PRINT("1 didn't find");PRINT(bv);printSplitt(*bv,name2index);
       in_1_notin_2++;
     }
   }
-  iter = set2.begin();
-  for( ; iter!= set2.end() ; ++iter){
-    if( set1.find(*iter) == set1.end()){
-      //      PRINT("2 didn't find");PRINT(*iter); printSplitt(**iter,name2index);
+  for (BitVector *bv : set2) {
+    if( set1.find(bv) == set1.end()){
+      //      PRINT("2 didn't find");PRINT(bv); printSplitt(*bv,name2index);
       in_2_notin_1++;
     }
   }
@@ -636,17 +634,15 @@ SequenceTree::computeFloatRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){
   int in_1_notin_2=0;
   int in_2_notin_1=0;
 
-  BitVectorPtr_set::iterator iter = set1.begin();
-  for( ; iter!= set1.end() ; ++iter){
-    if( set2.find(*iter) == set2.end()){
-      //      PRINT("1 didn't find");PRINT(*iter);printSplitt(**iter,name2index);
+  for (BitVector *bv : set1) {
+    if( set2.find(bv) == set2.end()){
+      //      PRINT("1 didn't find");PRINT(bv);printSplitt(*bv,name2index);
       in_1_notin_2++;
     }
   }
-  iter = set2.begin();
-  for( ; iter!= set2.end() ; ++iter){
-    if( set1.find(*iter) == set1.end()){
-      //      PRINT("2 didn't find");PRINT(*iter); printSplitt(**iter,name2index);
+  for (BitVector *bv : set2) {
+    if( set1.find(bv) == set1.end()){
+      //      PRINT("2 didn't find");PRINT(bv); printSplitt(*bv,name2index);
       in_2_notin_1++;
     }
   }
@@ -701,9 +697,8 @@ SequenceTree::printSplitt(BitVector &splitt, str2int_hashmap &name2index, std::o
   
   vector<string> index2name(name2index.size());
   
-  str2int_hashmap::iterator iter = name2index.begin();
-  for( ; iter!=name2index.end() ; ++iter){
-    index2name[(*iter).second] = (*iter).first;
+  for (const auto &kv : name2index) {
+    index2name[kv.second] = kv.first;
   }
   os << splitt << "  Hashcode: " << splitt.hashCode() << " "; 
   for(size_t i=0 ; i<splitt.getNumBits() ; i++){
