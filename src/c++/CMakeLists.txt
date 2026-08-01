@@ -303,10 +303,21 @@ if(BUILD_WITH_MPI)
   programs/fastprot_mpi/Matrix.cpp
   programs/fastprot_mpi/MaximumLikelihood.cpp
   programs/fastprot_mpi/ProtSeqUtils.cpp
-  programs/fastprot/PhylipDmOutputStream.cpp
-  programs/fastprot/BinaryDmOutputStream.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c
   )
+  # fastprot_mpi is out of this plan's scope (project_layout_plan.md:
+  # deferred, to be folded into fastprot on a future request) and was
+  # never build-tested here (no MPI in this environment - configuring
+  # with -DBUILD_WITH_MPI=ON already fails before reaching this point).
+  # It used to reuse programs/fastprot/PhylipDmOutputStream.cpp and
+  # BinaryDmOutputStream.cpp directly in this source list; both moved
+  # into the shared fastphylo library as part of Phase C's io/
+  # consolidation, so those two lines were removed above rather than
+  # left pointing at deleted files. fastprot_mpi links fastphylo (below)
+  # and so gets io::PhylipDmOutputStream/BinaryDmOutputStream from
+  # there now - unverified whether fastprot_mpi's own (separate,
+  # unmerged) DataOutputStream.hpp is still compatible with them; needs
+  # checking when fastprot_mpi work is actually picked up.
   if(WITH_LIBXML)
     if(STATIC)
       set(FASTPROT_MPI_XML_SRCS programs/fastprot_mpi/XmlInputStream.cpp "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h")
