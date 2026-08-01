@@ -35,7 +35,7 @@ SOURCES		+= $(addprefix distance_methods/, $(DMETHODS))
 #SOURCES	+= $(addprefix sequence_based_tree_reconstruction/, $(SEQ_BASED))
 
 #PROGRAMS
-PROGRAMS	=  naivedist.cpp buildtree.cpp fastdist.cpp CreateSimulatedData.cpp RF_dist.cpp Clustal2gaplessPhylip.cpp aml_tree.cpp drawtree.cpp #sequence_nj.cpp 
+PROGRAMS	=  buildtree.cpp fastdist.cpp CreateSimulatedData.cpp #sequence_nj.cpp
 PROG_SOURCES	+= $(addprefix programs/, $(PROGRAMS))
 
 #DNA_b128 
