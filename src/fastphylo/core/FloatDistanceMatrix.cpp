@@ -8,8 +8,8 @@
 
 #include "fastphylo/core/FloatDistanceMatrix.hpp"
 
-#include <float.h>
-#include <math.h>
+#include <cfloat>
+#include <cmath>
 #include <iostream>
 #include "fastphylo/core/log_utils.hpp"
 #include "config.h"

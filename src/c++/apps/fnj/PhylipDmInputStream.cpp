@@ -5,7 +5,7 @@
 #include "PhylipDmInputStream.hpp"
 #include "fastphylo/core/DistanceMatrix.hpp"
 
-#include <assert.h>
+#include <cassert>
 
 using namespace std;
 

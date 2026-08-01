@@ -1,5 +1,5 @@
-#include <float.h>
-#include <math.h>
+#include <cfloat>
+#include <cmath>
 #include "fastphylo/dna/NeighborJoining.hpp"
 #include "fastphylo/core/Sequence.hpp"
 

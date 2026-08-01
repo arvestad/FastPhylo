@@ -12,7 +12,7 @@
 #include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
 #include <string>
 #include <iostream>
-#include <assert.h>
+#include <cassert>
 
 using namespace std;
 

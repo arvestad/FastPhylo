@@ -18,8 +18,8 @@
 #include "fastphylo/core/stl_utils.hpp"
 #include "fastphylo/core/log_utils.hpp"
 #include "fastphylo/core/file_utils.hpp"
-#include <float.h>
-#include <stdio.h>
+#include <cfloat>
+#include <cstdio>
 
 using namespace std;
 

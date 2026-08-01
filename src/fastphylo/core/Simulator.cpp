@@ -3,7 +3,7 @@
 #include "fastphylo/core/std_c_utils.h"
 #include "fastphylo/core/log_utils.hpp"
 #include <sstream>
-#include <math.h>
+#include <cmath>
 
 // This file's system() calls (bugprone-command-processor) invoke
 // external simulation tools (beep/Seq-Gen/rose/gnuplot) via hardcoded,

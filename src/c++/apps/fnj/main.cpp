@@ -3,14 +3,14 @@
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
-#include <assert.h>
+#include <cassert>
 #include <unistd.h>
 
 #include "config.h"
 #include "fastphylo/core/file_utils.hpp"
 #include "fastphylo/dna/NeighborJoining.hpp"
 #include <ctime>
-#include <time.h>
+#include <ctime>
 #include "fastphylo/core/log_utils.hpp"
 #include "fnj_gengetopt.h"
 

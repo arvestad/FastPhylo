@@ -14,10 +14,10 @@
 #include <climits>
 #include <string>
 #include <cstring>*/
-#include <string.h>
+#include <cstring>
 #include <iostream>
 #include <sstream>
-#include <limits.h>
+#include <climits>
 #include "fastphylo/core/log_utils.hpp"
 #include <algorithm>
 

@@ -9,7 +9,7 @@
 //
 //
 //--------------------------------------------------
-#include <math.h>
+#include <cmath>
 #include "fastphylo/core/SequenceTree.hpp"
 #include "fastphylo/dna/LeastSquaresFit.hpp"
 

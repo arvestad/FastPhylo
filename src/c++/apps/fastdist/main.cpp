@@ -13,9 +13,9 @@
 #include <memory>
 #include <string>
 #include <iostream>
-#include <time.h>
+#include <ctime>
 #include <fstream>
-#include <assert.h>
+#include <cassert>
 
 #include "config.h"
 #include "fastphylo/core/file_utils.hpp"

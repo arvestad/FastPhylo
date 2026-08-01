@@ -9,7 +9,7 @@
 
 #include "fastphylo/core/Object.hpp"
 #include <string>
-#include <stdio.h>
+#include <cstdio>
 #include <string>
 #include <iostream>
 #include <sstream>

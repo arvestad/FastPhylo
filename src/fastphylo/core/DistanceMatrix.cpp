@@ -1,5 +1,5 @@
-#include <float.h>
-#include <math.h>
+#include <cfloat>
+#include <cmath>
 #include <iostream>
 #include "fastphylo/core/log_utils.hpp"
 #include "fastphylo/core/DistanceMatrix.hpp"
