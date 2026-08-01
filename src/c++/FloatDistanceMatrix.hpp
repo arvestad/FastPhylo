@@ -39,18 +39,11 @@ public:
   //CONSTRUCTORS
   FloatDistanceMatrix(size_t columns=0);
   FloatDistanceMatrix(size_t rows, size_t columns);
-  FloatDistanceMatrix(const FloatDistanceMatrix &dm);
-  FloatDistanceMatrix& operator=(const FloatDistanceMatrix &dm);
   FloatDistanceMatrix(std::istream &in);
 
-  //DESTRUCTOR
-  ~FloatDistanceMatrix() {
-  	 for(int i = 0; i < rows; ++i) {
-	   if(D[i] != 0) {
-	     delete D[i];
-	   }
-  	 }
-  }
+  // Rows own their storage directly (std::vector<DistanceType>, not a
+  // pointer to one) - copy/move/destroy are all handled correctly by the
+  // compiler-generated special members, so none are declared here.
 
   //DIMENSIONS
   size_t getSize() const{ return rows;}
@@ -86,17 +79,17 @@ public:
   DistanceType getDistance(int i, int j) const{
     //only the upper right triangle
     if ( i <= j ) {
-      return (*D[i])[j - i];
+      return D[i][j - i];
     } else {
-      return (*D[j])[i - j];
+      return D[j][i - j];
     }
   };
 
   void setDistance(int i, int j, DistanceType d) {
     if ( i <= j ) {
-    	(*D[i])[j - i] = d;
+    	D[i][j - i] = d;
     } else {
-      (*D[j])[i - j] = d;
+      D[j][i - j] = d;
     }
   };
 
@@ -134,7 +127,7 @@ private:
   size_t columns;
   size_t rows;
   std::vector<Identifier> identifiers;
-  std::vector<std::vector<DistanceType>*> D;
+  std::vector<std::vector<DistanceType>> D;
 
   //makes sure that the vectors are of the right size.
   void assureSize();

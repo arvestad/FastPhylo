@@ -16,13 +16,7 @@ FLOATDISTANCEMATRIX::assureSize(){
   D.resize(rows);
 
   for (size_t i = 0 ; i < rows ; i++ ) {
-
-  	if(D[i] == nullptr) {
-  	  D[i] = new std::vector<DistanceType>;
-  	}
-
-  	(*D[i]).resize(columns - i);
-
+  	D[i].resize(columns - i);
   }
 }
 
@@ -38,43 +32,6 @@ FLOATDISTANCEMATRIX::FloatDistanceMatrix(size_t rows, size_t columns) {
   this->columns = columns;
   this->rows = rows;
   assureSize();
-}
-
-DM_TEMPLATE
-FLOATDISTANCEMATRIX::FloatDistanceMatrix(const FLOATDISTANCEMATRIX &dm){
-  (*this) = dm;
-}
-
-DM_TEMPLATE FLOATDISTANCEMATRIX&
-FLOATDISTANCEMATRIX::operator=(const FLOATDISTANCEMATRIX &dm){
-
-  for(int i = 0; i < rows; ++i) {
-  	 if(D[i] != 0) {
-  	 	delete D[i];
-  	 }
-  }
-
-  rows = dm.rows;
-  columns = dm.columns;
-
-  identifiers.resize(rows);
-  D.resize(rows);
-
-  //copy the upper triangle
-  for ( size_t i = 0 ; i < rows ; i++ ){
-    identifiers[i] = dm.identifiers[i];
-
-    DISTVEC &thisvec = (*D[i]);
-
-    thisvec.resize(i);
-    const DISTVEC &thatvec = (*dm.D[i]);
-
-    for ( size_t j = 0 ; j < rows - i ; j++ ) {
-      thisvec[j] = thatvec[j];
-    }
-  }
-
-  return *this;
 }
 
 
@@ -95,7 +52,7 @@ FLOATDISTANCEMATRIX::setDefaultValues(DistanceType &defval, Identifier &defid){
 
   for ( size_t i = 0 ; i < rows ; i++ ){
     for ( size_t j = 0 ; j < columns - i; j++ ) {
-      (*D[i])[j] = defval;
+      D[i][j] = defval;
     }
   }
 }
@@ -141,11 +98,11 @@ FLOATDISTANCEMATRIX::objInitFromStream(std::istream &in){
       distInit(in, dist);
     }
 
-    distInit(in, ((*D[i])[i - i]));
+    distInit(in, (D[i][i - i]));
 
     j++;
     for (; j < columns ; j++ ){
-      distInit(in, ((*D[i])[j - i]));
+      distInit(in, (D[i][j - i]));
     }
   }
   return in;
@@ -164,12 +121,12 @@ FLOATDISTANCEMATRIX::printOn(std::ostream &out) const{
     size_t j = 0;
     for (  ; j < i ; j++ ){
       out  << std::setw(10) << std::right;
-      distPrintOn(out,(*D[j])[i - j]);
+      distPrintOn(out,D[j][i - j]);
       out << " ";
     }
     for ( ; j < columns ; j++ ){
       out  << std::setw(10) << std::right;
-      distPrintOn(out,(*D[i])[j - i]);
+      distPrintOn(out,D[i][j - i]);
       out << " ";
     }
     out << std::endl;
@@ -191,28 +148,28 @@ FLOATDISTANCEMATRIX::swapRowToLast(size_t row){
   //switch the distances
 
   if(lastRow < row) {
-  	(*D[row]).resize(columns - lastRow);
+  	D[row].resize(columns - lastRow);
   } else {
-  	(*D[lastRow]).resize(columns - row);
+  	D[lastRow].resize(columns - row);
   }
 
   //change the values in every line before the line which shall be moved
   for ( size_t i = 0 ; i < row ; i++ ){
-    DistanceType tmp = (*D[i])[row - i];
-    (*D[i])[row - i] = (*D[i])[lastRow - i];
-    (*D[i])[lastRow - i] = tmp;
+    DistanceType tmp = D[i][row - i];
+    D[i][row - i] = D[i][lastRow - i];
+    D[i][lastRow - i] = tmp;
   }
 
   //change the zeros
-  DistanceType tmp = (*D[row])[row - row];
-  (*D[row])[row - row] = (*D[lastRow])[lastRow - lastRow];
-  (*D[lastRow])[lastRow - lastRow] = tmp;
+  DistanceType tmp = D[row][row - row];
+  D[row][row - row] = D[lastRow][lastRow - lastRow];
+  D[lastRow][lastRow - lastRow] = tmp;
 
   //change the values in the columns
   for ( size_t i = row+1 ; i < lastRow ; i++ ){
-    DistanceType tmp = (*D[row])[i - row];
-    (*D[row])[i - row] = (*D[i])[lastRow - i];
-    (*D[i])[lastRow - i] = tmp;
+    DistanceType tmp = D[row][i - row];
+    D[row][i - row] = D[i][lastRow - i];
+    D[i][lastRow - i] = tmp;
   }
 
   // Switch the Identifiers
@@ -223,9 +180,6 @@ FLOATDISTANCEMATRIX::swapRowToLast(size_t row){
 
 DM_TEMPLATE void
 FLOATDISTANCEMATRIX::removeLastRow(){
-  if(D[rows - 1] != 0) {
-  	 delete D[rows - 1];
-  }
   --rows;
   assureSize();
 }
