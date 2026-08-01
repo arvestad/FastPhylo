@@ -11,9 +11,9 @@
 // primitive into fastprot (encode once per sequence, not per pair).
 //
 // Build via CMake (target bench_primitives) or manually:
-//   c++ -O2 -std=c++11 -I../src/c++/programs/fastprot -I/opt/homebrew/include \
-//     bench_primitives.cpp ../src/c++/programs/fastprot/ProtSeqCode.cpp \
-//     ../src/c++/programs/fastprot/ProtSeqCompare.cpp -o bench_primitives
+//   c++ -O2 -std=c++17 -I../include -I/opt/homebrew/include \
+//     bench_primitives.cpp ../src/fastphylo/protein/ProtSeqCode.cpp \
+//     ../src/fastphylo/protein/ProtSeqCompare.cpp -o bench_primitives
 //   ./bench_primitives
 
 #include <algorithm>
@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 #include "fastphylo/protein/ProtSeqCode.hpp"
 #include "fastphylo/protein/ProtSeqCompare.hpp"
@@ -31,7 +32,7 @@ using namespace std::chrono;
 
 namespace {
 
-const std::string CANONICAL = "ARNDCQEGHILKMFPSTWYV";
+constexpr std::string_view CANONICAL = "ARNDCQEGHILKMFPSTWYV";
 
 std::string random_seq(std::size_t len, unsigned int *seed) {
   std::string s;

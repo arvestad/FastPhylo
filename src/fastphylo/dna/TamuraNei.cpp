@@ -44,7 +44,7 @@ static float tV;//observed transversions
 static float n; //the string length
 
 
-static float E = exp(1.0);
+static constexpr float E = 2.71828182845904523536F; // exp(1.0)
 
 // THIS IS ACTUALLY THE DERIVATIVE OF THE LOG LIKELIHOOD!!
 static float

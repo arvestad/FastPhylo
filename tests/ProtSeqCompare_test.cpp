@@ -10,11 +10,11 @@
 // validate ProtSeqCompare's primitives in isolation against a
 // known-correct reference.
 //
-// Not yet wired into the CMake build (code_tests/ isn't built by
-// CMakeLists.txt today - see phase0_audit.md); compile and run manually:
-//   c++ -std=c++11 -I../programs/fastprot ProtSeqCompare_test.cpp \
-//     ../programs/fastprot/ProtSeqCode.cpp \
-//     ../programs/fastprot/ProtSeqCompare.cpp -o /tmp/t && /tmp/t
+// This test is wired into the CMake build as the ProtSeqCompare_test
+// target. To compile and run manually instead:
+//   c++ -std=c++17 -I../include ProtSeqCompare_test.cpp \
+//     ../src/fastphylo/protein/ProtSeqCode.cpp \
+//     ../src/fastphylo/protein/ProtSeqCompare.cpp -o /tmp/t && /tmp/t
 
 #undef NDEBUG
 #include <cassert>
@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 #include "fastphylo/protein/ProtSeqCode.hpp"
 #include "fastphylo/protein/ProtSeqCompare.hpp"
@@ -31,14 +32,14 @@ using namespace ProtSeqCode;
 
 namespace {
 
-const std::string CANONICAL = "ARNDCQEGHILKMFPSTWYV";
+constexpr std::string_view CANONICAL = "ARNDCQEGHILKMFPSTWYV";
 // Every character FastaInputStream.cpp's validation regex allows, one of
 // each case-fold identity class (see phase1_design.md).
-const std::string FULL_ALPHABET = "ARNDCQEGHILKMFPSTWYVBOUXZ-. ?";
+constexpr std::string_view FULL_ALPHABET = "ARNDCQEGHILKMFPSTWYVBOUXZ-. ?";
 
 std::size_t ref_getAAInd(char c) {
-  std::string::size_type pos = CANONICAL.find(static_cast<char>(std::toupper(static_cast<unsigned char>(c))));
-  return pos == std::string::npos ? 100 : pos;
+  std::string_view::size_type pos = CANONICAL.find(static_cast<char>(std::toupper(static_cast<unsigned char>(c))));
+  return pos == std::string_view::npos ? 100 : pos;
 }
 
 // Mirrors count_id_dist() exactly, including its assumption that s2 is at

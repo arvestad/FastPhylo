@@ -103,6 +103,11 @@ static b128 *del_ptr2;
 //----------------------
 // LEVEL SUMS etc
 
+// sse2_wrapper.h's set_*_b128()/set_first_int_b128() are extern "C"
+// wrappers around SSE2/simde intrinsics - they cannot throw, but being
+// plain C they carry no noexcept for clang-tidy to see.
+// NOLINTBEGIN(bugprone-throwing-static-initialization)
+
 // LEVEL 1
 // A mask where the least significant bit in every two block is set.
 static const b128 LEAST_SIGNIFCANT_BIT = set_all_ints(0x55555555);
@@ -126,6 +131,7 @@ static const b128 EIGHT = set_first_int_b128(8);
 //FINAL LEVEL
 static const b128 SIXTEEN_BIT_MASK = set_all_ints(0x0000ffff);
 static const b128 SIXTEEN = set_first_int_b128(16);
+// NOLINTEND(bugprone-throwing-static-initialization)
 
 //------------------------------------
 // CONVERTING LEVELS
