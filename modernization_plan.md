@@ -445,14 +445,78 @@ the correct, improved failure mode described above, not a regression
 from a previously-working state (the old code path was never
 build-tested in this environment either).
 
+### Phase 6 - fastdist/fnj source-level modernization [DONE, 2026-08-01]
+
+Per explicit request, extended this plan's Phases 1-3 treatment
+(mechanical modernization, RAII/ownership, modern idioms) to
+`programs/fastdist/` and `programs/fnj/` - previously deferred as a
+"later, separate phase" per the original scope note above. Commits:
+"Phase 6 (fastdist/fnj): convert include guards...", "...NULL ->
+nullptr...", "...typedef -> using, C-style casts...", "...RAII - fix
+file-descriptor leak...", "...modern idioms...".
+
+- **Mechanical** (Phase 1 equivalent): 17 headers -> `#pragma once`
+  (same nesting-depth-aware script), 32 `NULL` -> `nullptr` (14 files,
+  via `clang-tidy --fix` scoped to just that check, verified safe
+  again), 4 `typedef` -> `using`/named `enum`/`struct` (done by hand -
+  both programs' `Extrainfos.hpp` have the exact same commented-out
+  class block that corrupted `clang-tidy --fix` on fastprot's copy in
+  the original Phase 1), and 33 C-style casts -> the correct
+  `static_cast`/`reinterpret_cast`/`const_cast` (both programs'
+  `XmlInputStream.cpp`/`XmlOutputStream.cpp` are near-duplicates of
+  fastprot's own copies of these files, so this got the identical
+  categorization fastprot's did - `xmlChar*`/`char*` reinterpretation,
+  `const_cast` for string literals, `reinterpret_cast` for the
+  `xmlRelaxNGSetParserErrors` function-pointer arguments).
+- **RAII** (Phase 2 equivalent): found a **third real bug** this whole
+  engagement, independently introduced (not copy-pasted) from the
+  first two - `fastdist/BinaryDmOutputStream`'s constructor did
+  `fp = nullptr; delete fp;`, nulling out the `FILE*` the base
+  constructor had just `fopen()`'d and deleting the (harmless, since
+  null) result - discarding the open file handle without ever
+  `fclose()`-ing it. A real file-descriptor leak on every `fastdist -O
+  binary -o <file>` invocation (not memory corruption like fastprot's
+  original `BinaryDmOutputStream` bug, which deleted a *still-open*,
+  never-nulled pointer - same root confusion about `fp`'s ownership
+  transferring to `ofs` partway through construction, two independently
+  broken attempts at the same idea). Fixed with `fclose(fp); fp =
+  nullptr;`, and gave the class the same `unique_ptr<ofstream>`
+  ownership split fastprot's copy got. Verified with a direct binary-
+  output smoke test, since `fastdist` (unlike `fastprot`) has no binary
+  example in `RunExamples.sh`. Also converted both programs'
+  `main.cpp` `DataInputStream*`/`DataOutputStream*` to `unique_ptr`
+  (same leak-on-exception-path issue as fastprot's original fix).
+- **Modern idioms** (Phase 3 equivalent): 3 range-based-for conversions
+  (one deliberately left the *second* of two zipped containers as a
+  manually-advanced iterator, since it isn't stepped 1:1 with the
+  range-based loop's container); `override` added to every genuine
+  base-virtual override across both programs' `DataInputStream`/
+  `DataOutputStream` hierarchies - deliberately **not** added to
+  `XmlInputStream`'s/`BinaryInputStream`'s `readDM(StrFloMatrix&, ...)`
+  overload in `fnj`, since `DataInputStream`'s base interface only
+  declares the `StrDblMatrix` overload as virtual (its own 2016-06-14
+  comment explains why the two aren't symmetric) - marking the other
+  one `override` would have been a compile error, exactly the kind of
+  distinction that requires reading the base class rather than
+  pattern-matching. No `auto` changes - searched for fastprot's
+  "duplicated `static_cast` target type" pattern, found none here, so
+  didn't force anything.
+
+Same verification discipline as every phase: full rebuild + `ctest` +
+`RunExamples.sh` byte-identical after each commit, plus a final
+from-scratch clean configure+build+test pass. `fastdist`/`fnj` are now
+at parity with `fastprot`'s modernization level for this plan's Phases
+1-3; Phase 5's CMake work already covered both targets' build
+configuration.
+
 ## What's explicitly deferred, not forgotten
 
 - `DNA_b128`/`distance_methods`/`sequence_likelihood` (own future
   phase, per the scoping decision above).
-- The smaller remaining programs (`buildtree`, `CreateSimulatedData`,
-  `sequence_nj`) - `fastdist`/`fnj` picked up CMake modernization in
-  Phase 5 above, but their own source-level modernization (Phases 1-3's
-  treatment) hasn't started.
+- `fastprot_mpi` and the smaller remaining programs (`buildtree`,
+  `CreateSimulatedData`, `sequence_nj`) - still untouched at the source
+  level (Phase 5's CMake work covers `fastprot_mpi`'s build
+  configuration only).
 - The `Matrix` class's heap-allocation-per-instance design (flagged
   separately in memory - `MatrixExpm`/Eigen investigation) - that's a
   performance-motivated redesign, distinct from this plan's style
