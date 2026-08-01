@@ -227,7 +227,10 @@ int main (int argc, char **argv) {
   catch(...){
     throw;
   }
-  CATCH_EXCEPTION();
+  CATCH_EXCEPTION()
+  catch(...){
+    std::cerr << "Unknown (non-Exception) error" << std::endl;
+  }
   cmdline_parser_free(&args_info);
   return 0;
 }

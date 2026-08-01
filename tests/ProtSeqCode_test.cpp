@@ -93,7 +93,7 @@ static void test_empty_sequence() {
   assert(out.empty());
 }
 
-int main() {
+int main() { // NOLINT(bugprone-exception-escape) - a test binary crashing on an unexpected exception is a fine, loud failure mode.
   test_canonical_aa_roundtrip();
   test_non_canonical_letters_excluded_from_replacement_tally();
   test_punctuation();

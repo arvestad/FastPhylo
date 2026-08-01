@@ -109,7 +109,7 @@ Stats time_calls(Fn fn, int warmup, int reps) {
 
 } // anonymous namespace
 
-int main() {
+int main() { // NOLINT(bugprone-exception-escape) - a benchmark binary crashing on an unexpected exception is a fine, loud failure mode.
   const int WARMUP = 3;
   const int REPS = 21;
   const double DIVERGENCE = 0.25; // representative mid-range divergence

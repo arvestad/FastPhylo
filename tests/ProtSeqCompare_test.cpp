@@ -164,7 +164,7 @@ void test_length_mismatch_defined_behavior() {
 
 } // anonymous namespace
 
-int main() {
+int main() { // NOLINT(bugprone-exception-escape) - a test binary crashing on an unexpected exception is a fine, loud failure mode.
   test_random_pairs_various_lengths_and_mismatch_rates();
   test_every_alphabet_symbol_at_boundaries_and_runs();
   test_edge_cases();

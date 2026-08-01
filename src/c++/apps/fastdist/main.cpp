@@ -367,7 +367,10 @@ main(int argc,
 		throw;
 	}
 
-	CATCH_EXCEPTION();
+	CATCH_EXCEPTION()
+	catch(...){
+		cerr << "Unknown (non-Exception) error" << endl;
+	}
 	cmdline_parser_free(&args_info);
 	return 0;
 }
