@@ -39,26 +39,19 @@
 
 using namespace std;
 
-int
-main(int argc,
-		char **argv){
+// Lint Phase 5 (lint_phase5_refactors.md): main() was a single 394-line
+// function (cognitive complexity 181, threshold 25). Extracted below,
+// in the order main() calls them.
 
-	gengetopt_args_info args_info;
-	TRY_EXCEPTION();
-
-	sequence_translation_model trans_model;
-
-
-
+// Handles --print-relaxng-input/--print-relaxng-output/--number-of-runs'
+// argument-combination checks and the two exit(EXIT_SUCCESS) relaxng-dump
+// paths - none of this depends on anything computed later in main().
+static void handleEarlyExitFlags(const gengetopt_args_info &args_info) {
 #ifndef WITH_LIBXML
 	if ( args_info.input_format_arg == input_format_arg_xml ) {
 		cerr << "The software was built with WITH_LIBXML=OFF. Please rebuild it if you want XML functionality." << endl; exit(EXIT_FAILURE);
 	}
 #endif // WITH_LIBXML
-
-	if (cmdline_parser (argc, argv, &args_info) != 0) {
-		exit(EXIT_FAILURE);
-}
 
 	if ( (args_info.print_relaxng_input_given != 0u) && (args_info.print_relaxng_output_given != 0u) ) {
 		cerr << "error: --print-relaxng-input and --print-relaxng-output can not be used at the same time" << endl; exit(EXIT_FAILURE);
@@ -70,9 +63,12 @@ main(int argc,
 	if ( (args_info.number_of_runs_given != 0u) && args_info.input_format_arg != input_format_arg_phylip  ) {
 		cerr << "error: --number-of-runs can only be used together with --input-format=phylip " << endl; exit(EXIT_FAILURE);
 	}
+}
 
-	//-----------------------------------------------------
-	// EVOLUTIONARY MODEL
+// Builds the sequence_translation_model from args_info: evolutionary
+// model choice, ts/tv ratios, and the ambiguity-handling flags.
+static sequence_translation_model buildTranslationModel(const gengetopt_args_info &args_info) {
+	sequence_translation_model trans_model;
 
 	switch ( args_info.distance_function_arg )
 	{
@@ -87,21 +83,6 @@ main(int argc,
 	trans_model.tstvratio = args_info.tstvratio_arg;
 	trans_model.pyrtvratio =  args_info.pyrtvratio_arg;
 
-	//----------------------------------------------
-	// BOOTSTRAPPING
-	int numboot = args_info.bootstraps_arg;
-	bool no_incl_orig = args_info.no_incl_orig_given != 0u;
-
-	if ( args_info.seed_given != 0u ) {
-		srand(static_cast<unsigned int>(args_info.seed_arg));
-	} else {
-		// NOLINTNEXTLINE(bugprone-random-generator-seed) - bootstrap resampling, not a security context; time-seeding when no explicit --seed is the intended default.
-		srand(static_cast<unsigned int>(time(nullptr)));
-}
-
-	//-----------------------------------------------
-	// AMBIGUITIES
-
 	trans_model.no_ambiguities = (args_info.no_ambiguities_given != 0u);
 	trans_model.no_ambig_resolve = (args_info.no_ambig_resolve_given != 0u);
 	trans_model.no_transition_probs = (args_info.no_transprob_given != 0u);
@@ -112,6 +93,245 @@ main(int argc,
 	case ambiguity_frequency_model_arg_BASE : trans_model.use_base_freqs = true; break;
 	default: cerr << "programming error 2..." << endl; exit(EXIT_FAILURE);
 	}
+
+	return trans_model;
+}
+
+// srand()'s seed: an explicit --seed for reproducibility, or the current
+// time by default (bootstrap resampling, not a security context).
+static void seedRandom(const gengetopt_args_info &args_info) {
+	if ( args_info.seed_given != 0u ) {
+		srand(static_cast<unsigned int>(args_info.seed_arg));
+	} else {
+		// NOLINTNEXTLINE(bugprone-random-generator-seed) - bootstrap resampling, not a security context; time-seeding when no explicit --seed is the intended default.
+		srand(static_cast<unsigned int>(time(nullptr)));
+	}
+}
+
+static std::unique_ptr<DataInputStream> buildInputStream(const gengetopt_args_info &args_info) {
+	char *inputfilename = nullptr;
+	switch( args_info.inputs_num )
+	  {
+	  case 0: break; /* inputfilename will be null and indicate stdin as input */
+	  case 1: inputfilename =  args_info.inputs[0]; break;
+	  default: cerr << "Error: you can at most specify one input filename" << endl; exit(EXIT_FAILURE);
+	}
+
+	switch ( args_info.input_format_arg )
+	{
+	case input_format_arg_fasta: return std::make_unique<FastaInputStream>(inputfilename);
+	case input_format_arg_phylip : return std::make_unique<PhylipMaInputStream>(inputfilename);
+#ifdef WITH_LIBXML
+	case input_format_arg_xml: return std::make_unique<XmlInputStream>(inputfilename);
+#endif // WITH_LIBXML
+	default: exit(EXIT_FAILURE);
+	}
+}
+
+static std::unique_ptr<DataOutputStream> buildOutputStream(const gengetopt_args_info &args_info) {
+	char *outputfilename = nullptr;
+	if( args_info.outfile_given != 0u )
+	{  outputfilename = args_info.outfile_arg;  }
+
+	switch ( args_info.output_format_arg )
+	{
+	case output_format_arg_phylip: return std::make_unique<PhylipDmOutputStream>(outputfilename);
+	case output_format_arg_xml: return std::make_unique<XmlOutputStream>(outputfilename);
+	//Mehmood's Changes here : email: malagori@kth.se
+	case output_format_arg_binary: return std::make_unique<BinaryDmOutputStream>(outputfilename);
+	default: exit(EXIT_FAILURE);
+	}
+}
+
+// Fills and prints every row of dm - the innermost loop of
+// runRowStreamingOutput() below, which the original had hand-duplicated
+// three times (no-bootstrap case, bootstrap's original-sequences case,
+// bootstrap's per-replicate case) with only dm/dm2 differing.
+static void fillAndPrintAllRows(DataOutputStream &ostream, StrFloRow &dm,
+                                 std::vector<DNA_b128_String> &b128seqs,
+                                 sequence_translation_model &trans_model,
+                                 std::vector<string> &names, size_t numberOfSequences,
+                                 bool useFixFactor, float fixfactor, bool mem_eff_flag) {
+	for(size_t i = 0; i < numberOfSequences; ++i){
+		fillMatrixRow(dm, b128seqs, trans_model, i, mem_eff_flag);
+		dm.setIdentifier(names.at(i));
+		if(useFixFactor) {
+			applyFixFactorRow(dm,fixfactor);
+		}
+		ostream.printRow(dm, names.at(i), i, mem_eff_flag);
+	}
+}
+
+// Row-streaming output path (StrFloRow, fillMatrixRow()/printRow()) -
+// shared by the --output-format=binary and --memory-efficient branches,
+// which turned out to be identical apart from mem_eff_flag once compared
+// side by side (both originally hand-duplicated the same ~75 lines).
+static void runRowStreamingOutput(DataInputStream &istream, DataOutputStream &ostream,
+                                   sequence_translation_model &trans_model,
+                                   int ndatasets, int numboot, bool no_incl_orig,
+                                   bool useFixFactor, float fixfactor,
+                                   int input_format_arg, bool mem_eff_flag) {
+	StrFloRow dm;
+	//open infile
+
+	// THE DATA WE WILL PROCESS
+	std::vector<Sequence> seqs;
+	std::vector<string> names;
+	std::vector<DNA_b128_String> b128seqs;
+
+	Extrainfos extrainfos;
+
+	//for each dataset in the files
+
+	for ( int ds = 0 ; ds < ndatasets || input_format_arg == input_format_arg_xml ; ds++ ){
+		//no bootstrapping
+		std::string runId;
+		if ( !no_incl_orig && numboot == 0){//only need to create one distance matrix
+			if ( ! istream.read(b128seqs,runId,names,extrainfos)) {
+				break;
+			}
+
+			const size_t numberOfSequences = b128seqs.size();
+			ostream.printStartRun(names,runId,extrainfos);
+			ostream.printHeader(numberOfSequences);
+			fillAndPrintAllRows(ostream, dm, b128seqs, trans_model, names, numberOfSequences, useFixFactor, fixfactor, mem_eff_flag);
+		}
+		//bootstrapping
+		else{
+			//TODO: implement bootstraping with the improved version of FastDist
+			StrFloRow dm2;
+			//read original sequences
+			if ( ! istream.readSequences(seqs,runId,extrainfos)) { break;
+}
+			names.clear();names.reserve(seqs.size());
+			for(auto & seq : seqs)
+			{
+				names.push_back(seq.name);
+			}
+			const size_t numberOfSequences = seqs.size();
+			ostream.printStartRun(names,runId,extrainfos);
+			ostream.printHeader(numberOfSequences);
+			if ( !no_incl_orig ){//create the distance matrix for the original sequences
+				Sequences2DNA_b128(seqs,b128seqs);
+				fillAndPrintAllRows(ostream, dm2, b128seqs, trans_model, names, numberOfSequences, useFixFactor, fixfactor, mem_eff_flag);
+			}
+			//start the bootstrapping
+			//	  vector<Sequence> bootsequences;
+			for ( int b = 0 ; b < numboot ; b++ ){
+				bootstrapSequences(seqs,b128seqs);
+				std::cout << numberOfSequences << std::endl;
+				ostream.printBootstrapSpliter(numberOfSequences);
+				fillAndPrintAllRows(ostream, dm2, b128seqs, trans_model, names, numberOfSequences, useFixFactor, fixfactor, mem_eff_flag);
+			}
+		}
+		ostream.printEndRun();
+	}//end data set loop
+}
+
+// Sets dm's identifiers, applies the fix factor if requested, and prints
+// it - runFullMatrixOutput()'s equivalent of fillAndPrintAllRows() above,
+// hand-duplicated three times in the original for the same three cases.
+// fillMatrix() itself stays a separate call at each site rather than
+// folded in here: the no-bootstrap case needs it to run before
+// printStartRun(), unlike the other two.
+static void setIdentifiersApplyFixFactorAndPrint(DataOutputStream &ostream, StrDblMatrix &dm,
+                                                  std::vector<string> &names,
+                                                  bool useFixFactor, float fixfactor) {
+	dm.setIdentifiers(names);
+	if(useFixFactor) {
+		applyFixFactor(dm,fixfactor);
+	}
+	ostream.print(dm);
+}
+
+// Whole-matrix output path (StrDblMatrix, fillMatrix()/print()) - the
+// third of main()'s three output branches, distinct in shape from
+// runRowStreamingOutput() above (different matrix type, no per-row
+// streaming), so kept separate rather than forced into one function.
+static void runFullMatrixOutput(DataInputStream &istream, DataOutputStream &ostream,
+                                 sequence_translation_model &trans_model,
+                                 int ndatasets, int numboot, bool no_incl_orig,
+                                 bool useFixFactor, float fixfactor,
+                                 int input_format_arg) {
+	StrDblMatrix dm;
+	//open infile
+	// THE DATA WE WILL PROCESS
+	std::vector<Sequence> seqs;
+	std::vector<string> names;
+	std::vector<DNA_b128_String> b128seqs;
+	Extrainfos extrainfos;
+
+	//for each dataset in the files
+	for ( int ds = 0 ; ds < ndatasets || input_format_arg == input_format_arg_xml ; ds++ ){
+		//no bootstrapping
+		std::string runId;
+		if ( !no_incl_orig && numboot == 0){//only need to create one distance matrix
+			if ( ! istream.read(b128seqs,runId,names,extrainfos)) { break;
+}
+			fillMatrix(dm, b128seqs, trans_model);
+			ostream.printStartRun(names,runId,extrainfos);
+			//          freeXmlStrings(extrainfos);
+			setIdentifiersApplyFixFactorAndPrint(ostream, dm, names, useFixFactor, fixfactor);
+		}
+		//bootstrapping
+		else{
+			//read original sequences
+
+			if ( ! istream.readSequences(seqs,runId,extrainfos)) { break;
+}
+
+			names.clear();names.reserve(seqs.size());
+			for(auto & seq : seqs) {
+				names.push_back(seq.name);
+}
+
+			ostream.printStartRun(names,runId,extrainfos);
+			//          freeXmlStrings(extrainfos);
+			if ( !no_incl_orig ){//create the distance matrix for the original sequences
+				Sequences2DNA_b128(seqs,b128seqs);
+				fillMatrix(dm, b128seqs, trans_model);
+				setIdentifiersApplyFixFactorAndPrint(ostream, dm, names, useFixFactor, fixfactor);
+			}
+			//start the bootstrapping
+			//	  vector<Sequence> bootsequences;
+			for ( int b = 0 ; b < numboot ; b++ ){
+				//Sequence::bootstrapSequences(seqs,bootsequences);
+				//Sequences2DNA_b128(bootsequences,b128seqs);
+				bootstrapSequences(seqs,b128seqs);
+				fillMatrix(dm, b128seqs, trans_model);
+				setIdentifiersApplyFixFactorAndPrint(ostream, dm, names, useFixFactor, fixfactor);
+			}
+		}
+		ostream.printEndRun();
+	}//end data set loop
+
+	//OUTPUT THE TREES
+}////Mehmood's Changes End : email: malagori@kth.se
+
+int
+main(int argc,
+		char **argv){
+
+	gengetopt_args_info args_info;
+	TRY_EXCEPTION();
+
+	if (cmdline_parser (argc, argv, &args_info) != 0) {
+		exit(EXIT_FAILURE);
+}
+
+	handleEarlyExitFlags(args_info);
+
+	//-----------------------------------------------------
+	// EVOLUTIONARY MODEL
+	sequence_translation_model trans_model = buildTranslationModel(args_info);
+
+	//----------------------------------------------
+	// BOOTSTRAPPING
+	int numboot = args_info.bootstraps_arg;
+	bool no_incl_orig = args_info.no_incl_orig_given != 0u;
+
+	seedRandom(args_info);
+
 	bool useFixFactor = args_info.fixfactor_given != 0u;
 	float fixfactor=args_info.fixfactor_arg;
 	int ndatasets = args_info.number_of_runs_arg;
@@ -122,262 +342,24 @@ main(int argc,
 	//
 
 	try {
-		char * inputfilename = nullptr;
-		char * outputfilename = nullptr;
-
-		std::unique_ptr<DataInputStream> istream;
-		std::unique_ptr<DataOutputStream> ostream;
-
-		switch( args_info.inputs_num )
-		  {
-		  case 0: break; /* inputfilename will be null and indicate stdin as input */
-		  case 1: inputfilename =  args_info.inputs[0]; break;
-		  default: cerr << "Error: you can at most specify one input filename" << endl; exit(EXIT_FAILURE);
-		}
-
-		if( args_info.outfile_given != 0u )
-		{  outputfilename = args_info.outfile_arg;  }
-
-		switch ( args_info.input_format_arg )
-		{
-		case input_format_arg_fasta: istream = std::make_unique<FastaInputStream>(inputfilename);  break;
-		case input_format_arg_phylip : istream = std::make_unique<PhylipMaInputStream>(inputfilename);  break;
-#ifdef WITH_LIBXML
-		case input_format_arg_xml: istream = std::make_unique<XmlInputStream>(inputfilename); break;
-#endif // WITH_LIBXML
-		default: exit(EXIT_FAILURE);
-		}
-
-		switch ( args_info.output_format_arg )
-		{
-		case output_format_arg_phylip: ostream = std::make_unique<PhylipDmOutputStream>(outputfilename);  break;
-		case output_format_arg_xml: ostream = std::make_unique<XmlOutputStream>(outputfilename); break;
-		//Mehmood's Changes here : email: malagori@kth.se
-		case output_format_arg_binary: ostream = std::make_unique<BinaryDmOutputStream>(outputfilename); break;
-		default: exit(EXIT_FAILURE);
-		}
+		std::unique_ptr<DataInputStream> istream = buildInputStream(args_info);
+		std::unique_ptr<DataOutputStream> ostream = buildOutputStream(args_info);
 
 		//Mehmood's Changes here : email: malagori@kth.se
 		if (args_info.output_format_arg == output_format_arg_binary ) {
-			StrFloRow dm;
-			//open infile
-
-			// THE DATA WE WILL PROCESS
-			std::vector<Sequence> seqs;
-			std::vector<string> names;
-			std::vector<DNA_b128_String> b128seqs;
-
-			Extrainfos extrainfos;
-
-			//for each dataset in the files
-
-
-			for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
-				//no bootstrapping
-				std::string runId;
-				if ( !no_incl_orig && numboot == 0){//only need to create one distance matrix
-					if ( ! istream->read(b128seqs,runId,names,extrainfos)) {
-						break;
-					}
-
-					const size_t numberOfSequences = b128seqs.size();
-					ostream->printStartRun(names,runId,extrainfos);
-					ostream->printHeader(numberOfSequences);
-
-					for(size_t i = 0; i < numberOfSequences; ++i){
-						fillMatrixRow(dm, b128seqs, trans_model, i, false);
-						dm.setIdentifier(names.at(i));
-						if(useFixFactor) { applyFixFactorRow(dm,fixfactor);
-}
-						ostream->printRow(dm, names.at(i), i, false);
-					}
-				}
-				//bootstrapping
-				else{
-					//TODO: implement bootstraping with the improved version of FastDist
-					StrFloRow dm;
-					//read original sequences
-					if ( ! istream->readSequences(seqs,runId,extrainfos)) { break;
-}
-					names.clear();names.reserve(seqs.size());
-					for(auto & seq : seqs)
-					{
-						names.push_back(seq.name);
-					}
-					const size_t numberOfSequences = seqs.size();
-					ostream->printStartRun(names,runId,extrainfos);
-					ostream->printHeader(numberOfSequences);
-					if ( !no_incl_orig ){//create the distance matrix for the original sequences
-						Sequences2DNA_b128(seqs,b128seqs);
-						for(size_t i = 0; i < numberOfSequences; ++i){
-							fillMatrixRow(dm, b128seqs, trans_model, i, false);
-							dm.setIdentifier(names.at(i));
-							if(useFixFactor) { applyFixFactorRow(dm,fixfactor);
-}
-							ostream->printRow(dm, names.at(i), i, false);
-						}
-					}
-					//start the bootstrapping
-					//	  vector<Sequence> bootsequences;
-					for ( int b = 0 ; b < numboot ; b++ ){
-						bootstrapSequences(seqs,b128seqs);
-						std::cout << numberOfSequences << std::endl;
-						ostream->printBootstrapSpliter(numberOfSequences);
-						for(size_t i = 0; i < numberOfSequences; ++i){
-							fillMatrixRow(dm, b128seqs, trans_model, i, false);
-							dm.setIdentifier(names.at(i));
-							if(useFixFactor) { applyFixFactorRow(dm,fixfactor);
-}
-							ostream->printRow(dm, names.at(i), i,false);
-						}
-					}
-				}
-				ostream->printEndRun();
-			}//end data set loop
+			runRowStreamingOutput(*istream, *ostream, trans_model, ndatasets, numboot,
+			                       no_incl_orig, useFixFactor, fixfactor,
+			                       args_info.input_format_arg, false);
 		} else if ( args_info.memory_efficient_given != 0u ) {
-			StrFloRow dm;
-						//open infile
-
-						// THE DATA WE WILL PROCESS
-						std::vector<Sequence> seqs;
-						std::vector<string> names;
-						std::vector<DNA_b128_String> b128seqs;
-
-						Extrainfos extrainfos;
-
-						//for each dataset in the files
-
-
-						for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
-							//no bootstrapping
-							std::string runId;
-							if ( !no_incl_orig && numboot == 0){//only need to create one distance matrix
-								if ( ! istream->read(b128seqs,runId,names,extrainfos)) {
-									break;
-								}
-
-								const size_t numberOfSequences = b128seqs.size();
-								ostream->printStartRun(names,runId,extrainfos);
-								ostream->printHeader(numberOfSequences);
-
-								for(size_t i = 0; i < numberOfSequences; ++i){
-									fillMatrixRow(dm, b128seqs, trans_model, i, true);
-									dm.setIdentifier(names.at(i));
-									if(useFixFactor) { applyFixFactorRow(dm,fixfactor);
-}
-									ostream->printRow(dm, names.at(i), i, true);
-								}
-							}
-							//bootstrapping
-							else{
-								//TODO: implement bootstraping with the improved version of FastDist
-								StrFloRow dm;
-								//read original sequences
-								if ( ! istream->readSequences(seqs,runId,extrainfos)) { break;
-}
-								names.clear();names.reserve(seqs.size());
-								for(auto & seq : seqs)
-								{
-									names.push_back(seq.name);
-								}
-								const size_t numberOfSequences = seqs.size();
-								ostream->printStartRun(names,runId,extrainfos);
-								ostream->printHeader(numberOfSequences);
-								if ( !no_incl_orig ){//create the distance matrix for the original sequences
-									Sequences2DNA_b128(seqs,b128seqs);
-									for(size_t i = 0; i < numberOfSequences; ++i){
-										fillMatrixRow(dm, b128seqs, trans_model, i, true);
-										dm.setIdentifier(names.at(i));
-										if(useFixFactor) { applyFixFactorRow(dm,fixfactor);
-}
-										ostream->printRow(dm, names.at(i), i, true);
-									}
-								}
-								//start the bootstrapping
-								//	  vector<Sequence> bootsequences;
-								for ( int b = 0 ; b < numboot ; b++ ){
-									bootstrapSequences(seqs,b128seqs);
-									std::cout << numberOfSequences << std::endl;
-									ostream->printBootstrapSpliter(numberOfSequences);
-									for(size_t i = 0; i < numberOfSequences; ++i){
-										fillMatrixRow(dm, b128seqs, trans_model, i, true);
-										dm.setIdentifier(names.at(i));
-										if(useFixFactor) { applyFixFactorRow(dm,fixfactor);
-}
-										ostream->printRow(dm, names.at(i), i, true);
-									}
-								}
-							}
-							ostream->printEndRun();
-						}//end data set loop
+			runRowStreamingOutput(*istream, *ostream, trans_model, ndatasets, numboot,
+			                       no_incl_orig, useFixFactor, fixfactor,
+			                       args_info.input_format_arg, true);
 		}
 		else{
-			StrDblMatrix dm;
-			//open infile
-			// THE DATA WE WILL PROCESS
-			std::vector<Sequence> seqs;
-			std::vector<string> names;
-			std::vector<DNA_b128_String> b128seqs;
-			Extrainfos extrainfos;
-
-			//for each dataset in the files
-			for ( int ds = 0 ; ds < ndatasets || args_info.input_format_arg == input_format_arg_xml ; ds++ ){
-				//no bootstrapping
-				std::string runId;
-				if ( !no_incl_orig && numboot == 0){//only need to create one distance matrix
-					if ( ! istream->read(b128seqs,runId,names,extrainfos)) { break;
-}
-					fillMatrix(dm, b128seqs, trans_model);
-					ostream->printStartRun(names,runId,extrainfos);
-					//          freeXmlStrings(extrainfos);
-					dm.setIdentifiers(names);
-					if(useFixFactor) { applyFixFactor(dm,fixfactor);
-}
-					//	  output << dm;
-					ostream->print(dm);
-				}
-				//bootstrapping
-				else{
-					//read original sequences
-
-					if ( ! istream->readSequences(seqs,runId,extrainfos)) { break;
-}
-
-					names.clear();names.reserve(seqs.size());
-					for(auto & seq : seqs) {
-						names.push_back(seq.name);
-}
-
-					ostream->printStartRun(names,runId,extrainfos);
-					//          freeXmlStrings(extrainfos);
-					if ( !no_incl_orig ){//create the distance matrix for the original sequences
-						Sequences2DNA_b128(seqs,b128seqs);
-						fillMatrix(dm, b128seqs, trans_model);
-						dm.setIdentifiers(names);
-						if(useFixFactor) {
-							applyFixFactor(dm,fixfactor);
-}
-						//       	       output << dm;
-						ostream->print(dm);
-					}
-					//start the bootstrapping
-					//	  vector<Sequence> bootsequences;
-					for ( int b = 0 ; b < numboot ; b++ ){
-						//Sequence::bootstrapSequences(seqs,bootsequences);
-						//Sequences2DNA_b128(bootsequences,b128seqs);
-						bootstrapSequences(seqs,b128seqs);
-						fillMatrix(dm, b128seqs, trans_model);
-						dm.setIdentifiers(names);
-						if(useFixFactor) { applyFixFactor(dm,fixfactor);
-}
-						ostream->print(dm);
-					}
-				}
-				ostream->printEndRun();
-			}//end data set loop
-
-			//OUTPUT THE TREES
-		}////Mehmood's Changes End : email: malagori@kth.se
+			runFullMatrixOutput(*istream, *ostream, trans_model, ndatasets, numboot,
+			                     no_incl_orig, useFixFactor, fixfactor,
+			                     args_info.input_format_arg);
+		}
 	}
 
 	catch(...){
@@ -391,4 +373,3 @@ main(int argc,
 	cmdline_parser_free(&args_info);
 	return 0;
 }
-
