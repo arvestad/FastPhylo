@@ -4,7 +4,7 @@
 #include "fastphylo/dna/Sequences2DistanceMatrix.hpp"
 #include "fastphylo/core/Exception.hpp"
 #include "fastphylo/core/Sequence.hpp"
-#include "Extrainfos.hpp"
+#include "fastphylo/io/Extrainfos.hpp"
 
 #include <iostream>
 #include <fstream>

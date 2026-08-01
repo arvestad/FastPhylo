@@ -3,7 +3,7 @@
 #include <cstdio>
 #include "fastphylo/core/Exception.hpp"
 #include "fastphylo/core/Sequence.hpp"
-#include "Extrainfos.hpp"
+#include "fastphylo/io/Extrainfos.hpp"
 
 
 #include <iostream>

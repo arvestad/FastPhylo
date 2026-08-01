@@ -21,17 +21,17 @@
 #include "fastphylo/core/file_utils.hpp"
 #include <iomanip>
 #include "fastphylo/core/log_utils.hpp"
-#include "BinaryDmOutputStream.hpp"
+#include "fastphylo/io/BinaryDmOutputStream.hpp"
 #include "fastdist_gengetopt.h"
 #include "fastphylo/dna/NeighborJoining.hpp"
 #include "DataInputStream.hpp"
 #include "PhylipMaInputStream.hpp"
 #include "FastaInputStream.hpp"
-#include "DataOutputStream.hpp"
-#include "Extrainfos.hpp"
+#include "fastphylo/io/DataOutputStream.hpp"
+#include "fastphylo/io/Extrainfos.hpp"
 #include "fastphylo/io/fileFormatSchema.hpp"
-#include "XmlOutputStream.hpp"
-#include "PhylipDmOutputStream.hpp"
+#include "fastphylo/io/XmlOutputStream.hpp"
+#include "fastphylo/io/PhylipDmOutputStream.hpp"
 
 #ifdef WITH_LIBXML
 #include "XmlInputStream.hpp"

@@ -196,13 +196,27 @@ if(STATIC AND WITH_LIBXML)
  set(LIBXML_EXTRA_COMPILE_FLAGS " -DLIBXML_STATIC ")
 endif(STATIC AND WITH_LIBXML)
 
+# Layout Phase C (project_layout_plan.md): shared output-stream classes,
+# consolidated out of fastdist's and fastprot's independently-diverged
+# per-program copies (see that plan doc for the audit - some, like
+# Extrainfos, were near-identical; PhylipDmOutputStream/XmlOutputStream/
+# DataOutputStream were genuinely different, with fastdist still on the
+# pre-speed2026a unbatched write path, now ported to fastprot's faster
+# one). fnj's own DataOutputStream/XmlOutputStream stay local to
+# programs/fnj/ - fnj writes trees built from a distance matrix, not a
+# distance matrix itself, a genuinely different shape, not just naming
+# drift.
+set(FASTPHYLO_IO_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/io)
+set(FASTPHYLO_IO_SRCS
+${FASTPHYLO_IO_DIR}/DataOutputStream.cpp
+${FASTPHYLO_IO_DIR}/PhylipDmOutputStream.cpp
+${FASTPHYLO_IO_DIR}/XmlOutputStream.cpp
+${FASTPHYLO_IO_DIR}/BinaryDmOutputStream.cpp
+)
+
 set(FASTDIST_SRCS programs/fastdist/main.cpp
 programs/fastdist/PhylipMaInputStream.cpp
 programs/fastdist/FastaInputStream.cpp
-programs/fastdist/DataOutputStream.cpp
-programs/fastdist/XmlOutputStream.cpp
-programs/fastdist/PhylipDmOutputStream.cpp
-programs/fastdist/BinaryDmOutputStream.cpp
 ${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.c
 )
 
@@ -247,10 +261,7 @@ endif()
 
 set(FASTPROT_SRCS programs/fastprot/main.cpp
 programs/fastprot/FastaInputStream.cpp
-programs/fastprot/DataOutputStream.cpp
-programs/fastprot/XmlOutputStream.cpp
 programs/fastprot/PhylipMaInputStream.cpp
-programs/fastprot/PhylipDmOutputStream.cpp
 programs/fastprot/ProtDistCalc.cpp
 programs/fastprot/ModelMatrix.cpp
 programs/fastprot/ExpectedDistance.cpp
@@ -259,7 +270,6 @@ programs/fastprot/MaximumLikelihood.cpp
 programs/fastprot/ProtSeqUtils.cpp
 programs/fastprot/ProtSeqCode.cpp
 programs/fastprot/ProtSeqCompare.cpp
-programs/fastprot/BinaryDmOutputStream.cpp
 ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.c
 )
 
@@ -310,7 +320,7 @@ endforeach(i)
 # "SequenceTree.hpp", "NeighborJoining.hpp") - confirmed by grep before
 # this rewrite, not assumed - so consumers linking fastphylo need these
 # on their include path too, which PUBLIC gives them transitively.
-add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS})
+add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS} ${FASTPHYLO_IO_SRCS})
 # Modernization Phase B (project_layout_plan.md): the public API lives
 # under include/fastphylo/{core,dna,io,protein}/ now, consumed as
 # #include "fastphylo/<bucket>/X.hpp" - this is the one include root

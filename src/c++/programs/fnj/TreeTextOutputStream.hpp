@@ -3,7 +3,7 @@
 #include "DataOutputStream.hpp"
 #include "fastphylo/core/Exception.hpp"
 #include "fastphylo/core/SequenceTree.hpp"
-#include "Extrainfos.hpp"
+#include "fastphylo/io/Extrainfos.hpp"
 
 #include <iostream>
 #include <vector>

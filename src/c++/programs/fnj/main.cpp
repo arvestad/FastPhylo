@@ -18,7 +18,7 @@
 #include "DataOutputStream.hpp"
 #include "TreeTextOutputStream.hpp"
 #include "XmlOutputStream.hpp"
-#include "Extrainfos.hpp"
+#include "fastphylo/io/Extrainfos.hpp"
 #include "fastphylo/io/fileFormatSchema.hpp"
 #include "PhylipDmInputStream.hpp"
 #include "BinaryInputStream.hpp"
