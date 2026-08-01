@@ -291,17 +291,69 @@ type...". Delivered:
 
 Same verification discipline throughout: full rebuild + `RunExamples.sh`
 + `ctest` byte-identical after each commit (same two pre-existing,
-unrelated `ex4`/`ex10` mismatches as every prior phase).
+unrelated `ex4`/`ex10` mismatches as every prior phase - see Phase 4,
+which finally ran these down: not a real bug).
 
-### Phase 4 - Verification and sign-off
+### Phase 4 - Verification and sign-off [DONE, 2026-08-01]
 
-- Full `RunExamples.sh` + `ctest` pass, same as every phase.
-- `benchmarks/run_benchmarks.sh` re-run to confirm modernization didn't
-  regress speed2026a's performance work (style changes shouldn't, but
-  verify rather than assume, especially anything touching `Matrix`/
-  `ProtSeqCompare`/hot loops).
-- Short writeup per phase (this file, updated) - same convention as
-  `phase0_audit.md` for the performance work.
+- **Full rebuild from scratch**: deleted the build directory entirely
+  and reconfigured/rebuilt in `Release` mode (every prior phase's
+  verification reused an incrementally-updated `Debug` build) - clean,
+  no errors or warnings, confirming nothing in Phases 0-3 was
+  accidentally relying on stale build state. `ctest` and
+  `RunExamples.sh` both pass against this from-scratch build,
+  byte-identical to `expected_output/`.
+- **Finally ran down the "ex4/ex10 mismatch" this whole branch kept
+  reporting as pre-existing-but-unexplained**: they're not a real
+  output mismatch at all. Both `run_example` calls are commented out in
+  `examples/RunExamples.sh` (`#run_example 4 ...`, `#run_example 10
+  ...`) - predates this branch, unrelated to any of this work - so no
+  `ex4.out`/`ex10.out` is ever generated. Every verification pass this
+  branch compared `expected_output/ex{4,10}.out` (which still exist as
+  fixture files) against a nonexistent generated file, which trivially
+  "differs" regardless of code correctness. The script's own built-in
+  check (`for i in ex*.out; do diff ...`) is immune to this since it
+  only globs files that were actually generated - the bug was in this
+  session's own ad hoc verification loop, not in the codebase.
+  Corrected description throughout this doc; the accurate statement for
+  every phase this branch is: **all 15 active examples byte-identical,
+  always** - there was never an unexplained mismatch to carry forward.
+- **`benchmarks/run_benchmarks.sh` re-run** to confirm the style
+  modernization didn't regress speed2026a's SIMD work. Primitive-level
+  absolute numbers (`bench_primitives`, which still has its own
+  internal scalar-vs-SIMD comparison, unrelated to fastprot's) came out
+  slower in wall-clock terms than the checked-in Phase 5 baseline
+  (e.g. `count_id_dist` at length 300: 2.375µs here vs 1.625µs
+  checked-in) - but the *old* column scaled up by essentially the same
+  factor (16.8µs vs 11.5µs checked-in), and the resulting speedup
+  ratios matched the checked-in baseline closely (7.07x vs 7.10x, etc.)
+  - consistent with general machine load during this run, not a code
+  regression, since a real regression would only slow the *new*
+  column. End-to-end `fastprot -D JCK` wall-clock times (the number
+  that actually matters for real usage) came out on par with or
+  slightly *faster* than the Phase 5 baseline at all four problem
+  sizes. Note: the old-vs-new toggle inside `fastprot` itself
+  (`FASTPROT_NEW_PROT_CODE`) no longer exists - it was removed in
+  speed2026a's own Phase 6 cleanup - so the end-to-end script's "old"
+  and "new" columns are now identical code measured twice; only the
+  "new" column (or either, they're the same) is meaningful post-Phase-6.
+  Did not overwrite the checked-in `results_primitives.csv`/
+  `results_end_to_end.csv` with this run's noisier numbers - reverted
+  them after comparing, since the checked-in files are the
+  well-documented, controlled Phase 5 measurement and this was a
+  confirmatory spot-check, not a new canonical baseline.
+
+**Overall sign-off for this plan's four phases**: Phase 0 (tooling),
+Phase 1 (mechanical: pragma once/nullptr/using/casts), Phase 2 (RAII:
+3 raw-ownership sites converted, 2 real latent bugs found and fixed
+along the way - the `Object::equals()` UB and
+`FloatDistanceMatrix::operator=()`'s null-deref), and Phase 3 (modern
+idioms: range-based for/override/auto) are all complete for this
+plan's scope (core library minus `DNA_b128`/`distance_methods`/
+`sequence_likelihood`, plus `fastprot`). No behavior change anywhere
+except the two disclosed, intentional bug fixes; every commit verified
+independently. What's next is explicitly out of this plan's scope, see
+below.
 
 ## What's explicitly deferred, not forgotten
 
