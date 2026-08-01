@@ -90,7 +90,16 @@ size_t Sequence::hashCode() const {
 }
 // uses the name if it exists otherwise the sequence
 bool Sequence::equals(const Object *o) const {
-	const Sequence *otherseq = (const Sequence *)o;
+	// Modernization Phase 1 (modernization_plan.md): was a C-style cast,
+	// which for a base-to-derived pointer conversion between polymorphic
+	// types performs an *unchecked* static_cast - if o pointed to some
+	// other Object subclass, every access through otherseq below was
+	// undefined behavior (there was no null check, unlike BitVector's
+	// analogous equals(), which had a check that a C-style cast made
+	// dead code - see that fix). dynamic_cast plus this new check makes
+	// comparing to a differently-typed Object defined (false), not UB.
+	const Sequence *otherseq = dynamic_cast<const Sequence *>(o);
+	if ( otherseq == nullptr ) return false;
 	if ( name.size() == 0 ){
 		if ( otherseq->name.size() == 0 )
 			return seq == otherseq->seq;

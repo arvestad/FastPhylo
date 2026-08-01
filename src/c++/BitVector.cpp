@@ -113,7 +113,14 @@ BitVector::hashCode() const{
 
 bool   
 BitVector::equals(const Object *o) const{
-  BitVector *bv = (BitVector*) o;
+  // Modernization Phase 1 (modernization_plan.md): was a C-style cast,
+  // which for a base-to-derived pointer conversion between polymorphic
+  // types performs an *unchecked* static_cast - if o pointed to some
+  // other Object subclass, bv was never actually null (the check below
+  // was dead code) and every access through bv was undefined behavior.
+  // dynamic_cast makes the existing null check meaningful: comparing to
+  // a differently-typed Object is now defined (false), not UB.
+  const BitVector *bv = dynamic_cast<const BitVector*>(o);
 
   if(bv==nullptr) return false;
   if(numBits!=bv->numBits) return false;
