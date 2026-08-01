@@ -13,6 +13,7 @@
 #include "ProtDistCalc.hpp"
 #include "ProtSeqUtils.hpp"
 #include "../../DistanceMatrix.hpp"
+#include <memory>
 #include <string>
 #include <vector>
 #include <unistd.h>
@@ -137,8 +138,8 @@ int main (int argc, char **argv) {
   try {
     char *inputfilename = nullptr;
     char *outputfilename = nullptr;
-    DataInputStream *istream;
-    DataOutputStream *ostream;
+    std::unique_ptr<DataInputStream> istream;
+    std::unique_ptr<DataOutputStream> ostream;
     switch( args_info.inputs_num ) {
       case 0:
         break; /* inputfilename will be null and indicate stdin as input */
@@ -153,14 +154,14 @@ int main (int argc, char **argv) {
       outputfilename = args_info.outfile_arg;
     switch (args_info.input_format_arg) {
       case input_format_arg_fasta:
-        istream = new FastaInputStream(inputfilename);
+        istream = std::make_unique<FastaInputStream>(inputfilename);
         break;
       case input_format_arg_phylip:
-        istream = new PhylipMaInputStream(inputfilename);
+        istream = std::make_unique<PhylipMaInputStream>(inputfilename);
         break;
 #ifdef WITH_LIBXML
       case input_format_arg_xml:
-        istream = new XmlInputStream(inputfilename);
+        istream = std::make_unique<XmlInputStream>(inputfilename);
         break;
 #endif // WITH_LIBXML
       default:
@@ -169,13 +170,13 @@ int main (int argc, char **argv) {
     bool binary_format_type=args_info.memory_efficient_given;
     switch (args_info.output_format_arg) {
       case output_format_arg_phylip:
-        ostream = new PhylipDmOutputStream(outputfilename);
+        ostream = std::make_unique<PhylipDmOutputStream>(outputfilename);
         break;
       case output_format_arg_xml:
-        ostream = new XmlOutputStream(outputfilename);
+        ostream = std::make_unique<XmlOutputStream>(outputfilename);
         break;
       case output_format_arg_binary:
-        ostream = new BinaryDmOutputStream(outputfilename);
+        ostream = std::make_unique<BinaryDmOutputStream>(outputfilename);
         binary_format_type=true;
         break;
       default:
@@ -222,8 +223,6 @@ int main (int argc, char **argv) {
 			if (!binary_format_type)
 				ostream->printEndRun();
 		}
-		delete ostream;
-		delete istream;
   }
   catch(...){
     throw;
