@@ -124,8 +124,8 @@ bool Sequence::equals(const Object *o) const {
 }
 
 bool Sequence::onlyContains(std::string &chars){
-	for ( size_t i = 0 ; i < seq.size() ; i++ ) {
-		if ( chars.find(seq[i]) != std::string::npos ) {
+	for (char i : seq) {
+		if ( chars.find(i) != std::string::npos ) {
 			return false;
 }
 }
@@ -350,8 +350,8 @@ Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin){
 void 
 Sequence::printSequences(std::vector<Sequence> &seqs, std::ofstream &out){
 	out << seqs.size() << "\t " << seqs[0].seq.length() << endl;
-	for ( size_t i = 0 ; i < seqs.size() ; i++ ){
-		out << seqs[i] << endl;
+	for (const auto & seq : seqs){
+		out << seq << endl;
 	}
 }
 

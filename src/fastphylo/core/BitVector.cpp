@@ -46,8 +46,8 @@ BitVector::printOn(std::ostream& os) const{
 void 
 BitVector::flippAllBits(){
 
-  for(size_t i = 0 ; i<bits.size() ; i++){
-    bits[i] = (bits[i] ^ 0xffFFffFFU);
+  for(unsigned long & bit : bits){
+    bit = (bit ^ 0xffFFffFFU);
   }
 
 }
@@ -56,15 +56,15 @@ BitVector::flippAllBits(){
 void 
 BitVector::setAllBits(){
 
-  for(size_t i = 0 ; i<bits.size() ; i++){
-    bits[i] = 0xffFFffFFU;
+  for(unsigned long & bit : bits){
+    bit = 0xffFFffFFU;
   }
 }
 void 
 BitVector::clearAllBits(){
   
-  for(size_t i = 0 ; i<bits.size() ; i++){
-    bits[i] = 0;
+  for(unsigned long & bit : bits){
+    bit = 0;
   }
 }
 void 

@@ -30,8 +30,7 @@ static void test_canonical_aa_roundtrip() {
 
 static void test_non_canonical_letters_excluded_from_replacement_tally() {
   const std::string extra = "BOUXZ";
-  for (std::size_t i = 0; i < extra.size(); i++) {
-    char c = extra[i];
+  for (char c : extra) {
     std::uint8_t code = encode_residue(c);
     assert(!is_canonical_aa(code));
     assert(encode_residue(static_cast<char>(std::tolower(c))) == code);
@@ -56,8 +55,7 @@ static void test_all_codes_distinct_for_fasta_legal_alphabet() {
     "abcdefghiklmnopqrstuvwyzx -.?";
   std::set<std::uint8_t> seen;
   std::set<char> seen_upper;
-  for (std::size_t i = 0; i < fasta_legal.size(); i++) {
-    char c = fasta_legal[i];
+  for (char c : fasta_legal) {
     char up = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
     std::uint8_t code = encode_residue(c);
     if (seen_upper.count(up) != 0u) { continue; // already checked this identity class

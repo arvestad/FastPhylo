@@ -11,8 +11,8 @@ bool FastaInputStream::read(vector<Sequence> &seqs, string &runId, vector<string
 }
   names.clear();
   names.reserve(seqs.size());
-  for (size_t i = 0; i < seqs.size(); i++) {
-    names.push_back(seqs[i].name);
+  for (auto & seq : seqs) {
+    names.push_back(seq.name);
   }
   return true;
 }

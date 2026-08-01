@@ -44,10 +44,10 @@ SequenceTree::printNodeData(std::ostream &os){
   SequenceTree::NodeVector vec;
   vec.reserve(getNumNodes());
   addNodesInInfixOrder(vec);
-  for ( size_t i = 0 ; i < vec.size() ; i++ ){
-    string str = vec[i]->data.s.toString();
+  for (auto & i : vec){
+    string str = i->data.s.toString();
     if ( !str.empty() ) {
-      os << "[" << vec[i]->getNodeId() << "] " << str << endl;
+      os << "[" << i->getNodeId() << "] " << str << endl;
 }
   }
 }
@@ -57,8 +57,7 @@ SequenceTree::setNodeNames(){
   SequenceTree::NodeVector vec;
   vec.reserve(getNumNodes());
   addNodesInInfixOrder(vec);
-  for ( size_t i = 0 ; i < vec.size() ; i++ ){
-    SequenceTree::Node * n = vec[i];
+  for (auto n : vec){
     if ( NAME(n).empty() ) {
       NAME(n) = string("n")+n->getNodeId();
 }
@@ -67,8 +66,7 @@ SequenceTree::setNodeNames(){
 void
 SequenceTree::printSequencesPhylip(SequenceTree::NodeVector &nodes,  std::ostream &os){
   os << nodes.size() << "\t " << SEQ(nodes[0]).length() << endl;
-  for ( size_t i = 0 ; i < nodes.size() ; i++ ){
-    SequenceTree::Node *n = nodes[i];
+  for (auto n : nodes){
     os << n->data.s << endl;
   } 
 }
@@ -83,8 +81,7 @@ SequenceTree::printSequences( std::ostream &os){
   SequenceTree::NodeVector vec;
   vec.reserve(getNumNodes());
   addNodesInInfixOrder(vec);
-  for ( size_t i = 0 ; i < vec.size() ; i++ ){
-    SequenceTree::Node *n = vec[i];
+  for (auto n : vec){
     if ( NAME(n).empty() ) {
       continue;
 }
@@ -96,8 +93,7 @@ SequenceTree::printSequencesWithoutGaps(std::ostream &os){
   SequenceTree::NodeVector vec;
   vec.reserve(getNumNodes());
   addNodesInInfixOrder(vec);
-  for ( size_t i = 0 ; i < vec.size() ; i++ ){
-    SequenceTree::Node *n = vec[i];
+  for (auto n : vec){
     if ( NAME(n).empty() ) {
       continue;
 }
@@ -139,19 +135,19 @@ void SequenceTree::shortcutDegree2Nodes(){
   SequenceTree::NodeVector vec;
   addNodesWithDegree(vec,2);
 
-  for ( size_t i = 0 ; i < vec.size() ; i++ ){
-    SequenceTree::Node *n = vec[i];
-    if ( vec[i]->isRoot() ){
+  for (auto & i : vec){
+    SequenceTree::Node *n = i;
+    if ( i->isRoot() ){
       SequenceTree::Node *child = n->getRightMostChild();
       double newedge = EDGE(child) + EDGE(child->getLeftSibling());
-      shortcutNode(vec[i]);
+      shortcutNode(i);
       EDGE(child) = -1;
       EDGE(child->getRightMostChild()) = newedge;
     }
     else{
       double pedge = EDGE(n);
       EDGE(n->getRightMostChild()) += pedge;
-      shortcutNode(vec[i]);
+      shortcutNode(i);
     }
   }
   if ( getRoot()->getDegree() == 1 ){
@@ -165,19 +161,19 @@ void SequenceTree::shortcutFloatDegree2Nodes(){
   SequenceTree::NodeVector vec;
   addNodesWithDegree(vec,2);
 
-  for ( size_t i = 0 ; i < vec.size() ; i++ ){
-    SequenceTree::Node *n = vec[i];
-    if ( vec[i]->isRoot() ){
+  for (auto & i : vec){
+    SequenceTree::Node *n = i;
+    if ( i->isRoot() ){
       SequenceTree::Node *child = n->getRightMostChild();
       float newedge = EDGE(child) + EDGE(child->getLeftSibling());
-      shortcutNode(vec[i]);
+      shortcutNode(i);
       EDGE(child) = -1;
       EDGE(child->getRightMostChild()) = newedge;
     }
     else{
       float pedge = EDGE(n);
       EDGE(n->getRightMostChild()) += pedge;
-      shortcutNode(vec[i]);
+      shortcutNode(i);
     }
   }
   if ( getRoot()->getDegree() == 1 ){
@@ -372,11 +368,11 @@ SequenceTree::mapSequencesOntoTree( std::vector<Sequence> &seqs){
   } 
 
   //go through the nameseq pairs and look up node
-  for ( size_t i=0 ; i<seqs.size() ; i++ ){
-    auto iter = str2node.find(seqs[i].name);
+  for (auto & seq : seqs){
+    auto iter = str2node.find(seq.name);
     if ( iter != str2node.end() ){
       SEQ((*iter).second).clear();
-      SEQ((*iter).second).append(seqs[i].seq);
+      SEQ((*iter).second).append(seq.seq);
     }
     else{
       //      USER_WARNING("Unknown name in tree: " << nameseqPairs[i]);

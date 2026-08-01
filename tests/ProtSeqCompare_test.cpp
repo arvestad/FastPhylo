@@ -102,8 +102,7 @@ std::string random_seq(std::size_t len, unsigned int *seed) {
 void test_random_pairs_various_lengths_and_mismatch_rates() {
   unsigned int seed = 12345;
   const std::size_t lengths[] = { 0, 1, 2, 17, 31, 32, 33, 100, 347, 1000, 3001 };
-  for (std::size_t li = 0; li < sizeof(lengths) / sizeof(lengths[0]); li++) {
-    std::size_t len = lengths[li];
+  for (unsigned long len : lengths) {
     std::string s1 = random_seq(len, &seed);
     // low mismatch: copy s1 then perturb a few positions
     std::string s2_low = s1;
@@ -123,8 +122,7 @@ void test_random_pairs_various_lengths_and_mismatch_rates() {
 }
 
 void test_every_alphabet_symbol_at_boundaries_and_runs() {
-  for (std::size_t i = 0; i < FULL_ALPHABET.size(); i++) {
-    char c = FULL_ALPHABET[i];
+  for (char c : FULL_ALPHABET) {
     // symbol at first and last position of an otherwise-'A' sequence
     std::string s1 = "AAAAAAAAAA";
     s1[0] = c;

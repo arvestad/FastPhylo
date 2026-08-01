@@ -12,8 +12,8 @@ bool FastaInputStream::read(vector<DNA_b128_String> &b128seqs, string &runId, ve
   }
   names.clear();
   names.reserve(seqs.size());
-  for (size_t i = 0; i < seqs.size(); i++) {
-    names.push_back(seqs[i].name);
+  for (auto & seq : seqs) {
+    names.push_back(seq.name);
   }
   Sequences2DNA_b128(seqs, b128seqs);
   return true;

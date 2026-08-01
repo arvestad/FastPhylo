@@ -200,9 +200,9 @@ main(int argc,
 					if ( ! istream->readSequences(seqs,runId,extrainfos)) { break;
 }
 					names.clear();names.reserve(seqs.size());
-					for( size_t i=0;i<seqs.size();i++)
+					for(auto & seq : seqs)
 					{
-						names.push_back(seqs[i].name);
+						names.push_back(seq.name);
 					}
 					const size_t numberOfSequences = seqs.size();
 					ostream->printStartRun(names,runId,extrainfos);
@@ -276,9 +276,9 @@ main(int argc,
 								if ( ! istream->readSequences(seqs,runId,extrainfos)) { break;
 }
 								names.clear();names.reserve(seqs.size());
-								for( size_t i=0;i<seqs.size();i++)
+								for(auto & seq : seqs)
 								{
-									names.push_back(seqs[i].name);
+									names.push_back(seq.name);
 								}
 								const size_t numberOfSequences = seqs.size();
 								ostream->printStartRun(names,runId,extrainfos);
@@ -344,8 +344,8 @@ main(int argc,
 }
 
 					names.clear();names.reserve(seqs.size());
-					for( size_t i=0;i<seqs.size();i++) {
-						names.push_back(seqs[i].name);
+					for(auto & seq : seqs) {
+						names.push_back(seq.name);
 }
 
 					ostream->printStartRun(names,runId,extrainfos);

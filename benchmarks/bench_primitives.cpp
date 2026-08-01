@@ -45,9 +45,9 @@ std::string random_seq(std::size_t len, unsigned int *seed) {
 
 std::string diverge(const std::string &s, double rate, unsigned int *seed) {
   std::string out = s;
-  for (std::size_t i = 0; i < out.size(); i++) {
+  for (char & i : out) {
     if ((rand_r(seed) / static_cast<double>(RAND_MAX)) < rate) {
-      out[i] = CANONICAL[rand_r(seed) % CANONICAL.size()];
+      i = CANONICAL[rand_r(seed) % CANONICAL.size()];
 }
 }
   return out;
@@ -124,8 +124,7 @@ int main() { // NOLINT(bugprone-exception-escape) - a benchmark binary crashing 
 
   std::cout << "primitive,length,old_median_us,old_q1_us,old_q3_us,new_median_us,new_q1_us,new_q3_us,speedup\n";
 
-  for (std::size_t li = 0; li < sizeof(lengths) / sizeof(lengths[0]); li++) {
-    std::size_t len = lengths[li];
+  for (unsigned long len : lengths) {
     unsigned int seed = 42 + static_cast<unsigned int>(len);
     std::string s1 = random_seq(len, &seed);
     std::string s2 = diverge(s1, DIVERGENCE, &seed);

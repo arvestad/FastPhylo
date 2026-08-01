@@ -7,8 +7,8 @@ bool PhylipMaInputStream::read(vector<Sequence> &seqs, string &runId, vector<str
   Sequence::readSequences(seqs, *reader.fp);
   names.clear();
   names.reserve(seqs.size());
-  for (size_t i = 0; i < seqs.size(); i++) {
-    names.push_back(seqs[i].name);
+  for (auto & seq : seqs) {
+    names.push_back(seq.name);
   }
   return true;
 }
