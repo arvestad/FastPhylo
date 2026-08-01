@@ -10,6 +10,7 @@
 //--------------------------------------------------
 
 #include "fastphylo/core/Sequence.hpp"
+#include <array>
 #include <string>
 #include "fastphylo/core/log_utils.hpp"
 #include <fstream>
@@ -217,22 +218,22 @@ Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin){
 	int numSequences;
 	unsigned int seqlen;
 	const int MAXLINE = 16384;
-	char line[MAXLINE];
+	std::array<char, MAXLINE> line{};
 	do {//skip lines which does not contain two numbers.
-		fin.getline(line,MAXLINE);
+		fin.getline(line.data(),MAXLINE);
 		// NOLINTNEXTLINE(bugprone-unchecked-string-to-number-conversion) - the while condition below is exactly that check.
-	}while(sscanf(line,"%d %d",&numSequences,&seqlen) != 2 );
+	}while(sscanf(line.data(),"%d %d",&numSequences,&seqlen) != 2 );
 
 	seqs.resize(numSequences);
 
 	//read the names and sequences
-	char tmpName[11];
+	std::array<char, 11> tmpName{};
 	for ( int i = 0 ; i < numSequences ; i++ ){
 		Sequence &s = seqs[i];
 		s.seq.clear();
 		s.seq.reserve(seqlen+1);
 
-		fin.getline(tmpName,11);//reads atmost 10 chars
+		fin.getline(tmpName.data(),11);//reads atmost 10 chars
 		//skip lines without 10 chars per line
 		if( !fin.fail() ){
 			if( fin.eof() ) THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
@@ -240,18 +241,18 @@ Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin){
 			continue;
 		}
 		s.name.clear();
-		appendUntil(s.name,tmpName,fin.gcount(), ' ');
+		appendUntil(s.name,tmpName.data(),fin.gcount(), ' ');
 
 		fin.clear();
-		fin.getline(line,MAXLINE);
+		fin.getline(line.data(),MAXLINE);
 
 		while( fin.fail() && fin.gcount()==MAXLINE-1 ){//didn't read all the line
-			appendAllNonChars(s.seq,line,fin.gcount(), ' ');
+			appendAllNonChars(s.seq,line.data(),fin.gcount(), ' ');
 			fin.clear();
-			fin.getline(line,MAXLINE);
+			fin.getline(line.data(),MAXLINE);
 		}
 		if( !fin.fail()) {//we read it all including the newline char unless it ended with eof
-			appendAllNonChars(s.seq,line, fin.gcount() - (fin.eof()? 0: 1), ' ');
+			appendAllNonChars(s.seq,line.data(), fin.gcount() - (fin.eof()? 0: 1), ' ');
 		}
 		else //fail
 			THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
@@ -273,10 +274,10 @@ Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin){
 			for ( int i = 0 ; i < numSequences ; i++ ){
 				Sequence &s = seqs[i];
 
-				fin.getline(line,MAXLINE);
+				fin.getline(line.data(),MAXLINE);
 
 				std::string myStr;
-				myStr=line;
+				myStr=line.data();
 
 				if (myStr.empty()){
 					if( fin.eof() )
@@ -286,7 +287,7 @@ Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin){
 				}
 
 				if ( !fin.fail() || fin.gcount()!=MAXLINE-1 ){
-					appendAllNonChars(s.seq,line, fin.gcount() - (fin.eof()? 0: 1), ' ');
+					appendAllNonChars(s.seq,line.data(), fin.gcount() - (fin.eof()? 0: 1), ' ');
 
 				}
 

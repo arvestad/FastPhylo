@@ -12,6 +12,7 @@
 #include "fastphylo/core/SequenceTree.hpp"
 #include "fastphylo/core/Exception.hpp"
 
+#include <array>
 #include <vector>
 #include <string>
 #include <unordered_set>
@@ -387,11 +388,11 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
 
   int numSequences;
   unsigned int seqlen;
-  char tmp[100];
-  fin.getline(tmp,100);
+  std::array<char, 100> tmp{};
+  fin.getline(tmp.data(),100);
   // NOLINTNEXTLINE(bugprone-unchecked-string-to-number-conversion) - checked below.
-  if ( sscanf(tmp,"%d %d",&numSequences,&seqlen) != 2 )
-    THROW_EXCEPTION("expected \"<num sequences> <sequence length>\", got \"" << tmp << "\"");
+  if ( sscanf(tmp.data(),"%d %d",&numSequences,&seqlen) != 2 )
+    THROW_EXCEPTION("expected \"<num sequences> <sequence length>\", got \"" << tmp.data() << "\"");
 
 
   //build hash map {name,node} and reserve mem for the sequences

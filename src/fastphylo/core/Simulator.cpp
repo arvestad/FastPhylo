@@ -83,8 +83,8 @@ evolveSequencesUsingSeqGen(SequenceTree &tree, int seqlen, float diameterFactor,
 
   //execute seq-gen
   //execute seq-gen
-  char str[1000];
-  sprintf(str,  SEQGEN " -l%d %s" //-wa =write ancestor sequences  
+  std::array<char, 1000> str{};
+  sprintf(str.data(),  SEQGEN " -l%d %s" //-wa =write ancestor sequences  
           //JUKES CANTOR
           //	  " -s %f -n 1 -m HKY -t 0.5 -f  0.25 0.25 0.25 0.25 < "
           //" -n1 -mHKY -t0.5 -f0.25,0.25,0.25,0.25 < " //without diamter factor
@@ -92,8 +92,8 @@ evolveSequencesUsingSeqGen(SequenceTree &tree, int seqlen, float diameterFactor,
           " -s%f -n1 -mHKY -t2 -f0.25,0.25,0.25,0.25 < "
           SEQGEN_IN " > " SEQGEN_OUT,
           seqlen, (writeAncestral ? " -wa " : "") ,diameterFactor);
-  cout << "about to execute: " << str << endl;
-  system(str); // NOLINT(bugprone-command-processor) - see file header.
+  cout << "about to execute: " << str.data() << endl;
+  system(str.data()); // NOLINT(bugprone-command-processor) - see file header.
 
   ifstream seqgen_outfile;
   open_read_stream(SEQGEN_OUT,seqgen_outfile);
@@ -183,12 +183,12 @@ evolveSequencesUsingROSE(SequenceTree &tree,int seqlen, double exp_sub, double e
 
 void
 createFileName(std::string &name, int numLeafs, int ultrametricDeviation, int seqlen, float diameterFactor){
-  char tmp[1000];
-  
-  sprintf(tmp,"leafs_%d_sqlen_%d_diamF_%f.txt",
+  std::array<char, 1000> tmp{};
+
+  sprintf(tmp.data(),"leafs_%d_sqlen_%d_diamF_%f.txt",
 	  numLeafs,seqlen,diameterFactor);
 
-  name.append(tmp);
+  name.append(tmp.data());
 }
 
 
@@ -205,8 +205,8 @@ createGnuplotFromDatFile(const char *datfilename,
 			 const std::vector<string> names, 
 			 const std::string title){
   
-  char plotfilename[1000];
-  sprintf(plotfilename,"%s.eps", datfilename);
+  std::array<char, 1000> plotfilename{};
+  sprintf(plotfilename.data(),"%s.eps", datfilename);
 
   
   ofstream out;
@@ -215,7 +215,7 @@ createGnuplotFromDatFile(const char *datfilename,
   out.precision(2);
   out << "reset\n"
       <<"set terminal postscript eps solid color \"Time-Roman\" 18\n"
-      <<"set output '" << plotfilename <<"'\n"
+      <<"set output '" << plotfilename.data() <<"'\n"
       <<"set xlabel '" << xlabel <<"'\n"
       <<"set ylabel '"<< ylabel<<"'\n"
       <<"set title '"<< title << "'\n"
