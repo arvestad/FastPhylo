@@ -1,3 +1,4 @@
+#include <memory>
 #include <string>
 #include <iostream>
 #include <cstdlib>
@@ -99,8 +100,8 @@ int main (int argc, char **argv) {
 	try {
 		char * inputfilename = nullptr;
 		char * outputfilename = nullptr;
-		DataInputStream *istream;
-		DataOutputStream *ostream;
+		std::unique_ptr<DataInputStream> istream;
+		std::unique_ptr<DataOutputStream> ostream;
 
 		switch( args_info.inputs_num ) {
 			case 0:
@@ -115,12 +116,12 @@ int main (int argc, char **argv) {
 			outputfilename = args_info.outfile_arg;
 		switch ( args_info.input_format_arg ) {
 			case input_format_arg_phylip:
-				istream = new PhylipDmInputStream(inputfilename);
+				istream = std::make_unique<PhylipDmInputStream>(inputfilename);
 				break;
-			case input_format_arg_binary: istream = new BinaryInputStream(inputfilename);
+			case input_format_arg_binary: istream = std::make_unique<BinaryInputStream>(inputfilename);
 				break;
 #ifdef WITH_LIBXML
-			case input_format_arg_xml: istream = new XmlInputStream(inputfilename);
+			case input_format_arg_xml: istream = std::make_unique<XmlInputStream>(inputfilename);
 				break;
 #endif // WITH_LIBXML
 			default:
@@ -128,10 +129,10 @@ int main (int argc, char **argv) {
 		}
 		switch (args_info.output_format_arg) {
 			case output_format_arg_newick:
-				ostream = new TreeTextOutputStream(outputfilename);
+				ostream = std::make_unique<TreeTextOutputStream>(outputfilename);
 				break;
 			case output_format_arg_xml:
-				ostream = new XmlOutputStream(outputfilename);
+				ostream = std::make_unique<XmlOutputStream>(outputfilename);
 				break;
 			default:
 				exit(EXIT_FAILURE);
@@ -191,8 +192,6 @@ int main (int argc, char **argv) {
 			if (args_info.analyze_run_number_given)
 				break;
 		}//end run loop
-		delete ostream;
-		delete istream;
 	}
 	catch(...){
 		throw;

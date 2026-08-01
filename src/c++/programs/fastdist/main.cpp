@@ -10,6 +10,7 @@
 
 #include "Sequences2DistanceMatrix.hpp"
 
+#include <memory>
 #include <string>
 #include <iostream>
 #include <time.h>
@@ -121,8 +122,8 @@ main(int argc,
 		char * inputfilename = nullptr;
 		char * outputfilename = nullptr;
 
-		DataInputStream *istream;
-		DataOutputStream *ostream;
+		std::unique_ptr<DataInputStream> istream;
+		std::unique_ptr<DataOutputStream> ostream;
 
 		switch( args_info.inputs_num )
 		  {
@@ -136,20 +137,20 @@ main(int argc,
 
 		switch ( args_info.input_format_arg )
 		{
-		case input_format_arg_fasta: istream = new FastaInputStream(inputfilename);  break;
-		case input_format_arg_phylip : istream = new PhylipMaInputStream(inputfilename);  break;
+		case input_format_arg_fasta: istream = std::make_unique<FastaInputStream>(inputfilename);  break;
+		case input_format_arg_phylip : istream = std::make_unique<PhylipMaInputStream>(inputfilename);  break;
 #ifdef WITH_LIBXML
-		case input_format_arg_xml: istream = new XmlInputStream(inputfilename); break;
+		case input_format_arg_xml: istream = std::make_unique<XmlInputStream>(inputfilename); break;
 #endif // WITH_LIBXML
 		default: exit(EXIT_FAILURE);
 		}
 
 		switch ( args_info.output_format_arg )
 		{
-		case output_format_arg_phylip: ostream = new PhylipDmOutputStream(outputfilename);  break;
-		case output_format_arg_xml: ostream = new XmlOutputStream(outputfilename); break;
+		case output_format_arg_phylip: ostream = std::make_unique<PhylipDmOutputStream>(outputfilename);  break;
+		case output_format_arg_xml: ostream = std::make_unique<XmlOutputStream>(outputfilename); break;
 		//Mehmood's Changes here : email: malagori@kth.se
-		case output_format_arg_binary: ostream = new BinaryDmOutputStream(outputfilename); break;
+		case output_format_arg_binary: ostream = std::make_unique<BinaryDmOutputStream>(outputfilename); break;
 		default: exit(EXIT_FAILURE);
 		}
 
@@ -360,8 +361,6 @@ main(int argc,
 
 			//OUTPUT THE TREES
 		}////Mehmood's Changes End : email: malagori@kth.se
-		delete ostream;
-		delete istream;
 	}
 
 	catch(...){
