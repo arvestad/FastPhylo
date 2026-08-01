@@ -183,22 +183,63 @@ streaming smoke test, `fastprot -I xml` stdin smoke test, round-trip
 XML tests for both programs) specifically for the paths this merge
 touched that `RunExamples.sh` doesn't cover.
 
-### Phase D - `programs/` → `apps/`
-Rename, confirm each app directory is now genuinely thin, short
-per-app `CMakeLists.txt` files if that reads better than the current
-one-big-file approach (open question, not decided yet).
+### Phase D - `programs/` → `apps/` [DONE, 2026-08-01]
 
-### Phase E - `tests/` and `docs/`
-Move `src/c++/code_tests/` to top-level `tests/` (sibling to
-`examples/`/`benchmarks/`, where you'd actually look for it); rename
-`src/docbook/` to `docs/`. Low risk, mechanical.
+`fastdist`/`fastprot` confirmed genuinely thin now: each is just a
+`DataInputStream.hpp` declaration, three small adapter classes
+(`FastaInputStream`/`PhylipMaInputStream`/`XmlInputStream`, each ~15
+lines forwarding to the shared `io::*Reader`), `main.cpp`, and
+`gengetopt/`. `fnj` stayed larger, as expected - its I/O classes were
+never merged (confirmed genuinely different shape, not naming drift).
+Per-app `CMakeLists.txt` files: not done - stayed with the existing
+one-big-file approach rather than splitting, since nothing about this
+plan's work depended on it and it wasn't asked for.
 
-### Phase F - Verification and sign-off
-Full rebuild + `ctest` + `RunExamples.sh` (paths inside it reference
-`FASTPHYLOPATH=.../build/src/c++` - needs updating for the new binary
-location) + a check of `.github/workflows/build-and-test.yml` and
-`benchmarks/run_benchmarks.sh` for any now-stale paths. Update
-`README`/memory notes to match the new layout.
+Straight `git mv programs apps` plus updating all 71 `programs/`-relative
+path references in `src/c++/CMakeLists.txt`. `fastprot_mpi/` and the
+three loose top-level programs (`buildtree.cpp`, `CreateSimulatedData.cpp`,
+`sequence_nj.cpp`, none in this plan's scope) moved with the rest of the
+directory rather than being carved out specially. `docs/index.xml.cmake`
+has an old captured-build-log transcript as illustrative example text,
+referencing both the old `programs/` path and filenames that no longer
+exist post-Phase-C - left alone, it's decorative documentation content
+in a target that defaults off (`BUILD_DOCBOOK`), not functional.
+
+### Phase E - `tests/` and `docs/` [DONE, 2026-08-01]
+
+`src/c++/code_tests/` → top-level `tests/`; `src/docbook/` → `docs/`.
+Mechanical, as expected. Checked `docs/CMakeLists.txt` for path
+assumptions tied to the old nesting depth (two levels from repo root
+vs. one now) - none; every path there is either
+`${CMAKE_CURRENT_SOURCE_DIR}`-relative or an absolute
+`${CMAKE_BINARY_DIR}` reference, both nesting-depth-agnostic.
+
+### Phase F - Verification and sign-off [DONE, 2026-08-01]
+
+Full clean release-mode rebuild from a deleted `build/`, `ctest`,
+`RunExamples.sh` (all 15 active examples byte-identical) - done after
+every phase throughout, repeated once more at the end as a final check.
+Re-verified the three optional configure-time toggles
+(`-DWITH_LIBXML=OFF` builds completely; `-DSTATIC=ON` configures
+without error; `-DBUILD_WITH_MPI=ON` still fails clearly at configure
+time, no MPI in this environment) still work after all the restructuring.
+Checked `.github/workflows/build-and-test.yml` and
+`benchmarks/run_benchmarks.sh` for stale paths - neither hardcodes
+`programs/`/`code_tests/`/`src/docbook`, both already worked unchanged
+(binaries still land at `build/src/c++/*`, since that's
+`src/c++/CMakeLists.txt`'s own location, not something this plan moved).
+Updated `README.md`'s directory-layout section, which was stale from
+before this plan even started.
+
+**Overall sign-off**: all six phases of this plan (A/B scaffold+core+dna,
+C io/ consolidation, C2 protein/, D apps/ rename, E tests/docs, F
+verification) are done. `fastdist`/`fnj`/`fastprot` build against a real
+shared library with a discoverable public API under `include/fastphylo/`,
+the io/ duplication that caused three independent bugs this engagement
+is gone, and four more real bugs were found and fixed along the way (see
+Phase C's writeup above). No behavior change anywhere except the
+disclosed, intentional fixes; every commit verified independently.
+`fastprot_mpi` remains deferred per the section below.
 
 ## Decisions (settled 2026-08-01)
 

@@ -31,6 +31,11 @@ For the moment, we refer to the docs at our old web site: fastphylo.sourceforge.
 
 The directory layout of this package:
 
-* src/c++       the c++ sources
-* src/docbook   the docbook sources for the html documentation on the homepage
+* include/fastphylo  the public API of the shared library (core/dna/io/protein)
+* src/fastphylo      the library's implementation, mirroring include/fastphylo
+* src/c++/apps       the command-line programs (fastdist, fnj, fastprot, ...), each a thin consumer of the library
+* tests              correctness tests
+* benchmarks         performance benchmarks
+* examples           example invocations and expected output, used for regression testing
+* docs               the docbook sources for the html documentation on the homepage
 
