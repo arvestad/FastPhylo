@@ -42,11 +42,11 @@ set(INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/install INTERNAL)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/download)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/build)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/install)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt)
 if(BUILD_WITH_MPI)
-  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt)
 endif()
 
 set(ARCH_FLAGS "-msse2")
@@ -75,26 +75,26 @@ set(ARCH_FLAGS "-msse2")
   add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/external/install/lib/libz.a" COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/build_zlib.sh" ${ZLIB_VERSION} "${CMAKE_CURRENT_BINARY_DIR}/external/install" DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/external/download/zlib-${ZLIB_VERSION}.tar.gz" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/external/build")
 
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.h
-                     COMMAND ${GENGETOPT} -i ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastdist/gengetopt/cmdline.ggo --output-dir=${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt
-                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastdist/gengetopt/cmdline.ggo ${GENGETOPTDEP}
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.h
+                     COMMAND ${GENGETOPT} -i ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastdist/gengetopt/cmdline.ggo --output-dir=${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt
+                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastdist/gengetopt/cmdline.ggo ${GENGETOPTDEP}
                      VERBATIM)
 
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.h
-                     COMMAND ${GENGETOPT} -i ${CMAKE_CURRENT_SOURCE_DIR}/programs/fnj/gengetopt/cmdline.ggo --output-dir=${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt
-                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/programs/fnj/gengetopt/cmdline.ggo ${GENGETOPTDEP}
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt/fnj_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt/fnj_gengetopt.h
+                     COMMAND ${GENGETOPT} -i ${CMAKE_CURRENT_SOURCE_DIR}/apps/fnj/gengetopt/cmdline.ggo --output-dir=${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt
+                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/apps/fnj/gengetopt/cmdline.ggo ${GENGETOPTDEP}
                      VERBATIM)
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.h
-                     COMMAND ${GENGETOPT} -i ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot/gengetopt/cmdline.ggo --output-dir=${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt
-                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot/gengetopt/cmdline.ggo ${GENGETOPTDEP}
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.h
+                     COMMAND ${GENGETOPT} -i ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot/gengetopt/cmdline.ggo --output-dir=${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt
+                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot/gengetopt/cmdline.ggo ${GENGETOPTDEP}
                      VERBATIM)
 
 if(BUILD_WITH_MPI)
-  add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.h
-                     COMMAND ${GENGETOPT} -i ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot_mpi/gengetopt/cmdline.ggo --output-dir=${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt
-                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot_mpi/gengetopt/cmdline.ggo ${GENGETOPTDEP}
+  add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.h
+                     COMMAND ${GENGETOPT} -i ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot_mpi/gengetopt/cmdline.ggo --output-dir=${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt
+                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot_mpi/gengetopt/cmdline.ggo ${GENGETOPTDEP}
                      VERBATIM)
 endif()
 
@@ -147,7 +147,7 @@ endif()
 # src/fastphylo/{core,dna}/, mirroring the public headers under
 # include/fastphylo/{core,dna}/ - see that plan doc for the rationale
 # (a discoverable public API, and a step toward de-duplicating the I/O
-# stream classes still living per-program under programs/).
+# stream classes still living per-program under apps/).
 set(FASTPHYLO_CORE_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/core)
 set(FASTPHYLO_DNA_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/dna)
 
@@ -203,7 +203,7 @@ endif(STATIC AND WITH_LIBXML)
 # DataOutputStream were genuinely different, with fastdist still on the
 # pre-speed2026a unbatched write path, now ported to fastprot's faster
 # one). fnj's own DataOutputStream/XmlOutputStream stay local to
-# programs/fnj/ - fnj writes trees built from a distance matrix, not a
+# apps/fnj/ - fnj writes trees built from a distance matrix, not a
 # distance matrix itself, a genuinely different shape, not just naming
 # drift.
 set(FASTPHYLO_IO_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/io)
@@ -224,48 +224,48 @@ if(WITH_LIBXML)
   set(FASTPHYLO_IO_XML_SRCS ${FASTPHYLO_IO_DIR}/XmlInputStream.cpp)
 endif()
 
-set(FASTDIST_SRCS programs/fastdist/main.cpp
-programs/fastdist/PhylipMaInputStream.cpp
-programs/fastdist/FastaInputStream.cpp
-${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.c
+set(FASTDIST_SRCS apps/fastdist/main.cpp
+apps/fastdist/PhylipMaInputStream.cpp
+apps/fastdist/FastaInputStream.cpp
+${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.c
 )
 
 if(WITH_LIBXML)
  if(STATIC)
-  set(FASTDIST_XML_SRCS programs/fastdist/XmlInputStream.cpp "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h")
+  set(FASTDIST_XML_SRCS apps/fastdist/XmlInputStream.cpp "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h")
  else(STATIC)
-  set(FASTDIST_XML_SRCS programs/fastdist/XmlInputStream.cpp)
+  set(FASTDIST_XML_SRCS apps/fastdist/XmlInputStream.cpp)
  endif(STATIC)
 endif(WITH_LIBXML)
 
 
-set(FNJ_SRCS programs/fnj/main.cpp
-programs/fnj/DataInputStream.cpp
-programs/fnj/DataOutputStream.cpp
-programs/fnj/TreeTextOutputStream.cpp
-programs/fnj/XmlOutputStream.cpp
-programs/fnj/PhylipDmInputStream.cpp
-programs/fnj/BinaryInputStream.cpp
-${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.c
+set(FNJ_SRCS apps/fnj/main.cpp
+apps/fnj/DataInputStream.cpp
+apps/fnj/DataOutputStream.cpp
+apps/fnj/TreeTextOutputStream.cpp
+apps/fnj/XmlOutputStream.cpp
+apps/fnj/PhylipDmInputStream.cpp
+apps/fnj/BinaryInputStream.cpp
+${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt/fnj_gengetopt.c
 )
 
 if(WITH_LIBXML)
  if(STATIC)
-  set(FNJ_XML_SRCS programs/fnj/XmlInputStream.cpp "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h")
+  set(FNJ_XML_SRCS apps/fnj/XmlInputStream.cpp "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h")
  else(STATIC)
-  set(FNJ_XML_SRCS programs/fnj/XmlInputStream.cpp)
+  set(FNJ_XML_SRCS apps/fnj/XmlInputStream.cpp)
  endif(STATIC)
 endif(WITH_LIBXML)
 
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.c PROPERTIES GENERATED true)
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.h PROPERTIES GENERATED true)
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.c PROPERTIES GENERATED true)
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.h PROPERTIES GENERATED true)
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.c PROPERTIES GENERATED true)
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.h PROPERTIES GENERATED true)
+set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt/fnj_gengetopt.c PROPERTIES GENERATED true)
+set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt/fnj_gengetopt.h PROPERTIES GENERATED true)
+set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.c PROPERTIES GENERATED true)
+set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.h PROPERTIES GENERATED true)
+set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.c PROPERTIES GENERATED true)
+set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.h PROPERTIES GENERATED true)
 if(BUILD_WITH_MPI)
-  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c PROPERTIES GENERATED true)
-  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.h PROPERTIES GENERATED true)
+  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c PROPERTIES GENERATED true)
+  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.h PROPERTIES GENERATED true)
 endif()
 
 
@@ -287,39 +287,39 @@ ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp
 ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCompare.cpp
 )
 
-set(FASTPROT_SRCS programs/fastprot/main.cpp
-programs/fastprot/FastaInputStream.cpp
-programs/fastprot/PhylipMaInputStream.cpp
-${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.c
+set(FASTPROT_SRCS apps/fastprot/main.cpp
+apps/fastprot/FastaInputStream.cpp
+apps/fastprot/PhylipMaInputStream.cpp
+${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.c
 )
 
 if(WITH_LIBXML)
  if(STATIC)
-  set(FASTPROT_XML_SRCS programs/fastprot/XmlInputStream.cpp "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h")
+  set(FASTPROT_XML_SRCS apps/fastprot/XmlInputStream.cpp "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h")
  else(STATIC)
-  set(FASTPROT_XML_SRCS programs/fastprot/XmlInputStream.cpp)
+  set(FASTPROT_XML_SRCS apps/fastprot/XmlInputStream.cpp)
  endif(STATIC)
 endif(WITH_LIBXML)
 
 if(BUILD_WITH_MPI)
-  set(FASTPROT_MPI_SRCS programs/fastprot_mpi/main.cpp
-  programs/fastprot_mpi/FastaInputStream.cpp
-  programs/fastprot_mpi/DataOutputStream.cpp
-  programs/fastprot_mpi/XmlOutputStream.cpp
-  programs/fastprot_mpi/PhylipMaInputStream.cpp
-  programs/fastprot_mpi/ProtDistCalc.cpp
-  programs/fastprot_mpi/ModelMatrix.cpp
-  programs/fastprot_mpi/ExpectedDistance.cpp
-  programs/fastprot_mpi/Matrix.cpp
-  programs/fastprot_mpi/MaximumLikelihood.cpp
-  programs/fastprot_mpi/ProtSeqUtils.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c
+  set(FASTPROT_MPI_SRCS apps/fastprot_mpi/main.cpp
+  apps/fastprot_mpi/FastaInputStream.cpp
+  apps/fastprot_mpi/DataOutputStream.cpp
+  apps/fastprot_mpi/XmlOutputStream.cpp
+  apps/fastprot_mpi/PhylipMaInputStream.cpp
+  apps/fastprot_mpi/ProtDistCalc.cpp
+  apps/fastprot_mpi/ModelMatrix.cpp
+  apps/fastprot_mpi/ExpectedDistance.cpp
+  apps/fastprot_mpi/Matrix.cpp
+  apps/fastprot_mpi/MaximumLikelihood.cpp
+  apps/fastprot_mpi/ProtSeqUtils.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c
   )
   # fastprot_mpi is out of this plan's scope (project_layout_plan.md:
   # deferred, to be folded into fastprot on a future request) and was
   # never build-tested here (no MPI in this environment - configuring
   # with -DBUILD_WITH_MPI=ON already fails before reaching this point).
-  # It used to reuse programs/fastprot/PhylipDmOutputStream.cpp and
+  # It used to reuse apps/fastprot/PhylipDmOutputStream.cpp and
   # BinaryDmOutputStream.cpp directly in this source list; both moved
   # into the shared fastphylo library as part of Phase C's io/
   # consolidation, so those two lines were removed above rather than
@@ -330,9 +330,9 @@ if(BUILD_WITH_MPI)
   # checking when fastprot_mpi work is actually picked up.
   if(WITH_LIBXML)
     if(STATIC)
-      set(FASTPROT_MPI_XML_SRCS programs/fastprot_mpi/XmlInputStream.cpp "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h")
+      set(FASTPROT_MPI_XML_SRCS apps/fastprot_mpi/XmlInputStream.cpp "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h")
     else(STATIC)
-      set(FASTPROT_MPI_XML_SRCS programs/fastprot_mpi/XmlInputStream.cpp)
+      set(FASTPROT_MPI_XML_SRCS apps/fastprot_mpi/XmlInputStream.cpp)
     endif(STATIC)
   endif(WITH_LIBXML)
 endif(BUILD_WITH_MPI)
@@ -372,8 +372,8 @@ find_package(Threads REQUIRED)
 
 add_executable(fastdist ${FASTDIST_SRCS} ${FASTDIST_XML_SRCS})
 target_include_directories(fastdist PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastdist
-  ${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt
+  ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastdist
+  ${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt
 )
 target_link_libraries(fastdist PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS} ${ZLIB_LIBRARY})
 
@@ -383,8 +383,8 @@ endif(STATIC)
 
 add_executable(fnj ${FNJ_SRCS} ${FNJ_XML_SRCS})
 target_include_directories(fnj PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/programs/fnj
-  ${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt
+  ${CMAKE_CURRENT_SOURCE_DIR}/apps/fnj
+  ${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt
 )
 target_link_libraries(fnj PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS} ${ZLIB_LIBRARY})
 
@@ -397,8 +397,8 @@ find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 add_executable(fastprot ${FASTPROT_SRCS} ${FASTPROT_XML_SRCS})
 target_include_directories(fastprot PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot
-  ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt
+  ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot
+  ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt
 )
 target_link_libraries(fastprot PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK ${ZLIB_LIBRARY} Threads::Threads)
 
@@ -410,8 +410,8 @@ endif(STATIC)
 if(BUILD_WITH_MPI)
   add_executable(fastprot_mpi ${FASTPROT_MPI_SRCS} ${FASTPROT_MPI_XML_SRCS})
   target_include_directories(fastprot_mpi PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot_mpi
-    ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt
+    ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot_mpi
+    ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt
   )
   target_link_libraries(fastprot_mpi PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK ${ZLIB_LIBRARY} Threads::Threads MPI::MPI_CXX)
 
