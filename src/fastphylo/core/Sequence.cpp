@@ -106,7 +106,7 @@ bool Sequence::equals(const Object *o) const {
 	// analogous equals(), which had a check that a C-style cast made
 	// dead code - see that fix). dynamic_cast plus this new check makes
 	// comparing to a differently-typed Object defined (false), not UB.
-	const Sequence *otherseq = dynamic_cast<const Sequence *>(o);
+	const auto *otherseq = dynamic_cast<const Sequence *>(o);
 	if ( otherseq == nullptr ) { return false;
 }
 	if ( name.empty() ){

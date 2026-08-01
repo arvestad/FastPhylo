@@ -121,7 +121,7 @@ BitVector::equals(const Object *o) const{
   // was dead code) and every access through bv was undefined behavior.
   // dynamic_cast makes the existing null check meaningful: comparing to
   // a differently-typed Object is now defined (false), not UB.
-  const BitVector *bv = dynamic_cast<const BitVector*>(o);
+  const auto *bv = dynamic_cast<const BitVector*>(o);
 
   if(bv==nullptr) { return false;
 }

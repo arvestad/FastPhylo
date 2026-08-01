@@ -344,7 +344,7 @@ SequenceTree::mapSequencesOntoTree(char  **nameseqPairs, int numPairs){
 
   //go through the nameseq pairs and look up node
   for ( int i = 0 ; i < 2*numPairs ; i+=2 ){
-    str2node_map::iterator iter = str2node.find(string(nameseqPairs[i]));
+    auto iter = str2node.find(string(nameseqPairs[i]));
     if ( iter != str2node.end() ){
       SEQ((*iter).second).clear();
       SEQ((*iter).second).append(nameseqPairs[i+1]);
@@ -373,7 +373,7 @@ SequenceTree::mapSequencesOntoTree( std::vector<Sequence> &seqs){
 
   //go through the nameseq pairs and look up node
   for ( size_t i=0 ; i<seqs.size() ; i++ ){
-    str2node_map::iterator iter = str2node.find(seqs[i].name);
+    auto iter = str2node.find(seqs[i].name);
     if ( iter != str2node.end() ){
       SEQ((*iter).second).clear();
       SEQ((*iter).second).append(seqs[i].seq);
@@ -428,7 +428,7 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
     garbage.clear();
     
     //find the node 
-    str2node_map::iterator iter = str2node.find(string(names[i]));
+    auto iter = str2node.find(string(names[i]));
     if ( iter != str2node.end() ){
       sequences[i] = & SEQ(((*iter).second));
       actualNodeString = sequences[i];
@@ -537,7 +537,7 @@ SequenceTree::computeRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){
  
   t2.addLeafs(nodes2);
   for(int i=0 ; i<numLeafs ; i++){
-    str2int_hashmap::iterator iter = name2index.find(NAME(nodes2[i]));
+    auto iter = name2index.find(NAME(nodes2[i]));
     if(iter == name2index.end() ){
       USER_WARNING("trees have different leafs. " << NAME(nodes2[i]) <<" doesn't exist.");
       return -1;
@@ -621,7 +621,7 @@ SequenceTree::computeFloatRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){
 
   t2.addLeafs(nodes2);
   for(int i=0 ; i<numLeafs ; i++){
-    str2int_hashmap::iterator iter = name2index.find(NAME(nodes2[i]));
+    auto iter = name2index.find(NAME(nodes2[i]));
     if(iter == name2index.end() ){
       USER_WARNING("trees have different leafs. " << NAME(nodes2[i]) <<" doesn't exist.");
       return -1;
@@ -814,7 +814,7 @@ SequenceTree::makeCanonical(const str2int_hashmap &name2id){
   addLeafs(tmpvec);
   
   for(size_t i=0;i<tmpvec.size();i++){
-    str2int_hashmap::const_iterator find = name2id.find(NAME(tmpvec[i]));
+    auto find = name2id.find(NAME(tmpvec[i]));
     if (find==name2id.end()) {
       USER_WARNING("name doesn't exist: \"" << NAME(tmpvec[i])<<"\"");
     }

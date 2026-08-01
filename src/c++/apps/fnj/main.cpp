@@ -40,7 +40,7 @@ template<class T> void buildTrees(T &dm, tree2int_map &tree2count, std::vector<N
 	for(size_t i=0; i<methods.size(); i++){
 		computeNJTree(dm,tree,methods[i]);
 		tree.makeCanonical(name2id);
-		tree2int_map::iterator iter = tree2count.find(tree);
+		auto iter = tree2count.find(tree);
 		if(iter!=tree2count.end()) {
 			iter->second++;
 		} else {

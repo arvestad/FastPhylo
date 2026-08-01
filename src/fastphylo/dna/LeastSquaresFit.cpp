@@ -37,7 +37,7 @@ computeLeastSquaresEdgeLengths(const StrDblMatrix &orig_dm,  SequenceTree &tree)
 }
 
   for(size_t row=0 ; row<dm.getSize() ; row++){
-    str2int_hashmap::iterator f = name2Id.find(dm.getIdentifier(row));
+    auto f = name2Id.find(dm.getIdentifier(row));
     if(f==name2Id.end())
       USER_ERROR("name doesn't exist in tree: " << dm.getIdentifier(row));
     
@@ -203,7 +203,7 @@ computeLeastFloatSquaresEdgeLengths(const StrFloMatrix &orig_dm,  SequenceTree &
 }
 
   for(size_t row=0 ; row<dm.getSize() ; row++){
-    str2int_hashmap::iterator f = name2Id.find(dm.getIdentifier(row));
+    auto f = name2Id.find(dm.getIdentifier(row));
     if(f==name2Id.end())
       USER_ERROR("name doesn't exist in tree: " << dm.getIdentifier(row));
 

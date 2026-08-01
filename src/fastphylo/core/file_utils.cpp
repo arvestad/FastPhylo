@@ -167,7 +167,7 @@ open_read_file(const char *fname){
 // Added by Mehmood Khan Malagori; email: malagori@kth.se
 std::ofstream *
 open_write_binary(const char *fname){
-	ofstream *ofs = new ofstream(fname, ios::binary);
+	auto *ofs = new ofstream(fname, ios::binary);
 	if ( !ofs->good() ){
 		ofs->close();
 		ofs->clear();

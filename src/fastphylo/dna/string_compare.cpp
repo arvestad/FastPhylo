@@ -107,7 +107,7 @@ complete_dna_string_compare(float divergence_matrix[4][4],//a 4x4 matrix will be
   // print_divergence_matrix(divergence_matrix);
   
   //update ambiguities according to Swofford
-  vector<int>::iterator iter = ambig_pos.begin();
+  auto iter = ambig_pos.begin();
   for ( ; iter != ambig_pos.end() ; ++iter ){
     int pos = *iter;
     nucleotide n1 = char2nucleotide(s1[pos]);

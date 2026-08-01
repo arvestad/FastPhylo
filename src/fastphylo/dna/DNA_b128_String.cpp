@@ -325,7 +325,7 @@ DNA_b128_String::getNucleotide(int pos) const{
   //check that not deleted or ambigious
   if ( n == DNA_UNKNOWN_ ){
     //check if ambigious (PENDING could do a binary search!)
-    vector<ambiguity_nucleotide_at_position>::const_iterator iter = ambiguities.begin();
+    auto iter = ambiguities.begin();
     for ( ; iter != ambiguities.end() && (*iter).position < pos ; ++iter ){
       //skip until pos
     }
@@ -344,7 +344,7 @@ DNA_b128_String::getNucleotideNOAMBIGUITY(int pos) const{
   
   int c_int = get_int_b128(c_b128, INT_D_I(pos));
 
-  nucleotide n =  static_cast<nucleotide>((c_int >> BIT_INT_I(pos) ) & NUCLEOTIDE_INT_MASK);
+  auto n =  static_cast<nucleotide>((c_int >> BIT_INT_I(pos) ) & NUCLEOTIDE_INT_MASK);
 
   //check that not deleted or ambigious
   if ( n == DNA_A_ ){
@@ -388,7 +388,7 @@ DNA_b128_String::setNucleotide(int pos, nucleotide n){
     assert ( is_ambiguity_nucleotide(old) != 0 );
     _fastClearNucleotideUnknown(D_I(pos),INT_D_I(pos),BIT_INT_I(pos));
     //PENDING very slowDNA_b128_String!  (PENDING could do a binary search!)
-    vector<ambiguity_nucleotide_at_position>::iterator iter = ambiguities.begin();
+    auto iter = ambiguities.begin();
     for ( ; iter != ambiguities.end() ; ++iter ){
       if ( (*iter).position == pos ){
         ambiguities.erase(iter);        
@@ -414,7 +414,7 @@ DNA_b128_String::setNucleotide(int pos, nucleotide n){
     assert ( is_ambiguity_nucleotide(n) != 0 );
     _fastSetNucleotideUnknown(D_I(pos),INT_D_I(pos),BIT_INT_I(pos));
 
-    vector<ambiguity_nucleotide_at_position>::iterator iter = ambiguities.begin();
+    auto iter = ambiguities.begin();
     while ( iter != ambiguities.end() &&
             (*iter).position < pos ) {
       ++iter;
@@ -462,7 +462,7 @@ bool operator== (const DNA_b128_String::ambiguity_nucleotide_at_position &a,
 
 bool
 DNA_b128_String::equals(const Object *o) const{
-  const DNA_b128_String *s2 = dynamic_cast<const DNA_b128_String *>(o);
+  const auto *s2 = dynamic_cast<const DNA_b128_String *>(o);
   if ( s2 == nullptr ) {
     return false;
 }
@@ -488,7 +488,7 @@ DNA_b128_String::equals(const Object *o) const{
 void
 DNA_b128_String::resolveAmbiguities(const DNA_b128_String &temp_str){
 
-  std::vector<ambiguity_nucleotide_at_position>::iterator iter = ambiguities.begin();
+  auto iter = ambiguities.begin();
   //  int numres = 0;
   for ( ; iter != ambiguities.end() ; ++iter ){
     ambiguity_nucleotide_at_position ambpos = *iter;
@@ -511,7 +511,7 @@ void
 DNA_b128_String::resolveAmbiguitiesUsingTransitionProbabilities(const DNA_b128_String &temp_str, 
 								ML_string_distance mldist){
 
-  std::vector<ambiguity_nucleotide_at_position>::iterator iter = ambiguities.begin();
+  auto iter = ambiguities.begin();
  
   for ( ; iter != ambiguities.end() ; ++iter ){
     ambiguity_nucleotide_at_position ambpos = *iter;
@@ -573,8 +573,8 @@ DNA_b128_String::correctDistanceWithAmbiguitiesUsingBackgroundFrequences(simple_
   simple_string_distance real_distance = sp;
 
   //traverse the ambiguities and compute the correct distance.
-  std::vector<ambiguity_nucleotide_at_position>::const_iterator i1 = s1.ambiguities.begin();
-  std::vector<ambiguity_nucleotide_at_position>::const_iterator i2 = s2.ambiguities.begin();
+  auto i1 = s1.ambiguities.begin();
+  auto i2 = s2.ambiguities.begin();
   int pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
   int pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
 
@@ -649,8 +649,8 @@ DNA_b128_String::correctDistanceWithAmbiguitiesUsingBackgroundFrequences(TN_stri
   TN_string_distance real_distance = sp;
 
   //traverse the ambiguities and compute the correct distance.
-  std::vector<ambiguity_nucleotide_at_position>::const_iterator i1 = s1.ambiguities.begin();
-  std::vector<ambiguity_nucleotide_at_position>::const_iterator i2 = s2.ambiguities.begin();
+  auto i1 = s1.ambiguities.begin();
+  auto i2 = s2.ambiguities.begin();
   int pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
   int pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
 
@@ -730,8 +730,8 @@ DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(simp
   simple_string_distance real_distance = sp;
 
   //traverse the ambiguities and compute the correct distance.
-  std::vector<ambiguity_nucleotide_at_position>::const_iterator i1 = s1.ambiguities.begin();
-  std::vector<ambiguity_nucleotide_at_position>::const_iterator i2 = s2.ambiguities.begin();
+  auto i1 = s1.ambiguities.begin();
+  auto i2 = s2.ambiguities.begin();
   int pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
   int pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
 
@@ -810,8 +810,8 @@ DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(TN_s
   TN_string_distance real_distance = sp;
 
   //traverse the ambiguities and compute the correct distance.
-  std::vector<ambiguity_nucleotide_at_position>::const_iterator i1 = s1.ambiguities.begin();
-  std::vector<ambiguity_nucleotide_at_position>::const_iterator i2 = s2.ambiguities.begin();
+  auto i1 = s1.ambiguities.begin();
+  auto i2 = s2.ambiguities.begin();
   int pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
   int pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
 
