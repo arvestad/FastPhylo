@@ -121,7 +121,7 @@ public:
     computeFloatRobinsonFoulds(SequenceTree &t1,SequenceTree &t2);
 
   void
-  computeSplittSet(std::vector<BitVector> &splitts, SequenceTree::NodeVector &nodeForEachSplitt,
+  computeSplittSet(std::vector<BitVector> &splitts, SequenceTree::NodeVector &nodes,
 		   str2int_hashmap &name2index);
   static void
   printSplitt(BitVector &splitt, str2int_hashmap &name2index, std::ostream& os=std::cout);

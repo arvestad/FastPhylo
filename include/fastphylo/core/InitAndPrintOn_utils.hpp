@@ -77,10 +77,10 @@ struct Sequence_double{
 
 
 std::istream &
-operator>>(std::istream &in,Sequence_double &seqflt);
+operator>>(std::istream &in,Sequence_double &strflt);
 
 std::ostream&
-operator<<(std::ostream & os, const Sequence_double &seqflt);
+operator<<(std::ostream & os, const Sequence_double &strflt);
 
 //--------------------------------------
 // STRING INT PAIR
@@ -106,10 +106,10 @@ struct string_double{
 
 
 std::istream &
-operator>>(std::istream &in,string_double &strint);
+operator>>(std::istream &in,string_double &strflt);
 
 std::ostream&
-operator<<(std::ostream & os, const string_double &strint);
+operator<<(std::ostream & os, const string_double &strflt);
 
 
 //--------------------------------------

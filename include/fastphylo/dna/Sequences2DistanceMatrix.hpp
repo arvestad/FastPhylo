@@ -58,7 +58,7 @@ typedef struct {
 //---------------------------------------------------------------
 //Fills the distance matrix according to the sequence_translation_model.
 
-void fillMatrix(StrDblMatrix &dm, std::vector<DNA_b128_String> &b128_strings,
+void fillMatrix(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 		sequence_translation_model trans_model);
 
 
@@ -83,7 +83,7 @@ void fillMatrix_TN93(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 //-----------
 //--------- mehmood warka dang---------------
 
-void fillMatrixRow(StrFloRow &dm, std::vector<DNA_b128_String> &b128_strings,
+void fillMatrixRow(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 		sequence_translation_model trans_model, size_t row, bool mem_eff_flag);
 
 //--------------------------------------------------------------------

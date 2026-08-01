@@ -32,9 +32,9 @@ using namespace std;
 // Declarations of methods that compute the sums
 // at different levels
 static void dist_level_1(b128 &sum_ts_l1, b128 &sum_pyrts_l1, b128 &sum_tv_l1, b128 &sum_del_l1);
-static void dist_level_2(b128 &sum_ts_l1, b128 &sum_pyrts_l1, b128 &sum_tv_l1, b128 &sum_del_l1);
-static void dist_level_3(b128 &sum_ts_l1, b128 &sum_pyrts_l1, b128 &sum_tv_l1, b128 &sum_del_l1);
-static void dist_level_4(b128 &sum_ts_l1, b128 &sum_pyrts_l1, b128 &sum_tv_l1, b128 &sum_del_l1);
+static void dist_level_2(b128 &sum_ts_l2, b128 &sum_pyrts_l2, b128 &sum_tv_l2, b128 &sum_del_l2);
+static void dist_level_3(b128 &sum_ts_l3, b128 &sum_pyrts_l3, b128 &sum_tv_l3, b128 &sum_del_l3);
+static void dist_level_4(b128 &sum_ts_l4, b128 &sum_pyrts_l4, b128 &sum_tv_l4, b128 &sum_del_l4);
 
 
 

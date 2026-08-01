@@ -34,16 +34,16 @@ FILE *
 open_write_file(const char *fname);
 
 void
-open_write_stream(const char *fname, std::ofstream &fout);
+open_write_stream(const char *fname, std::ofstream &of);
 
 void
-open_write_stream(const std::string fname, std::ofstream &fout);
+open_write_stream(const std::string fname, std::ofstream &of);
 
 FILE *
 open_write_file_interactive(const char *fname);
 
 void
-open_write_stream_interactive(const char *fname, std::ofstream &fout);
+open_write_stream_interactive(const char *fname, std::ofstream &of);
 
 FILE *
 open_read_file(const char *fname);

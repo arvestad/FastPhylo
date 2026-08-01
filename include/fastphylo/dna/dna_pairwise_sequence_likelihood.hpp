@@ -107,7 +107,7 @@ std::ostream&
 operator<<(std::ostream & os, const TN_string_distance &d);
 
 std::ostream&
-operator<<(std::ostream & os, const ML_string_distance &sd);
+operator<<(std::ostream & os, const ML_string_distance &td);
 
 //-------------------------------------------------------------
 

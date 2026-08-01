@@ -36,26 +36,26 @@ string operator + (const int i, const string & s) {
 }
 
 
-string operator + (const string & s, const float i) {
+string operator + (const string & s, const float f) {
     // a 32bit int in decimal asciiz form is less than 12 characters
     char buf[20];
 #ifdef WIN32
-    _snprintf(buf, sizeof(buf), "%f", i);
+    _snprintf(buf, sizeof(buf), "%f", f);
 #else
-    snprintf(buf, sizeof(buf), "%f", i);
+    snprintf(buf, sizeof(buf), "%f", f);
 #endif
     string t = s;
     t.append(buf);
     return t;
 }
 
-string operator + (const float i, const string & s) {
+string operator + (const float f, const string & s) {
     // a 32bit int in decimal asciiz form is less than 12 characters
     char buf[20];
 #ifdef WIN32
-    _snprintf(buf, sizeof(buf), "%f", i);
+    _snprintf(buf, sizeof(buf), "%f", f);
 #else
-    snprintf(buf, sizeof(buf), "%f", i);
+    snprintf(buf, sizeof(buf), "%f", f);
 #endif
     string t = s;
     t.insert(0,buf);
