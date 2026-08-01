@@ -110,49 +110,53 @@ regularnucleotide2ambiguity_nucleotide(const nucleotide &n){
   // CONVERSION WITH BASE FREQUENCES
 static __inline ambiguity_nucleotide
 nucleotide2ambiguity_nucleotide(const nucleotide &n,
-                                int basefreqA = 1,
-                                int basefreqC = 1,
-                                int basefreqG = 1,
-                                int basefreqT = 1){
+                                size_t basefreqA = 1,
+                                size_t basefreqC = 1,
+                                size_t basefreqG = 1,
+                                size_t basefreqT = 1){
   ambiguity_nucleotide an = {n,0,0,0,0};
-  
+  const double A = static_cast<double>(basefreqA);
+  const double C = static_cast<double>(basefreqC);
+  const double G = static_cast<double>(basefreqG);
+  const double T = static_cast<double>(basefreqT);
+
   switch (n){
   case DNA_A_: an.probA = 1.0; break;
   case DNA_C_: an.probC = 1.0; break;
   case DNA_G_: an.probG = 1.0; break;
   case DNA_T_: an.probT = 1.0; break;
   case DNA_UNKNOWN_: USER_ERROR("DNA_UNKNOWN_ can not be input"); break; //unkown is not handled
-  case DNA_M_: an.probA = (0.999999*basefreqA)/(basefreqA+basefreqC); an.probC = (0.999999*basefreqC)/(basefreqA+basefreqC); break;
-  case DNA_R_: an.probA = (0.999999*basefreqA)/(basefreqA+basefreqG); an.probG = (0.999999*basefreqG)/(basefreqA+basefreqG); break;
-  case DNA_W_: an.probA = (0.999999*basefreqA)/(basefreqA+basefreqT); an.probT = (0.999999*basefreqT)/(basefreqA+basefreqT); break;
-  case DNA_S_: an.probC = (0.999999*basefreqC)/(basefreqC+basefreqG); an.probG = (0.999999*basefreqG)/(basefreqC+basefreqG); break;
-  case DNA_Y_: an.probC = (0.999999*basefreqC)/(basefreqC+basefreqT); an.probT = (0.999999*basefreqT)/(basefreqC+basefreqT); break;
-  case DNA_K_: an.probG = (0.999999*basefreqG)/(basefreqG+basefreqT); an.probT = (0.999999*basefreqT)/(basefreqG+basefreqT); break;
+  case DNA_M_: an.probA = (0.999999*A)/(A+C); an.probC = (0.999999*C)/(A+C); break;
+  case DNA_R_: an.probA = (0.999999*A)/(A+G); an.probG = (0.999999*G)/(A+G); break;
+  case DNA_W_: an.probA = (0.999999*A)/(A+T); an.probT = (0.999999*T)/(A+T); break;
+  case DNA_S_: an.probC = (0.999999*C)/(C+G); an.probG = (0.999999*G)/(C+G); break;
+  case DNA_Y_: an.probC = (0.999999*C)/(C+T); an.probT = (0.999999*T)/(C+T); break;
+  case DNA_K_: an.probG = (0.999999*G)/(G+T); an.probT = (0.999999*T)/(G+T); break;
   case DNA_V_:
-    an.probA = (0.999999*basefreqA)/(basefreqA+basefreqC+basefreqG);
-    an.probC = (0.999999*basefreqC)/(basefreqA+basefreqC+basefreqG);
-    an.probG = (0.999999*basefreqG)/(basefreqA+basefreqC+basefreqG);
+    an.probA = (0.999999*A)/(A+C+G);
+    an.probC = (0.999999*C)/(A+C+G);
+    an.probG = (0.999999*G)/(A+C+G);
     break;
   case DNA_H_:
-    an.probA = (0.999999*basefreqA)/(basefreqA+basefreqC+basefreqT);
-    an.probC = (0.999999*basefreqC)/(basefreqA+basefreqC+basefreqT);
-    an.probT = (0.999999*basefreqT)/(basefreqA+basefreqC+basefreqT);
+    an.probA = (0.999999*A)/(A+C+T);
+    an.probC = (0.999999*C)/(A+C+T);
+    an.probT = (0.999999*T)/(A+C+T);
     break;
   case DNA_D_:
-    an.probA = (0.999999*basefreqA)/(basefreqA+basefreqG+basefreqT);
-    an.probG = (0.999999*basefreqG)/(basefreqA+basefreqG+basefreqT);
-    an.probT = (0.999999*basefreqT)/(basefreqA+basefreqG+basefreqT);
+    an.probA = (0.999999*A)/(A+G+T);
+    an.probG = (0.999999*G)/(A+G+T);
+    an.probT = (0.999999*T)/(A+G+T);
     break;
   case DNA_B_:
-    an.probC = (0.999999*basefreqC)/(basefreqC+basefreqG+basefreqT);
-    an.probG = (0.999999*basefreqG)/(basefreqC+basefreqG+basefreqT);
-    an.probT = (0.999999*basefreqT)/(basefreqC+basefreqG+basefreqT);
+    an.probC = (0.999999*C)/(C+G+T);
+    an.probG = (0.999999*G)/(C+G+T);
+    an.probT = (0.999999*T)/(C+G+T);
     break;
   case DNA_N_:
-    an.probA = (0.999999*basefreqA)/(basefreqA+basefreqC+basefreqG+basefreqT);
-    an.probC = (0.999999*basefreqC)/(basefreqA+basefreqC+basefreqG+basefreqT);
-    an.probG = (0.999999*basefreqG)/(basefreqA+basefreqC+basefreqG+basefreqT);
-    an.probT = (0.999999*basefreqT)/(basefreqA+basefreqC+basefreqG+basefreqT);
+    an.probA = (0.999999*A)/(A+C+G+T);
+    an.probC = (0.999999*C)/(A+C+G+T);
+    an.probG = (0.999999*G)/(A+C+G+T);
+    an.probT = (0.999999*T)/(A+C+G+T);
     break;
   case DNA_NOT_ALLOWED: USER_WARNING("DNA_NOT_ALLOWED can not be input" ); break;
   default: USER_WARNING("AMBIG_X_FLAG can not be input: " << n); 

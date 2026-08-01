@@ -195,8 +195,8 @@ public:
   //These functions compute the probabilities of every ambiguity symbol.
   //E.g. 'M' is either an 'A' or a 'C' and if basefreqA=3 and basefreqC=2
   //then the probability of seeing an 'A' is 3/5 and for 'C' 2/5.
-  void calcAmbiguityProbabilities(int basefreqA, int basefreqC,
-                                  int basefreqG, int basefreqT){
+  void calcAmbiguityProbabilities(size_t basefreqA, size_t basefreqC,
+                                  size_t basefreqG, size_t basefreqT){
     std::vector<ambiguity_nucleotide_at_position>::iterator iter = ambiguities.begin();
     for ( ; iter != ambiguities.end() ; ++iter ){
       (*iter).ambiguity = nucleotide2ambiguity_nucleotide((*iter).ambiguity.n, basefreqA, basefreqC, basefreqG, basefreqT);
