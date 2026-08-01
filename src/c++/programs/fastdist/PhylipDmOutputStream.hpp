@@ -6,8 +6,7 @@
  *      Email: malagori@kth.se
  */
 
-#ifndef PHYLIPDMOUTPUTSTREAM_HPP_
-#define PHYLIPDMOUTPUTSTREAM_HPP_
+#pragma once
 
 //#include <cstdio>
 #include "DataOutputStream.hpp"
@@ -26,4 +25,3 @@ public:
   virtual void printBootstrapSpliter(size_t numNodes);
 };
 
-#endif /* PHYLIPDMOUTPUTSTREAM_HPP_ */

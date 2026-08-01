@@ -1,5 +1,4 @@
-#ifndef DATAOUTPUTSTREAM_HPP
-#define DATAOUTPUTSTREAM_HPP
+#pragma once
 
 #include "Exception.hpp"
 #include "SequenceTree.hpp"
@@ -22,4 +21,3 @@ protected:
   bool file_was_opened;
 };
 
-#endif // DATAOUTPUTSTREAM_HPP

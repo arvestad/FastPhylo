@@ -1,5 +1,4 @@
-#ifndef XMLINPUTSTREAM_HPP
-#define XMLINPUTSTREAM_HPP
+#pragma once
 
 #include <cstdio>
 #include <iostream>
@@ -33,4 +32,3 @@ protected:
   int dmSize;
 };
 
-#endif // XMLINPUTSTREAM_HPP

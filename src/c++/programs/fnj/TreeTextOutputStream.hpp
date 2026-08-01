@@ -1,5 +1,4 @@
-#ifndef TREETEXTOUTPUTSTREAM_HPP
-#define TREETEXTOUTPUTSTREAM_HPP
+#pragma once
 
 #include "DataOutputStream.hpp"
 #include "Exception.hpp"
@@ -16,4 +15,3 @@ public:
   void print( tree2int_map & tree2count, bool printCounts, std::string & runId, std::vector<std::string> & names, Extrainfos & extrainfos);
 };
 
-#endif // TREETEXTOUTPUTSTREAM_HPP

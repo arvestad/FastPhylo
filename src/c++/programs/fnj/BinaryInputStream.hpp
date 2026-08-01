@@ -5,8 +5,7 @@
  *      Auther: Mehmood Alam Khan
  *       Email: malagori@kth.se
  */
-#ifndef BINARYINPUTSTREAM_HPP
-#define BINARYINPUTSTREAM_HPP
+#pragma once
 
 #include "DataInputStream.hpp"
 #include <cstdio>
@@ -32,4 +31,3 @@ protected:
   bool input_was_read;
 };
 
-#endif // BINARYINPUTSTREAM_HPP

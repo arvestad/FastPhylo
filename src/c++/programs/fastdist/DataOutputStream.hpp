@@ -1,5 +1,4 @@
-#ifndef DATAOUTPUTSTREAM_HPP
-#define DATAOUTPUTSTREAM_HPP
+#pragma once
 
 #include <cstdio>
 #include <vector>
@@ -48,4 +47,3 @@ public:
   virtual void print( StrDblMatrix & dm );
 };
 */
-#endif // DATAOUTPUTSTREAM_HPP

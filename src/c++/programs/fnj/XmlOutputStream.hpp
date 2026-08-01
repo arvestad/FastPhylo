@@ -1,5 +1,4 @@
-#ifndef XMLOUTPUTSTREAM_HPP
-#define XMLOUTPUTSTREAM_HPP
+#pragma once
 
 #include <cstdio>
 #include "DataOutputStream.hpp"
@@ -12,4 +11,3 @@ protected:
   void print( tree2int_map & tree2count, bool printCounts, std::string & runId, std::vector<std::string> & names, Extrainfos & extrainfos);
 };
 
-#endif // XMLOUTPUTSTREAM_HPP

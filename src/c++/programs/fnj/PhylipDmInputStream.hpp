@@ -1,5 +1,4 @@
-#ifndef PHYLIPDMINPUTSTREAM_HPP
-#define PHYLIPDMINPUTSTREAM_HPP
+#pragma once
 /*
  * PhylipDmInputStream.hpp
  *      Auther: Mehmood Alam Khan Email: malagori@kth.se
@@ -24,4 +23,3 @@ protected:
   bool file_was_opened;
 };
 
-#endif // PHYLIPDMINPUTSTREAM_HPP

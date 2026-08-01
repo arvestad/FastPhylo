@@ -1,5 +1,4 @@
-#ifndef XMLOUTPUTSTREAM_HPP
-#define XMLOUTPUTSTREAM_HPP
+#pragma once
 
 #include <cstdio>
 #include "DataOutputStream.hpp"
@@ -20,4 +19,3 @@ public:
   virtual void printBootstrapSpliter(size_t numNodes);
 };
 
-#endif // XMLOUTPUTSTREAM_HPP

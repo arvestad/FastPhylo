@@ -1,5 +1,4 @@
-#ifndef EXTRAINFOS_HPP
-#define EXTRAINFOS_HPP
+#pragma once
 
 
 #include <vector>
@@ -33,4 +32,3 @@ protected:
   size_t size;
 };
 **/
-#endif // EXTRAINFOS_HPP

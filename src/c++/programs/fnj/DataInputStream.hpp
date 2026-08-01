@@ -1,5 +1,4 @@
-#ifndef DATAINPUTSTREAM_HPP
-#define DATAINPUTSTREAM_HPP
+#pragma once
 
 #include <cstdio>
 #include "Sequences2DistanceMatrix.hpp"
@@ -31,4 +30,3 @@ public:
   /arve 2016-06-14
 */
 
-#endif // DATAINPUTSTREAM_HPP

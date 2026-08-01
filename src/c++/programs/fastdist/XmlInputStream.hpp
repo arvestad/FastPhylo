@@ -1,5 +1,4 @@
-#ifndef XMLINPUTSTREAM_HPP
-#define XMLINPUTSTREAM_HPP
+#pragma once
 
 #include <cstdio>
 
@@ -36,4 +35,3 @@ protected:
   int fd;
 };
 
-#endif // XMLINPUTSTREAM_HPP
