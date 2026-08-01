@@ -224,7 +224,7 @@ double integrate(const DblVec fnk){
     term = fnk.front();
 }
   for (int i=1; i<nr_distances; i++) {
-    term += (fnk[i]*i + fnk[i-1]*(i-1))*speed*speed;
+    term += ((fnk[i]*i) + (fnk[i-1]*(i-1)))*speed*speed;
   }
 
   return term/2.0;

@@ -49,7 +49,7 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
   }
 
   string row; // reused per row; one fwrite() flushes it at the end of each row
-  row.reserve((writeXml || writeXmlSD ? numNodes : 0) * 26 + 32);
+  row.reserve(((writeXml || writeXmlSD ? numNodes : 0) * 26) + 32);
 
   for (size_t i = 0; i < numNodes; i++) {
     row.clear();
@@ -96,7 +96,7 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
         // unusual, matching the original fprintf()'s "rare" framing).
         char rare[128];
         int n;
-        if (f - intpart * 1.0 < 0.000001) {
+        if (f - (intpart * 1.0) < 0.000001) {
           if (writeXml || writeXmlSD) {
             n = snprintf(rare, sizeof(rare), "     <entry>%10d</entry>\n", intpart);
           } else {
@@ -112,7 +112,7 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
 }
         continue;
       }
-      float decimalpart = f - 1.0 * intpart;
+      float decimalpart = f - (1.0 * intpart);
       // warning: this isn't enough to get the correct rounding but it is close
       if (intpart == 0) { {
         defstr[2] = '0';
@@ -202,7 +202,7 @@ void PhylipDmOutputStream::printRow(StrFloRow &dm, string name, int row, bool me
     defstr[1] = ' ';
     int intpart = static_cast<int>(f);
     if (intpart > 99) {
-      if (f - intpart * 1.0 < 0.000001) {
+      if (f - (intpart * 1.0) < 0.000001) {
         fprintf(fp, "%10d", intpart);
         continue;
       }
@@ -210,7 +210,7 @@ void PhylipDmOutputStream::printRow(StrFloRow &dm, string name, int row, bool me
       continue;
     }
 
-    float decimalpart = f - 1.0 * intpart;
+    float decimalpart = f - (1.0 * intpart);
     if (intpart == 0) {
       defstr[2] = '0';
     } else {

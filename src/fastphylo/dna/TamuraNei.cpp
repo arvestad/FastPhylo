@@ -55,23 +55,23 @@ partof_derivative_likelihood(float b){
   float exp_2b = powf(E,two_b);
   
 float VAL=
-  (2*tV)/(-1 + exp_2b) +
+  ((2*tV)/(-1 + exp_2b)) +
 
   ///
-  (((-2*gY)/exp_2b + (2*(gY + gU*k1))/powf(E,two_b*(gY + gU*k1)))*tU)/
-  (-powf(E,-two_b*(gY + gU*k1)) + gU + gY/exp_2b) + 
+  (((((-2*gY)/exp_2b) + ((2*(gY + (gU*k1)))/powf(E,two_b*(gY + (gU*k1)))))*tU)/
+  (-powf(E,-two_b*(gY + (gU*k1))) + gU + (gY/exp_2b))) + 
   ///
-  (((-4*gU*gY)/exp_2b -
-    (2*gA*gG*((-2*gY)/exp_2b + (2*(gY + gU*k1))/powf(E,two_b*(gY + gU*k1))))/gU -
-    (2*gC*gT*((-2*gU)/exp_2b + (2*(gU + gY*k2))/powf(E,two_b*(gU + gY*k2))))/gY
+  (((((-4*gU*gY)/exp_2b) -
+    ((2*gA*gG*(((-2*gY)/exp_2b) + ((2*(gY + (gU*k1)))/powf(E,two_b*(gY + (gU*k1))))))/gU) -
+    ((2*gC*gT*(((-2*gU)/exp_2b) + ((2*(gU + (gY*k2)))/powf(E,two_b*(gU + (gY*k2))))))/gY)
     )*(n - tV - tU - tY))/
-  (1 - 2*(1 - powf(E,-two_b))*gU*gY -
-   (2*gC*gT*(-powf(E,-two_b*(gU + gY*k2)) + gC + gU/exp_2b + gT))/gY - 
-   (2*gA*gG*(-powf(E,-two_b*(gY + gU*k1)) + gU + gY/exp_2b))/gU) +
+  (1 - (2*(1 - powf(E,-two_b))*gU*gY) -
+   ((2*gC*gT*(-powf(E,-two_b*(gU + (gY*k2))) + gC + (gU/exp_2b) + gT))/gY) - 
+   ((2*gA*gG*(-powf(E,-two_b*(gY + (gU*k1))) + gU + (gY/exp_2b)))/gU))) +
 
   ////
-  (((-2*gU)/exp_2b + (2*(gU + gY*k2))/powf(E,two_b*(gU + gY*k2)))*tY)/
-  (-powf(E,-two_b*(gU + gY*k2)) + gC + gU/exp_2b + gT);
+  (((((-2*gU)/exp_2b) + ((2*(gU + (gY*k2)))/powf(E,two_b*(gU + (gY*k2)))))*tY)/
+  (-powf(E,-two_b*(gU + (gY*k2))) + gC + (gU/exp_2b) + gT));
 
 // cout << " VAL = " << VAL << endl;
  return VAL;
@@ -199,7 +199,7 @@ secant_search(){
     float tmp = x1;
     float tmpf = partof_derivative_likelihood(x1);
 
-    x1 = x1 - (x1-x0)/(tmpf-fx0)*tmpf;
+    x1 = x1 - ((x1-x0)/(tmpf-fx0)*tmpf);
     fx0= tmpf;
     x0 = tmp;
     //cout << "fx0 " << fx0 << "   x0 " << x0 << endl;
@@ -240,11 +240,11 @@ compute_Tamura_Nei_fixratio(int strlen, TN_string_distance sd,
   
   gA = (static_cast<float>(numAs))/norm;
   gA = ( gA < 0.000001 ? 0.000001 : gA);
-  gC = 0.000001+(static_cast<float>(numCs))/norm;
+  gC = 0.000001+((static_cast<float>(numCs))/norm);
   gC = ( gC < 0.000001 ? 0.000001 : gC);
-  gG = 0.000001+(static_cast<float>(numGs))/norm;
+  gG = 0.000001+((static_cast<float>(numGs))/norm);
   gG = ( gG < 0.000001 ? 0.000001 : gG);
-  gT = 0.000001+(static_cast<float>(numTs))/norm;
+  gT = 0.000001+((static_cast<float>(numTs))/norm);
   gT = ( gT < 0.000001 ? 0.000001 : gT);
   
   gU = gA+gG;
@@ -263,13 +263,13 @@ compute_Tamura_Nei_fixratio(int strlen, TN_string_distance sd,
 
   //the distance
   ML_string_distance tp;
-  tp.distance = 4.0*(gA*gG*purine_ratio + gT*gC*pyrimidine_ratio + gU*gY)*bt_prob;
+  tp.distance = 4.0*((gA*gG*purine_ratio) + (gT*gC*pyrimidine_ratio) + (gU*gY))*bt_prob;
 
   // FIX THE CHANGE PROBABILITIES
 
   float tv_prob = 2.0*gU*gY*(1-exp(-2*bt_prob));
-  float ts_pyrimidine_prob = 2.0 * gT*gC/gY*(gY- exp(-2*(gY*pyrimidine_ratio+ gU)*bt_prob) + gU*exp(-2*bt_prob));
-  float ts_purine_prob = 2.0 * gA*gG/gU*(gU- exp(-2*(gU*purine_ratio+ gY)*bt_prob) + gY*exp(-2*bt_prob));
+  float ts_pyrimidine_prob = 2.0 * gT*gC/gY*(gY- exp(-2*((gY*pyrimidine_ratio)+ gU)*bt_prob) + (gU*exp(-2*bt_prob)));
+  float ts_purine_prob = 2.0 * gA*gG/gU*(gU- exp(-2*((gU*purine_ratio)+ gY)*bt_prob) + (gY*exp(-2*bt_prob)));
 
   assert ( tv_prob > 0.00001 && tv_prob < 0.99999);
   assert (ts_pyrimidine_prob > 0.00001 &&  ts_pyrimidine_prob < 0.99999);

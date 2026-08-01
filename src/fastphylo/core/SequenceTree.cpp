@@ -223,7 +223,7 @@ SequenceTree::compute_loglikelihood(){
     //cout << "optprob: " << optprob << endl;
     if ( hamdist != 0 ){
       //PRINT(hamdist*log(optprob/3.0) + (slen - hamdist)*log(1 - optprob));
-      loglikelihood += hamdist*log(optprob/3.0) + (slen - hamdist)*log(1 - optprob);
+      loglikelihood += (hamdist*log(optprob/3.0)) + ((slen - hamdist)*log(1 - optprob));
       EDGE(n) = optprob;
     }
     else { {
@@ -268,7 +268,7 @@ SequenceTree::computeFloat_loglikelihood(){
     //cout << "optprob: " << optprob << endl;
     if ( hamdist != 0 ){
       //PRINT(hamdist*log(optprob/3.0) + (slen - hamdist)*log(1 - optprob));
-      loglikelihood += hamdist*log(optprob/3.0) + (slen - hamdist)*log(1 - optprob);
+      loglikelihood += (hamdist*log(optprob/3.0)) + ((slen - hamdist)*log(1 - optprob));
       EDGE(n) = optprob;
     }
     else { {

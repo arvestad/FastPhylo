@@ -51,8 +51,8 @@ partof_derivative_likelihood(float x,
 
   float VAL = //
     (b/(exp4x-1.0)) //
-    + ( a*( exp2x*(1.0+K) - exp2Kx) / ( exp2Kx*(1.0+exp4x) - 2.0*exp2x) ) //
-    + ( ( a+b-n)*( exp2x*(1.0+K)+exp2Kx ) / ( exp2Kx*(1.0+exp4x) + 2.0*exp2x) );
+    + ( a*( (exp2x*(1.0+K)) - exp2Kx) / ( (exp2Kx*(1.0+exp4x)) - (2.0*exp2x)) ) //
+    + ( ( a+b-n)*( (exp2x*(1.0+K))+exp2Kx ) / ( (exp2Kx*(1.0+exp4x)) + (2.0*exp2x)) );
 
   //  cout << " VAL = " << VAL << endl;
   return VAL;
@@ -65,7 +65,7 @@ secant_search(
               float a,//observed transitions
               float b,//observed transversions
               float n){
-  float x0 = (a/K + b/2)/n;
+  float x0 = ((a/K) + (b/2))/n;
   float fx0 = partof_derivative_likelihood(x0,K,a,b,n);
   float x1;
   if ( fx0 < 0 ) {
@@ -81,7 +81,7 @@ secant_search(
     float tmpf = partof_derivative_likelihood(x1,K,a,b,n);
 
     //    cerr << "x1 = " << x1  << " \tx0 = " << x0 << " \tfx0 = " << fx0 <<endl;
-    x1 = x1 - (x1-x0)/(tmpf-fx0)*tmpf;
+    x1 = x1 - ((x1-x0)/(tmpf-fx0)*tmpf);
     x1 = std::max<float>(x1, 0);
     fx0= tmpf;
     x0 = tmp;
@@ -125,7 +125,7 @@ compute_K2P_fixratio(int strlen, simple_string_distance sd, float fixRatio){
   if ( a_div_b > 10000 || a_div_b < 0.00001 ){
     bt_prob = b/n;//PENDING we should try using K here
     at_prob = a/n;
-    tp.distance = -0.5 * log(1.0 - 2*bt_prob - at_prob) - 0.25 *log(1 - 2.0*at_prob);
+    tp.distance = (-0.5 * log(1.0 - (2*bt_prob) - at_prob)) - (0.25 *log(1 - (2.0*at_prob)));
   }
   else {
     //float bt_prob = _binary_search(K,a,b,n);
@@ -141,7 +141,7 @@ compute_K2P_fixratio(int strlen, simple_string_distance sd, float fixRatio){
   assert(bt_prob >= 0.0);
 
   float tv_prob = 0.5*(1-exp(-4*bt_prob));
-  float ts_prob = 0.25*(1-2*exp(-2*(at_prob+bt_prob)) + exp(-4*bt_prob));
+  float ts_prob = 0.25*(1-(2*exp(-2*(at_prob+bt_prob))) + exp(-4*bt_prob));
   
   float id_prob = 1 - tv_prob - ts_prob;
   assert ( tv_prob >= 0.0 && tv_prob <= 1.0);

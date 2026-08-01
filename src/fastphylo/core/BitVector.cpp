@@ -16,7 +16,7 @@
 using namespace std;
 
 
-BitVector::BitVector(size_t numBits) : bits(numBits/32+1,0){
+BitVector::BitVector(size_t numBits) : bits((numBits/32)+1,0){
   this->numBits = numBits;
 }
 

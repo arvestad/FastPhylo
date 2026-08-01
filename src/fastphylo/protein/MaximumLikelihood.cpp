@@ -16,7 +16,7 @@
     double n_sum = N.sum();
     double d = (n_sum-N.sum_diag())/n_sum;
 
-    double adjusted = d + 0.2*pow(d, 2);
+    double adjusted = d + (0.2*pow(d, 2));
     adjusted = std::min(adjusted, 0.854); // Infinite distance
       
 
@@ -57,7 +57,7 @@
       }
       double l_new = likelihood_deriv(N, Q, Qdecomp, t+delta);
       double deriv = (l_new - l_d) / delta;
-      t = t - l_d / deriv;
+      t = t - (l_d / deriv);
       if (t < 1) { // 1 is the smallest possible distance
         return 1;
 }

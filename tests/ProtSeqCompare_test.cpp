@@ -63,7 +63,7 @@ std::vector<std::size_t> ref_count_replacements(const std::string &s1, const std
     std::size_t c1 = ref_getAAInd(s1[i]);
     std::size_t c2 = ref_getAAInd(s2[i]);
     if (c1 != 100 && c2 != 100) {
-      counts[c1 * 20 + c2]++;
+      counts[(c1 * 20) + c2]++;
 }
   }
   return counts;

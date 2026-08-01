@@ -526,28 +526,28 @@ DNA_b128_String::resolveAmbiguitiesUsingTransitionProbabilities(const DNA_b128_S
         float totalprob;
         switch( template_nucleotide ){
         case DNA_A_:
-           totalprob = curramb.probA*mldist.A_A + curramb.probC*mldist.A_C + curramb.probG*mldist.A_G + curramb.probT*mldist.A_T;
+           totalprob = (curramb.probA*mldist.A_A) + (curramb.probC*mldist.A_C) + (curramb.probG*mldist.A_G) + (curramb.probT*mldist.A_T);
           curramb.probA = curramb.probA*mldist.A_A/totalprob;
           curramb.probC = curramb.probC*mldist.A_C/totalprob;
           curramb.probG = curramb.probG*mldist.A_G/totalprob;
           curramb.probT = curramb.probT*mldist.A_T/totalprob;
           break;
         case DNA_C_:
-           totalprob = curramb.probA*mldist.A_C + curramb.probC*mldist.C_C + curramb.probG*mldist.C_G + curramb.probT*mldist.C_T;
+           totalprob = (curramb.probA*mldist.A_C) + (curramb.probC*mldist.C_C) + (curramb.probG*mldist.C_G) + (curramb.probT*mldist.C_T);
           curramb.probA = curramb.probA*mldist.A_C/totalprob;
           curramb.probC = curramb.probC*mldist.C_C/totalprob;
           curramb.probG = curramb.probG*mldist.C_G/totalprob;
           curramb.probT = curramb.probT*mldist.C_T/totalprob;
           break;
         case DNA_G_:
-           totalprob = curramb.probA*mldist.A_G + curramb.probC*mldist.C_G + curramb.probG*mldist.G_G + curramb.probT*mldist.G_T;
+           totalprob = (curramb.probA*mldist.A_G) + (curramb.probC*mldist.C_G) + (curramb.probG*mldist.G_G) + (curramb.probT*mldist.G_T);
           curramb.probA = curramb.probA*mldist.A_G/totalprob;
           curramb.probC = curramb.probC*mldist.C_G/totalprob;
           curramb.probG = curramb.probG*mldist.G_G/totalprob;
           curramb.probT = curramb.probT*mldist.G_T/totalprob;
           break;
         case DNA_T_:
-           totalprob = curramb.probA*mldist.A_T + curramb.probC*mldist.C_T + curramb.probG*mldist.G_T + curramb.probT*mldist.T_T;
+           totalprob = (curramb.probA*mldist.A_T) + (curramb.probC*mldist.C_T) + (curramb.probG*mldist.G_T) + (curramb.probT*mldist.T_T);
           curramb.probA = curramb.probA*mldist.A_T/totalprob;
           curramb.probC = curramb.probC*mldist.C_T/totalprob;
           curramb.probG = curramb.probG*mldist.G_T/totalprob;

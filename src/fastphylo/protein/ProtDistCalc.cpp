@@ -49,7 +49,7 @@ namespace {
     Matrix m(ProtSeqCode::NUM_CANONICAL_AA, ProtSeqCode::NUM_CANONICAL_AA);
     for (std::size_t a = 0; a < ProtSeqCode::NUM_CANONICAL_AA; a++) {
       for (std::size_t b = 0; b < ProtSeqCode::NUM_CANONICAL_AA; b++) {
-        m(a, b) = static_cast<double>(tally[a * ProtSeqCode::NUM_CANONICAL_AA + b]);
+        m(a, b) = static_cast<double>(tally[(a * ProtSeqCode::NUM_CANONICAL_AA) + b]);
 }
 }
     return m;
@@ -258,7 +258,7 @@ namespace {
       for (int j=i+1; j<sv.size(); j++){
         double diff = 1 - ProtSeqCode::count_id_fraction(encoded[i].data(), encoded[i].size(),
             encoded[j].data(), encoded[j].size());
-        double distance = -(19/20.0)*log(1-(20.0/19) * diff);
+        double distance = -(19/20.0)*log(1-((20.0/19) * diff));
         dm.setDistance(i, j, distance);
       }
     }
@@ -276,7 +276,7 @@ namespace {
       for (int j=i+1; j<sv.size(); j++){
         double diff = 1 - ProtSeqCode::count_id_fraction(encoded[i].data(), encoded[i].size(),
             encoded[j].data(), encoded[j].size());
-        double adj_distance = diff + 0.2*diff*diff;
+        double adj_distance = diff + (0.2*diff*diff);
         adj_distance = std::min(adj_distance, 0.854);
         double distance = - log(1-adj_distance);
         dm.setDistance(i, j, distance);
@@ -300,11 +300,11 @@ void calculate_stormsonnhammer_dists(const SeqVec &sv, StrDblMatrix &dm){
       if (diff > 0.916) { {
         adj_distance = 1000.0;
       } } else {
-        adj_distance = - log(1 - 0.95844*diff
-            - 0.69957 * pow(diff, 2)
-            + 2.4955 * pow(diff, 3)
-            - 4.6353 * pow(diff, 4)
-            + 2.8076 * pow(diff, 5));
+        adj_distance = - log(1 - (0.95844*diff)
+            - (0.69957 * pow(diff, 2))
+            + (2.4955 * pow(diff, 3))
+            - (4.6353 * pow(diff, 4))
+            + (2.8076 * pow(diff, 5)));
       }
       dm.setDistance(i, j, adj_distance); 
     }

@@ -67,7 +67,7 @@ Matrix::Matrix(std::size_t rows, std::size_t cols): nr_rows(rows), nr_cols(cols)
 Matrix::Matrix(const double array[], std::size_t rows, std::size_t cols): m_data(rows*cols, 0), nr_rows(rows), nr_cols(cols){
   for (int i=0; i<cols; i++) {
     for (int j=0; j<rows; j++) {
-      m_data[i*rows + j] = array[j*cols + i];
+      m_data[(i*rows) + j] = array[(j*cols) + i];
     }
   }
 }
@@ -76,7 +76,7 @@ Matrix::Matrix(const double array[], std::size_t rows, std::size_t cols): m_data
  */
 Matrix::Matrix(const std::vector<double> &d): nr_rows(d.size()), nr_cols(d.size()), m_data(d.size()*d.size()){
   for (int i=0; i<d.size(); i++) {
-    m_data[i*d.size()+i] = d[i];
+    m_data[(i*d.size())+i] = d[i];
 }
 }
 
@@ -157,7 +157,7 @@ Matrix Matrix::diag_mult(const std::vector<double> &diag) const{
 
   for (int i=0; i<get_cols(); i++) {
     for (int j=0; j<get_rows(); j++) {
-      temp(i,j) = (*this)(i*get_rows()+j)*diag[i];  
+      temp(i,j) = (*this)((i*get_rows())+j)*diag[i];  
 }
 }
 

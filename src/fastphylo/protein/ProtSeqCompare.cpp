@@ -69,7 +69,7 @@ namespace ProtSeqCode {
       std::uint8_t c1 = s1[i];
       std::uint8_t c2 = s2[i];
       if (is_canonical_aa(c1) && is_canonical_aa(c2)) {
-        counts[c1 * NUM_CANONICAL_AA + c2]++;
+        counts[(c1 * NUM_CANONICAL_AA) + c2]++;
 }
     }
     return counts;

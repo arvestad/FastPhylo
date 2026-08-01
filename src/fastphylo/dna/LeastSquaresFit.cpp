@@ -83,12 +83,12 @@ computeLeastSquaresEdgeLengths(const StrDblMatrix &orig_dm,  SequenceTree &tree)
       USER_ERROR("Distance Matrix contains a non finite number: " << sum);
     }
 
-    EDGE(child1) = 0.5*dm.getDistance(nodeIdToRowIndex[ID(child1)],
-				      nodeIdToRowIndex[ID(child2)])
-      + 1.0/(2*(numOriginalLeafs-numNodesBelow[ID(parent)]))*sum;
-    EDGE(child2) = 0.5*dm.getDistance(nodeIdToRowIndex[ID(child1)],
-				      nodeIdToRowIndex[ID(child2)])
-      - 1.0/(2*(numOriginalLeafs-numNodesBelow[ID(parent)]))*sum;
+    EDGE(child1) = (0.5*dm.getDistance(nodeIdToRowIndex[ID(child1)],
+				      nodeIdToRowIndex[ID(child2)]))
+      + (1.0/(2*(numOriginalLeafs-numNodesBelow[ID(parent)]))*sum);
+    EDGE(child2) = (0.5*dm.getDistance(nodeIdToRowIndex[ID(child1)],
+				      nodeIdToRowIndex[ID(child2)]))
+      - (1.0/(2*(numOriginalLeafs-numNodesBelow[ID(parent)]))*sum);
     // PRINT(dm.getDistance(nodeIdToRowIndex[ID(child1)],nodeIdToRowIndex[ID(child2)]));
     //     PRINT((numOriginalLeafs-numNodesBelow[ID(parent)]));
     //     PRINT(sum);PRINT(EDGE(child1));PRINT( EDGE(child2));
@@ -108,7 +108,7 @@ computeLeastSquaresEdgeLengths(const StrDblMatrix &orig_dm,  SequenceTree &tree)
     //update distances to parent
     double w1 = (1.0*numNodesBelow[ID(child1)])/numNodesBelow[ID(parent)];
     double w2 = (1.0*numNodesBelow[ID(child2)])/numNodesBelow[ID(parent)];
-    double distChild1Child2 = w1*EDGE(child1)+w2*EDGE(child2);
+    double distChild1Child2 = (w1*EDGE(child1))+(w2*EDGE(child2));
   
     //put parent on the row of child 2
     nodeIdToRowIndex[ID(parent)] = nodeIdToRowIndex[ID(child2)];
@@ -119,8 +119,8 @@ computeLeastSquaresEdgeLengths(const StrDblMatrix &orig_dm,  SequenceTree &tree)
 
     for(size_t row=0 ; row<dm.getSize()-1 ; row++){
       dm.setDistance(parentRow,row,
-		     w1*dm.getDistance(child1Row,row)+
-		     w2*dm.getDistance(child2Row,row)-
+		     (w1*dm.getDistance(child1Row,row))+
+		     (w2*dm.getDistance(child2Row,row))-
 		     distChild1Child2);
     }    
     
@@ -249,12 +249,12 @@ computeLeastFloatSquaresEdgeLengths(const StrFloMatrix &orig_dm,  SequenceTree &
       USER_ERROR("Distance Matrix contains a non finite number: " << sum);
     }
 
-    EDGE(child1) = 0.5*dm.getDistance(nodeIdToRowIndex[ID(child1)],
-				      nodeIdToRowIndex[ID(child2)])
-      + 1.0/(2*(numOriginalLeafs-numNodesBelow[ID(parent)]))*sum;
-    EDGE(child2) = 0.5*dm.getDistance(nodeIdToRowIndex[ID(child1)],
-				      nodeIdToRowIndex[ID(child2)])
-      - 1.0/(2*(numOriginalLeafs-numNodesBelow[ID(parent)]))*sum;
+    EDGE(child1) = (0.5*dm.getDistance(nodeIdToRowIndex[ID(child1)],
+				      nodeIdToRowIndex[ID(child2)]))
+      + (1.0/(2*(numOriginalLeafs-numNodesBelow[ID(parent)]))*sum);
+    EDGE(child2) = (0.5*dm.getDistance(nodeIdToRowIndex[ID(child1)],
+				      nodeIdToRowIndex[ID(child2)]))
+      - (1.0/(2*(numOriginalLeafs-numNodesBelow[ID(parent)]))*sum);
     // PRINT(dm.getDistance(nodeIdToRowIndex[ID(child1)],nodeIdToRowIndex[ID(child2)]));
     //     PRINT((numOriginalLeafs-numNodesBelow[ID(parent)]));
     //     PRINT(sum);PRINT(EDGE(child1));PRINT( EDGE(child2));
@@ -274,7 +274,7 @@ computeLeastFloatSquaresEdgeLengths(const StrFloMatrix &orig_dm,  SequenceTree &
     //update distances to parent
     float w1 = (1.0*numNodesBelow[ID(child1)])/numNodesBelow[ID(parent)];
     float w2 = (1.0*numNodesBelow[ID(child2)])/numNodesBelow[ID(parent)];
-    float distChild1Child2 = w1*EDGE(child1)+w2*EDGE(child2);
+    float distChild1Child2 = (w1*EDGE(child1))+(w2*EDGE(child2));
 
     //put parent on the row of child 2
     nodeIdToRowIndex[ID(parent)] = nodeIdToRowIndex[ID(child2)];
@@ -285,8 +285,8 @@ computeLeastFloatSquaresEdgeLengths(const StrFloMatrix &orig_dm,  SequenceTree &
 
     for(size_t row=0 ; row<dm.getSize()-1 ; row++){
       dm.setDistance(parentRow,row,
-		     w1*dm.getDistance(child1Row,row)+
-		     w2*dm.getDistance(child2Row,row)-
+		     (w1*dm.getDistance(child1Row,row))+
+		     (w2*dm.getDistance(child2Row,row))-
 		     distChild1Child2);
     }
 
