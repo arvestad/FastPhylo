@@ -53,7 +53,7 @@ DNA_b128_StringsFromPHYLIP(istream &fin, std::vector<std::string> &names, std::v
 	b128_strings.resize(numSequences);
 	for ( int i = 0 ; i < numSequences ; i++ ){
 		b128_strings[i].reInitiate(seqlen);
-		names.push_back(string());
+		names.emplace_back();
 	}
 	//phylip has name lenght 10.
 	//read the names and map the sequences onto the tree

@@ -76,7 +76,7 @@ bool XmlSequenceReader::readSequences(std::vector<Sequence> &seqs, std::string &
         l.in_seq = true;
         numSequences++;
         seqs.resize(numSequences);
-        extrainfos.push_back(std::string());
+        extrainfos.emplace_back();
         Sequence &s = seqs[numSequences - 1];
 
         xmlChar *name = xmlTextReaderGetAttribute(reader, reinterpret_cast<const xmlChar *>("name"));

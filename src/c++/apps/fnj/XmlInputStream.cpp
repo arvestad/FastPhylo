@@ -115,12 +115,12 @@ readstatus  XmlInputStream::readDM( StrDblMatrix & dm, std::vector<std::string> 
 				case XML_READER_TYPE_ELEMENT:
 					nr_of_ids++;
 					l.in_identity = true;
-					extrainfos.push_back( std::string() );
+					extrainfos.emplace_back( );
 					//                extrainfos.resize(nr_of_ids);
 					//                extrainfos[nr_of_ids-1]=NULL;
 					xmlChar *nameStr;
 					nameStr=xmlTextReaderGetAttribute(reader,reinterpret_cast<const xmlChar *>("name") );
-					names.push_back( reinterpret_cast<char *>(nameStr) );
+					names.emplace_back(reinterpret_cast<char *>(nameStr) );
 					xmlFree(nameStr);
 					continue;
 				case XML_READER_TYPE_END_ELEMENT:
