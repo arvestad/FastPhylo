@@ -45,6 +45,33 @@ using ParsimonyTree = Tree<p_vector>;
 static void
 backtrack(SequenceTree::Node *sn, ParsimonyTree::Node *pn);
 
+namespace {
+// Fitch-parsimony bottom-up DP core: for node's data at position j,
+// computes the cost of assigning each of the 4 symbols to this
+// position, given its children's already-computed costs (min over
+// each child of that child's cost for a symbol, plus 1 if it differs
+// from the symbol being priced here). The triple-nested loop
+// (symbol x child x child-symbol) below was the main contributor to
+// computeMostParsimoniousSequences()'s cognitive complexity (45).
+void computeParsimonyAtPosition(ParsimonyTree::Node *node, size_t j) {
+  constexpr size_t numSymbols = 4;
+  p_info &p = node->data[j];
+  for ( size_t sym = 0 ; sym < numSymbols ; sym++ ){
+    p[sym] = 0;
+    ParsimonyTree::Node *child = node->getRightMostChild();
+    for ( ; child != nullptr ; child = child->getLeftSibling() ){
+      p_info &child_p = (child->data)[j];
+      size_t score = child_p[0] + (sym != 0 ? 1 : 0);
+      for ( size_t symC = 1 ; symC < numSymbols ; symC++ ){
+        size_t symCp = child_p[symC] + (sym != symC ? 1 : 0);
+        score = MIN(score, symCp);
+      }
+      //add the best cost the the parsimony at the parent
+      p[sym] += score;
+    }//end children loop
+  }//end symbol loop
+}
+} // namespace
 
 size_t
 SequenceTree::computeMostParsimoniousSequences(){
@@ -82,9 +109,8 @@ SequenceTree::computeMostParsimoniousSequences(){
   //constants
   const size_t seqlen = seq.length();
   const size_t numNodes = getNumNodes();
-  const size_t numSymbols = 4;
 
-    
+
   //BOTTOM UP
   nodes.clear();
   pTree.addNodesInPostfixOrder(nodes);
@@ -94,26 +120,10 @@ SequenceTree::computeMostParsimoniousSequences(){
 }
     p_vector &pos = nodes[i]->data;
     pos.resize(seq.length(),defaultVal);
-    //for each position in the sequence
+    //for each position in the sequence, compute the parsimony score
+    //for each possible symbol by taking the minimum sum over the children
     for( size_t j = 0 ; j < seqlen ; j++ ){
-      p_info &p = pos[j];
-      
-      //For each possible symbol compute the parsimony score
-      //by taking the minimum sum over the children 
-      for ( size_t sym = 0 ; sym < numSymbols ; sym++ ){
-        p[sym] = 0;
-        ParsimonyTree::Node *child = nodes[i]->getRightMostChild();
-        for ( ; child != nullptr ; child = child->getLeftSibling() ){
-          p_info &child_p = (child->data)[j];
-          size_t score = child_p[0] + (sym != 0 ? 1 : 0);
-          for ( size_t symC = 1 ; symC < numSymbols ; symC++ ){
-            size_t symCp = child_p[symC] + (sym != symC ? 1 : 0);
-            score = MIN(score, symCp);
-          }
-          //add the best cost the the parsimony at the parent
-          p[sym] += score;
-        }//end children loop
-      }//end symbol loop
+      computeParsimonyAtPosition(nodes[i], j);
     }//end sequence position
   }//end node loop
 

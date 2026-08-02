@@ -906,3 +906,51 @@ binary, wrote a small standalone program (compiled against
 `libfastphylo.a` directly, not committed): three short seeded
 sequences, five repeated bootstrap draws, output compared byte-for-byte
 between the pre- and post-refactor library - identical.
+
+### `SequenceTree_MostParsimonious.cpp`: `computeMostParsimoniousSequences` (45 → 0)
+
+A Fitch-parsimony bottom-up DP: for each internal node and each
+sequence position, computes the cost of assigning each of 4 symbols to
+that position from its children's already-computed costs. That was a
+triple-nested loop (symbol × child × child's-symbol) inside the outer
+node/position loops - extracted as `computeParsimonyAtPosition()`,
+leaving the caller with just the node/position loop nest:
+
+```cpp
+void computeParsimonyAtPosition(ParsimonyTree::Node *node, size_t j) {
+  constexpr size_t numSymbols = 4;
+  p_info &p = node->data[j];
+  for ( size_t sym = 0 ; sym < numSymbols ; sym++ ){
+    p[sym] = 0;
+    ParsimonyTree::Node *child = node->getRightMostChild();
+    for ( ; child != nullptr ; child = child->getLeftSibling() ){
+      p_info &child_p = (child->data)[j];
+      size_t score = child_p[0] + (sym != 0 ? 1 : 0);
+      for ( size_t symC = 1 ; symC < numSymbols ; symC++ ){
+        size_t symCp = child_p[symC] + (sym != symC ? 1 : 0);
+        score = MIN(score, symCp);
+      }
+      p[sym] += score;
+    }
+  }
+}
+```
+
+Left the leaf-initialization loop and the root/backtrack best-symbol
+logic alone - one extraction was enough to clear the threshold, and
+both of those touch `oldRoot->data.s.seq` as a shared mutable scratch
+buffer in a way that looked riskier to pull out than the DP core,
+which is a clean, self-contained computation with no such aliasing.
+
+Like several other findings in this task, this function's only real
+callers are in `src/c++/simulated_phylogenies/` (`BootstrapTest.cpp`/
+`BootstrapStats.cpp`) - unreachable from `fastdist`/`fnj`/`fastprot`.
+
+**Verification**: full rebuild, `clang-tidy` back to zero findings,
+`ctest`, `RunExamples.sh` (15/15, confirming no regression elsewhere).
+Wrote a standalone test (against `libfastphylo.a`, not committed): a
+5-leaf tree (`((a,b),c,(d,e))`) with hand-picked sequences differing
+at a few positions (enough to force real tie-breaks in the DP, not a
+trivially-identical-sequences case), comparing the total parsimony
+score and every node's reconstructed sequence between the pre- and
+post-refactor library - byte-identical.
