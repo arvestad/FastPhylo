@@ -358,3 +358,136 @@ other (~0.33s/~0.41s both before and after), consistent with the
 change being AST-shape-only with no effect on the code the optimizer
 actually emits. Also ran the full `ctest` + `RunExamples.sh` (15/15
 byte-identical) suite as usual.
+
+## `fnj`'s `XmlInputStream::readDM` (complexity 82 → 0)
+
+`fnj`'s XML distance-matrix reader: a single 172-line function driving
+a libxml2 pull-parser loop, structured as ten sequential `if (right
+depth/parent-state/name) { switch(node_type) {...} }` blocks - one per
+XML element it recognizes (`entry`, `row`, `dm`, `identity`,
+`extrainfo`, `dms`, `run`, `identities`, `runs`, `root`). Each
+condition chains 3-6 `&&`-ed booleans plus a depth check plus a name
+comparison, and cognitive complexity charges for every one of those
+operators, on top of the switch itself - ten times over.
+
+**Key structural fact that made the extraction safe**: each block's
+`name` comparison is mutually exclusive with every other block's (a
+given XML node has exactly one tag name), so at most one block's full
+condition can ever be true for a given node. That means "fall through
+this `if` because the condition was false" and "handle it, then
+`continue` the loop" are the only two things that ever happen, and
+they're externally indistinguishable - both just mean "go read the
+next XML node." That equivalence is what makes a clean split possible:
+each block becomes a standalone method that re-checks its own guard
+condition and returns `std::nullopt` if it doesn't apply, or optionally
+a `readstatus` to return from `readDM()` immediately (`DM_READ` /
+`END_OF_RUN` / `END_OF_RUNS` - the three cases that used to `return`
+straight out of the middle of the function):
+
+```cpp
+std::optional<readstatus>
+XmlInputStream::handleDmNode(int depth, int type, const xmlChar *name,
+                              std::vector<std::string> &names, StrDblMatrix &dm) {
+  if (!(l.in_root && l.in_runs && l.in_run && l.in_dms &&
+        depth == 4 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("dm")) != 0)) {
+    return std::nullopt;
+  }
+  switch (type) {
+  case XML_READER_TYPE_ELEMENT:
+    dm.resize(dmSize);
+    l.in_dm = true;
+    l.row_nr = -1;
+    return std::nullopt;
+  case XML_READER_TYPE_END_ELEMENT:
+    l.in_dm = false;
+    for (size_t namei = 0; namei < names.size(); namei++) { dm.setIdentifier(namei, names[namei]); }
+    return DM_READ;
+  default:
+    return std::nullopt; // other node types (whitespace, comments, ...) intentionally ignored
+  }
+}
+```
+
+`readDM()` becomes pure dispatch - ten calls, each an `if (auto status
+= handleXNode(...)) { return *status; }`:
+
+```cpp
+readstatus XmlInputStream::readDM(StrDblMatrix &dm, std::vector<std::string> &names,
+                                   std::string &runId, Extrainfos &extrainfos) {
+  int nr_of_ids = 0;
+  int ret;
+  while ((ret = xmlTextReaderRead(reader)) == 1) {
+    if (xmlTextReaderIsValid(reader) != 1) { THROW_EXCEPTION("xml input does not validate"); exit(EXIT_FAILURE); }
+    int depth = xmlTextReaderDepth(reader);
+    int type = xmlTextReaderNodeType(reader);
+    const xmlChar *name = xmlTextReaderConstName(reader);
+
+    if (auto status = handleEntryNode(depth, type, name, dm)) { return *status; }
+    if (auto status = handleRowNode(depth, type, name)) { return *status; }
+    if (auto status = handleDmNode(depth, type, name, names, dm)) { return *status; }
+    if (auto status = handleIdentityNode(depth, type, name, names, extrainfos, nr_of_ids)) { return *status; }
+    if (auto status = handleExtrainfoNode(depth, type, name, extrainfos)) { return *status; }
+    if (auto status = handleDmsNode(depth, type, name)) { return *status; }
+    if (auto status = handleRunNode(depth, type, name, runId)) { return *status; }
+    if (auto status = handleIdentitiesNode(depth, type, name, names, extrainfos)) { return *status; }
+    if (auto status = handleRunsNode(depth, type, name)) { return *status; }
+    if (auto status = handleRootNode(depth, type, name)) { return *status; }
+  }
+  return ERROR;
+}
+```
+
+The ten handlers are private members (declared in `XmlInputStream.hpp`)
+so they can read/write `l` (the `locator_t` parser-state struct) and
+`dmSize` directly, same as the original inline code did.
+
+Two genuinely dead locals (`const xmlChar *value;` and `bool run_read
+= false;`, both declared but never referenced anywhere in the
+function) were dropped while moving this code - confirmed unused via
+grep before removing, not assumed.
+
+**Verification**: full rebuild, `clang-tidy` back to zero findings,
+`ctest`, `RunExamples.sh` (15/15 byte-identical - ex8/ex9 exercise
+this function via `-I phylip`/`-I xml`). `RunExamples.sh` doesn't cover
+every path through the ten handlers, so also built the pre-refactor
+commit into a separate tree and manually diffed old vs. new on
+`-I xml`, `-I phylip` with `-r 2 -O xml` (exercises the multi-run and
+`identity`/`extrainfo` paths together), `--analyze-run-number`, and
+the bad-input-count error path - all byte-identical.
+
+## `fnj/main.cpp`: `main()` (complexity 69 → 0)
+
+Refactored the same session as the `readDM()` split above, same file
+family. `main()`'s complexity came from the usual mix (argument
+validation, stream construction, a run loop) plus one genuine bug-shaped
+finding: the run loop's body was branched on `args_info.input_format_arg
+== input_format_arg_binary`, but **both branches of that if/else were
+byte-for-byte identical** - `StrDblMatrix dm; for (...
+istream->readDM(dm, ...) ...) {...}`, the exact same ~15 lines, copy-pasted
+into both the `if` and the `else`. The input format only matters to
+*which* `DataInputStream` implementation got constructed earlier
+(`buildInputStream()`); by the time this loop runs, `istream->readDM()`
+already dispatches virtually, so the branch was dead weight - probably
+a leftover from when the binary path used a different matrix type,
+later unified without ever removing the now-pointless split.
+
+Extracted the shared body as `processRuns()` and deleted the branch
+entirely (not "collapsed" - there was nothing left to collapse once
+the duplicate was recognized as duplicate). Also extracted
+`handleEarlyExitFlags()` (every early-exit check except the `isatty()`
+one, which has to run before `cmdline_parser()` populates `args_info`
+and so stays inline), `resolveMethods()`, `buildInputStream()`, and
+`buildOutputStream()` - same shape as the `fastdist/main.cpp` helpers
+from earlier in this document. Four more dead locals (`seqs`,
+`b128seqs`, `latestReadSuccessful`, `speciesnames` - declared, never
+read) were dropped, again confirmed unused via grep first.
+
+**Verification**: full rebuild, `clang-tidy` back to zero findings,
+`ctest`, `RunExamples.sh` (15/15 byte-identical - ex8/ex9 exercise
+`main()` via `-r 2 -I phylip`/`-I xml`). Manually diffed old vs. new
+on the same set of flag combinations as the `readDM()` verification
+above (they share a binary and a test session), plus `--print-counts`,
+`-m BIONJ`, `--print-relaxng-input`, and the too-many-input-files error
+path - all byte-identical, including the now-branchless run loop
+actually being exercised via both `-I binary` and `-I phylip`/`-I xml`
+runs.
