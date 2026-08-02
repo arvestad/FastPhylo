@@ -954,3 +954,32 @@ at a few positions (enough to force real tie-breaks in the DP, not a
 trivially-identical-sequences case), comparing the total parsimony
 score and every node's reconstructed sequence between the pre- and
 post-refactor library - byte-identical.
+
+### `string_compare.cpp`: `complete_dna_string_compare` (30 → 0)
+
+Swofford's method for distributing an ambiguous position's divergence
+mass across every nucleotide pair consistent with both sequences'
+ambiguity symbols at that position: for each ambiguous position, sum
+up matching mass (`total`, a 4×4 nested loop) then distribute it
+proportionally (another 4×4 nested loop) - both inside the outer loop
+over ambiguous positions. Extracted as `ambiguityConsistentMass()` and
+`distributeAmbiguityMass()`, leaving the outer function with a single
+loop over ambiguous positions calling both.
+
+**Also dead code** - `complete_dna_string_compare()` has no callers
+anywhere in the tree except the orphaned, unbuilt
+`tests/DNA_b128_String_test.cpp` (not referenced by any
+`CMakeLists.txt`, same as this document's other orphaned-test
+mentions) and its own declaration/definition. Not reachable from
+`fastdist`/`fnj`/`fastprot`, nor from the `simulated_phylogenies`
+tools that accounted for most of this task's other dead-code findings.
+
+**Verification**: full rebuild, `clang-tidy` back to zero findings,
+`ctest`, `RunExamples.sh` (15/15, confirming no regression elsewhere -
+not this function specifically, given the above). Wrote a standalone
+test (against `libfastphylo.a`, not committed): two 24-char sequences
+containing IUPAC ambiguity codes (`R`, `Y`, `N`, `M`) to actually
+exercise the ambiguity-distribution loops rather than only the plain
+scan-and-classify path, comparing the resulting divergence matrix and
+derived `TN_string_distance` between the pre- and post-refactor
+library - byte-identical.

@@ -74,6 +74,44 @@ TN_string_compare(const std::string &s1,
 
 
 
+namespace {
+// Total observed divergence-matrix mass between any nucleotide pair
+// consistent with ambiguity symbols a1 (this position's ambiguity in
+// s1) and a2 (in s2) - the denominator Swofford's method distributes
+// each ambiguous position's mass across below, weighted by how much of
+// it each (i,j) pair could plausibly account for.
+float ambiguityConsistentMass(const divergence_matrix_t &divergence_matrix,
+                               ambiguity_nucleotide a1, ambiguity_nucleotide a2){
+  float total = 0;
+  for ( int i = 0 ; i <= 3 ; i++ ){
+    ambiguity_nucleotide ai = nucleotide2ambiguity_nucleotide(static_cast<nucleotide>(i));
+    for ( int j = 0 ; j <= 3 ; j++ ){
+      ambiguity_nucleotide aj = nucleotide2ambiguity_nucleotide(static_cast<nucleotide>(j));
+      if ( is_ambiguity_contained(ai,a1) && is_ambiguity_contained(aj,a2) ){
+        total += divergence_matrix[i][j] + divergence_matrix[j][i];//PENDING
+      }
+    }
+  }
+  return total;
+}
+
+// Distributes one ambiguous position's mass (see ambiguityConsistentMass
+// above) proportionally into tmp_matrix, across every (i,j) pair
+// consistent with a1/a2.
+void distributeAmbiguityMass(const divergence_matrix_t &divergence_matrix, divergence_matrix_t &tmp_matrix,
+                              ambiguity_nucleotide a1, ambiguity_nucleotide a2, float total){
+  for ( int i = 0 ; i <= 3 ; i++ ){
+    ambiguity_nucleotide ai = nucleotide2ambiguity_nucleotide(static_cast<nucleotide>(i));
+    for ( int j = 0 ; j <= 3 ; j++ ){
+      ambiguity_nucleotide aj = nucleotide2ambiguity_nucleotide(static_cast<nucleotide>(j));
+      if ( is_ambiguity_contained(ai,a1) && is_ambiguity_contained(aj,a2) && total != 0){
+        tmp_matrix[i][j] += (divergence_matrix[i][j] + divergence_matrix[j][i])/total;//PENDING
+      }
+    }
+  }
+}
+} // namespace
+
 int
 complete_dna_string_compare(divergence_matrix_t &divergence_matrix,//a 4x4 matrix will be filled in with the frequences
                             const std::string &s1,
@@ -115,26 +153,8 @@ complete_dna_string_compare(divergence_matrix_t &divergence_matrix,//a 4x4 matri
     ambiguity_nucleotide a1 = nucleotide2ambiguity_nucleotide(n1);
     ambiguity_nucleotide a2 = nucleotide2ambiguity_nucleotide(n2);
 
-
-    float total = 0;
-    for ( int i = 0 ; i <= 3 ; i++ ){
-        ambiguity_nucleotide ai = nucleotide2ambiguity_nucleotide(static_cast<nucleotide>(i));
-      for ( int j = 0 ; j <= 3 ; j++ ){
-        ambiguity_nucleotide aj = nucleotide2ambiguity_nucleotide(static_cast<nucleotide>(j));
-        if ( is_ambiguity_contained(ai,a1) && is_ambiguity_contained(aj,a2) ){
-          total += divergence_matrix[i][j] + divergence_matrix[j][i];//PENDING
-        }
-      }
-    }
-    for ( int i = 0 ; i <= 3 ; i++ ){
-      for ( int j = 0 ; j <= 3 ; j++ ){
-        ambiguity_nucleotide ai = nucleotide2ambiguity_nucleotide(static_cast<nucleotide>(i));
-        ambiguity_nucleotide aj = nucleotide2ambiguity_nucleotide(static_cast<nucleotide>(j));
-        if ( is_ambiguity_contained(ai,a1) && is_ambiguity_contained(aj,a2) && total != 0){
-          tmp_matrix[i][j] += (divergence_matrix[i][j] + divergence_matrix[j][i])/total;//PENDING
-        }
-      }
-    }
+    float total = ambiguityConsistentMass(divergence_matrix, a1, a2);
+    distributeAmbiguityMass(divergence_matrix, tmp_matrix, a1, a2, total);
 
   }//end for pos
 
