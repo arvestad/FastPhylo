@@ -862,3 +862,47 @@ the extraction is a pure mechanical move (every original statement
 preserved verbatim, nothing reordered or altered) - not a claim that
 the function's own behavior was runtime-verified, since it can't be
 reached to test.
+
+### `Sequence.cpp`: `readSequences` (47 → 0), `bootstrapSequences` (32 → 0)
+
+A fourth (`readSequences`) copy of the same legacy interleaved-PHYLIP-
+reading pattern already refactored twice earlier in this document
+(`SequenceTree::mapSequencesOntoTree(istream&)`, `Sequences2Distance
+Matrix.cpp`'s `DNA_b128_StringsFromPHYLIP()`) - same `anySequenceComplete()`
++ `readInterleavedLines()` split, same author ("Mehmood's Changes"
+comment survives in all versions), same care to preserve this copy's
+own small difference from the other two (`while (whileTrue)` here, vs.
+`while (whileTrue || fin.eof())` in the other two - not homogenized,
+since each copy may already encode its own subtly-different bug or
+intentional variation that isn't mine to silently "fix" while chasing
+a complexity number).
+
+`bootstrapSequences` is the second copy of the `stride`-chunking
+no-op-batching pattern this document already found and removed once
+(`Sequences2DistanceMatrix.cpp`'s `bootstrapSequences()`).
+`Sequence.cpp`'s own is actually simpler than that one: no
+`BUFFSIZE`-bounded buffer here at all - it writes straight into a
+pre-sized `std::string`, so unlike the `Sequences2DistanceMatrix.cpp`
+version there wasn't even a genuine "long sequence" case to preserve.
+The entire `if (stride < seqlen) {...} else {...}` collapsed to two
+plain loops.
+
+**Both turned out to be effectively dead code** in the shipped
+binaries: `readSequences()` *is* reachable (`fastprot -I phylip`
+routes through `PhylipMaInputStream`, which calls it - `RunExamples.sh`'s
+`ex6`/`ex11`-`ex18` exercise it directly), but `bootstrapSequences()`'s
+only real caller is `src/c++/simulated_phylogenies/BootstrapStats.cpp`
+(same out-of-scope, unbuilt tool as earlier `LeastSquaresFit.cpp`
+findings) - both `fastdist/main.cpp` and `buildtree.cpp` have it
+present only as a commented-out call. `fastdist`'s actual bootstrap
+path goes through the sibling `Sequences2DistanceMatrix.cpp` version
+(`DNA_b128_String`-based, already verified earlier in this document).
+
+**Verification**: full rebuild, `clang-tidy` back to zero findings in
+both, `ctest`, `RunExamples.sh` (15/15 byte-identical, and - per
+above - this really does cover `readSequences()`). For
+`bootstrapSequences()`, since it can't be reached through any shipped
+binary, wrote a small standalone program (compiled against
+`libfastphylo.a` directly, not committed): three short seeded
+sequences, five repeated bootstrap draws, output compared byte-for-byte
+between the pre- and post-refactor library - identical.

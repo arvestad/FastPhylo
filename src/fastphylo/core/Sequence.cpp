@@ -19,6 +19,63 @@
 
 using namespace std;
 
+namespace {
+// True once any single sequence has reached seqlen chars - the
+// (individually odd-looking, but preserved exactly) stopping condition
+// Sequence::readSequences()'s interleaved-line loop below checks in
+// two places. Same pattern, same rationale, as the near-identical
+// legacy PHYLIP readers in SequenceTree.cpp's mapSequencesOntoTree()
+// and Sequences2DistanceMatrix.cpp's DNA_b128_StringsFromPHYLIP() -
+// all three were evidently written from the same original template.
+bool anySequenceComplete(const std::vector<Sequence> &seqs, unsigned int seqlen) {
+  for (const auto &s : seqs) {
+    if (s.seq.length() == seqlen) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Sequences aren't necessarily complete after each has read its opening
+// line (see the caller's first loop, right before this is called) -
+// they may be spread out interleaving over several lines. Keeps
+// reading one more line per sequence until anySequenceComplete() says
+// at least one has reached seqlen.
+void readInterleavedLines(istream &fin, std::vector<Sequence> &seqs, int numSequences, unsigned int seqlen,
+                           char *line, int maxline) {
+  bool whileTrue = !anySequenceComplete(seqs, seqlen);
+
+  while ( whileTrue){
+    for ( int i = 0 ; i < numSequences ; i++ ){
+      Sequence &s = seqs[i];
+
+      fin.getline(line,maxline);
+
+      std::string myStr;
+      myStr=line;
+
+      if (myStr.empty()){
+        if( fin.eof() )
+          THROW_EXCEPTION("Sequence not of correct length: " << seqs[i].name<< "    length is " << seqs[i].seq.length());
+        i=i-1;
+        continue;
+      }
+
+      if ( !fin.fail() || fin.gcount()!=maxline-1 ){
+        appendAllNonChars(s.seq,line, fin.gcount() - (fin.eof()? 0: 1), ' ');
+      }
+
+      // check if any one of the sequences is read completely and has correct
+      // seq.length but some don't have that break the loop with error msg:
+      if ( anySequenceComplete(seqs, seqlen) ){
+        whileTrue = false;
+      }
+
+    }//end for loop
+  }
+}
+} // namespace
+
 hashstr Sequence::stringhasher;
 
 Sequence::Sequence(){
@@ -262,46 +319,7 @@ Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin){
 //Mehmood's Changes here'
 		//The sequences aren't neccesarily on one line but my be spread out interleaving
 		//over several lines. Therefore we read until seqlen chars have been read.
-		bool whileTrue= true;
-		// check if all the sequences has been completely read.
-		for ( int i = 0 ; i < numSequences ; i++ ){
-			if ( seqs[i].seq.length() == seqlen ){
-				whileTrue= false;
-			}
-		}
-
-		while ( whileTrue){
-			for ( int i = 0 ; i < numSequences ; i++ ){
-				Sequence &s = seqs[i];
-
-				fin.getline(line.data(),MAXLINE);
-
-				std::string myStr;
-				myStr=line.data();
-
-				if (myStr.empty()){
-					if( fin.eof() )
-						THROW_EXCEPTION("Sequence not of correct length: " << seqs[i].name<< "    length is " << seqs[i].seq.length());
-					i=i-1;
-					continue;
-				}
-
-				if ( !fin.fail() || fin.gcount()!=MAXLINE-1 ){
-					appendAllNonChars(s.seq,line.data(), fin.gcount() - (fin.eof()? 0: 1), ' ');
-
-				}
-
-
-				// check if any one of the sequences is read completely and has correct
-				// seq.length but some don't have that break the loop with error msg:
-				for ( int i = 0 ; i < numSequences ; i++ ){
-						if ( seqs[i].seq.length() == seqlen ){
-							whileTrue= false;
-						}
-					}
-
-			}//end for loop
-		}
+		readInterleavedLines(fin, seqs, numSequences, seqlen, line.data(), MAXLINE);
 
 // Mehmood's changes end here
 
@@ -377,47 +395,26 @@ Sequence::bootstrapSequences(std::vector<Sequence> &seqs, std::vector<Sequence> 
 
 	// Do the bootstrapping
 	size_t pos=0;
-	size_t seq;
 	vector<int> samplePositions(seqlen);
-	const size_t stride = 32;
 
-	if( stride < seqlen){
-		for( pos=0; pos<(seqlen-stride); pos+= stride) {
-			for( size_t i=0; i<stride; i++) {
-				samplePositions[pos+i] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
-}
-}
-		for (; pos<seqlen; pos++) {
-			samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
+	// Was two near-identical branches keyed on `32 < seqlen`, each
+	// doing this same fill (and, below, the same sampled-copy step) in
+	// stride-32 chunks vs a plain loop - an apparent unrolling attempt
+	// that changed nothing observable (rand() is a serial call, and
+	// plain array indexing has no dependency on iteration order
+	// either), verified and unified into one path - same finding as
+	// Sequences2DistanceMatrix.cpp's bootstrapSequences() (see that
+	// file's before/after for the fuller explanation).
+	for (pos=0; pos<seqlen; pos++) {
+		samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
 }
 
-
-		for( seq=0; seq<seqs.size(); seq++){
-			string & b = boot[seq].seq;
-			const string & s = seqs[seq].seq;
-
-			for( pos=0; pos<seqlen-stride; pos+=stride){
-				for( size_t i=0; i<stride; i++) {
-					b[pos+i] = s[samplePositions[pos+i]];
-}
-			}
-			for (; pos<seqlen; pos++) {
-				b[pos] = s[samplePositions[pos]];
-}
-		}
-	}
-	else{//seqlen<stride
+	for( size_t seq=0; seq<seqs.size(); seq++){
+		string & b = boot[seq].seq;
+		const string & s = seqs[seq].seq;
 		for (pos=0; pos<seqlen; pos++) {
-			samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
+			b[pos] = s[samplePositions[pos]];
 }
-
-		for( seq=0; seq<seqs.size(); seq++){
-			string & b = boot[seq].seq;
-			const string & s = seqs[seq].seq;
-			for (pos=0; pos<seqlen; pos++) {
-				b[pos] = s[samplePositions[pos]];
-}
-		}
 	}
 }
 
