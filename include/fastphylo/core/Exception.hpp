@@ -38,7 +38,7 @@ public:
 
 std::string stackTrace;
   
-Exception(const std::string &f, const std::string &func, int l, const std::string &mes);
+Exception(std::string f, std::string func, int l, std::string mes);
 Exception(const Exception &exc);
 
   void addToStackTrace(const Exception &exc){

@@ -10,10 +10,12 @@
 //--------------------------------------------------
 
 #include "fastphylo/core/Exception.hpp"
+
+#include <utility>
 using namespace std;
 
-Exception::Exception(const std::string &f, const std::string &func, int l, const std::string &mes) :
-  file(f),function(func),line(l),message(mes){
+Exception::Exception(std::string f, std::string func, int l, std::string mes) :
+  file(std::move(f)),function(std::move(func)),line(l),message(std::move(mes)){
 }
 Exception::Exception(const Exception &exc) :
 file(exc.file), function(exc.function), line(exc.line), message(exc.message), stackTrace(exc.stackTrace){

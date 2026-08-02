@@ -1,6 +1,7 @@
 #include "fastphylo/io/FastaInputStream.hpp"
 #include "fastphylo/core/Exception.hpp"
 #include <cstdio>
+#include <utility>
 
 using namespace std;
 
@@ -10,7 +11,7 @@ FastaSequenceReader::~FastaSequenceReader() {
 }
 }
 
-FastaSequenceReader::FastaSequenceReader(char *filename, string allowedChars) : allowedChars(allowedChars) {
+FastaSequenceReader::FastaSequenceReader(char *filename, string allowedChars) : allowedChars(std::move(allowedChars)) {
   file_was_opened = false;
   if (filename == nullptr) { {
     fp = &cin;
