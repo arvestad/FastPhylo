@@ -613,3 +613,98 @@ do as a drive-by.
 **Verification**: full rebuild, `clang-tidy` back to zero findings,
 `ctest`, `RunExamples.sh` (15/15 byte-identical - ex3's `fastdist -I
 xml -O xml seq.xml` exercises this exact function).
+
+## Task #47: remaining findings in the 26-47 range
+
+The last batch of `readability-function-cognitive-complexity` findings
+(~19, scattered across `include/fastphylo`/`src/fastphylo`/`src/c++/
+apps/{fastdist,fnj,fastprot}`). Two of the twenty raw `clang-tidy`
+hits (`tests/DNA_b128_String_test.cpp`, `tests/Tree_test.cpp`, both
+`main()`) are skipped here: neither file is referenced by any
+`CMakeLists.txt` (confirmed by grep), so neither builds - same
+orphaned-test situation as `tests/Tree_test.cpp`'s other use noted
+under the `mapSequencesOntoTree` section above. Refactoring code that
+can't be compiled can't be verified, so these are left alone; whether
+to wire them into the build at all is a separate question, not a
+Phase 5 scope decision.
+
+### `DNA_b128_String.cpp`: the four `correctDistanceWithAmbiguitiesUsing*()` overloads (26/26/26/26 → 0/0, 2 NOLINT'd at 26)
+
+All four (`UsingBackgroundFrequences`/`UsingTransitionProbabilities`,
+each with a `simple_string_distance` and a `TN_string_distance`
+overload) turned out to run the *exact same* merge-style traversal
+over `s1`'s and `s2`'s sorted ambiguity-position lists - only which
+`compute_ambiguity_distance*()` function gets called, and which fields
+of the result struct get updated, differs. Extracted the shared
+traversal into two member function templates (one per
+`compute_ambiguity_distance*()` family - `Impl` suffixed), parameterized
+over the distance type and an `accumulate` lambda supplied by each of
+the four thin public wrappers:
+
+```cpp
+template <typename Distance, typename Accumulate>
+Distance DNA_b128_String::correctDistanceWithAmbiguitiesUsingBackgroundFrequencesImpl(
+    Distance sp, const DNA_b128_String &s1, const DNA_b128_String &s2, Accumulate accumulate) {
+  Distance real_distance = sp;
+  auto i1 = s1.ambiguities.begin();
+  auto i2 = s2.ambiguities.begin();
+  int pos1 = (i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
+  int pos2 = (i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
+  while (pos1 < INT_MAX || pos2 < INT_MAX) {
+    if (pos1 == pos2) {
+      accumulate(real_distance, compute_ambiguity_distance((*i1).ambiguity, (*i2).ambiguity));
+      ++i1; ++i2;
+      pos1 = (i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
+      pos2 = (i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
+    } else if (pos1 < pos2) { /* ... */ }
+    else { /* pos1 > pos2, symmetric */ }
+  }
+  return real_distance;
+}
+
+simple_string_distance
+DNA_b128_String::correctDistanceWithAmbiguitiesUsingBackgroundFrequences(simple_string_distance sp,
+                                                                         const DNA_b128_String &s1,
+                                                                         const DNA_b128_String &s2){
+  return correctDistanceWithAmbiguitiesUsingBackgroundFrequencesImpl(sp, s1, s2,
+      [](simple_string_distance &d, ambiguity_distance amdist) {
+        d.transitions += amdist.purine_transition_prob + amdist.pyrimidine_transition_prob;
+        d.transversions += amdist.transversion_prob;
+        d.deletedPositions -= 1;
+      });
+}
+```
+
+Had to be a **member** function template, not a free function in an
+anonymous namespace (the pattern used everywhere else in this
+document) - it reads `s1.ambiguities`/`s2.ambiguities`, which is
+private. Declared in `DNA_b128_String.hpp` (template member functions
+need their declaration visible to callers even when, as here, the
+definition stays in the `.cpp` and is only ever instantiated from that
+same file).
+
+This dropped all four *public* overloads' complexity to 0 (they're now
+one-line forwarding calls), but the two `Impl` templates themselves
+still measure 26 - one point over threshold. Left `NOLINT`'d rather
+than split further: each is a single merge-style traversal over two
+sorted lists with three mutually-exclusive cases
+(`pos1==pos2`/`pos1<pos2`/`pos1>pos2`), already about as small as each
+case can get; splitting the three cases into their own functions would
+mean threading `pos1`/`pos2`/`i1`/`i2` through all of them by
+reference, fragmenting one coherent loop for no readability gain -
+exactly the "a few very close to the threshold are left alone with a
+brief note" case `lint_plan.md` anticipated for this category.
+
+**Verification**: full rebuild, `clang-tidy` down from 4 findings to
+2 (both `NOLINT`'d), `ctest`, `RunExamples.sh` (15/15 byte-identical -
+though none of those fixtures' sequences actually contain ambiguity
+codes, so they only exercise the "empty ambiguity list, loop runs zero
+times" path). Built a small phylip file with IUPAC ambiguity codes
+(`N`, `R`, `M`) and compared the pre-refactor commit's `fastdist`
+against the refactored one across `-D TN93`/`-D K2P` (the
+`TN_string_distance`/`simple_string_distance` overloads
+respectively) × with/without `-t` (`UsingTransitionProbabilities` vs
+`UsingBackgroundFrequences`) × `-A`/`-R` (ambiguity-handling disabled,
+and the pre-resolve step disabled) - all six combinations
+byte-identical, covering all four refactored functions on data that
+actually exercises their real logic, not just the empty-list path.

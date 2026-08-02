@@ -189,6 +189,15 @@ public:
                                                                                            const DNA_b128_String &s1,
                                                                                            const DNA_b128_String &s2);
 
+  // Shared traversal logic behind the two correctDistanceWithAmbiguitiesUsing*()
+  // overload pairs above - see DNA_b128_String.cpp's definition for why
+  // this needed to be a member (private ambiguities access) rather than
+  // a free function in an anonymous namespace.
+  template <typename Distance, typename Accumulate>
+  static Distance correctDistanceWithAmbiguitiesUsingBackgroundFrequencesImpl(Distance sp, const DNA_b128_String &s1, const DNA_b128_String &s2, Accumulate accumulate);
+  template <typename Distance, typename Accumulate>
+  static Distance correctDistanceWithAmbiguitiesUsingTransitionProbabilitiesImpl(Distance sp, ML_string_distance tp, const DNA_b128_String &s1, const DNA_b128_String &s2, Accumulate accumulate);
+
   //-----------------------------
   // SET AMBIGUITY DISTRIBUTION
   //

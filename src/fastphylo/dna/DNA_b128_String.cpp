@@ -566,11 +566,30 @@ DNA_b128_String::resolveAmbiguitiesUsingTransitionProbabilities(const DNA_b128_S
 //
 // CORRECT DISTANCE COMPUTATION WITH AMBIGUITIES
 //
-simple_string_distance
-DNA_b128_String::correctDistanceWithAmbiguitiesUsingBackgroundFrequences(simple_string_distance sp,
-                                                                         const DNA_b128_String &s1,
-                                                                         const DNA_b128_String &s2){
-  simple_string_distance real_distance = sp;
+// The four correctDistanceWithAmbiguitiesUsing*() functions below (two
+// simple_string_distance/TN_string_distance overloads for each of
+// UsingBackgroundFrequences and UsingTransitionProbabilities) all
+// traverse s1's/s2's ambiguity lists in position order the same way -
+// only which compute_ambiguity_distance*() variant gets called and how
+// its result is folded into real_distance differs (simple_string_distance
+// has one combined `transitions` field, TN_string_distance splits it into
+// `purine_transitions`/`pyrimidine_transitions`). This was the main
+// source of each function's cognitive complexity (26 each, all four
+// right at the threshold) - the traversal logic itself, shared here as
+// two member function templates, one per compute-function family.
+// Members (not free functions in an anonymous namespace) because they
+// read s1.ambiguities/s2.ambiguities, which is private.
+
+// Still 1 point over threshold (26) after extracting this out of its
+// four original callers - it's a single merge-style traversal over
+// two sorted position lists (pos1==pos2 / pos1<pos2 / pos1>pos2), each
+// branch already minimal; splitting the three cases into their own
+// functions would need to thread pos1/pos2/i1/i2 through all of them
+// by reference, fragmenting one coherent loop for no readability gain.
+template <typename Distance, typename Accumulate>
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+Distance DNA_b128_String::correctDistanceWithAmbiguitiesUsingBackgroundFrequencesImpl(Distance sp, const DNA_b128_String &s1, const DNA_b128_String &s2, Accumulate accumulate) {
+  Distance real_distance = sp;
 
   //traverse the ambiguities and compute the correct distance.
   auto i1 = s1.ambiguities.begin();
@@ -584,19 +603,11 @@ DNA_b128_String::correctDistanceWithAmbiguitiesUsingBackgroundFrequences(simple_
 
     //if two ambiguities match then there has been one then this has been
     //treated as a match of two unkowns.
-    ambiguity_distance amdist;
     if ( pos1 == pos2 ){
       ambiguity_nucleotide an1 = (*i1).ambiguity;
       ambiguity_nucleotide an2 = (*i2).ambiguity;
+      accumulate(real_distance, compute_ambiguity_distance(an1,an2));
 
-      amdist = compute_ambiguity_distance(an1,an2);
-      
-      //---
-      //update the distance
-      real_distance.transitions += amdist.purine_transition_prob+amdist.pyrimidine_transition_prob;
-      real_distance.transversions += amdist.transversion_prob;
-      real_distance.deletedPositions -= 1;
-      
       ++i1;
       ++i2;
       pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
@@ -607,13 +618,7 @@ DNA_b128_String::correctDistanceWithAmbiguitiesUsingBackgroundFrequences(simple_
       nucleotide n = s2.getNucleotideNOAMBIGUITY(pos1);
       if ( n != DNA_UNKNOWN_ ){
         ambiguity_nucleotide an2 = regularnucleotide2ambiguity_nucleotide(n);
-        amdist = compute_ambiguity_distance(an1,an2);
-        
-        //---
-        //update the distance
-        real_distance.transitions += amdist.purine_transition_prob+amdist.pyrimidine_transition_prob;
-        real_distance.transversions += amdist.transversion_prob;
-        real_distance.deletedPositions -= 1;
+        accumulate(real_distance, compute_ambiguity_distance(an1,an2));
       }
       ++i1;
       pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
@@ -623,263 +628,125 @@ DNA_b128_String::correctDistanceWithAmbiguitiesUsingBackgroundFrequences(simple_
       nucleotide n = s1.getNucleotideNOAMBIGUITY(pos2);
       if ( n != DNA_UNKNOWN_ ){
         ambiguity_nucleotide an1 = regularnucleotide2ambiguity_nucleotide(n);
-        amdist = compute_ambiguity_distance(an1,an2);
-        //---
-        //update the distance
-        real_distance.transitions += amdist.purine_transition_prob+amdist.pyrimidine_transition_prob;
-        real_distance.transversions += amdist.transversion_prob;
-        real_distance.deletedPositions -= 1;
+        accumulate(real_distance, compute_ambiguity_distance(an1,an2));
       }
-      
+
       ++i2;
       pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
     }
 
   }
-  //---------------------
-  
-  return real_distance;  
+
+  return real_distance;
 }
 
+// Same shape and same reason for the NOLINT as the sibling above.
+template <typename Distance, typename Accumulate>
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+Distance DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilitiesImpl(Distance sp, ML_string_distance tp, const DNA_b128_String &s1, const DNA_b128_String &s2, Accumulate accumulate) {
+  Distance real_distance = sp;
+
+  //traverse the ambiguities and compute the correct distance.
+  auto i1 = s1.ambiguities.begin();
+  auto i2 = s2.ambiguities.begin();
+  int pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
+  int pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
+
+  //TRAVERSE
+  // all ambiguities in order
+  while( pos1 < INT_MAX || pos2 < INT_MAX ){
+    //if two ambiguities match then there has been one then this has been
+    //treated as a match of two unkowns.
+    if ( pos1 == pos2 ){
+      ambiguity_nucleotide an1 = (*i1).ambiguity;
+      ambiguity_nucleotide an2 = (*i2).ambiguity;
+      accumulate(real_distance, compute_ambiguity_distance_using_transition_probabilities(an1,an2,tp));
+
+      ++i1;
+      ++i2;
+      pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
+      pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
+    }
+    else if ( pos1 < pos2 ){
+      ambiguity_nucleotide an1 = (*i1).ambiguity;
+      nucleotide n = s2.getNucleotideNOAMBIGUITY(pos1);
+      if ( n != DNA_UNKNOWN_ ){
+        // SPEED UP: compute_ambiguity_distance_using_transition_probabilities()
+        // has a dedicated (nucleotide, ambiguity_nucleotide) overload for
+        // exactly this case, avoiding a regularnucleotide2ambiguity_nucleotide()
+        // conversion that the general (ambiguity_nucleotide, ambiguity_nucleotide)
+        // overload above would otherwise need.
+        accumulate(real_distance, compute_ambiguity_distance_using_transition_probabilities(n,an1,tp));
+      }
+      ++i1;
+      pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
+    }
+    else {// pos1 > pos2
+      ambiguity_nucleotide an2 = (*i2).ambiguity;
+      nucleotide n = s1.getNucleotideNOAMBIGUITY(pos2);
+      if ( n != DNA_UNKNOWN_ ){
+        accumulate(real_distance, compute_ambiguity_distance_using_transition_probabilities(n,an2,tp));
+      }
+
+      ++i2;
+      pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
+    }
+
+  }
+
+  return real_distance;
+}
+
+simple_string_distance
+DNA_b128_String::correctDistanceWithAmbiguitiesUsingBackgroundFrequences(simple_string_distance sp,
+                                                                         const DNA_b128_String &s1,
+                                                                         const DNA_b128_String &s2){
+  return correctDistanceWithAmbiguitiesUsingBackgroundFrequencesImpl(sp, s1, s2,
+      [](simple_string_distance &d, ambiguity_distance amdist) {
+        d.transitions += amdist.purine_transition_prob + amdist.pyrimidine_transition_prob;
+        d.transversions += amdist.transversion_prob;
+        d.deletedPositions -= 1;
+      });
+}
 
 TN_string_distance
 DNA_b128_String::correctDistanceWithAmbiguitiesUsingBackgroundFrequences(TN_string_distance sp,
                                                                          const DNA_b128_String &s1,
                                                                          const DNA_b128_String &s2){
-  TN_string_distance real_distance = sp;
-
-  //traverse the ambiguities and compute the correct distance.
-  auto i1 = s1.ambiguities.begin();
-  auto i2 = s2.ambiguities.begin();
-  int pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
-  int pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
-
-  //TRAVERSE
-  // all ambiguities in order
-  while( pos1 < INT_MAX || pos2 < INT_MAX ){
-
-    //if two ambiguities match then there has been one then this has been
-    //treated as a match of two unkowns.
-    ambiguity_distance amdist;
-    if ( pos1 == pos2 ){
-      ambiguity_nucleotide an1 = (*i1).ambiguity;
-      ambiguity_nucleotide an2 = (*i2).ambiguity;
-
-      amdist = compute_ambiguity_distance(an1,an2);
-      
-      //---
-      //update the distance
-      real_distance.purine_transitions += amdist.purine_transition_prob;
-      real_distance.pyrimidine_transitions += amdist.pyrimidine_transition_prob;
-      real_distance.transversions += amdist.transversion_prob;
-      real_distance.deletedPositions -= 1;
-      
-      ++i1;
-      ++i2;
-      pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
-      pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
-    }
-    else if ( pos1 < pos2 ){
-      ambiguity_nucleotide an1 = (*i1).ambiguity;
-      nucleotide n = s2.getNucleotideNOAMBIGUITY(pos1);
-      if ( n != DNA_UNKNOWN_ ){
-        ambiguity_nucleotide an2 = regularnucleotide2ambiguity_nucleotide(n);
-        amdist = compute_ambiguity_distance(an1,an2);
-        
-        //---
-        //update the distance
-        real_distance.purine_transitions += amdist.purine_transition_prob;
-        real_distance.pyrimidine_transitions += amdist.pyrimidine_transition_prob;
-        real_distance.transversions += amdist.transversion_prob;
-        real_distance.deletedPositions -= 1;
-      }
-      ++i1;
-      pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
-    }
-    else {// pos1 > pos2
-      ambiguity_nucleotide an2 = (*i2).ambiguity;
-      nucleotide n = s1.getNucleotideNOAMBIGUITY(pos2);
-      if ( n != DNA_UNKNOWN_ ){
-        ambiguity_nucleotide an1 = regularnucleotide2ambiguity_nucleotide(n);
-        amdist = compute_ambiguity_distance(an1,an2);
-        //---
-        //update the distance
-        real_distance.purine_transitions += amdist.purine_transition_prob;
-        real_distance.pyrimidine_transitions += amdist.pyrimidine_transition_prob;
-        real_distance.transversions += amdist.transversion_prob;
-        real_distance.deletedPositions -= 1;
-      }
-      
-      ++i2;
-      pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
-    }
-
-  }
-  //---------------------
-  
-  return real_distance;  
-} 
-
+  return correctDistanceWithAmbiguitiesUsingBackgroundFrequencesImpl(sp, s1, s2,
+      [](TN_string_distance &d, ambiguity_distance amdist) {
+        d.purine_transitions += amdist.purine_transition_prob;
+        d.pyrimidine_transitions += amdist.pyrimidine_transition_prob;
+        d.transversions += amdist.transversion_prob;
+        d.deletedPositions -= 1;
+      });
+}
 
 simple_string_distance
 DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(simple_string_distance sp,
                                                                             ML_string_distance tp,
                                                                             const DNA_b128_String &s1,
                                                                             const DNA_b128_String &s2){
-  
-  simple_string_distance real_distance = sp;
-
-  //traverse the ambiguities and compute the correct distance.
-  auto i1 = s1.ambiguities.begin();
-  auto i2 = s2.ambiguities.begin();
-  int pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
-  int pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
-
-  //TRAVERSE
-  // all ambiguities in order
-  while( pos1 < INT_MAX || pos2 < INT_MAX ){
-    ambiguity_distance amdist;
-    //if two ambiguities match then there has been one then this has been
-    //treated as a match of two unkowns.
-    if ( pos1 == pos2 ){
-      ambiguity_nucleotide an1 = (*i1).ambiguity;
-      ambiguity_nucleotide an2 = (*i2).ambiguity;
-
-      amdist = compute_ambiguity_distance_using_transition_probabilities(an1,an2,tp);
-
-      //---
-      //update the distance
-      real_distance.transitions += amdist.purine_transition_prob+amdist.pyrimidine_transition_prob;
-      real_distance.transversions += amdist.transversion_prob;
-      real_distance.deletedPositions -= 1;
-
-      ++i1;
-      ++i2;
-      pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
-      pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
-    }
-    else if ( pos1 < pos2 ){
-      ambiguity_nucleotide an1 = (*i1).ambiguity;
-      nucleotide n = s2.getNucleotideNOAMBIGUITY(pos1);
-      if ( n != DNA_UNKNOWN_ ){
-	//        ambiguity_nucleotide an2 = regularnucleotide2ambiguity_nucleotide(n);
-      
-        amdist = compute_ambiguity_distance_using_transition_probabilities(n,an1,tp);
-        //---
-        //update the distance
-        real_distance.transitions += amdist.purine_transition_prob+amdist.pyrimidine_transition_prob;
-        real_distance.transversions += amdist.transversion_prob;
-        real_distance.deletedPositions -= 1;
-      }
-      ++i1;
-      pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
-    }
-    else {// pos1 > pos2
-      ambiguity_nucleotide an2 = (*i2).ambiguity;
-      nucleotide n = s1.getNucleotideNOAMBIGUITY(pos2);
-      if ( n != DNA_UNKNOWN_ ){
-	//        ambiguity_nucleotide an1 = regularnucleotide2ambiguity_nucleotide(n);
-      
-        amdist = compute_ambiguity_distance_using_transition_probabilities(n,an2,tp);
-        //---
-        //update the distance
-        real_distance.transitions += amdist.purine_transition_prob+amdist.pyrimidine_transition_prob;
-        real_distance.transversions += amdist.transversion_prob;
-        real_distance.deletedPositions -= 1;
-
-      }
-      
-      ++i2;
-      pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
-    }
-
-  }
-
-  
-  return real_distance;  
-  
+  return correctDistanceWithAmbiguitiesUsingTransitionProbabilitiesImpl(sp, tp, s1, s2,
+      [](simple_string_distance &d, ambiguity_distance amdist) {
+        d.transitions += amdist.purine_transition_prob + amdist.pyrimidine_transition_prob;
+        d.transversions += amdist.transversion_prob;
+        d.deletedPositions -= 1;
+      });
 }
-
 
 TN_string_distance
 DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(TN_string_distance sp,
                                                                             ML_string_distance tp,
                                                                             const DNA_b128_String &s1,
                                                                             const DNA_b128_String &s2){
-  
-  TN_string_distance real_distance = sp;
-
-  //traverse the ambiguities and compute the correct distance.
-  auto i1 = s1.ambiguities.begin();
-  auto i2 = s2.ambiguities.begin();
-  int pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
-  int pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
-
-  //TRAVERSE
-  // all ambiguities in order
-  while( pos1 < INT_MAX || pos2 < INT_MAX ){
-    ambiguity_distance amdist;
-    //if two ambiguities match then there has been one then this has been
-    //treated as a match of two unkowns.
-    if ( pos1 == pos2 ){
-      ambiguity_nucleotide an1 = (*i1).ambiguity;
-      ambiguity_nucleotide an2 = (*i2).ambiguity;
-
-      amdist = compute_ambiguity_distance_using_transition_probabilities(an1,an2,tp);
-      //---
-      //update the distance
-      real_distance.purine_transitions += amdist.purine_transition_prob;
-      real_distance.pyrimidine_transitions+= amdist.pyrimidine_transition_prob;
-      real_distance.transversions += amdist.transversion_prob;
-      real_distance.deletedPositions -= 1;
-
-      ++i1;
-      ++i2;
-      pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
-      pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
-    }
-    else if ( pos1 < pos2 ){
-      ambiguity_nucleotide an1 = (*i1).ambiguity;
-      nucleotide n = s2.getNucleotideNOAMBIGUITY(pos1);
-      if ( n != DNA_UNKNOWN_ ){
-        ambiguity_nucleotide an2 = regularnucleotide2ambiguity_nucleotide(n);
-      
-        amdist = compute_ambiguity_distance_using_transition_probabilities(an1,an2,tp);
-        //---
-        //update the distance
-        real_distance.purine_transitions += amdist.purine_transition_prob;
-        real_distance.pyrimidine_transitions+= amdist.pyrimidine_transition_prob;
-        real_distance.transversions += amdist.transversion_prob;
-        real_distance.deletedPositions -= 1;
-      }
-      ++i1;
-      pos1 = ( i1 != s1.ambiguities.end() ? (*i1).position : INT_MAX);
-    }
-    else {// pos1 > pos2
-      ambiguity_nucleotide an2 = (*i2).ambiguity;
-      nucleotide n = s1.getNucleotideNOAMBIGUITY(pos2);
-      if ( n != DNA_UNKNOWN_ ){
-        ambiguity_nucleotide an1 = regularnucleotide2ambiguity_nucleotide(n);
-      
-        amdist = compute_ambiguity_distance_using_transition_probabilities(an1,an2,tp);
-        //---
-        //update the distance
-        real_distance.purine_transitions += amdist.purine_transition_prob;
-        real_distance.pyrimidine_transitions+= amdist.pyrimidine_transition_prob;
-        real_distance.transversions += amdist.transversion_prob;
-        real_distance.deletedPositions -= 1;
-
-      }
-      
-      ++i2;
-      pos2 = ( i2 != s2.ambiguities.end() ? (*i2).position : INT_MAX);
-    }
-
-  }
-  //---------------------
-  
-  return real_distance;  
-  
+  return correctDistanceWithAmbiguitiesUsingTransitionProbabilitiesImpl(sp, tp, s1, s2,
+      [](TN_string_distance &d, ambiguity_distance amdist) {
+        d.purine_transitions += amdist.purine_transition_prob;
+        d.pyrimidine_transitions += amdist.pyrimidine_transition_prob;
+        d.transversions += amdist.transversion_prob;
+        d.deletedPositions -= 1;
+      });
 }
 
 
