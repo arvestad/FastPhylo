@@ -49,57 +49,36 @@ void bootstrap_sequences(const std::vector<Sequence> &seqs, std::vector<Sequence
 
   // Do the bootstrapping
   size_t pos=0;
-  size_t seq;  
   std::vector<int> samplePositions(seqlen);
   const size_t BUFFSIZE = (16383>seqlen ? seqlen : 16383); //2^14=16384
   std::vector<char> buff(BUFFSIZE+1);
   buff[BUFFSIZE]='\0';
-  size_t const stride = 32;
 
-  if( stride < seqlen){
-    for( pos=0; pos<(seqlen-stride); pos+= stride) {
-      for( size_t i=0; i<stride; i++) {
-        samplePositions[pos+i] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
-}
-}
-    for (; pos<seqlen; pos++) {
-      samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
+  // Was two near-identical branches keyed on `32 < seqlen` - same
+  // no-op stride-chunking-vs-plain-loop split already found and
+  // removed in Sequences2DistanceMatrix.cpp's bootstrapSequences()
+  // (this function's own doc comment above says it was adapted from
+  // there) - verified equivalent there and unified into one path here
+  // too.
+  for (pos=0; pos<seqlen; pos++) {
+    samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
 }
 
-
-    for( seq=0; seq<seqs.size(); seq++){
-      const std::string & s = seqs[seq].seq;
-      //-----------
-      pos = 0;
-      for( ; pos<seqlen-BUFFSIZE; pos+=BUFFSIZE){
-        for( size_t i=0; i<BUFFSIZE; i++){
-          buff[i] = s[samplePositions[pos+i]]; 
-        }
-        bseqs[seq].seq.append(buff.data());
+  for( size_t seq=0; seq<seqs.size(); seq++){
+    const std::string & s = seqs[seq].seq;
+    pos = 0;
+    for( ; pos<seqlen-BUFFSIZE; pos+=BUFFSIZE){
+      for( size_t i=0; i<BUFFSIZE; i++){
+        buff[i] = s[samplePositions[pos+i]];
       }
-      size_t i;
-      for ( i=0; pos<seqlen; i++,pos++) {
-        buff[i] = s[samplePositions[pos]]; 
-}
-      buff[i] = '\0';
-      //----------
       bseqs[seq].seq.append(buff.data());
     }
-  }
-  else{//seqlen<stride
-    for (pos=0; pos<seqlen; pos++) {
-      samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));    
+    size_t i;
+    for ( i=0; pos<seqlen; i++,pos++) {
+      buff[i] = s[samplePositions[pos]];
 }
-
-    for( seq=0; seq<seqs.size(); seq++){
-      const std::string & s = seqs[seq].seq;
-      for (pos=0; pos<seqlen; pos++) {
-        buff[pos] = s[samplePositions[pos]]; 
-}
-      buff[pos]='\0';
-      bseqs[seq].seq.append(buff.data());
-    } 
+    buff[i] = '\0';
+    bseqs[seq].seq.append(buff.data());
   }
-
 }
 

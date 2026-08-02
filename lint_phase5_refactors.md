@@ -983,3 +983,63 @@ exercise the ambiguity-distribution loops rather than only the plain
 scan-and-classify path, comparing the resulting divergence matrix and
 derived `TN_string_distance` between the pre- and post-refactor
 library - byte-identical.
+
+### `ProtSeqUtils.cpp`: `bootstrap_sequences` (30 → 0)
+
+The third and last copy of the `Sequences2DistanceMatrix.cpp`-derived
+`stride`-chunking no-op-batching pattern found in this task (the
+function's own doc comment already says "Code adapted from
+Sequences2DistanceMatrix.cpp - bootstrapSequences()"). Same fix: the
+`if (32 < seqlen) {...} else {...}` split collapsed to two plain
+loops, relying on the equivalence already proven and empirically
+verified for the original.
+
+Unlike the other two copies, **this one is genuinely live** -
+`fastprot`'s real `-b`/`--bootstraps` path calls it directly (`fastprot
+main.cpp`'s `processRuns()`, from earlier in this document's `fastprot
+main()` section).
+
+**Verification**: full rebuild, `clang-tidy` back to zero findings -
+the last of this task's ~19 findings, confirmed with a final sweep of
+every in-scope file (all zero, aside from the four already-`NOLINT`'d
+`fillMatrix*` functions and the two orphaned test `main()`s noted
+earlier). `ctest`, `RunExamples.sh` (15/15 byte-identical). Since this
+function is reachable, verified it the same way as the `fastdist`
+bootstrap fix earlier: built the pre-refactor commit into a separate
+tree and compared `fastprot -I fasta ... -b N -R <seed>` (fastprot's
+seed flag is `-R`, not `-s` like `fastdist` - `-s` is `--speed` there,
+caught this via a spurious first diff before finding the right flag)
+across several bootstrap counts/seeds and `--no-incl-orig` - all
+byte-identical.
+
+---
+
+That's every `readability-function-cognitive-complexity` finding in
+scope. Recurring lessons worth carrying into the rest of Phase 5
+(`bugprone-easily-swappable-parameters`, `modernize-pass-by-value`)
+and beyond:
+
+- **Read the diagnostic's full notes, not just the summary line**,
+  before assuming a high complexity number means the code itself is
+  complex - the SIMD/simde finding earlier in this document was almost
+  entirely a macro-expansion artifact, not real logic.
+- **A repeated finding across multiple files is a signal to check for
+  copy-paste history**, not just fix each in isolation - three of this
+  task's functions turned out to be near-verbatim copies of the same
+  original (two PHYLIP-interleaved-reader variants, three
+  `stride`-chunking bootstrap variants), and the first one fixed made
+  each subsequent one faster and safer to fix with higher confidence.
+- **Check whether a function is actually reachable before assuming
+  `RunExamples.sh` verifies it.** A large fraction of this task's
+  findings turned out to be dead code from the shipped binaries'
+  perspective (only called from `src/c++/simulated_phylogenies/` or
+  orphaned test files not wired into any `CMakeLists.txt`) - worth
+  confirming with a caller search before trusting fixture coverage,
+  and worth writing a small standalone test against `libfastphylo.a`
+  directly when no live path exists.
+- **A duplicated-function family already flagged in a separate,
+  dedicated project plan** (`Sequences2DistanceMatrix.cpp`'s
+  `fillMatrix*` functions) **is a sign to `NOLINT` and defer, not to
+  improvise a partial fix** - especially when that plan's own scope
+  note explicitly anticipates the bigger consolidation this pass isn't
+  meant to attempt.
