@@ -55,7 +55,7 @@ XmlSequenceReader::XmlSequenceReader(char *filename, const char *relaxngSchemaSt
 }
 
 std::optional<bool>
-XmlSequenceReader::handleSeqNode(int depth, int type, const xmlChar *name, std::vector<Sequence> &seqs, Extrainfos &extrainfos, int &numSequences) {
+XmlSequenceReader::handleSeqNode(int depth, xmlReaderTypes type, const xmlChar *name, std::vector<Sequence> &seqs, Extrainfos &extrainfos, int &numSequences) {
   if (!(l.in_root && l.in_runs && l.in_run && depth == 3 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("seq")) != 0)) {
     return std::nullopt;
   }
@@ -90,7 +90,7 @@ XmlSequenceReader::handleSeqNode(int depth, int type, const xmlChar *name, std::
 }
 
 std::optional<bool>
-XmlSequenceReader::handleExtrainfoNode(int depth, int type, const xmlChar *name, Extrainfos &extrainfos) {
+XmlSequenceReader::handleExtrainfoNode(int depth, xmlReaderTypes type, const xmlChar *name, Extrainfos &extrainfos) {
   if (!(l.in_root && l.in_runs && l.in_run && l.in_seq && depth == 4 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("extrainfo")) != 0)) {
     return std::nullopt;
   }
@@ -107,7 +107,7 @@ XmlSequenceReader::handleExtrainfoNode(int depth, int type, const xmlChar *name,
 }
 
 std::optional<bool>
-XmlSequenceReader::handleRootNode(int depth, int type, const xmlChar *name) {
+XmlSequenceReader::handleRootNode(int depth, xmlReaderTypes type, const xmlChar *name) {
   if (!(depth == 0 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("root")) != 0)) {
     return std::nullopt;
   }
@@ -124,7 +124,7 @@ XmlSequenceReader::handleRootNode(int depth, int type, const xmlChar *name) {
 }
 
 std::optional<bool>
-XmlSequenceReader::handleRunsNode(int depth, int type, const xmlChar *name) {
+XmlSequenceReader::handleRunsNode(int depth, xmlReaderTypes type, const xmlChar *name) {
   if (!(l.in_root && depth == 1 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("runs")) != 0)) {
     return std::nullopt;
   }
@@ -141,7 +141,7 @@ XmlSequenceReader::handleRunsNode(int depth, int type, const xmlChar *name) {
 }
 
 std::optional<bool>
-XmlSequenceReader::handleRunNode(int depth, int type, const xmlChar *name, std::string &runId, Extrainfos &extrainfos) {
+XmlSequenceReader::handleRunNode(int depth, xmlReaderTypes type, const xmlChar *name, std::string &runId, Extrainfos &extrainfos) {
   if (!(l.in_root && l.in_runs && depth == 2 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("run")) != 0)) {
     return std::nullopt;
   }
@@ -180,7 +180,7 @@ bool XmlSequenceReader::readSequences(std::vector<Sequence> &seqs, std::string &
     }
 
     int depth = xmlTextReaderDepth(reader);
-    int type = xmlTextReaderNodeType(reader);
+    auto type = static_cast<xmlReaderTypes>(xmlTextReaderNodeType(reader));
     const xmlChar *name = xmlTextReaderConstName(reader);
 
     if (auto result = handleSeqNode(depth, type, name, seqs, extrainfos, numSequences)) { return *result; }

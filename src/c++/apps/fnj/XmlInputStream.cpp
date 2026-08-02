@@ -50,7 +50,7 @@ XmlInputStream::XmlInputStream(char * filename) {
 }
 
 std::optional<readstatus>
-XmlInputStream::handleEntryNode(int depth, int type, const xmlChar *name, StrDblMatrix &dm) {
+XmlInputStream::handleEntryNode(int depth, xmlReaderTypes type, const xmlChar *name, StrDblMatrix &dm) {
   if (!(l.in_root && l.in_runs && l.in_run && l.in_dms && l.in_dm && l.in_row &&
         depth == 6 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("entry")) != 0 &&
         type == XML_READER_TYPE_ELEMENT)) {
@@ -69,7 +69,7 @@ XmlInputStream::handleEntryNode(int depth, int type, const xmlChar *name, StrDbl
 }
 
 std::optional<readstatus>
-XmlInputStream::handleRowNode(int depth, int type, const xmlChar *name) {
+XmlInputStream::handleRowNode(int depth, xmlReaderTypes type, const xmlChar *name) {
   if (!(l.in_root && l.in_runs && l.in_run && l.in_dms && l.in_dm &&
         depth == 5 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("row")) != 0)) {
     return std::nullopt;
@@ -89,7 +89,7 @@ XmlInputStream::handleRowNode(int depth, int type, const xmlChar *name) {
 }
 
 std::optional<readstatus>
-XmlInputStream::handleDmNode(int depth, int type, const xmlChar *name, std::vector<std::string> &names, StrDblMatrix &dm) {
+XmlInputStream::handleDmNode(int depth, xmlReaderTypes type, const xmlChar *name, std::vector<std::string> &names, StrDblMatrix &dm) {
   if (!(l.in_root && l.in_runs && l.in_run && l.in_dms &&
         depth == 4 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("dm")) != 0)) {
     return std::nullopt;
@@ -112,7 +112,7 @@ XmlInputStream::handleDmNode(int depth, int type, const xmlChar *name, std::vect
 }
 
 std::optional<readstatus>
-XmlInputStream::handleIdentityNode(int depth, int type, const xmlChar *name, std::vector<std::string> &names, Extrainfos &extrainfos, int &nr_of_ids) {
+XmlInputStream::handleIdentityNode(int depth, xmlReaderTypes type, const xmlChar *name, std::vector<std::string> &names, Extrainfos &extrainfos, int &nr_of_ids) {
   if (!(l.in_root && l.in_runs && l.in_run && l.in_identities &&
         depth == 4 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("identity")) != 0)) {
     return std::nullopt;
@@ -136,7 +136,7 @@ XmlInputStream::handleIdentityNode(int depth, int type, const xmlChar *name, std
 }
 
 std::optional<readstatus>
-XmlInputStream::handleExtrainfoNode(int depth, int type, const xmlChar *name, Extrainfos &extrainfos) {
+XmlInputStream::handleExtrainfoNode(int depth, xmlReaderTypes type, const xmlChar *name, Extrainfos &extrainfos) {
   if (!(l.in_root && l.in_runs && l.in_run && l.in_identities && l.in_identity &&
         depth == 5 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("extrainfo")) != 0)) {
     return std::nullopt;
@@ -156,7 +156,7 @@ XmlInputStream::handleExtrainfoNode(int depth, int type, const xmlChar *name, Ex
 }
 
 std::optional<readstatus>
-XmlInputStream::handleDmsNode(int depth, int type, const xmlChar *name) {
+XmlInputStream::handleDmsNode(int depth, xmlReaderTypes type, const xmlChar *name) {
   if (!(l.in_root && l.in_runs && l.in_run &&
         depth == 3 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("dms")) != 0)) {
     return std::nullopt;
@@ -174,7 +174,7 @@ XmlInputStream::handleDmsNode(int depth, int type, const xmlChar *name) {
 }
 
 std::optional<readstatus>
-XmlInputStream::handleRunNode(int depth, int type, const xmlChar *name, std::string &runId) {
+XmlInputStream::handleRunNode(int depth, xmlReaderTypes type, const xmlChar *name, std::string &runId) {
   if (!(l.in_root && l.in_runs && depth == 2 &&
         xmlStrEqual(name, reinterpret_cast<const xmlChar *>("run")) != 0)) {
     return std::nullopt;
@@ -209,7 +209,7 @@ XmlInputStream::handleRunNode(int depth, int type, const xmlChar *name, std::str
 }
 
 std::optional<readstatus>
-XmlInputStream::handleIdentitiesNode(int depth, int type, const xmlChar *name, std::vector<std::string> &names, Extrainfos &extrainfos) {
+XmlInputStream::handleIdentitiesNode(int depth, xmlReaderTypes type, const xmlChar *name, std::vector<std::string> &names, Extrainfos &extrainfos) {
   if (!(l.in_root && l.in_runs && l.in_run &&
         depth == 3 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("identities")) != 0)) {
     return std::nullopt;
@@ -229,7 +229,7 @@ XmlInputStream::handleIdentitiesNode(int depth, int type, const xmlChar *name, s
 }
 
 std::optional<readstatus>
-XmlInputStream::handleRunsNode(int depth, int type, const xmlChar *name) {
+XmlInputStream::handleRunsNode(int depth, xmlReaderTypes type, const xmlChar *name) {
   if (!(l.in_root && depth == 1 &&
         xmlStrEqual(name, reinterpret_cast<const xmlChar *>("runs")) != 0)) {
     return std::nullopt;
@@ -247,7 +247,7 @@ XmlInputStream::handleRunsNode(int depth, int type, const xmlChar *name) {
 }
 
 std::optional<readstatus>
-XmlInputStream::handleRootNode(int depth, int type, const xmlChar *name) {
+XmlInputStream::handleRootNode(int depth, xmlReaderTypes type, const xmlChar *name) {
   if (!(depth == 0 && xmlStrEqual(name, reinterpret_cast<const xmlChar *>("root")) != 0)) {
     return std::nullopt;
   }
@@ -278,7 +278,7 @@ readstatus XmlInputStream::readDM(StrDblMatrix &dm, std::vector<std::string> &na
       exit(EXIT_FAILURE);
     }
     int depth = xmlTextReaderDepth(reader);
-    int type = xmlTextReaderNodeType(reader);
+    auto type = static_cast<xmlReaderTypes>(xmlTextReaderNodeType(reader));
     const xmlChar *name = xmlTextReaderConstName(reader);
 
     if (auto status = handleEntryNode(depth, type, name, dm)) { return *status; }
