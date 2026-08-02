@@ -112,11 +112,11 @@ int main(int argc, char **argv){
     if (args_info.output_format_arg == output_format_arg_binary) {
       runRowStreamingOutput(*istream, *ostream, trans_model, ndatasets, numboot,
                              no_incl_orig, useFixFactor, fixfactor,
-                             args_info.input_format_arg, false);
+                             args_info.input_format_arg, RowOutputMode::Regular);
     } else if (args_info.memory_efficient_given != 0u) {
       runRowStreamingOutput(*istream, *ostream, trans_model, ndatasets, numboot,
                              no_incl_orig, useFixFactor, fixfactor,
-                             args_info.input_format_arg, true);
+                             args_info.input_format_arg, RowOutputMode::MemoryEfficient);
     } else {
       runFullMatrixOutput(*istream, *ostream, trans_model, ndatasets, numboot,
                            no_incl_orig, useFixFactor, fixfactor,
@@ -130,17 +130,24 @@ int main(int argc, char **argv){
 }
 ```
 
-`runRowStreamingOutput(..., bool mem_eff_flag)` replaces both duplicated
-blocks - called once with `false`, once with `true`. Its own per-row
-inner loop was *itself* duplicated three times inside (no-bootstrap
-case, bootstrap's "original sequences" case, bootstrap's per-replicate
-case), so that became a further helper, `fillAndPrintAllRows()`. Same
-pattern for the whole-matrix branch: extracted to `runFullMatrixOutput()`,
-with its own three-times-duplicated body factored into
-`setIdentifiersApplyFixFactorAndPrint()`. Six more small helpers
-(`handleEarlyExitFlags`, `buildTranslationModel`, `seedRandom`,
-`buildInputStream`, `buildOutputStream`) cover the argument-handling
-preamble.
+`runRowStreamingOutput(..., RowOutputMode mode)` replaces both
+duplicated blocks - called once with `RowOutputMode::Regular`, once
+with `RowOutputMode::MemoryEfficient`. (First cut, called out in
+review: this parameter was a bare `bool mem_eff_flag`, so the two call
+sites read as `runRowStreamingOutput(..., false)` /
+`runRowStreamingOutput(..., true)` - unreadable without checking the
+signature. Replaced with the scoped enum shown above; the underlying
+bool still gets reconstructed once, right at the point where the
+pre-existing `fillMatrixRow()`/`printRow()` functions require it.) Its
+own per-row inner loop was *itself* duplicated three times inside
+(no-bootstrap case, bootstrap's "original sequences" case, bootstrap's
+per-replicate case), so that became a further helper,
+`fillAndPrintAllRows()`. Same pattern for the whole-matrix branch:
+extracted to `runFullMatrixOutput()`, with its own three-times-duplicated
+body factored into `setIdentifiersApplyFixFactorAndPrint()`. Six more
+small helpers (`handleEarlyExitFlags`, `buildTranslationModel`,
+`seedRandom`, `buildInputStream`, `buildOutputStream`) cover the
+argument-handling preamble.
 
 **A real bug risk found and avoided while doing this**: the first
 extraction attempt moved `fillMatrix()` to *after* `printStartRun()` in

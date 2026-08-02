@@ -143,6 +143,13 @@ static std::unique_ptr<DataOutputStream> buildOutputStream(const gengetopt_args_
 	}
 }
 
+// Row-streaming output has two modes, distinguished at every call site
+// by name instead of a bare true/false: Regular streams rows for
+// --output-format=binary, MemoryEfficient additionally reuses buffers
+// for --memory-efficient. Converted to the bool fillMatrixRow()/
+// printRow() still expect only at the point of calling them.
+enum class RowOutputMode { Regular, MemoryEfficient };
+
 // Fills and prints every row of dm - the innermost loop of
 // runRowStreamingOutput() below, which the original had hand-duplicated
 // three times (no-bootstrap case, bootstrap's original-sequences case,
@@ -151,7 +158,8 @@ static void fillAndPrintAllRows(DataOutputStream &ostream, StrFloRow &dm,
                                  std::vector<DNA_b128_String> &b128seqs,
                                  sequence_translation_model &trans_model,
                                  std::vector<string> &names, size_t numberOfSequences,
-                                 bool useFixFactor, float fixfactor, bool mem_eff_flag) {
+                                 bool useFixFactor, float fixfactor, RowOutputMode mode) {
+	const bool mem_eff_flag = (mode == RowOutputMode::MemoryEfficient);
 	for(size_t i = 0; i < numberOfSequences; ++i){
 		fillMatrixRow(dm, b128seqs, trans_model, i, mem_eff_flag);
 		dm.setIdentifier(names.at(i));
@@ -170,7 +178,7 @@ static void runRowStreamingOutput(DataInputStream &istream, DataOutputStream &os
                                    sequence_translation_model &trans_model,
                                    int ndatasets, int numboot, bool no_incl_orig,
                                    bool useFixFactor, float fixfactor,
-                                   int input_format_arg, bool mem_eff_flag) {
+                                   int input_format_arg, RowOutputMode mode) {
 	StrFloRow dm;
 	//open infile
 
@@ -194,7 +202,7 @@ static void runRowStreamingOutput(DataInputStream &istream, DataOutputStream &os
 			const size_t numberOfSequences = b128seqs.size();
 			ostream.printStartRun(names,runId,extrainfos);
 			ostream.printHeader(numberOfSequences);
-			fillAndPrintAllRows(ostream, dm, b128seqs, trans_model, names, numberOfSequences, useFixFactor, fixfactor, mem_eff_flag);
+			fillAndPrintAllRows(ostream, dm, b128seqs, trans_model, names, numberOfSequences, useFixFactor, fixfactor, mode);
 		}
 		//bootstrapping
 		else{
@@ -213,7 +221,7 @@ static void runRowStreamingOutput(DataInputStream &istream, DataOutputStream &os
 			ostream.printHeader(numberOfSequences);
 			if ( !no_incl_orig ){//create the distance matrix for the original sequences
 				Sequences2DNA_b128(seqs,b128seqs);
-				fillAndPrintAllRows(ostream, dm2, b128seqs, trans_model, names, numberOfSequences, useFixFactor, fixfactor, mem_eff_flag);
+				fillAndPrintAllRows(ostream, dm2, b128seqs, trans_model, names, numberOfSequences, useFixFactor, fixfactor, mode);
 			}
 			//start the bootstrapping
 			//	  vector<Sequence> bootsequences;
@@ -221,7 +229,7 @@ static void runRowStreamingOutput(DataInputStream &istream, DataOutputStream &os
 				bootstrapSequences(seqs,b128seqs);
 				std::cout << numberOfSequences << std::endl;
 				ostream.printBootstrapSpliter(numberOfSequences);
-				fillAndPrintAllRows(ostream, dm2, b128seqs, trans_model, names, numberOfSequences, useFixFactor, fixfactor, mem_eff_flag);
+				fillAndPrintAllRows(ostream, dm2, b128seqs, trans_model, names, numberOfSequences, useFixFactor, fixfactor, mode);
 			}
 		}
 		ostream.printEndRun();
@@ -349,11 +357,11 @@ main(int argc,
 		if (args_info.output_format_arg == output_format_arg_binary ) {
 			runRowStreamingOutput(*istream, *ostream, trans_model, ndatasets, numboot,
 			                       no_incl_orig, useFixFactor, fixfactor,
-			                       args_info.input_format_arg, false);
+			                       args_info.input_format_arg, RowOutputMode::Regular);
 		} else if ( args_info.memory_efficient_given != 0u ) {
 			runRowStreamingOutput(*istream, *ostream, trans_model, ndatasets, numboot,
 			                       no_incl_orig, useFixFactor, fixfactor,
-			                       args_info.input_format_arg, true);
+			                       args_info.input_format_arg, RowOutputMode::MemoryEfficient);
 		}
 		else{
 			runFullMatrixOutput(*istream, *ostream, trans_model, ndatasets, numboot,
