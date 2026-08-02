@@ -14,11 +14,11 @@ XmlOutputStream::~XmlOutputStream() {
 }
 
 void XmlOutputStream::print(StrDblMatrix &dm) {
-  PhylipDmOutputStream::printPHYLIPfastSD(dm, fp, true, false);
+  PhylipDmOutputStream::printPHYLIPfastSD(dm, fp, PhylipDmOutputStream::Format::Xml);
 }
 
 void XmlOutputStream::printSD(StrDblMatrix &dm) {
-  PhylipDmOutputStream::printPHYLIPfastSD(dm, fp, false, true);
+  PhylipDmOutputStream::printPHYLIPfastSD(dm, fp, PhylipDmOutputStream::Format::XmlSD);
 }
 
 void XmlOutputStream::printStartRun(std::vector<string> &names, std::string &runId, Extrainfos &extrainfos) {

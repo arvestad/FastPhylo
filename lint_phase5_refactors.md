@@ -167,3 +167,104 @@ combinations (binary, memory-efficient, bootstrapped phylip,
 bootstrapped+binary, bootstrapped+memory-efficient, bootstrapped
 +`--no-incl-orig`) - all identical, including stdout.
 
+## `PhylipDmOutputStream::printPHYLIPfastSD` (complexity 86 → 0 findings in the file)
+
+The batched phylip/XML matrix writer (shared by `fastdist`, `fastprot`,
+and `XmlOutputStream`). All 86 points of complexity came from one
+pattern repeated ~9 times: `if (writeXml || writeXmlSD) { ... } else {
+... }`, re-checked at the header, at every row's prefix/suffix, and
+three more times inside the innermost per-entry formatting loop
+(not-finite case, large-value case, fast-path case).
+
+**Before** (excerpt - the repeated-check shape, innermost loop only):
+
+```cpp
+void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out,
+                                              bool writeXml, bool writeXmlSD,
+                                              bool skipLeadingHeader) {
+  ...
+  for (size_t i = 0; i < numNodes; i++) {
+    ...
+    for (size_t j = 0; j < entriesPerRow; j++) {
+      float f = dm.getDistance(i, j);
+      if (!isfinite(f)) {
+        if (writeXml || writeXmlSD) { row += "     <entry>-1</entry>\n"; }
+        else { row += "        -1"; }
+        continue;
+      }
+      ...
+      if (intpart > 99) {
+        if (f - (intpart * 1.0) < 0.000001) {
+          if (writeXml || writeXmlSD) { n = snprintf(..., "     <entry>%10d</entry>\n", intpart); }
+          else { n = snprintf(..., "%10d", intpart); }
+        } else if (writeXml || writeXmlSD) { n = snprintf(..., "     <entry>%10f</entry>\n", f); }
+        else { n = snprintf(..., "%10f", f); }
+        ...
+        continue;
+      }
+      ...
+      if (writeXml || writeXmlSD) { row += "     <entry>"; row += &defstr[skip]; row += "</entry>\n"; }
+      else { row.append(defstr.data(), 10); }
+    }
+    ...
+  }
+}
+```
+
+**After**: the two bools became one three-way enum (per the same
+call-site-readability feedback as the `fastdist/main.cpp` refactor
+above - `printPHYLIPfastSD(dm, fp, true, false)` at a call site forces
+the reader to look up which bool means what; `printPHYLIPfastSD(dm, fp,
+Format::Xml)` doesn't), and the entire per-entry formatting decision
+tree - the actual source of the complexity - moved into three file-local
+helpers (`appendEntry`, `appendFastEntry`, `appendRareEntry`) that
+`printPHYLIPfastSD()` now just calls once per entry:
+
+```cpp
+enum class Format { Plain, Xml, XmlSD };  // in the class declaration
+
+void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out,
+                                              Format format, bool skipLeadingHeader) {
+  const size_t numNodes = dm.getSize();
+  const bool xml = format != Format::Plain;
+  ...
+  for (size_t i = 0; i < numNodes; i++) {
+    row.clear();
+    if (xml) { row += "    <row>\n"; entriesPerRow++; }
+    else { /* name padding */ }
+
+    for (size_t j = 0; j < entriesPerRow; j++) {
+      appendEntry(row, dm.getDistance(i, j), format);
+    }
+
+    row += xml ? "    </row>\n" : "\n";
+    fwrite(row.data(), sizeof(char), row.size(), out);
+  }
+  ...
+}
+```
+
+`appendEntry()` holds the not-finite check and dispatches to
+`appendFastEntry()` (the `|value| <= 99` fixed-width path,
+`std::array<char, 11>`) or `appendRareEntry()` (the `snprintf()`
+fallback for larger values) - each of those unconditional `if (writeXml
+|| writeXmlSD)` branches now appears exactly once, in exactly one
+helper, instead of being re-litigated at every call site.
+
+Call sites updated to match: `print()`/`printSD()` in this same file
+now pass `Format::Plain`/`Format::XmlSD`; `XmlOutputStream::print()`/
+`printSD()` pass `Format::Xml`/`Format::XmlSD` (relying on
+`skipLeadingHeader`'s existing default - XML output never sets it -
+same as before this refactor).
+
+**Out of scope, on purpose**: `fastprot_mpi/PhylipDmOutputStream.cpp`
+has its own separate `printPHYLIPfastSD` with the same name and the
+same bool pair - a different file, not touched here, consistent with
+`fastprot_mpi` being out of scope for every phase of this lint pass.
+
+**Verification**: full rebuild, `clang-tidy`'s cognitive-complexity
+check back to zero findings for this file, `ctest`, and `RunExamples.sh`
+(all 15 fixtures byte-identical) - this function is on the plain
+phylip/xml output path that `RunExamples.sh` actually exercises
+(unlike the fastdist refactor above), so no separate manual comparison
+was needed this time.

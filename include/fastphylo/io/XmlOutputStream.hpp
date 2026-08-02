@@ -5,9 +5,10 @@
 #include "fastphylo/io/PhylipDmOutputStream.hpp"
 
 // Layout Phase C: shared between fastdist and fastprot. print()/printSD()
-// route through PhylipDmOutputStream::printPHYLIPfastSD() (writeXml=true)
-// - fastprot already did this before this merge; fastdist's own print()
-// called the old, unbatched printPHYLIPfast() global function instead.
+// route through PhylipDmOutputStream::printPHYLIPfastSD() (Format::Xml/
+// Format::XmlSD) - fastprot already did this before this merge; fastdist's
+// own print() called the old, unbatched printPHYLIPfast() global function
+// instead.
 class XmlOutputStream : public DataOutputStream {
 public:
   XmlOutputStream(char *filename = nullptr);

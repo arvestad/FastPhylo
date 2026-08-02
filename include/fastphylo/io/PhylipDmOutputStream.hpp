@@ -46,7 +46,8 @@ public:
   // writing it again here. Only meaningful for the non-XML case; XmlOutputStream
   // never sets it (its printHeader() stays a no-op, so there's no
   // "already written" scenario to avoid there).
-  static void printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, bool writeXml, bool writeXmlSD, bool skipLeadingHeader = false);
+  enum class Format { Plain, Xml, XmlSD };
+  static void printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, Format format, bool skipLeadingHeader = false);
 
 private:
   bool headerWritten;
