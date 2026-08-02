@@ -151,12 +151,12 @@ sum_with_previous_level(b128 &sum_current, b128 sum_previous, b128 mask, b128 sh
 
 //the same but shifts whole bytes instead of bits, probably faster than
 //the previous one since it utilizes immediates instead of variables.
-//shift_bytes_right_b128()'s byte count must be a compile-time
-//immediate (it wraps _mm_srli_si128, which requires one), so this
-//stays a macro rather than becoming a function like the one above -
-//parenthesized to fix bugprone-macro-parentheses without losing that.
+//shift_bytes_right_b128<N>()'s byte count is a template parameter, not
+//a macro parameter (see sse2_wrapper.h) - still needs the surrounding
+//braces (bugprone-macro-parentheses doesn't apply to the template
+//argument itself, only to SUM_CURRENT/SUM_PREVIOUS/MASK below).
 #define SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT(SUM_CURRENT,SUM_PREVIOUS,MASK,BYTESHIFT)\
-{(SUM_CURRENT) = add_b128((SUM_CURRENT),add_b128(and_b128((SUM_PREVIOUS),(MASK)),and_b128(shift_bytes_right_b128((SUM_PREVIOUS),(BYTESHIFT)),(MASK))));}
+{(SUM_CURRENT) = add_b128((SUM_CURRENT),add_b128(and_b128((SUM_PREVIOUS),(MASK)),and_b128(shift_bytes_right_b128<(BYTESHIFT)>((SUM_PREVIOUS)),(MASK))));}
 
 // CONVERTS THE SUM
 // Takes the sum of the previous level adds all two adjacent blocks into
@@ -166,12 +166,73 @@ convert_sum(b128 &sum_current, b128 sum_previous, b128 mask, b128 shift){
   sum_current = add_b128(and_b128(sum_previous,mask),and_b128(shift_each32_bits_right_b128(sum_previous,shift),mask));
 }
 
-//the same but shifts whole bytes instead of bits - stays a macro for
-//the same compile-time-immediate reason as the sibling above.
+//the same but shifts whole bytes instead of bits - same
+//shift_bytes_right_b128<N>() template as the sibling above.
 #define CONVERT_SUM_IMMEDIATEBYTESHIFT(SUM_CURRENT,SUM_PREVIOUS,MASK,BYTESHIFT)\
-{(SUM_CURRENT) = add_b128(and_b128((SUM_PREVIOUS),(MASK)),and_b128(shift_bytes_right_b128((SUM_PREVIOUS),(BYTESHIFT)),(MASK)));}
+{(SUM_CURRENT) = add_b128(and_b128((SUM_PREVIOUS),(MASK)),and_b128(shift_bytes_right_b128<(BYTESHIFT)>((SUM_PREVIOUS)),(MASK)));}
 
 
+
+//------------------------------------
+// REMAINDER HANDLING
+//
+// dist_level_1() always consumes three b128s at a time, so at most two
+// are left over once the level_1/2/3/4 call counts are computed. Sums
+// them directly into total_sum_ts/tv/del - a fallthrough switch by
+// design: case 2 handles the first leftover (there's nothing summed
+// yet, so it can assign rather than add), then falls into case 1's
+// body, which handles the second leftover (or the only one, if there
+// was just one) by adding into whatever case 2 already produced.
+// This was the single largest contributor to computeDistance()'s
+// cognitive complexity (65 of it, on its own) - extracted here
+// verbatim (down to the asserts and pointer increments) rather than
+// restructured, since the fallthrough *is* the logic, not an
+// accident: rewriting it as two independent branches would either
+// duplicate the case-1 body or require an extra bool parameter.
+static void
+sumRemainderBlocks(int rest_num_b128s, b128 &total_sum_ts, b128 &total_sum_tv, b128 &total_sum_del){
+  b128 diff;
+  b128 del;
+  b128 tmp_tv;
+  switch( rest_num_b128s ){
+  case 2:
+    assert ( equal_b128(total_sum_tv,set_zero_b128()) );//assuming that nothing summed so far.
+    assert ( equal_b128(total_sum_ts,set_zero_b128()) );//assuming that nothing summed so far.
+    assert ( equal_b128(total_sum_del,set_zero_b128()) );//assuming that nothing summed so far.
+
+    del = or_b128(get_b128(del_ptr1),get_b128(del_ptr2));
+    diff = andnot_b128(del,xor_b128(get_b128(ptr1),get_b128(ptr2)));
+
+    total_sum_del = and_b128(del,LEAST_SIGNIFCANT_BIT);
+
+    tmp_tv = and_b128(shift_each32_bits_right_b128(diff,ONE),LEAST_SIGNIFCANT_BIT);
+    total_sum_tv = tmp_tv;
+    total_sum_ts = andnot_b128(tmp_tv, and_b128(diff,LEAST_SIGNIFCANT_BIT));
+
+    ++ptr1;++ptr2;
+    ++del_ptr1;++del_ptr2;
+    [[fallthrough]];
+  case 1:
+    del = or_b128(get_b128(del_ptr1),get_b128(del_ptr2));
+
+    diff = andnot_b128(del,xor_b128(get_b128(ptr1),get_b128(ptr2)));
+
+    total_sum_del = add_b128(total_sum_del, and_b128(del,LEAST_SIGNIFCANT_BIT));
+
+    tmp_tv = and_b128(shift_each32_bits_right_b128(diff,ONE),LEAST_SIGNIFCANT_BIT);
+    total_sum_tv = add_b128(total_sum_tv, tmp_tv);
+    total_sum_ts = add_b128(total_sum_ts,andnot_b128(tmp_tv, and_b128(diff,LEAST_SIGNIFCANT_BIT)));
+
+    ++ptr1;++ptr2;
+    ++del_ptr1;++del_ptr2;
+    break;
+  case 0:
+    break; // nothing left to sum
+  default:
+    assert(false && "rest_num_b128s must be 0, 1 or 2");
+    break;
+  }
+}
 
 //------------------------------------
 // DISTANCE COMPUTATION
@@ -243,49 +304,8 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
   b128 total_sum_ts = set_zero_b128();
   b128 total_sum_del = set_zero_b128();
 
-  const b128 LEAST_SIGNIFCANT_BIT = set_all_ints(0x55555555);
-  const b128 ONE = set_first_int_b128(1);
-  
   //Compute the remaining b128s. There are atmost two remaining.
-  b128 diff;
-  b128 del;
-  b128 tmp_tv;
-  switch( rest_num_b128s ){
-  case 2:
-    assert ( equal_b128(total_sum_tv,set_zero_b128()) );//assuming that nothing summed so far.
-    assert ( equal_b128(total_sum_ts,set_zero_b128()) );//assuming that nothing summed so far.
-    assert ( equal_b128(total_sum_del,set_zero_b128()) );//assuming that nothing summed so far.
-    
-    del = or_b128(get_b128(del_ptr1),get_b128(del_ptr2));
-    diff = andnot_b128(del,xor_b128(get_b128(ptr1),get_b128(ptr2)));
-  
-    total_sum_del = and_b128(del,LEAST_SIGNIFCANT_BIT);
-    
-    tmp_tv = and_b128(shift_each32_bits_right_b128(diff,ONE),LEAST_SIGNIFCANT_BIT);
-    total_sum_tv = tmp_tv;
-    total_sum_ts = andnot_b128(tmp_tv, and_b128(diff,LEAST_SIGNIFCANT_BIT));
-
-    ++ptr1;++ptr2;
-    ++del_ptr1;++del_ptr2;
-  case 1:
-    del = or_b128(get_b128(del_ptr1),get_b128(del_ptr2));
-
-    diff = andnot_b128(del,xor_b128(get_b128(ptr1),get_b128(ptr2)));
-
-    total_sum_del = add_b128(total_sum_del, and_b128(del,LEAST_SIGNIFCANT_BIT));
- 
-    tmp_tv = and_b128(shift_each32_bits_right_b128(diff,ONE),LEAST_SIGNIFCANT_BIT);
-    total_sum_tv = add_b128(total_sum_tv, tmp_tv);
-    total_sum_ts = add_b128(total_sum_ts,andnot_b128(tmp_tv, and_b128(diff,LEAST_SIGNIFCANT_BIT)));
-
-    ++ptr1;++ptr2;
-    ++del_ptr1;++del_ptr2;
-  case 0:
-    break; // nothing left to sum
-  default:
-    assert(false && "rest_num_b128s must be 0, 1 or 2");
-    break;
-  }
+  sumRemainderBlocks(rest_num_b128s, total_sum_ts, total_sum_tv, total_sum_del);
 
 
   //update the block size to size 4
@@ -395,12 +415,12 @@ DNA_b128_String::computeDistance(const DNA_b128_String &s1,
   // Now each block in total_sum* is 32 bits. Thus to get the final
   // sum we simply need to add the four ints.
 
-  total_sum_ts = add_b128(total_sum_ts, shift_bytes_right_b128(total_sum_ts,4));
-  total_sum_ts = add_b128(total_sum_ts, shift_bytes_right_b128(total_sum_ts,8));
-  total_sum_tv = add_b128(total_sum_tv, shift_bytes_right_b128(total_sum_tv,4));
-  total_sum_tv = add_b128(total_sum_tv, shift_bytes_right_b128(total_sum_tv,8));
-  total_sum_del = add_b128(total_sum_del, shift_bytes_right_b128(total_sum_del,4));
-  total_sum_del = add_b128(total_sum_del, shift_bytes_right_b128(total_sum_del,8));
+  total_sum_ts = add_b128(total_sum_ts, shift_bytes_right_b128<4>(total_sum_ts));
+  total_sum_ts = add_b128(total_sum_ts, shift_bytes_right_b128<8>(total_sum_ts));
+  total_sum_tv = add_b128(total_sum_tv, shift_bytes_right_b128<4>(total_sum_tv));
+  total_sum_tv = add_b128(total_sum_tv, shift_bytes_right_b128<8>(total_sum_tv));
+  total_sum_del = add_b128(total_sum_del, shift_bytes_right_b128<4>(total_sum_del));
+  total_sum_del = add_b128(total_sum_del, shift_bytes_right_b128<8>(total_sum_del));
   
   simple_string_distance d= {get_int_0_b128(total_sum_del),
 			     static_cast<float>(get_int_0_b128(total_sum_ts)),

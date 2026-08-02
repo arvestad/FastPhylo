@@ -220,18 +220,10 @@ negate_b128(b128 a){
 //-------------------------
 // SHIFTING ALL 128 BITS IMMEDIATE BYTES
 // NOTEsse2_wrapper! An immediate is a constant integer (literal),
-// thus immediate_bytes can not be a variable argument!
-// Shift all 128 bits in a by specific number of bytes
-// E.g. get_int(
-//              shift_bytes_left_b128(set_b128(0,0,X,0),4)
-//             ,2) returns X.
-#define shift_bytes_left_b128(__A, __IMM_BYTES)  _mm_slli_si128(__A,__IMM_BYTES)
-
-//E.g. get_int(
-//             shift_bytes_right_b128(set_b128(0,0,X,0),4)
-//            ,0) returns X.
-#define shift_bytes_right_b128(__A, __IMM_BYTES)  _mm_srli_si128(__A,__IMM_BYTES)
-
+// thus immediate_bytes can not be a variable argument! See
+// shift_bytes_left_b128()/shift_bytes_right_b128() below (defined
+// after this extern "C" block closes - they're template functions,
+// which can't have C linkage).
 //-------------------------
 // LOCAL SHIFTING
 // Local shifting of each 32 bits zeros are added to the end.
@@ -556,6 +548,38 @@ void print_blocks_b128(b128 a, int block_size);
   
 #ifdef __cplusplus
 }
-#endif  
+#endif
+
+//-------------------------
+// SHIFTING ALL 128 BITS IMMEDIATE BYTES
+//
+// _mm_slli_si128()/_mm_srli_si128() require a compile-time immediate
+// for the byte count - a plain function parameter can't stand in for
+// that (same reasoning as SUM_WITH_PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT
+// in computeDistance_DNA_b128_String.cpp - see that file's comment).
+// A non-type template parameter satisfies "known at compile time"
+// while still being an ordinary function, unlike a macro: its body
+// isn't textually re-substituted into every caller, so a tool that
+// walks a function's own AST (e.g. clang-tidy's cognitive-complexity
+// check) sees it as what it is - one wrapped intrinsic - rather than
+// simde's ARM fallback shim (a runtime if/else guarding the immediate
+// range, only present because native SSE2 isn't available on ARM)
+// appearing to be inline branches in whichever function calls this.
+// Needs C++ linkage, hence living outside the extern "C" block above.
+// E.g. get_int(shift_bytes_left_b128<4>(set_b128(0,0,X,0)),2) returns X.
+// E.g. get_int(shift_bytes_right_b128<4>(set_b128(0,0,X,0)),0) returns X.
+#ifdef __cplusplus
+template <int ImmBytes>
+static inline b128
+shift_bytes_left_b128(b128 a){
+  return _mm_slli_si128(a, ImmBytes);
+}
+
+template <int ImmBytes>
+static inline b128
+shift_bytes_right_b128(b128 a){
+  return _mm_srli_si128(a, ImmBytes);
+}
+#endif
 
 #endif // SSE2_WRAPPER_H

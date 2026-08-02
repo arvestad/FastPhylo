@@ -268,3 +268,93 @@ check back to zero findings for this file, `ctest`, and `RunExamples.sh`
 phylip/xml output path that `RunExamples.sh` actually exercises
 (unlike the fastdist refactor above), so no separate manual comparison
 was needed this time.
+
+## `computeDistance`/`computeTAMURANEIDistance` (complexity 65/85 → 0, plus `dist_level_4`'s 29 → 0)
+
+The SIMD hot path: DNA_b128_String's b128-register-batched Jukes-Cantor
+and Tamura-Nei distance functions (`computeDistance_DNA_b128_
+String.cpp`, `computeTAMURANEIDistance_DNA_b128_String.cpp`). Handled
+with more caution than any other Phase 5 target, for two reasons: it's
+genuinely hot code (every pairwise sequence comparison in `fastdist`
+goes through it), and - as this section explains - most of the
+reported complexity here turned out not to be *our* code at all.
+
+**First extraction, small payoff**: both functions open with a
+fallthrough `switch` handling the ≤2 leftover b128s that don't divide
+evenly into a `dist_level_1()` call (which always consumes 3 at a
+time) - identical shape in both files, just with an extra `pyrts` term
+in the Tamura-Nei version. Extracted verbatim into a
+`sumRemainderBlocks()` helper in each file (kept as two separate
+near-identical functions rather than merged, since the field counts
+differ - the same call/duplicate-once tradeoff as the `PhylipDmOutput
+Stream` section above). This only dropped complexity by 1 point each
+(65→64, 85→84) - a `switch` counts as a single point in this cognitive-
+complexity model regardless of how much code is inside its cases, so
+moving a lot of code out doesn't move much complexity out with it. Worth
+doing anyway (it's genuinely the least-readable part of either
+function), but it wasn't the real story.
+
+**The real finding**: re-running `clang-tidy` with full diagnostic
+notes (not just the summary warning) showed almost the entire
+complexity score - dozens of points - attributed to a single macro,
+`shift_bytes_right_b128`, at every one of its call sites:
+
+```
+computeDistance_DNA_b128_String.cpp:364:3: note: +2, including nesting penalty of 1, nesting level increased to 2
+  CONVERT_SUM_IMMEDIATEBYTESHIFT(total_sum_ts,total_sum_ts,EIGHT_BIT_MASK,1);
+  ...
+sse2_wrapper.h:233: note: expanded from macro 'shift_bytes_right_b128'
+  #define shift_bytes_right_b128(__A, __IMM_BYTES)  _mm_srli_si128(__A,__IMM_BYTES)
+simde/x86/sse2.h:1410: note: expanded from macro '_mm_srli_si128'
+simde/x86/sse2.h:1381: note: expanded from macro 'simde_mm_bsrli_si128'
+    if (HEDLEY_UNLIKELY(imm8 > 15)) { ... } else { ... }
+```
+
+On this machine (Apple Silicon), `_mm_srli_si128` isn't a native
+intrinsic - it's simde's NEON-backed emulation (from `b5cef42`, "Fix
+SSE2-on-ARM build via simde"), and simde's emulation macro contains a
+runtime `if (imm8 > 15) {...} else {...}` to validate the shift amount
+generically. Because `shift_bytes_right_b128` is a macro, that whole
+if/else is *textually substituted* into `computeDistance()`/
+`computeTAMURANEIDistance()` at every call site (there are over a
+dozen between the two functions), and `clang-tidy`'s cognitive-
+complexity check walks the expanded AST - so it scored every one of
+those textually-inlined if/else pairs as if we had written that
+branching by hand, nesting penalty and all. In practice `imm8` is
+always a compile-time literal (`1`, `2`, `4`, or `8`) here, so the
+compiler folds the check away entirely at `-O3` - it was never real
+branching in the compiled output, only in what the linter saw.
+
+**Fix**: converted `shift_bytes_right_b128`/`shift_bytes_left_b128`
+from macros to templates in `sse2_wrapper.h` -
+`shift_bytes_right_b128<N>(a)` instead of `shift_bytes_right_b128(a,
+N)`. A non-type template parameter satisfies the same "must be a
+compile-time immediate" requirement the macro existed for (documented
+in both .cpp files' comments already, for the sibling `SUM_WITH_
+PREVIOUS_LEVEL_IMMEDIATEBYTESHIFT`/`CONVERT_SUM_IMMEDIATEBYTESHIFT`
+macros - a function parameter can't do this, `_mm_srli_si128` needs a
+literal). The difference that matters here: a template function has
+its own AST that a tool analyzes on its own terms, not text pasted
+into every caller - so simde's internal if/else is now scored against
+`shift_bytes_right_b128<N>()` itself (trivial), not against whichever
+function happens to call it. Had to move the templates outside the
+header's `extern "C" { ... }` block (this header is also compiled as
+plain C - `sse2_wrapper.c.o` is a real build target - and templates
+can't have C linkage), with a comment explaining why they're split out.
+
+This dropped `computeDistance()` from 64 to 0 findings, `computeTAMURANEIDistance()`
+from 84 to 0, and - as a side effect, since it uses the same macro -
+`dist_level_4()`'s unrelated 29-point finding to 0 as well, without
+touching `dist_level_4()` itself at all.
+
+**Verification, given this is the hottest of hot paths**: `RunExamples.sh`'s
+DNA fixtures (ex1/ex2/ex3) don't stress this enough to catch a subtle
+regression, so: built the pre-refactor commit into a separate tree
+(`build_old/`) and, on a synthetic 500-sequence/30,000bp dataset,
+confirmed byte-identical `-O binary` output for both the default
+(Jukes-Cantor) and `-D TN` (Tamura-Nei) distance functions, then timed
+3 runs of each on old vs. new (`/usr/bin/time`) - within noise of each
+other (~0.33s/~0.41s both before and after), consistent with the
+change being AST-shape-only with no effect on the code the optimizer
+actually emits. Also ran the full `ctest` + `RunExamples.sh` (15/15
+byte-identical) suite as usual.
