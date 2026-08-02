@@ -1043,3 +1043,77 @@ and beyond:
   improvise a partial fix** - especially when that plan's own scope
   note explicitly anticipates the bigger consolidation this pass isn't
   meant to attempt.
+
+## Phase 5's other two categories: `modernize-pass-by-value` and `bugprone-easily-swappable-parameters`
+
+### `modernize-pass-by-value` (4 findings → 0)
+
+`Exception`'s constructor and `FastaSequenceReader`'s constructor both
+took `std::string` by `const&` purely to copy into member fields -
+`clang-tidy --fix` converted both to pass-by-value + `std::move()` at
+each member-init, the standard idiom (avoids a copy when the caller
+already has an rvalue - which `THROW_EXCEPTION`'s `ostringstream`
+output and most call sites here do). Reviewed the diff before
+building; all 16 of clang-tidy's suggested edits applied cleanly.
+Verified via full rebuild, `clang-tidy` (0 findings), `ctest`,
+`RunExamples.sh` (15/15 byte-identical).
+
+### `bugprone-easily-swappable-parameters` (16 findings, 40 by the time this phase reached it → 26 left, deliberately)
+
+`lint_plan.md` scored this category "API design smell, needs redesign
+not a fix" and explicitly called for opportunistic handling, not a
+dedicated sweep - and by the time Phase 5's cognitive-complexity work
+was done, the count had grown well past the original 16: every
+`handleXNode(int depth, int type, ...)` helper extracted from
+`fnj/XmlInputStream.cpp`'s and `fastphylo/io/XmlInputStream.cpp`'s
+`readDM()`/`readSequences()` earlier in this document has exactly this
+shape (two adjacent `int`s).
+
+That specific case turned out to have a genuine, free fix: `type`'s
+values are already libxml2's own `xmlReaderTypes` enum values
+(`XML_READER_TYPE_ELEMENT` etc., which every one of these functions
+already switches on) - the parameter was just declared `int` instead
+of that existing type. Changing it to `xmlReaderTypes type` (with a
+`static_cast` at the one call site in each file that reads it from
+`xmlTextReaderNodeType()`) makes `depth`/`type` un-swappable *at the
+type level* - the compiler now rejects a transposed call, rather than
+depending on a lint check to notice one. This resolved 14 findings
+across the two files at essentially zero cost or risk: no design
+change, no new abstraction, just using a type that already existed in
+the domain.
+
+No other finding had an equivalent free lunch. The rest split into two
+groups, both left alone on purpose:
+
+- **Virtual interface implementations** - `DataInputStream::read()`
+  (5 overrides: `FastaInputStream`/`PhylipMaInputStream`/
+  `XmlInputStream` × `fastdist`/`fastprot`) and `DataOutputStream::print()`
+  (`TreeTextOutputStream`, `XmlOutputStream`). Changing either
+  signature means touching a base class and every override across
+  several files - exactly the "needs redesign" case the plan's own
+  framing anticipated, not something to improvise as a side effect of
+  an unrelated lint pass.
+- **Everything else** - `Simulator.cpp` (3 functions, untouched this
+  session, only reachable from the out-of-scope
+  `simulated_phylogenies/` tools), `TamuraNei.cpp`'s
+  `compute_Tamura_Nei_fixratio`, `dist_level_1` (both DNA distance
+  files - `b128&` output-parameter groups in SIMD hot-path code),
+  `MaximumLikelihood.cpp`'s `likelihood_deriv`, `fnj/XmlInputStream.cpp`'s
+  `handleIdentityNode` (`names`/`extrainfos` - both literally
+  `std::vector<std::string>`, since `Extrainfos` is a bare alias not a
+  distinct type), and several functions written earlier in *this*
+  Phase 5 pass (`fastdist/main.cpp`'s `runRowStreamingOutput`/
+  `runFullMatrixOutput`, `fastprot/main.cpp`'s `processRuns`, the
+  `readInterleavedLines`/`readInterleavedContinuationLines` family,
+  `LeastSquaresFit.cpp`'s `buildRowIndexMaps`/`swapChildToLastRow`).
+  None of these has an existing named type to substitute the way
+  `xmlReaderTypes` did - the adjacent parameters are genuinely distinct
+  concepts (a count vs. a length, two independent flags, a group of
+  SIMD output registers) with no free type-level fix, only a real
+  design change (new wrapper types, or restructuring into a struct)
+  that would extend well past "opportunistic." Left as-is, matching
+  the plan's own scope decision for this category.
+
+**Verification**: full rebuild, `clang-tidy` (`depth`/`type` findings
+gone from both files touched), `ctest`, `RunExamples.sh` (15/15
+byte-identical).
