@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <iostream>
 #include <fstream>
+#include <optional>
 #include <libxml/xmlreader.h>
 #include "fastphylo/core/Sequence.hpp"
 #include "fastphylo/io/Extrainfos.hpp"
@@ -37,4 +38,19 @@ protected:
   xmlTextReaderPtr reader;
   locator_t l;
   int fd;
+
+private:
+  // readSequences()'s state machine, one handler per XML element it
+  // recognizes at a given nesting depth/parent state - same technique
+  // as fnj/XmlInputStream.cpp's readDM() split (see that file's
+  // handleXNode() methods for the full rationale). Each handler
+  // re-checks its own guard condition and returns std::nullopt when it
+  // doesn't apply; a non-nullopt return is readSequences()'s cue to
+  // return that value immediately (only handleRunNode() ever does,
+  // for `return true;` at the end of a run).
+  std::optional<bool> handleSeqNode(int depth, int type, const xmlChar *name, std::vector<Sequence> &seqs, Extrainfos &extrainfos, int &numSequences);
+  std::optional<bool> handleExtrainfoNode(int depth, int type, const xmlChar *name, Extrainfos &extrainfos);
+  std::optional<bool> handleRootNode(int depth, int type, const xmlChar *name);
+  std::optional<bool> handleRunsNode(int depth, int type, const xmlChar *name);
+  std::optional<bool> handleRunNode(int depth, int type, const xmlChar *name, std::string &runId, Extrainfos &extrainfos);
 };

@@ -383,6 +383,61 @@ SequenceTree::mapSequencesOntoTree( std::vector<Sequence> &seqs){
 }
 
 //--------------------
+namespace {
+// Reads one line's worth of sequence characters from fin into *currseq,
+// translating each via char2nucleotide() and stopping at end-of-line.
+// Shared between mapSequencesOntoTree(istream&)'s first pass (each
+// sequence's opening line) and its interleaved-continuation pass (later
+// lines of the same, possibly multi-line, alignment) - both read one
+// line into whichever sequence pointer is currently active. This was
+// the main source of that function's cognitive complexity (61):
+// duplicated inline, its nesting counted twice.
+void readSequenceLine(std::istream &fin, string *currseq) {
+  while (true) {
+    char c = fin.get();
+    nucleotide n = char2nucleotide(c);
+    if (DNA_NOT_ALLOWED == n) {
+      if (isspace(c) == 0) {
+        USER_ERROR("Bad character \'" << c << "\'");
+      } else if (c != '\n') {
+        continue; // skip space
+      }
+      break; // if '\n'
+    }
+    currseq->append(1, nucleotide2char(n));
+  }
+}
+
+// Continuation pass: sequences aren't necessarily on one line, so once
+// every node's opening line has been read (see the caller's first
+// loop), keep consuming further interleaved lines - one per sequence,
+// its 10-char name field skipped - until the last-matched sequence
+// reaches its expected length. The second big contributor to
+// mapSequencesOntoTree(istream&)'s original complexity, alongside
+// readSequenceLine() above.
+void readInterleavedContinuationLines(std::istream &fin, int numSequences, unsigned int seqlen,
+                                       string &garbage, std::vector<string *> &sequences,
+                                       const string *actualNodeString) {
+  while (actualNodeString->length() < seqlen) {
+    for (int i = 0; i < numSequences; i++) {
+      char c = fin.peek();
+      if (isspace(c) == 0) {
+        //skip first 10 chars
+        for (int j = 10; j != 0; j--) {
+          fin.get();
+        }
+      }
+      while (c == '\n') {
+        c = fin.get();
+      }
+
+      garbage.clear();
+      readSequenceLine(fin, sequences[i]);
+    }
+  }
+}
+} // namespace
+
 void
 SequenceTree::mapSequencesOntoTree(std::istream &fin){
 
@@ -431,66 +486,14 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
       actualNodeString = sequences[i];
     }
 
-    string *currseq = sequences[i];
-    
-    while (true){
-      char c = fin.get();
-      nucleotide n = char2nucleotide(c);
-      if ( DNA_NOT_ALLOWED == n ){
-        if ( isspace(c) == 0 ){
-          USER_ERROR("Bad character \'" << c << "\'");
-        }
-        else if ( c != '\n' ) { {
-          continue;
-}
-}
-        //if '\n'
-        break;
-      }
-
-      currseq->append(1,nucleotide2char(n));
-    }
-    
+    readSequenceLine(fin, sequences[i]);
   }
   
   //read remaining sequences
-  
+
   //The sequences aren't neccesarily on one line but my be spread out interleaving
   //over several lines. Therefore we read until seqlen chars have been read.
-  while ( actualNodeString->length() < seqlen ){
-    for ( int i = 0 ; i < numSequences ; i++ ){
-      char c = fin.peek();
-      if ( isspace(c) == 0 ){
-        //skip first 10 chars
-        for ( int j = 10 ; j != 0 ; j-- ) {
-          fin.get();
-}
-      }
-      while ( c == '\n' ) {
-        c = fin.get();
-}
-
-      garbage.clear();
-      string *currseq = sequences[i];
-      while (true){
-        c = fin.get();
-        nucleotide n = char2nucleotide(c);
-        if ( DNA_NOT_ALLOWED == n ){
-          if ( isspace(c) == 0 ){
-            USER_ERROR("Bad character \'" << c << "\'");
-          }
-          else if ( c != '\n' ) { {//skip space
-            continue;
-}
-}
-          //if '\n'
-          break;
-        }
-
-        currseq->append(1,nucleotide2char(n));
-      } 
-    }
-  }
+  readInterleavedContinuationLines(fin, numSequences, seqlen, garbage, sequences, actualNodeString);
 
 
   // CHECK THAT ALL STRINGS HAVE THE SAME LENGTH

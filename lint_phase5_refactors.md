@@ -491,3 +491,125 @@ above (they share a binary and a test session), plus `--print-counts`,
 path - all byte-identical, including the now-branchless run loop
 actually being exercised via both `-I binary` and `-I phylip`/`-I xml`
 runs.
+
+## `SequenceTree::mapSequencesOntoTree(istream&)` (complexity 61 → 0)
+
+The three-overload family of `mapSequencesOntoTree` in `SequenceTree.cpp`
+- `(char**, int)`, `(vector<Sequence>&)`, `(istream&)` - only the third
+was flagged; the first two are ~15-line hash-map-and-lookup loops, the
+third is a hand-rolled PHYLIP-ish sequence parser reading directly off
+a `std::istream`, character by character.
+
+Two duplicated "read one line of sequence characters" loops were the
+main contributor: the first pass (each sequence's opening line, read
+right after its name) and the "interleaved continuation" pass (later
+lines of the same multi-line alignment, read once every sequence has
+at least one line) both inlined the identical ~15-line
+translate-and-append-until-newline loop. Extracted as a file-local
+`readSequenceLine(istream&, string*)`. That alone only got the
+function from 61 to 27 (still 2 over threshold) - the interleaved-
+continuation pass's *surrounding* loop (`while (...) { for (...) {
+peek/skip-name-field/skip-newlines; readSequenceLine(...); } }`) still
+had real nesting of its own, so it became a second helper,
+`readInterleavedContinuationLines()`, taking the same handful of
+locals (`numSequences`, `seqlen`, `garbage`, `sequences`,
+`actualNodeString`) the loop already closed over.
+
+**No test coverage exists for this function** - it's called from
+`Simulator.cpp` (simulation-tool support, not exercised by
+`RunExamples.sh` or any wired-up test), and the only file that
+exercises it directly (`tests/Tree_test.cpp`) isn't in any
+`CMakeLists.txt`, so it never actually builds or runs. Wrote a small
+throwaway standalone program instead (compiled against
+`libfastphylo.a` directly, not committed) that builds a 3-leaf tree,
+feeds a hand-crafted multi-line/interleaved input including an
+unmatched name (exercises the "discard into `garbage`" path), and
+dumps the result via `printSequencesPhylip()`. Built and ran this
+against both the pre- and post-refactor library - byte-identical
+output.
+
+## `fastprot/main.cpp`: `main()` (complexity 59 → 0)
+
+Same shape as the `fastdist`/`fnj` `main()` refactors earlier in this
+document: `handleEarlyExitFlags()`, `buildTranslationModel()` (returns
+`prot_sequence_translation_model` by value, same pattern as
+`fastdist`'s `sequence_translation_model` - a small POD, safe to
+return by value), `buildInputStream()`, `buildOutputStream()`, and a
+`processRuns()` for the per-dataset/bootstrap loop.
+
+**A real bug found and fixed**: the original order was
+
+```cpp
+gengetopt_args_info args_info;
+TRY_EXCEPTION();
+prot_sequence_translation_model trans_model;
+#ifndef WITH_LIBXML
+  if (args_info.input_format_arg == input_format_arg_xml){ ... exit ... }
+#endif
+if (cmdline_parser(argc, argv, &args_info) != 0) { exit(EXIT_FAILURE); }
+```
+
+- the `WITH_LIBXML=OFF` check reads `args_info.input_format_arg`
+*before* `cmdline_parser()` populates it, i.e. reads an uninitialized
+stack variable. In a `WITH_LIBXML=OFF` build, this is undefined
+behavior that could spuriously exit with "built without XML support"
+for a run that never asked for XML input, depending on whatever
+garbage happened to be on the stack. Inert in the default build
+(`WITH_LIBXML=ON` by `CMakeLists.txt`, so the `#ifndef` block doesn't
+even compile in), which is presumably why it survived - `fastdist`'s
+and `fnj`'s `main()`s both correctly call `cmdline_parser()` first.
+Fixed by moving the check into `handleEarlyExitFlags()`, called after
+`cmdline_parser()`, matching the other two.
+
+`processRuns()` itself was still 3 over threshold after the first
+pass (the original-data and bootstrap-replicate blocks each inlined
+an identical "sd ? calculate-with-sd : calculate-without-sd; setIdentifiers"
+step and an identical "print; sd-and-not-binary ? printSD : nothing"
+step, but weren't otherwise identical - the original-data block also
+runs `printStartRun()`/`printHeader()` in between, the bootstrap block
+doesn't). Split those two common steps out as `calculateDistances()`
+and `printDistances()`, called from both blocks with the
+non-shared `printStartRun()`/`printHeader()` calls sandwiched between
+them at the one call site that needs them.
+
+**Verification**: full rebuild, `clang-tidy` back to zero findings,
+`ctest`, `RunExamples.sh` (15/15 byte-identical). For the `WITH_LIBXML`
+fix specifically: built a separate `WITH_LIBXML=OFF` tree and ran
+`fastprot -I fasta` five times (undefined behavior isn't
+deterministically reproducible, so this doesn't *prove* the old code
+could fail, but confirms the new code never spuriously exits) plus
+`fastprot -I xml` once, to confirm the "not built with libxml" error
+still fires correctly when actually asked for.
+
+## `fastphylo/io/XmlInputStream.cpp`: `XmlSequenceReader::readSequences` (complexity 55 → 0)
+
+The shared XML sequence-file reader behind both `fastdist -I xml` and
+`fastprot -I xml` (see this file's header comment on the Layout Phase C
+merge). Same shape and same technique as `fnj/XmlInputStream.cpp`'s
+`readDM()` split earlier in this document: five sequential "if (right
+depth/parents/name) {...}" blocks (`seq`, `extrainfo`, `root`, `runs`,
+`run`), each mutually exclusive by name, extracted into five
+`handleXNode()` methods returning `std::optional<bool>` (nullopt = keep
+reading; `true` = what the original returned inline from `run`'s
+`XML_READER_TYPE_END_ELEMENT` case - the only place this function ever
+returns early). `readSequences()` itself is now five dispatch calls.
+Also dropped two dead locals (`value`, `run_read`) - same pair, same
+non-use, as `fnj/XmlInputStream.cpp`'s `readDM()`, suggesting both were
+written by copy-pasting the same template.
+
+**Noted, not touched**: `XmlInputStream.hpp` already declares an unused
+`enum streamstatus { RUN_NOT_FINISHED, RUN_FINISHED }` that looks like
+an abandoned attempt to replace this function's `bool` return with
+something more descriptive - exactly the enum-over-bool preference this
+whole document has been applying. Didn't wire it up here: `bool
+readSequences(...)` is a pure-virtual `DataInputStream` interface
+implemented by several classes across both `fastdist` and `fastprot`
+(`FastaInputStream`, `PhylipMaInputStream`, `XmlInputStream` in each),
+all consumed via `if (!readSequences(...)) { break; }` - changing the
+return type is a real, separate API-surface change touching a dozen-plus
+files well beyond this one function's complexity fix, not something to
+do as a drive-by.
+
+**Verification**: full rebuild, `clang-tidy` back to zero findings,
+`ctest`, `RunExamples.sh` (15/15 byte-identical - ex3's `fastdist -I
+xml -O xml seq.xml` exercises this exact function).
