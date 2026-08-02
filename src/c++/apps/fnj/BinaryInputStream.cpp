@@ -34,13 +34,55 @@ BinaryInputStream::BinaryInputStream(char * filename)  {
 	}
 }
 
-readstatus BinaryInputStream::readDM(StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos) {
-	long converter;
-	char t;
-	int tagLength=11;
-	string tag;
+namespace {
+// Reads the ':'-terminated identifiers table once per binary file
+// (input_was_read guards this in the caller, same as before this was
+// extracted) and populates both dm's identifiers and names from it.
+void readIdentifiers(istream &fp, int newSize, StrFloMatrix &dm, std::vector<std::string> &names) {
+	char c;
+	string identifier;
+	for (int i=0; i< newSize; i++) {
+		while(true){
+			fp.read(&c, sizeof(c));
+			if(c == ':') { break;
+}
+			identifier+=c;
+		}
+		// if identifier is empty don't add it to the sequence name vector
+		if(identifier.empty()){
+			continue;
+		}
+		dm.setIdentifier(i, identifier);
+		identifier= "";
+	}
+	names.clear();
+	for(size_t namei=0 ; namei<dm.getSize() ; namei++ ) {
+		names.push_back(dm.getIdentifier(namei));
+}
+}
 
+// Reads the newSize*(newSize+1)/2 upper-triangular distance values.
+// Returns false on a short/failed read (caller returns END_OF_RUN).
+bool readDistanceValues(istream &fp, int newSize, StrFloMatrix &dm) {
+	for(int i = 0; i < newSize; ++i) {
+		for(int j = i; j < newSize; ++j) {
+			float f;
+			if (!fp.read( reinterpret_cast<char*>( &f ), sizeof(f))) {
+				return false;
+}
+			dm.setDistance(i, j, f);
+		}
+	}
+	return true;
+}
+} // namespace
+
+readstatus BinaryInputStream::readDM(StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos) {
 	if (!input_was_read) {
+		long converter;
+		char t;
+		int tagLength=11;
+		string tag;
 		for (int l=0; l< tagLength; ++l) {
 			fp->read(&t, sizeof(t));
 			tag+=t;
@@ -52,41 +94,15 @@ readstatus BinaryInputStream::readDM(StrFloMatrix & dm, std::vector<std::string>
 	}
 	dm.resize(newSize);
 	if (!input_was_read) {
-		char c;
-		string identifier;
-		for (int i=0; i< newSize; i++) {
-			while(true){
-				fp->read(&c, sizeof(c));
-				if(c == ':') { break;
-}
-				identifier+=c;
-			}
-			// if identifier is empty don't add it to the sequence name vector
-			if(identifier.empty()){
-				continue;
-			}
-			dm.setIdentifier(i, identifier);
-			identifier= "";
-		}
-		names.clear();
-		for(size_t namei=0 ; namei<dm.getSize() ; namei++ ) {
-			names.push_back(dm.getIdentifier(namei));
-}
+		readIdentifiers(*fp, newSize, dm, names);
 	}
 	else {
 		for (int i=0; i<names.size(); i++) {
 			dm.setIdentifier(i,names.at(i));
 }
 		}
-	// read each line of the matrix and set the distances
-	for(int i = 0; i < newSize; ++i) {
-		for(int j = i; j < newSize; ++j) {
-			float f;
-			if (!fp->read( reinterpret_cast<char*>( &f ), sizeof(f))) {
-				return END_OF_RUN;
-}
-			dm.setDistance(i, j, f);
-		}
+	if (!readDistanceValues(*fp, newSize, dm)) {
+		return END_OF_RUN;
 	}
 	input_was_read=true;
 	return DM_READ;

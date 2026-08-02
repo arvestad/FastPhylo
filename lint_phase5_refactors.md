@@ -834,3 +834,31 @@ exercise the buffer-chunking path this file's `BUFFSIZE` logic exists
 for - a synthetic 5-sequence/50,000-char dataset (`examples/seq.phylip`'s
 sequences are only ~13-20 chars, short enough to never leave the
 "else" branch that was just deleted) - all combinations byte-identical.
+
+### `fnj/BinaryInputStream.cpp`: `readDM(StrFloMatrix&, ...)` (27 → 0)
+
+Mechanical split: extracted the identifier-table-reading loop
+(`readIdentifiers()`, a `while(true)` char-by-char scan for each
+`:`-terminated name) and the distance-value-reading loop
+(`readDistanceValues()`, the upper-triangular double loop with an
+early-return-on-short-read) out of `readDM()`, no logic changes.
+
+**This function turned out to be dead code** - `BinaryInputStream`'s
+*other* overload, `readDM(StrDblMatrix&, ...)`, is the one `fnj`'s
+`DataInputStream` interface actually declares `virtual`/`override`,
+and that overload is still an unimplemented stub (a known, separate
+gap - "needs writing + round-trip test" - not part of this lint pass's
+scope). `fnj -I binary` always resolves to the stub and exits with
+"Not implemented!" before this `StrFloMatrix` overload could ever run
+- confirmed by grepping for callers (none) and by running `fnj -I
+binary /dev/null` before and after this change (same stub message
+either time).
+
+**Verification**: given the above, there's no live code path to
+exercise this function against - verification here is full rebuild +
+`clang-tidy` (0 findings) + `ctest` + `RunExamples.sh` (15/15,
+confirming no regression *elsewhere*) plus careful manual review that
+the extraction is a pure mechanical move (every original statement
+preserved verbatim, nothing reordered or altered) - not a claim that
+the function's own behavior was runtime-verified, since it can't be
+reached to test.
