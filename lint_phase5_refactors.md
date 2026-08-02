@@ -777,3 +777,60 @@ hand-built distance matrix, calling both `computeLeastSquaresEdgeLengths()`
 and `computeLeastFloatSquaresEdgeLengths()` and dumping the L2 score
 and every edge length at full precision. Built and ran against both
 the pre- and post-refactor library - byte-identical output.
+
+### `Sequences2DistanceMatrix.cpp`: `bootstrapSequences` (30 → 0), `DNA_b128_StringsFromPHYLIP` (42 → 0), `fillMatrix_Hamming`/`_JC`/`_K2P`/`_TN93` (31/31/41/47 → NOLINT'd)
+
+`bootstrapSequences()` had an `if (32 < seqlen) {...} else {...}` split
+that, on close reading, wasn't doing what it looked like. Both
+branches called `rand()` to fill `samplePositions[0..seqlen-1]`; the
+`32<seqlen` branch just did it in stride-32 batches (looks like an
+unrolling attempt) while the `else` branch did it in one plain loop.
+Since `rand()` is a serial call with no reordering, both visit
+positions `0..seqlen-1` in the same order and call `rand()` the same
+number of times - the batching changes nothing observable. Proved this
+and unified both branches to the plain loop. The second half of each
+branch (copying sampled positions into a bounded buffer and
+`append()`-ing, chunked for sequences longer than the 16383-char
+buffer) is *not* equivalent busywork - it's genuinely needed for
+sequences that don't fit `buff` in one piece - but the `else` branch's
+"just copy it all in one go" turns out to be the exact same code path
+as the chunked version when `BUFFSIZE == seqlen` (which is always true
+in the `else` branch's domain, since `stride=32 < 16383`): the chunk
+loop runs zero iterations and the tail loop alone copies everything,
+one `append()` call - identical to what the `else` branch wrote out by
+hand. Unified onto the chunked version alone, deleting the `if/else`
+and the entire `else` branch.
+
+`DNA_b128_StringsFromPHYLIP()` had a real duplicate (the "has any
+sequence reached `seqlen` chars" scan, computed once before the
+interleaved-read loop and again inside it after every line) -
+extracted as `anySequenceComplete()`. Preserved its literal semantics
+("any", not "every" sequence complete) even though "every" reads more
+intuitively for a stopping condition - not confident enough about the
+intended PHYLIP-variant-tolerance behavior here to silently change it
+mid-complexity-fix. The remaining interleaved-read `while` loop was
+extracted as `readInterleavedLines()`, matching the technique used for
+`SequenceTree::mapSequencesOntoTree(istream&)` earlier in this
+document (also legacy hand-rolled multi-line PHYLIP parsing).
+
+`fillMatrix_Hamming`/`_JC`/`_K2P`/`_TN93` were **not** touched - they're
+four of the eight functions a separate, already-written project plan
+(consolidating `Sequences2DistanceMatrix.cpp`'s duplicated
+`fillMatrix*` family, not started) explicitly identifies as needing a
+dedicated consolidation, ~90% identical to
+each other and to their `fillMatrixRow_*` counterparts further down
+this same file. A partial fix here would either duplicate or conflict
+with that plan's eventual work, so left `NOLINT`'d with a comment
+pointing at it instead.
+
+**Verification**: full rebuild, `clang-tidy` down from 6 findings to 0
+(4 `NOLINT`'d), `ctest`, `RunExamples.sh` (15/15 byte-identical - ex1/
+ex2 exercise `DNA_b128_StringsFromPHYLIP()` directly). `bootstrapSequences()`'s
+`rand()`-based resampling needed determinism to verify byte-for-byte,
+so built the pre-refactor commit into a separate tree and compared
+`fastdist -I phylip ... -b N -s <seed>` (fixed seed) output across
+several bootstrap counts/seeds, `--no-incl-orig`, and - to actually
+exercise the buffer-chunking path this file's `BUFFSIZE` logic exists
+for - a synthetic 5-sequence/50,000-char dataset (`examples/seq.phylip`'s
+sequences are only ~13-20 chars, short enough to never leave the
+"else" branch that was just deleted) - all combinations byte-identical.

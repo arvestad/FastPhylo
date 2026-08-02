@@ -24,6 +24,63 @@
 
 using namespace std;
 
+namespace {
+// True once any single sequence has reached seqlen chars. This is the
+// (individually odd-looking, but preserved exactly) stopping condition
+// DNA_b128_StringsFromPHYLIP()'s interleaved-line loop below checks in
+// two places - once to set the loop's initial state, once per line
+// read inside the loop - not "every sequence has reached seqlen",
+// which would read more intuitively but isn't what the original did.
+bool anySequenceComplete(const std::vector<DNA_b128_String> &b128_strings, int seqlen) {
+  for (const auto &s : b128_strings) {
+    if (s.getNumChars() == seqlen) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Sequences aren't necessarily complete after each has read its opening
+// line (see the caller's first loop, right before this is called) -
+// they may be spread out interleaving over several lines. Keeps
+// reading one more line per sequence until anySequenceComplete() says
+// at least one has reached seqlen - see that function's comment for
+// why "at least one", not "every one".
+void readInterleavedLines(istream &fin, const std::vector<std::string> &names,
+                           std::vector<DNA_b128_String> &b128_strings, int numSequences, int seqlen,
+                           char *line, int maxline){
+  bool whileTrue = !anySequenceComplete(b128_strings, seqlen);
+
+  while ( whileTrue || fin.eof() ){
+    for ( int i = 0 ; i < numSequences ; i++ ){
+      DNA_b128_String &s = b128_strings[i];
+
+      fin.getline(line,maxline);
+
+      std::string myStr;
+      myStr=line;
+
+      if (myStr.empty()){
+        if( fin.eof() )
+          THROW_EXCEPTION("Sequence not of correct length: " << names[i]<< "    length is " << b128_strings[i].getNumChars());
+        i=i-1;
+        continue;
+      }
+
+      if ( !fin.fail() || fin.gcount()!=maxline-1 ){
+        s.append(line);
+      }
+
+      // check if any one of the sequences is read completely and has correct
+      // seq.length but some don't have that break the loop with error msg:
+      if ( anySequenceComplete(b128_strings, seqlen) ){
+        whileTrue = false;
+      }
+
+    }//end for loop
+  }
+}
+} // namespace
 
 void
 Sequences2DNA_b128(std::vector<Sequence> &seqs, std::vector<DNA_b128_String> &b128){
@@ -89,46 +146,7 @@ DNA_b128_StringsFromPHYLIP(istream &fin, std::vector<std::string> &names, std::v
 //Mehmood changes starts here
 	//The sequences aren't neccesarily on one line but my be spread out interleaving
 	//over several lines. Therefore we read until seqlen chars have been read.
-	bool whileTrue= true;
-	// check if all the sequences has been completely read.
-	for ( int i = 0 ; i < numSequences ; i++ ){
-		if ( b128_strings[i].getNumChars() == seqlen ){
-			whileTrue= false;
-		}
-	}
-
-	while ( whileTrue || fin.eof() ){
-		for ( int i = 0 ; i < numSequences ; i++ ){
-			DNA_b128_String &s = b128_strings[i];
-
-			fin.getline(line.data(),MAXLINE);
-
-			std::string myStr;
-			myStr=line.data();
-
-			if (myStr.empty()){
-				if( fin.eof() )
-					THROW_EXCEPTION("Sequence not of correct length: " << names[i]<< "    length is " << b128_strings[i].getNumChars());
-				i=i-1;
-				continue;
-			}
-
-			if ( !fin.fail() || fin.gcount()!=MAXLINE-1 ){
-				s.append(line.data());
-
-			}
-
-
-			// check if any one of the sequences is read completely and has correct
-			// seq.length but some don't have that break the loop with error msg:
-			for ( int i = 0 ; i < numSequences ; i++ ){
-					if ( b128_strings[i].getNumChars() == seqlen ){
-						whileTrue= false;
-					}
-				}
-
-		}//end for loop
-	}
+	readInterleavedLines(fin, names, b128_strings, numSequences, seqlen, line.data(), MAXLINE);
 
 	// CHECK THAT ALL STRINGS HAVE THE SAME LENGTH
 	for ( int i = 0 ; i < numSequences ; i++ ){
@@ -157,56 +175,43 @@ bootstrapSequences(const std::vector<Sequence> &seqs, std::vector<DNA_b128_Strin
 
 	// Do the bootstrapping
 	size_t pos=0;
-	size_t seq;
 	vector<int> samplePositions(seqlen);
 	const size_t BUFFSIZE = (16383>seqlen ? seqlen : 16383); //2^14=16384
 	std::vector<char> buff(BUFFSIZE+1);
 	buff[BUFFSIZE]='\0';
-	size_t const stride = 32;
 
-	if( stride < seqlen){
-		for( pos=0; pos<(seqlen-stride); pos+= stride) {
-			for( size_t i=0; i<stride; i++) {
-				samplePositions[pos+i] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
-}
-}
-		for (; pos<seqlen; pos++) {
-			samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
+	// Was two near-identical branches keyed on `32 < seqlen`: one doing
+	// this same fill in stride-32 chunks (an apparent unrolling
+	// attempt that, since rand() is an inherently serial call, visits
+	// positions 0..seqlen-1 in the same order and calls rand() the
+	// same number of times as the plain loop below - chunking it
+	// changed nothing observable), the other this plain loop, used
+	// only for seqlen<=32. Proven equivalent and unified into one path.
+	for (pos=0; pos<seqlen; pos++) {
+		samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
 }
 
-
-		for( seq=0; seq<seqs.size(); seq++){
-			const string & s = seqs[seq].seq;
-			//-----------
-			pos = 0;
-			for( ; pos<seqlen-BUFFSIZE; pos+=BUFFSIZE){
-				for( size_t i=0; i<BUFFSIZE; i++){
-					buff[i] = s[samplePositions[pos+i]];
-				}
-				b128_strings[seq].append(buff.data());
+	// Same merge for the sampled-sequence-copy step below: BUFFSIZE is
+	// already capped at seqlen (min(16383,seqlen)), so for seqlen<=32
+	// (where the "stride<seqlen" branch used to skip this chunking
+	// entirely) the chunk loop below runs zero iterations and the tail
+	// loop alone copies the whole sequence in one append() - exactly
+	// what the removed branch did by hand.
+	for( size_t seq=0; seq<seqs.size(); seq++){
+		const string & s = seqs[seq].seq;
+		pos = 0;
+		for( ; pos<seqlen-BUFFSIZE; pos+=BUFFSIZE){
+			for( size_t i=0; i<BUFFSIZE; i++){
+				buff[i] = s[samplePositions[pos+i]];
 			}
-			size_t i;
-			for ( i=0; pos<seqlen; i++,pos++) {
-				buff[i] = s[samplePositions[pos]];
-}
-			buff[i] = '\0';
-			//----------
 			b128_strings[seq].append(buff.data());
 		}
-	}
-	else{//seqlen<stride
-		for (pos=0; pos<seqlen; pos++) {
-			samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
+		size_t i;
+		for ( i=0; pos<seqlen; i++,pos++) {
+			buff[i] = s[samplePositions[pos]];
 }
-
-		for( seq=0; seq<seqs.size(); seq++){
-			const string & s = seqs[seq].seq;
-			for (pos=0; pos<seqlen; pos++) {
-				buff[pos] = s[samplePositions[pos]];
-}
-			buff[pos]='\0';
-			b128_strings[seq].append(buff.data());
-		}
+		buff[i] = '\0';
+		b128_strings[seq].append(buff.data());
 	}
 }
 
@@ -267,7 +272,15 @@ fillMatrix(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 
 
 
-void 
+// fillMatrix_Hamming/_JC/_K2P/_TN93 (this one and its three siblings
+// below) are ~90% identical to each other and to their fillMatrixRow_*
+// counterparts further down this file - the same duplicated-fillMatrix*
+// family flagged in project memory's distance_matrix_refactor plan as
+// needing a dedicated consolidation (8 functions, not a quick extraction
+// like the other Phase 5 findings). Left as-is here rather than a
+// partial ad hoc fix that plan would have to redo.
+void
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 fillMatrix_Hamming(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 		sequence_translation_model trans_model){
 
@@ -348,7 +361,10 @@ fillMatrix_Hamming(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 }
 
 
-void 
+// Same fillMatrix* family, same NOLINT rationale as fillMatrix_Hamming
+// above.
+void
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 fillMatrix_JC(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 		sequence_translation_model trans_model){
 
@@ -426,7 +442,10 @@ fillMatrix_JC(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 
 
 
-void 
+// Same fillMatrix* family, same NOLINT rationale as fillMatrix_Hamming
+// above.
+void
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 fillMatrix_K2P(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 		sequence_translation_model trans_model){
 
@@ -511,6 +530,9 @@ fillMatrix_K2P(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 
 
 
+// Same fillMatrix* family, same NOLINT rationale as fillMatrix_Hamming
+// above.
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void fillMatrix_TN93(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs, 
 		DNA_b128_String::base_frequences freqs,
 		sequence_translation_model trans_model){
