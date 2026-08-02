@@ -708,3 +708,72 @@ respectively) × with/without `-t` (`UsingTransitionProbabilities` vs
 and the pre-resolve step disabled) - all six combinations
 byte-identical, covering all four refactored functions on data that
 actually exercises their real logic, not just the empty-list path.
+
+### `LeastSquaresFit.cpp`: `computeLeastSquaresEdgeLengths`/`computeLeastFloatSquaresEdgeLengths` (37/37 → 0/0)
+
+Another double/float twin pair, both running the identical UNJ
+edge-length-fitting algorithm - one on `StrDblMatrix`/`double`, one on
+`StrFloMatrix`/`float`. Unlike the `DNA_b128_String.cpp` pair earlier,
+the matrix types here don't share a common base with the same method
+names for everything: `SequenceTree::tree2distanceMatrix()`/
+`tree2FloatdistanceMatrix()` and the free functions `computeL2()`/
+`computeFloatL2()` are differently *named*, not overloaded, so those
+two call sites are passed into the shared template as function
+pointers rather than resolved by overload resolution:
+
+```cpp
+template <typename Matrix, typename Real>
+Real computeLeastSquaresEdgeLengthsImpl(const Matrix &orig_dm, SequenceTree &tree,
+                                         void (SequenceTree::*treeToMatrix)(Matrix &),
+                                         Real (*computeL2Fn)(const Matrix &, const Matrix &)){
+  ...
+  Matrix treeM(tree.getNumLeafs());
+  (tree.*treeToMatrix)(treeM);
+  return computeL2Fn(treeM, orig_dm);
+}
+
+double
+computeLeastSquaresEdgeLengths(const StrDblMatrix &orig_dm, SequenceTree &tree){
+  return computeLeastSquaresEdgeLengthsImpl<StrDblMatrix, double>(orig_dm, tree, &SequenceTree::tree2distanceMatrix, &computeL2);
+}
+```
+
+The `Real` template parameter (not just `Matrix`) matters for
+bit-for-bit fidelity: the original float version explicitly computed
+`w1`/`w2`/`distChild1Child2` as `float` (narrowing from the `double`
+arithmetic on the right-hand side at each assignment), not `double`
+throughout - using `auto` instead of an explicit `Real` template
+parameter would have silently changed every one of those roundings.
+
+Consolidating the two 135-line bodies into one dropped both public
+functions to 0, but left the shared `Impl` at 37 - still needed a
+second pass, extracting four more helpers, each a self-contained,
+previously-inline step of the per-merge bottom-up loop:
+`buildRowIndexMaps()` (name↔row-index setup, was a leaf-check `if`
+plus a not-found `if`+`USER_ERROR`), `computeWeightedNeighborSum()`
+(the `sum +=` loop feeding both `EDGE(child1)`/`EDGE(child2)`),
+`swapChildToLastRow()` (the row-bookkeeping `if` before
+`removeLastRow()`), and `updateDistancesToParent()` (the final
+per-row `setDistance()` loop). That got both `Impl` instantiations to
+0.
+
+**Also noted, not touched**: this pair's only callers are in
+`src/c++/simulated_phylogenies/` (`BootstrapStats.cpp`/
+`BootstrapTest.cpp`), which - like `tests/Tree_test.cpp` noted
+earlier - aren't referenced by any `CMakeLists.txt`, so neither
+`fastdist`, `fnj`, nor `fastprot` ever call this code. Out of scope to
+fix (a build-wiring question, not a Phase 5 one), but relevant to how
+this was verified.
+
+**Verification**: full rebuild, `clang-tidy` back to zero findings,
+`ctest`, `RunExamples.sh` (15/15 byte-identical, though - per the
+above - this confirms no regression elsewhere, not this function,
+which nothing in `RunExamples.sh` reaches). Wrote a standalone test
+program (compiled against `libfastphylo.a` directly, not committed):
+a 5-leaf tree (`((a,b),c,(d,e))`, chosen so the bottom-up loop
+actually processes two non-root internal-node merges, exercising all
+four new helpers rather than only the trivial 3-leaf-star case) with a
+hand-built distance matrix, calling both `computeLeastSquaresEdgeLengths()`
+and `computeLeastFloatSquaresEdgeLengths()` and dumping the L2 score
+and every edge length at full precision. Built and ran against both
+the pre- and post-refactor library - byte-identical output.
