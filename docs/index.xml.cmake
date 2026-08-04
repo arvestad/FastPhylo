@@ -529,7 +529,7 @@ cmake version 2.6-patch 0
 <programlisting><![CDATA[
 $ mkdir /tmp/build
 $ cd /tmp/build
-$ cmake -DSTATIC=ON -DCPACK_GENERATOR="TGZ" /tmp/source && make package
+$ cmake -DCPACK_GENERATOR="TGZ" /tmp/source && make package
 ]]></programlisting>
 
       </para>

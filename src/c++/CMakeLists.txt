@@ -22,17 +22,7 @@ if(BUILD_WITH_MPI)
 endif()
 
 
-if(STATIC)
- set(LIBXML2_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2")
- set(LIBXML2_LIBRARIES "${CMAKE_CURRENT_BINARY_DIR}/external/install/lib/libxml2.a")
-
-# The next line seems to be need for macosx
- set(ZLIB_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/external/install/lib/libz.a")
-endif(STATIC)
-
 set(GENGETOPT_VERSION 2.22.2)
-set(LIBXML2_VERSION 2.7.2)
-set(ZLIB_VERSION 1.2.3)
 
 set(DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/external/downloads" INTERNAL)
 set(BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/build INTERNAL)
@@ -55,24 +45,14 @@ set(ARCH_FLAGS "-msse2")
 
   add_custom_target(win32installer DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/fastphylo-${PACKAGE_VERSION}-win32.exe")
 
-  # STATIC's self-built gengetopt/libxml2/zlib toolchain: 2009-2011-era
-  # library versions fetched from FTP mirrors (ftp.gnu.org, xmlsoft.org)
-  # of unverified current availability. Not exercised by this project's
-  # regular dev/CI builds (STATIC defaults OFF) and not touched by this
-  # modernization pass beyond command-case consistency - flagged as a
-  # candidate for its own future audit rather than silently assumed
-  # working.
+  # Fallback for a dev machine with no system gengetopt on PATH (see
+  # find_program(GENGETOPT gengetopt) above) - self-builds one from
+  # source. Independent of the now-removed STATIC option; this stays
+  # until gengetopt itself is migrated away from (a separate, larger
+  # decision, tracked outside this lint pass).
   add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/external/download/gengetopt-${GENGETOPT_VERSION}.tar.gz" COMMAND wget --directory-prefix=external/download "ftp://ftp.gnu.org/gnu/gengetopt/gengetopt-${GENGETOPT_VERSION}.tar.gz")
 
-  add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/external/download/libxml2-${LIBXML2_VERSION}.tar.gz" COMMAND wget --directory-prefix=external/download "ftp://xmlsoft.org/libxml2/libxml2-${LIBXML2_VERSION}.tar.gz")
-
-  add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/external/download/zlib-${ZLIB_VERSION}.tar.gz" COMMAND wget --directory-prefix=external/download "http://www.gzip.org/zlib/zlib-${ZLIB_VERSION}.tar.gz")
-
   add_custom_command(OUTPUT "${GENGETOPTDEP}" COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/build_gengetopt.sh" ${GENGETOPT_VERSION} "${CMAKE_CURRENT_BINARY_DIR}/external/install" DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/external/download/gengetopt-${GENGETOPT_VERSION}.tar.gz" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/external/build")
-
-  add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/external/install/lib/libxml2.a" "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h" COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/build_libxml2.sh" ${LIBXML2_VERSION} "${CMAKE_CURRENT_BINARY_DIR}/external/install" DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/external/download/libxml2-${LIBXML2_VERSION}.tar.gz" "${CMAKE_CURRENT_BINARY_DIR}/external/install/lib/libz.a" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/external/build")
-
-  add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/external/install/lib/libz.a" COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/build_zlib.sh" ${ZLIB_VERSION} "${CMAKE_CURRENT_BINARY_DIR}/external/install" DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/external/download/zlib-${ZLIB_VERSION}.tar.gz" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/external/build")
 
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.h
@@ -98,26 +78,10 @@ if(BUILD_WITH_MPI)
                      VERBATIM)
 endif()
 
-# Modernization Phase 5: STATIC's self-built libxml2 bypasses
-# find_package's system detection by design (LIBXML2_INCLUDE_DIR/
-# LIBXML2_LIBRARIES set above), so it can't use the LibXml2::LibXml2
-# imported target directly - wrap it in a small INTERFACE library
-# instead, so every consumer below links one FASTPHYLO_XML_LIBS
-# regardless of STATIC. Preserves the pre-existing STATIC-vs-find_package
-# ordering/behavior exactly; not attempting to fix whatever interaction
-# there may be between the two (out of this pass's scope, STATIC is
-# untested here).
 if(WITH_LIBXML)
-  if(STATIC)
-    add_library(fastphylo_libxml2 INTERFACE)
-    target_include_directories(fastphylo_libxml2 INTERFACE ${LIBXML2_INCLUDE_DIR})
-    target_link_libraries(fastphylo_libxml2 INTERFACE ${LIBXML2_LIBRARIES})
-    set(FASTPHYLO_XML_LIBS fastphylo_libxml2)
-  else()
-    find_package(LibXml2)
-    if(TARGET LibXml2::LibXml2)
-      set(FASTPHYLO_XML_LIBS LibXml2::LibXml2)
-    endif()
+  find_package(LibXml2)
+  if(TARGET LibXml2::LibXml2)
+    set(FASTPHYLO_XML_LIBS LibXml2::LibXml2)
   endif()
 endif()
 
@@ -192,10 +156,6 @@ ${FASTPHYLO_DNA_DIR}/sse2_wrapper.c
 ${FASTPHYLO_DNA_DIR}/computeTAMURANEIDistance_DNA_b128_String.cpp
 ${FASTPHYLO_DNA_DIR}/computeDistance_DNA_b128_String.cpp)
 
-if(STATIC AND WITH_LIBXML)
- set(LIBXML_EXTRA_COMPILE_FLAGS " -DLIBXML_STATIC ")
-endif(STATIC AND WITH_LIBXML)
-
 # Layout Phase C (project_layout_plan.md): shared output-stream classes,
 # consolidated out of fastdist's and fastprot's independently-diverged
 # per-program copies (see that plan doc for the audit - some, like
@@ -231,11 +191,7 @@ ${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.c
 )
 
 if(WITH_LIBXML)
- if(STATIC)
-  set(FASTDIST_XML_SRCS apps/fastdist/XmlInputStream.cpp "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h")
- else(STATIC)
-  set(FASTDIST_XML_SRCS apps/fastdist/XmlInputStream.cpp)
- endif(STATIC)
+ set(FASTDIST_XML_SRCS apps/fastdist/XmlInputStream.cpp)
 endif(WITH_LIBXML)
 
 
@@ -250,11 +206,7 @@ ${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt/fnj_gengetopt.c
 )
 
 if(WITH_LIBXML)
- if(STATIC)
-  set(FNJ_XML_SRCS apps/fnj/XmlInputStream.cpp "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h")
- else(STATIC)
-  set(FNJ_XML_SRCS apps/fnj/XmlInputStream.cpp)
- endif(STATIC)
+ set(FNJ_XML_SRCS apps/fnj/XmlInputStream.cpp)
 endif(WITH_LIBXML)
 
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt/fnj_gengetopt.c PROPERTIES GENERATED true)
@@ -294,11 +246,7 @@ ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.c
 )
 
 if(WITH_LIBXML)
- if(STATIC)
-  set(FASTPROT_XML_SRCS apps/fastprot/XmlInputStream.cpp "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h")
- else(STATIC)
-  set(FASTPROT_XML_SRCS apps/fastprot/XmlInputStream.cpp)
- endif(STATIC)
+ set(FASTPROT_XML_SRCS apps/fastprot/XmlInputStream.cpp)
 endif(WITH_LIBXML)
 
 if(BUILD_WITH_MPI)
@@ -329,11 +277,7 @@ if(BUILD_WITH_MPI)
   # unmerged) DataOutputStream.hpp is still compatible with them; needs
   # checking when fastprot_mpi work is actually picked up.
   if(WITH_LIBXML)
-    if(STATIC)
-      set(FASTPROT_MPI_XML_SRCS apps/fastprot_mpi/XmlInputStream.cpp "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h")
-    else(STATIC)
-      set(FASTPROT_MPI_XML_SRCS apps/fastprot_mpi/XmlInputStream.cpp)
-    endif(STATIC)
+    set(FASTPROT_MPI_XML_SRCS apps/fastprot_mpi/XmlInputStream.cpp)
   endif(WITH_LIBXML)
 endif(BUILD_WITH_MPI)
 
@@ -379,22 +323,14 @@ target_include_directories(fastdist PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastdist
   ${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt
 )
-target_link_libraries(fastdist PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS} ${ZLIB_LIBRARY})
-
-if(STATIC)
- set_property(TARGET fastdist PROPERTY LINK_SEARCH_END_STATIC ON)
-endif(STATIC)
+target_link_libraries(fastdist PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS})
 
 add_executable(fnj ${FNJ_SRCS} ${FNJ_XML_SRCS})
 target_include_directories(fnj PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/fnj
   ${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt
 )
-target_link_libraries(fnj PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS} ${ZLIB_LIBRARY})
-
-if(STATIC)
- set_property(TARGET fnj PROPERTY LINK_SEARCH_END_STATIC ON)
-endif(STATIC)
+target_link_libraries(fnj PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS})
 
 
 find_package(BLAS REQUIRED)
@@ -404,11 +340,7 @@ target_include_directories(fastprot PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot
   ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt
 )
-target_link_libraries(fastprot PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK ${ZLIB_LIBRARY} Threads::Threads)
-
-if(STATIC)
- set_property(TARGET fastprot PROPERTY LINK_SEARCH_END_STATIC ON)
-endif(STATIC)
+target_link_libraries(fastprot PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK Threads::Threads)
 
 
 if(BUILD_WITH_MPI)
@@ -417,11 +349,7 @@ if(BUILD_WITH_MPI)
     ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot_mpi
     ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt
   )
-  target_link_libraries(fastprot_mpi PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK ${ZLIB_LIBRARY} Threads::Threads MPI::MPI_CXX)
-
-  if(STATIC)
-    set_property(TARGET fastprot_mpi PROPERTY LINK_SEARCH_END_STATIC ON)
-  endif(STATIC)
+  target_link_libraries(fastprot_mpi PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK Threads::Threads MPI::MPI_CXX)
 endif(BUILD_WITH_MPI)
 
 

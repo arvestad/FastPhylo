@@ -25,7 +25,12 @@ set(PACKAGE_VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR
 option(BUILD_WITH_MPI "Build the MPI version of fastprot" OFF)
 option(BUILD_DOCBOOK "Build Docbook html documentation" OFF)
 option(WITH_LIBXML "Build xml functionality. This adds a dependeny for libxml" ON)
-option(STATIC "Build static binaries. This is mainly intended for the win32-package and the MACOSX-bundle. This is will download gengetopt, lixml2, zlib, and build them. The libxml2-library (and therefore indirectly zlib) will be statically linked in" OFF)
+# The STATIC option (self-built gengetopt/libxml2/zlib from 2009-2011-era
+# FTP-hosted tarballs, for portable win32/macOS binary packaging) was
+# removed in lint_plan.md's Phase 6 - never exercised by this project's
+# regular dev/CI builds, and superseded by a from-scratch, modern
+# cross-platform release-build plan (see project memory/a future plan
+# doc) rather than kept around as dead weight in the meantime.
 
 
 add_subdirectory(src/c++)

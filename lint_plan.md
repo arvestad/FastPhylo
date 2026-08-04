@@ -201,21 +201,35 @@ call site); `modernize-pass-by-value` (4) - case-by-case, only where
 the calling code already always passes a temporary or is fine with the
 copy.
 
-### Phase 6 - Tooling/build-system smells
+### Phase 6 - Tooling/build-system smells (done)
 
 Two items flagged during the layout restructuring as candidates for
 this pass, both low-risk since neither is exercised by default builds:
-docbook's `GET_TARGET_PROPERTY(...LOCATION)` (deprecated since CMake
-3.0; modern equivalent is the `$<TARGET_FILE:...>` generator
-expression) - small, mechanical, `BUILD_DOCBOOK` defaults off so
-untestable end-to-end here but the syntax fix itself is verifiable.
-`STATIC`'s self-built gengetopt/libxml2/zlib toolchain (FTP mirrors,
-2009-2011-era versions) - this one's a bigger question than a lint fix
-(keep self-building ancient versions via increasingly-unreliable FTP,
-bump to current versions, switch to HTTPS mirrors, or drop the
-self-build path entirely in favor of requiring system-installed libs
-even under `STATIC`) - flagging for a decision before touching it,
-not planning to just mechanically patch it.
+
+- docbook's `GET_TARGET_PROPERTY(...LOCATION)` (deprecated since CMake
+  3.0). Turned out the result (`FASTDIST_EXE`) was never actually
+  referenced anywhere in `docs/` - the "modern equivalent"
+  (`$<TARGET_FILE:...>`) only works as a generator expression at the
+  point of use, and there was no point of use to convert, so the
+  correct fix was deleting the dead line rather than "modernizing"
+  something with zero effect. `BUILD_DOCBOOK=ON` still configures
+  cleanly after the removal (full docbook build remains untestable
+  end-to-end here - `BUILD_DOCBOOK` defaults off, no `xmlto` in this
+  environment - but the configure-time syntax is verified).
+- `STATIC`'s self-built gengetopt/libxml2/zlib toolchain (FTP mirrors,
+  2009-2011-era versions) - discussed directly rather than guessed at.
+  Decision: remove `STATIC` entirely. Cross-platform (macOS/Windows/
+  Linux) release binaries are wanted, via GitHub Actions - but that's
+  new work needing its own plan (likely `vcpkg` for Windows/portable-
+  macOS vendoring of *current* libxml2/zlib, not a revival of the old
+  FTP-fetch mechanism), not a reason to keep 2009-2011-era
+  FTP-mirror-dependent code around as a stopgap. gengetopt's own
+  self-build fallback (independent of `STATIC` - triggers whenever no
+  system `gengetopt` is on `PATH`, regardless) was left in place; it
+  goes away naturally whenever gengetopt itself is migrated away from
+  (separately tracked, not part of this pass - see "what's explicitly
+  out of scope" below). See `github_actions_release_builds_plan.md`
+  (once written) for the replacement.
 
 ### Phase 7 - Final verification and sign-off
 
