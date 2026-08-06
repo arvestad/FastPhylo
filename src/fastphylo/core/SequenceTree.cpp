@@ -11,6 +11,7 @@
 
 #include "fastphylo/core/SequenceTree.hpp"
 #include "fastphylo/core/Exception.hpp"
+#include "fastphylo/core/phylip_interleaved_reader.hpp"
 
 #include <array>
 #include <vector>
@@ -408,34 +409,6 @@ void readSequenceLine(std::istream &fin, string *currseq) {
   }
 }
 
-// Continuation pass: sequences aren't necessarily on one line, so once
-// every node's opening line has been read (see the caller's first
-// loop), keep consuming further interleaved lines - one per sequence,
-// its 10-char name field skipped - until the last-matched sequence
-// reaches its expected length. The second big contributor to
-// mapSequencesOntoTree(istream&)'s original complexity, alongside
-// readSequenceLine() above.
-void readInterleavedContinuationLines(std::istream &fin, int numSequences, unsigned int seqlen,
-                                       string &garbage, std::vector<string *> &sequences,
-                                       const string *actualNodeString) {
-  while (actualNodeString->length() < seqlen) {
-    for (int i = 0; i < numSequences; i++) {
-      char c = fin.peek();
-      if (isspace(c) == 0) {
-        //skip first 10 chars
-        for (int j = 10; j != 0; j--) {
-          fin.get();
-        }
-      }
-      while (c == '\n') {
-        c = fin.get();
-      }
-
-      garbage.clear();
-      readSequenceLine(fin, sequences[i]);
-    }
-  }
-}
 } // namespace
 
 void
@@ -467,33 +440,59 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
   //doesn't exist in the tree then these sequences are read into a
   //garbage string.
   string garbage;
-  string *actualNodeString = nullptr;//used to check that the whole sequence has been read
   garbage.reserve(seqlen+10);
   std::vector<string> names(numSequences);
   std::vector<string *> sequences(numSequences,&garbage);
 
-  
+
   //read the names and map the sequences onto the tree
-  
+
   for ( int i = 0 ; i < numSequences ; i++ ){
     fin >> names[i];
     garbage.clear();
-    
-    //find the node 
+
+    //find the node
     auto iter = str2node.find(string(names[i]));
     if ( iter != str2node.end() ){
       sequences[i] = & SEQ(((*iter).second));
-      actualNodeString = sequences[i];
     }
 
     readSequenceLine(fin, sequences[i]);
   }
-  
+
   //read remaining sequences
 
   //The sequences aren't neccesarily on one line but my be spread out interleaving
   //over several lines. Therefore we read until seqlen chars have been read.
-  readInterleavedContinuationLines(fin, numSequences, seqlen, garbage, sequences, actualNodeString);
+  phylipReadInterleavedContinuation(fin, numSequences, static_cast<size_t>(seqlen),
+    [&sequences, &garbage](int i) -> size_t {
+      // Only a real (matched) position may signal completion - one
+      // still pointing at the shared `garbage` buffer must never
+      // falsely trigger it, since every unmatched name in the file
+      // appends into that same buffer, inflating its length faster
+      // than any single real sequence grows (Phase A of
+      // phylip_reader_consolidation_plan.md). Returning a value that
+      // can never equal seqlen excludes it from the check.
+      if (sequences[i] == &garbage) {
+        return static_cast<size_t>(-1);
+      }
+      return sequences[i]->length();
+    },
+    [&](istream &in, int i) {
+      char c = in.peek();
+      if (isspace(c) == 0) {
+        //skip first 10 chars
+        for (int j = 10; j != 0; j--) {
+          in.get();
+        }
+      }
+      while (c == '\n') {
+        c = in.get();
+      }
+
+      garbage.clear();
+      readSequenceLine(in, sequences[i]);
+    });
 
 
   // CHECK THAT ALL STRINGS HAVE THE SAME LENGTH

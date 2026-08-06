@@ -279,15 +279,73 @@ to that reader's own `appendLine` callback, not parameterized into the
 shared templates at all - it's specific to one call site's mechanics,
 not a flag the shared loop itself needs to know about.
 
-### Phase C - Migrate each call site, one at a time
+### Phase C - Migrate each call site, one at a time (done)
 
-Rebuild + `ctest` + `RunExamples.sh` after each migration for the two
-reachable copies (`DNA_b128_StringsFromPHYLIP()`,
-`Sequence::readSequences()`). `SequenceTree::mapSequencesOntoTree
-(std::istream&)` needs the standalone-test-against-`libfastphylo.a`
-approach from Phase 5 (write it as a committed test this time, given
-it's the only way to verify this code path at all, rather than a
-throwaway).
+**`DNA_b128_StringsFromPHYLIP()`** (`Sequences2DistanceMatrix.cpp`) -
+migrated first, since it's the one with the confirmed bug. Verified
+via full rebuild + `ctest` + `RunExamples.sh` (byte-identical,
+examples 1/2 exercise it directly), plus re-running Phase A's exact
+bug reproduction (a constructed multi-line interleaved PHYLIP file
+with and without a trailing newline): both variants now produce
+byte-identical output, matching what `Sequence::readSequences` already
+did correctly - the bug is fixed.
+
+**`Sequence::readSequences()`** (`Sequence.cpp`) - migrated second.
+This reader never had the `fin.eof()` bug, so behavior is unchanged,
+only the duplication is gone. Verified via full rebuild + `ctest` +
+`RunExamples.sh` (byte-identical, examples 6/11-18 exercise it via
+`fastprot -I phylip`).
+
+**`SequenceTree::mapSequencesOntoTree(std::istream&)`** - migrated
+last, and needed the standalone-test approach since it has no live
+caller. Written as a real, committed, CMake-wired test
+(`tests/SequenceTree_PhylipReader_test.cpp`, linked against the
+`fastphylo` library target directly and registered via `add_test()`),
+not a throwaway - this is now permanent regression coverage for a
+function that had none before.
+
+**Two more things found and confirmed only by finally being able to
+exercise this function**, neither visible from reading the code alone:
+
+- `readSequenceLine()`'s nucleotide-normalization (`nucleotide2char()`)
+  lowercases every character - a first draft of the test asserted
+  uppercase expected strings and failed immediately; not a bug, just
+  undocumented behavior worth having in the test's own comments now.
+- **This reader's continuation-line convention is genuinely
+  incompatible with the plain, unpadded continuation lines the rest of
+  this project's PHYLIP files use** - the same convention
+  `Sequences2DistanceMatrix.cpp`/`Sequence.cpp` read correctly and
+  `RunExamples.sh`'s real fixtures use. Confirmed by direct experiment:
+  a plain continuation line (matching this project's actual file
+  format) throws `Bad character` mid-read, because the peek-based
+  name-field-skip logic (difference #4) treats any continuation line
+  starting with non-whitespace as having a stray 10-character name
+  field to discard, silently eating real sequence data instead. The
+  *same* content, padded with 10 leading spaces (as if every
+  continuation line repeated a blank name field), reads correctly.
+  This means `SequenceTree::mapSequencesOntoTree(istream&)`, if it
+  were ever fed a real multi-line PHYLIP file in this project's normal
+  format, would throw - it only works today (to the extent "today"
+  means "if it were ever called at all") against a differently-padded
+  PHYLIP dialect than the rest of the project uses. Whether its one
+  real caller (`Simulator.cpp`, via externally-generated Seq-Gen
+  output, itself only reachable from unbuilt `simulated_phylogenies/`
+  tools) ever actually produces that dialect is unknown and out of
+  this plan's scope to chase down - flagged here as a genuine,
+  newly-discovered defect for whoever next touches that code path, not
+  fixed as part of this consolidation (the name-field-skip logic
+  itself is untouched, ported verbatim per Phase B's scope decision).
+  The committed test's multi-line fixtures all use the verified-working
+  space-padded form for this reason, documented in the test file's own
+  header comment.
+
+Also verified, empirically, that the `garbage`-exclusion sentinel
+(Phase B's design) is load-bearing, not just theoretically motivated:
+temporarily removed it and re-ran the test suite, confirming the
+`test_unmatched_name_does_not_corrupt_real_sequences` test fails
+exactly as predicted (`"Sequence not of correct length: Gamma"`) -
+then restored the correct implementation and re-verified all three
+tests pass, plus a full `ctest`/`RunExamples.sh` re-run.
 
 ### Phase D - Final verification
 
