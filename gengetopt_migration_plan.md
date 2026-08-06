@@ -382,13 +382,31 @@ gengetopt-provisioning open question and Phase B (add
 `apt-get install gengetopt`) both moot, since there's nothing left to
 provision on any platform now.
 
-### Phase F - Final verification and sign-off
+### Phase F - Final verification and sign-off (done)
 
-Full clean rebuild + `ctest` + `RunExamples.sh` (byte-identical, same
-discipline as every prior phase in this engagement), plus the
-manual `--help`/`--version`/error-path smoke-test matrix across every
-migrated app (since none of that is covered by the automated
-regression suite).
+Full clean rebuild (fresh `build/`, all default targets): zero errors,
+zero warnings beyond the pre-existing known ones
+(`Simulator.cpp`'s `sprintf` deprecation, the ARM `-fno-branch-count-reg`
+ignored-flag notice) - no gengetopt-related build output left at all.
+`ctest`: 2/2 passed. `RunExamples.sh`: all fixtures byte-identical
+against `expected_output/`. `RunCliChecks.sh` (now covering `fnj`,
+`fastdist`, `fastprot`): 61/61 checks passed, 0 failures.
+
+`fastprot_mpi` remains the one unverified piece, per its own caveat in
+Phase D - `BUILD_WITH_MPI` defaults `OFF` and no MPI installation
+exists in any environment this migration was done in, unchanged from
+before this migration.
+
+**gengetopt is now fully gone from this project**: no `.ggo` files, no
+generated C parser, no FTP self-build fallback, no `gengetopt`
+mentions anywhere in the build system except historical/explanatory
+comments. All four apps (`fnj`, `fastdist`, `fastprot`, `fastprot_mpi`)
+parse their CLI via CLI11, a single vendored header
+(`third_party/CLI11.hpp`). Adding a new option to any app is now one
+`app.add_option(...)`/`app.add_flag(...)` call at the point of use, no
+separate DSL file or build-time code generation step - the original
+ask ("make implementing command-line options easier... I am a fan of
+argparse").
 
 ## What's explicitly out of scope
 
