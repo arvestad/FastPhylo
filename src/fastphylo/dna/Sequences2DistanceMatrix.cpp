@@ -11,6 +11,7 @@
 
 #include "fastphylo/dna/Sequences2DistanceMatrix.hpp"
 #include "fastphylo/dna/DNA_b128_String.hpp"
+#include "fastphylo/core/phylip_interleaved_reader.hpp"
 #include <array>
 #include <string>
 #include <fstream>
@@ -23,64 +24,6 @@
 #include <cstdio>
 
 using namespace std;
-
-namespace {
-// True once any single sequence has reached seqlen chars. This is the
-// (individually odd-looking, but preserved exactly) stopping condition
-// DNA_b128_StringsFromPHYLIP()'s interleaved-line loop below checks in
-// two places - once to set the loop's initial state, once per line
-// read inside the loop - not "every sequence has reached seqlen",
-// which would read more intuitively but isn't what the original did.
-bool anySequenceComplete(const std::vector<DNA_b128_String> &b128_strings, int seqlen) {
-  for (const auto &s : b128_strings) {
-    if (s.getNumChars() == seqlen) {
-      return true;
-    }
-  }
-  return false;
-}
-
-// Sequences aren't necessarily complete after each has read its opening
-// line (see the caller's first loop, right before this is called) -
-// they may be spread out interleaving over several lines. Keeps
-// reading one more line per sequence until anySequenceComplete() says
-// at least one has reached seqlen - see that function's comment for
-// why "at least one", not "every one".
-void readInterleavedLines(istream &fin, const std::vector<std::string> &names,
-                           std::vector<DNA_b128_String> &b128_strings, int numSequences, int seqlen,
-                           char *line, int maxline){
-  bool whileTrue = !anySequenceComplete(b128_strings, seqlen);
-
-  while ( whileTrue || fin.eof() ){
-    for ( int i = 0 ; i < numSequences ; i++ ){
-      DNA_b128_String &s = b128_strings[i];
-
-      fin.getline(line,maxline);
-
-      std::string myStr;
-      myStr=line;
-
-      if (myStr.empty()){
-        if( fin.eof() )
-          THROW_EXCEPTION("Sequence not of correct length: " << names[i]<< "    length is " << b128_strings[i].getNumChars());
-        i=i-1;
-        continue;
-      }
-
-      if ( !fin.fail() || fin.gcount()!=maxline-1 ){
-        s.append(line);
-      }
-
-      // check if any one of the sequences is read completely and has correct
-      // seq.length but some don't have that break the loop with error msg:
-      if ( anySequenceComplete(b128_strings, seqlen) ){
-        whileTrue = false;
-      }
-
-    }//end for loop
-  }
-}
-} // namespace
 
 void
 Sequences2DNA_b128(std::vector<Sequence> &seqs, std::vector<DNA_b128_String> &b128){
@@ -146,7 +89,25 @@ DNA_b128_StringsFromPHYLIP(istream &fin, std::vector<std::string> &names, std::v
 //Mehmood changes starts here
 	//The sequences aren't neccesarily on one line but my be spread out interleaving
 	//over several lines. Therefore we read until seqlen chars have been read.
-	readInterleavedLines(fin, names, b128_strings, numSequences, seqlen, line.data(), MAXLINE);
+	phylipReadInterleavedContinuation(fin, numSequences, static_cast<size_t>(seqlen),
+		[&b128_strings](int i) { return static_cast<size_t>(b128_strings[i].getNumChars()); },
+		[&](istream &in, int i) {
+			DNA_b128_String &s = b128_strings[i];
+			while (true) {
+				in.getline(line.data(), MAXLINE);
+				std::string myStr = line.data();
+				if (myStr.empty()) {
+					if (in.eof()) {
+						THROW_EXCEPTION("Sequence not of correct length: " << names[i] << "    length is " << b128_strings[i].getNumChars());
+					}
+					continue;
+				}
+				if (!in.fail() || in.gcount() != MAXLINE-1) {
+					s.append(line.data());
+				}
+				break;
+			}
+		});
 
 	// CHECK THAT ALL STRINGS HAVE THE SAME LENGTH
 	for ( int i = 0 ; i < numSequences ; i++ ){
