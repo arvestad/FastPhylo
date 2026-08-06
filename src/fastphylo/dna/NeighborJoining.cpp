@@ -42,8 +42,13 @@ computeNJTree(StrDblMatrix &dm, SequenceTree &tree, NJ_method m ){
 void
 computeNJTree(StrFloMatrix &dm, SequenceTree &tree, NJ_method m ){
   //Rewrote this method because it unneccessarily created two distance matrices
-  int rows = dm.getRows();
-  int columns = dm.getColumns();
+  //
+  // rows/columns stay int, not size_t, despite getRows()/getColumns()
+  // returning size_t: the loop below counts i down through 0 with
+  // `i >= 0`, which would never terminate (or read out of bounds) if
+  // i/rows were unsigned - distance_matrix_refactor_plan.md's Phase D.
+  int rows = static_cast<int>(dm.getRows());
+  int columns = static_cast<int>(dm.getColumns());
 
   int helpMatrixSize = 0;
   //Because DistanceMatrix copies automatically the distance (i,j) and (j,i) and so I used a vector of Rows

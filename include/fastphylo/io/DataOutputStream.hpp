@@ -42,7 +42,7 @@ public:
   virtual void printStartRun(std::vector<std::string> &names, std::string &runId, Extrainfos &extrainfos) {}
   virtual void printEndRun() {}
   virtual void printRows(const StrDblMatrix &dm) {}
-  virtual void printRow(StrFloRow &dm, std::string name, int row, bool mem_eff_flag = false) {}
+  virtual void printRow(StrFloRow &dm, std::string name, size_t row, bool mem_eff_flag = false) {}
   virtual void printHeader(size_t numNodes) {}
   virtual void printBootstrapSpliter(size_t numNodes) {}
 

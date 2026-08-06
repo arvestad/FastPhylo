@@ -48,10 +48,10 @@ void BinaryDmOutputStream::print(StrDblMatrix &dm) {
 
 // fastdist's bootstrap-streaming path: writes one row at a time as it's
 // computed, rather than building the whole matrix first.
-void BinaryDmOutputStream::printRow(StrFloRow &dm, string name, int row, bool mem_eff_flag) {
-  int entriesPerRow = dm.getColumns();
+void BinaryDmOutputStream::printRow(StrFloRow &dm, string name, size_t row, bool mem_eff_flag) {
+  const size_t entriesPerRow = dm.getColumns();
 
-  for (size_t j = row; j < static_cast<size_t>(entriesPerRow); j++) {
+  for (size_t j = row; j < entriesPerRow; j++) {
     float f = dm.getDistance(j);
 
     if (!isfinite(f)) {

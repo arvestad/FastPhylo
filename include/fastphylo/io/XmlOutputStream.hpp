@@ -25,6 +25,6 @@ public:
   // kept behaviorally identical to the original per-entry implementation
   // rather than risking an unverifiable rewrite (same reasoning as
   // PhylipDmOutputStream::printRow).
-  void printRow(StrFloRow &dm, std::string name, int row, bool mem_eff_flag) override;
+  void printRow(StrFloRow &dm, std::string name, size_t row, bool mem_eff_flag) override;
   void printBootstrapSpliter(size_t numNodes) override;
 };

@@ -164,61 +164,274 @@ skipping it and leaving them broken.
 
 ## Phases
 
-### Phase A - Inventory, no code changes
+### Phase A - Inventory, no code changes (done)
 
-Full enumeration of every `int`-indexed accessor across the three
-classes and every call site (526 occurrences, 23 files). For each of
-the three known `field = -1`-on-unsigned sites (`Sequences2Distance
-Matrix.cpp`'s four `fillMatrixRow_*` copies, `DistanceRow`'s stream
-constructor, `FloatDistanceMatrix`'s stream constructor), confirm by
-tracing (not assuming) whether the wrapped value ever reaches an
-accessor call, and classify each as: working-and-load-bearing (must be
-preserved or deliberately replaced with an explicit named idiom),
-dead/vestigial (can be deleted), or already-safe (int-typed, no
-wraparound). Produces a concrete site-by-site list the rest of the
-plan executes against, rather than discovering issues mid-refactor.
+Full enumeration confirmed (not just the original estimate): **508
+call-site occurrences across 28 files** (close to the original 526/23
+estimate; the small drift is just codebase churn since that number was
+written, not a sign the original count was wrong). Of those 28, the
+in-scope set (active build) is 17 files; the rest are the already-known
+out-of-scope callers.
 
-### Phase B - Widen the three classes' index parameters to `size_t`
+**A fourth `field = -1`-on-unsigned site, missed by the plan's original
+inventory**: `DistanceMatrix_impl.hpp:59`, in `DistanceMatrix(std::istream&)`
+- `size = -1;` immediately followed by `objInitFromStream(in)`, which
+unconditionally overwrites `size` before any accessor call (`if
+(newSize != size) { size = newSize; ...}` - `newSize` is never
+`SIZE_MAX` in practice, so this branch always fires). Same
+"harmless, immediately overwritten" shape as the other two documented
+sites below - traced, not assumed.
 
-`getDistance`/`setDistance`/`getIdentifier`/`setIdentifier` (and any
-other `int`-indexed method Phase A's inventory turns up) across
-`DistanceMatrix`/`FloatDistanceMatrix`/`DistanceRow`. Update every
-caller in the active build, verifying via full rebuild + `ctest` +
-`RunExamples.sh` after each file or logical cluster of files - same
-discipline as every other phase of this engagement. Update the
-out-of-scope callers (`fastprot_mpi/` etc.) too, on a best-effort,
-unable-to-fully-verify basis, flagged the same way Phase C of
-`project_layout_plan.md` flagged its own unverifiable `fastprot_mpi`
-fix.
+Classification of all four `field = -1`-on-unsigned sites, each traced
+individually:
+- `DistanceMatrix_impl.hpp:59` (`size = -1`) - **already-safe**:
+  overwritten before any accessor call, confirmed above.
+- `FloatDistanceMatrix_impl.hpp:40-41` (`rows = -1; columns = -1;`) -
+  **already-safe**: `objInitFromStream()`'s own override unconditionally
+  reassigns both fields before any accessor call, same shape as above.
+- `DistanceRow_impl.hpp:38` (`columns = -1`) - **dead, and actually
+  broken**, confirmed rather than assumed: `DistanceRow` never
+  overrides `objInitFromStream()` (grep confirms no such override in
+  `DistanceRow.hpp`), so this constructor calls `Object`'s no-op
+  base version - `columns` stays at the wrapped `SIZE_MAX` forever
+  and `D` is never resized. Matches the `//Doesn't function here :)`
+  comment directly above it. Also confirmed **unused**: zero call
+  sites for `DistanceRow(istream&)` anywhere in the active or
+  out-of-scope source tree. Left in place, not deleted, since deleting
+  a public constructor is a design decision outside this refactor's
+  stated scope (index types), not something to fold in opportunistically.
+- `Sequences2DistanceMatrix.cpp`'s four `fillMatrixRow_*` `row = -1`
+  sites - re-confirmed safe during Phase C below (never reach an
+  accessor while wrapped), and replaced with an explicit named idiom
+  there per Phase C's own plan.
 
-### Phase C - Consolidate `Sequences2DistanceMatrix.cpp`'s fillMatrix*/fillMatrixRow* families
+**`removeLastRow()`/`addRow()` underflow risk, noted but out of
+scope**: both do unguarded `--rows`/`size--` on already-`size_t`
+members (pre-existing, not part of this refactor's `int`/`size_t`
+parameter question). Every in-scope caller (`NeighborJoining.hpp`/
+`.cpp`, `LeastSquaresFit.cpp`) only calls `removeLastRow()` inside a
+loop that stops at 3 remaining nodes, so the underflow is never
+triggered in practice - confirmed via grepping every caller, not
+assumed safe.
 
-Collapse the 4+4 near-identical functions into one parameterized
-full-matrix implementation and one parameterized row-streaming
-implementation, per "The Sequences2DistanceMatrix.cpp duplication"
-above. Replace the `row = -1` wraparound trick with an explicit,
-named idiom in the new shared function. This is real design work, not
-mechanical - budget real time for getting the per-model distance
-callable's signature right and verifying every one of the 4 (or 8)
-original call sites still produces byte-identical output for its
-model.
+**The four out-of-scope files with call sites
+(`iterative_tree_merger/`, `sequence_based_tree_reconstruction/`,
+`buildtree.cpp`) are not wired into any CMake target at all** -
+confirmed via grep, not assumed. This corrects the plan's original
+premise that Phase B needed to "update them for consistency even
+though they can't be verified by building": since they're not merely
+unverifiable but **entirely uncompiled**, and `int`->`size_t` is never
+a hard compile error (only implicit widening), there is no actual
+compile-break risk to guard against by touching them. Phase B below
+leaves them untouched rather than making blind, unverifiable edits to
+dead code for stylistic consistency alone.
 
-### Phase D - Remaining narrowing-conversions call sites
+### Phase B - Widen the three classes' index parameters to `size_t` (done)
 
-Everything Phase B doesn't touch: `compute_Tamura_Nei`/
-`compute_Tamura_Nei_fixratio`'s `int strlen`/`numAs`/etc, which
-already (per `lint_plan.md`'s Phase 2 investigation) must stay `int`
-because of `strlen - sd.deletedPositions`'s signed subtraction - these
-get per-call-site explicit casts, not a type change. Sweep for
-whatever else remains after Phases B/C land, since some of the 352
-original findings could turn out to be unrelated to the DistanceMatrix
-family entirely.
+`getDistance`/`setDistance`/`getIdentifier`/`setIdentifier` widened
+from `int`/mixed to `size_t` across all three classes
+(`DistanceMatrix`, `FloatDistanceMatrix`, `DistanceRow`) - header-only
+change, no `_impl.hpp` bodies needed touching since the accessor
+bodies themselves already indexed `std::vector`s with the parameter
+directly.
 
-### Phase E - Final verification
+**Zero call-site changes were needed anywhere in the active build** -
+confirmed by rebuilding immediately after the header change: 0
+compile errors. Traced why beforehand (not just gotten lucky): every
+in-scope caller already uses `size_t`-typed loop variables/`.size()`
+results (verified directly in `NeighborJoining.hpp`, the single
+largest caller at 136 call sites, all already `size_t` end to end) -
+the `int` parameter was the one thing not already following the
+codebase's own established convention, exactly as the plan's "Goal"
+section framed it: one API predating the rest of the codebase's shift
+to `size_t`, not 300+ independent problems.
 
-Full clean rebuild + `ctest` + `RunExamples.sh` + a benchmark re-run
-(this touches `fillMatrix*`, which is on the hot path measured by
-`bench_primitives`/`plan.md`'s speed2026a work).
+Measured via a `clang-tidy --checks='-*,bugprone-narrowing-conversions'`
+before/after diff across the same 57 in-scope files: **285 -> 170
+findings, 115 resolved by this header-only change alone**, zero source
+edits elsewhere. Verified: full rebuild (0 errors) + `ctest` (2/2) +
+`RunExamples.sh` (byte-identical) after the change.
+
+### Phase C - Consolidate `Sequences2DistanceMatrix.cpp`'s fillMatrix*/fillMatrixRow* families (done)
+
+**Scope refinement, decided while implementing, not assumed away**:
+the plan's original framing ("one parameterized full-matrix
+implementation and one parameterized row-streaming implementation")
+turned out to be exactly right for the row-streaming family but not
+quite for the full-matrix family, once actually reading all 8
+functions side by side rather than by their summary shape:
+
+- `fillMatrixRowGeneric<RawDistance>()` - **all four**
+  `fillMatrixRow_{Hamming,JC,K2P,TN93}` unify into this one template.
+  All four originals had their ambiguity-resolution second pass
+  entirely commented out already (dead code, deleted here rather than
+  kept as an inert comment four times over) - once that's gone, even
+  Hamming's row version (which in the full-matrix family below is
+  genuinely different in shape) reduces to the exact same skeleton as
+  the other three: compute a raw pairwise distance, convert it to a
+  plain float, done.
+- `fillMatrixML<RawDistance>()` - shared by `fillMatrix_JC`/`_K2P`/
+  `_TN93` only. `fillMatrix_Hamming` stays its own function: its
+  ambiguity handling is genuinely different in *shape*, not just
+  formula - `compute_Hamming_distance()` returns a plain `float` (not
+  an `ML_string_distance`), its closest-neighbor resolution calls the
+  simpler `resolveAmbiguities()` (not
+  `resolveAmbiguitiesUsingTransitionProbabilities()`), and its
+  correction pass borrows `compute_JC()` as an ML estimate regardless
+  of the model. Forcing Hamming into the same template as the other
+  three would need enough extra parameterization (a
+  "closest-neighbor-resolver" callable, a separate
+  "correction-estimate" callable, a storage-shape switch between
+  `RawDistance` alone and `pair<RawDistance,ML_string_distance>`) that
+  the result would read *harder* than the duplication it replaced -
+  judged not worth it. Net: 8 functions -> 3 pieces of source code
+  (`fillMatrixML` instantiated 3x, `fillMatrix_Hamming` kept,
+  `fillMatrixRowGeneric` instantiated 4x).
+
+**A real, live, previously-uncaught bug found and fixed during this
+consolidation**: `fillMatrixRow_JC`'s `mem_eff_flag` branch was
+inverted relative to its three siblings (`if (mem_eff_flag)` instead
+of `if (!mem_eff_flag)`) - and, since the condition governs *both*
+branches via if/else, this meant JC's row-streaming path had the
+*regular* (`--output-format=binary`) and *memory-efficient*
+(`--memory-efficient`) behaviors swapped, not just one of them wrong.
+Verified live, not just read: `fastdist -D JC -e -O phylip` on an
+8-sequence test set printed zeros for the entire lower triangle
+instead of the real distances (comparing against the full-matrix
+reference, the correct behavior for `-e`), while the same command
+with `-D K2P` produced output byte-identical to its own full-matrix
+reference. Neither `RunExamples.sh` nor `RunCliChecks.sh` exercises
+`fastdist`'s `--memory-efficient` flag at all, so this had zero
+regression coverage before now. `fillMatrixRowGeneric()` uses the
+three-out-of-four (correct) direction uniformly, so this specific bug
+class cannot recur in any of the four models going forward.
+
+Verified the fix didn't regress the three already-correct models nor
+change unrelated behavior, via a genuine before/after comparison (a
+`git worktree` at the pre-Phase-C commit, not just re-reading the new
+code): `K2P`/`Hamming`/`TN93`'s binary-row-streaming output is
+byte-identical before and after, for both `--output-format=binary`
+and `--memory-efficient`. `JC`'s binary output changed by exactly one
+bit (`-0.0` -> `0.0`, IEEE-754 negative vs. positive zero, numerically
+and observably identical in every context) - traced to the fix
+correctly skipping a now-redundant self-distance recomputation for
+row 0 that the old buggy code's inverted branch used to redo. All
+four models' full-matrix output (`fillMatrix()`, untouched by this
+bug) is unchanged.
+
+The `row = -1` wraparound trick (relying on unsigned integer overflow
+to turn `row+1` into `0`) is gone from every model, replaced by an
+explicit `startCol` variable in `fillMatrixRowGeneric()` - readable
+without knowing wraparound is happening on purpose, and structurally
+unable to invert silently the way JC's copy did. The
+closest-neighbor/`closestDist` tracking in all four original row
+functions was also dead (written, never read outside the same
+commented-out block) - removed rather than carried into the new
+shared code.
+
+Verified: full clean rebuild (0 errors) + `ctest` (2/2) +
+`RunExamples.sh` (byte-identical) + `RunCliChecks.sh` (61/61) +
+`bench_primitives` (healthy speedups, 7x-68x depending on primitive/
+length, no regression - this consolidation touches the same hot path
+speed2026a measures) + the worktree-based before/after binary
+comparison described above. Measured via the same
+`clang-tidy --checks='-*,bugprone-narrowing-conversions'` diff used in
+Phase B: 170 -> 150 findings (Phase B: 285 -> 170; this phase: a
+further 20 resolved by removing the duplication, on top of the dead
+code and wraparound trick that are gone regardless of what
+`clang-tidy` reports).
+
+### Phase D - Remaining narrowing-conversions call sites (done)
+
+**Scope confirmed by direct discussion before starting**: of the 150
+findings remaining after Phase C, most turned out to be a genuinely
+different problem - 52+ were `double`->`float` precision loss (numeric
+formula code, e.g. `TamuraNei.cpp`'s ts/tv-ratio math), plus stream/
+`char` sentinel handling and libxml2 API calls, none of it about
+index types. Explicitly scoped this phase to *only* the
+DistanceMatrix-family-adjacent `size_t`->`int` sites, triaging each
+remaining finding by hand (not a blind sweep) into three buckets:
+
+- **Must-stay-`int`, cast at the call site** (the pattern the plan's
+  own text already anticipated for `compute_Tamura_Nei`/
+  `compute_Tamura_Nei_fixratio`'s `strlen`/`numAs`/`numCs`/`numGs`/
+  `numTs` params - confirmed these must stay `int` due to
+  `lint_plan.md`'s Phase 2 finding about signed subtraction inside
+  them): applied `static_cast<int>(...)` at all 11 call sites this
+  refactor's own Phase C code introduced in
+  `Sequences2DistanceMatrix.cpp`. Found one more real instance of the
+  same *class* of must-stay-signed constraint, not previously
+  documented: `NeighborJoining.cpp`'s `computeNJTree()` counts `i`
+  down through `0` with `i >= 0` - if `rows`/`columns` (fed by
+  `dm.getRows()`/`getColumns()`, both `size_t` since Phase B) were
+  ever widened instead of cast, the loop would never terminate (or
+  read out of bounds) once `i` underflowed. Cast at the two call
+  sites rather than widening, with a comment explaining why - the
+  wrong fix here would have been a real, live bug, not just a lint
+  regression.
+- **A `size_t` value assigned into `str2int_hashmap`'s `int` value
+  type** (`LeastSquaresFit.cpp`, `fnj/main.cpp`) - a project-wide
+  utility type, not part of the DistanceMatrix family itself, so
+  cast at the two call sites rather than changing the shared type.
+- **Genuinely safe to widen** - the `DataOutputStream::printRow()`
+  virtual hierarchy's `int row` parameter (base declaration +
+  `BinaryDmOutputStream`/`PhylipDmOutputStream`/`XmlOutputStream`
+  overrides, all four widened together to keep the override set
+  matching - a mismatched override would silently stop overriding
+  anything) and each implementation's `entriesPerRow` local variable,
+  all simple upward-counting loop bounds fed directly by `size_t`
+  values with no signed dependency. `PhylipDmOutputStream.cpp` had
+  one call site already `static_cast<int>`'d then immediately
+  `static_cast<size_t>`'d back for the loop condition - widening the
+  variable outright removed both casts, not just silenced the
+  warning. Same treatment for `applyFixFactor`/`applyFixFactorRow`
+  (`DistanceMatrix.cpp`/`FloatDistanceMatrix.cpp`/`DistanceRow.cpp`) -
+  their own free functions, directly part of this family, simple
+  upward loops.
+
+Explicitly left alone (confirmed unrelated by reading each site's
+actual code, not assumed from the finding's category label alone):
+`protein/Matrix.cpp`/`ExpectedDistance.cpp` (confirmed via grep - never
+touch `DistanceMatrix`/`FloatDistanceMatrix`/`DistanceRow`/
+`DistanceRow` at all, matches the plan's existing `protein/Matrix.hpp`
+exclusion), `DNA_b128_String.cpp` (its own internal capacity/index
+bookkeeping, unrelated), libxml2 API calls in both
+`XmlInputStream.cpp` files (`xmlRelaxNGNewMemParserCtxt`'s own
+signature, not project code), and `Sequences2DistanceMatrix.cpp`'s two
+pre-existing PHYLIP-parsing/bootstrap-resampling findings (unrelated
+to the fillMatrix family this plan is about).
+
+Measured via the same `clang-tidy` diff, on a freshly regenerated
+`compile_commands.json` after one run showed a spurious
+"Found compiler error(s)" on `TamuraNei.cpp` from a stale
+include-path cache (a tooling artifact, not a real code issue - the
+actual `cmake --build` succeeded with 0 errors throughout, and
+`TamuraNei.cpp` was never touched in this phase): **150 -> 111
+findings**, all 39 resolved sites confirmed to be the
+DistanceMatrix-adjacent `size_t`->`int` category; every remaining
+finding re-confirmed to be the out-of-scope `double`->`float`/stream/
+libxml2 categories, not a fix left undone.
+
+### Phase E - Final verification (done)
+
+Full clean rebuild (fresh `build/`, regenerated
+`compile_commands.json`): 0 errors. `ctest`: 2/2. `RunExamples.sh`:
+byte-identical. `RunCliChecks.sh`: 61/61. `bench_primitives`: healthy
+speedups (4x-56x depending on primitive/length), no regression - this
+phase's changes sit directly on the hot path `speed2026a`/
+`bench_primitives` measures. Plus a DNA-distance sanity check across
+all four models (`JC`/`K2P`/`TN93`/`HAMMING`) on a synthetic
+300-seq/8000bp dataset, matching `lint_plan.md`'s own Phase 7
+discipline - all fast (<0.1s) and consistent.
+
+All 5 phases of this plan are now complete. The `int`/`size_t`
+mismatch that motivated it is resolved everywhere it originated
+(`DistanceMatrix`/`FloatDistanceMatrix`/`DistanceRow`'s own accessors)
+and everywhere it was genuinely still visible in DistanceMatrix-
+adjacent code; a real, previously-uncaught, live bug
+(`fillMatrixRow_JC`'s inverted `--memory-efficient` behavior) was
+found and fixed as a direct consequence of the Phase C consolidation
+this plan called for from the start.
 
 ## Decisions
 

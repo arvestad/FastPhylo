@@ -42,7 +42,7 @@ void XmlOutputStream::printEndRun() {
 }
 
 // fastdist's memory-efficient bootstrap-streaming path (see header comment).
-void XmlOutputStream::printRow(StrFloRow &dm, string name, int row, bool mem_eff_flag) {
+void XmlOutputStream::printRow(StrFloRow &dm, string name, size_t row, bool mem_eff_flag) {
 
   const size_t numNodes = dm.getColumns();
 
@@ -51,13 +51,13 @@ void XmlOutputStream::printRow(StrFloRow &dm, string name, int row, bool mem_eff
   defstr[3] = '.';
   defstr[10] = 0;
 
-  int entriesPerRow = numNodes;
+  const size_t entriesPerRow = numNodes;
 
   fprintf(fp, "    <row>\n");
   if (mem_eff_flag) {
     row = 0;
   }
-  for (size_t j = row; j < static_cast<size_t>(entriesPerRow); j++) {
+  for (size_t j = row; j < entriesPerRow; j++) {
 
     float f = dm.getDistance(j);
 

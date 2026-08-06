@@ -76,7 +76,7 @@ public:
 
   //---------------------------------
   //GET AND SET DISTANCE
-  DistanceType getDistance(int i, int j) const{
+  DistanceType getDistance(size_t i, size_t j) const{
     //only the upper right triangle
     if ( i <= j ) {
       return D[i][j - i];
@@ -85,7 +85,7 @@ public:
     }
   };
 
-  void setDistance(int i, int j, DistanceType d) {
+  void setDistance(size_t i, size_t j, DistanceType d) {
     if ( i <= j ) {
     	D[i][j - i] = d;
     } else {
@@ -98,13 +98,13 @@ public:
     for(size_t i=0;i<ids.size();i++)
       identifiers[i]=ids[i];
   }
-  void setIdentifier(int i, Identifier id){
+  void setIdentifier(size_t i, Identifier id){
     identifiers[i] = id;
   }
-  Identifier& getIdentifier(int i){
+  Identifier& getIdentifier(size_t i){
     return identifiers[i];
   }
- const Identifier& getIdentifier(int i) const{
+ const Identifier& getIdentifier(size_t i) const{
     return identifiers[i];
  }
 

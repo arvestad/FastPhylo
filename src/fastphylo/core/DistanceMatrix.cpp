@@ -8,10 +8,10 @@
 bool
 applyFixFactor(StrDblMatrix &dm, double fixFactor){
   double biggest = 0;
-  int size =dm.getSize();
-  
-  for ( int i = 0 ; i < size ; i++ ){
-    for ( int j = 0 ; j < size ; j++ ){
+  size_t size =dm.getSize();
+
+  for ( size_t i = 0 ; i < size ; i++ ){
+    for ( size_t j = 0 ; j < size ; j++ ){
       double d = dm.getDistance(i,j);
       if ( std::isfinite(d) && d>biggest ){
         biggest = d;
@@ -21,8 +21,8 @@ applyFixFactor(StrDblMatrix &dm, double fixFactor){
 
   bool changed = false;
   biggest = biggest*fixFactor;
-  for ( int i = 0 ; i < size ; i++ ){
-    for ( int j = 0 ; j < size ; j++ ){
+  for ( size_t i = 0 ; i < size ; i++ ){
+    for ( size_t j = 0 ; j < size ; j++ ){
       double d = dm.getDistance(i,j);
       if ( !std::isfinite(d) || d<0 ){
         dm.setDistance(i,j,biggest);

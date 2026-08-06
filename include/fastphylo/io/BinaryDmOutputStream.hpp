@@ -23,7 +23,7 @@ public:
   void printHeader(size_t numNodes) override;
   void printStartRun(std::vector<std::string> &names, std::string &runId, Extrainfos &extrainfos) override;
   void print(StrDblMatrix &dm) override;
-  void printRow(StrFloRow &dm, std::string name, int row, bool mem_eff_flag) override;
+  void printRow(StrFloRow &dm, std::string name, size_t row, bool mem_eff_flag) override;
 
 private:
   // Owns the file when writing to disk; unused (writeToCout) when

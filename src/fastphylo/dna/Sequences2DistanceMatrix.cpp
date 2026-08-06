@@ -272,13 +272,174 @@ fillMatrix(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 
 
 
-// fillMatrix_Hamming/_JC/_K2P/_TN93 (this one and its three siblings
-// below) are ~90% identical to each other and to their fillMatrixRow_*
-// counterparts further down this file - the same duplicated-fillMatrix*
-// family flagged in project memory's distance_matrix_refactor plan as
-// needing a dedicated consolidation (8 functions, not a quick extraction
-// like the other Phase 5 findings). Left as-is here rather than a
-// partial ad hoc fix that plan would have to redo.
+// distance_matrix_refactor_plan.md, Phase C: fillMatrix_{Hamming,JC,
+// K2P,TN93} and fillMatrixRow_{Hamming,JC,K2P,TN93} (8 functions
+// total, ~90% identical to each other) are consolidated below into
+// three pieces of code instead:
+//
+// - fillMatrixML<RawDistance>(): shared by fillMatrix_JC/_K2P/_TN93.
+//   JC/K2P/TN93 share one skeleton exactly (per-pair raw distance ->
+//   ML distance, closest-neighbor tracking, an ambiguity-resolution
+//   pass using that ML distance, then a correction pass) - only the
+//   raw-distance type (simple_string_distance for JC/K2P,
+//   TN_string_distance for TN93) and the three model-specific
+//   callables (computeRaw/computeML/correctAmbiguities) differ.
+// - fillMatrix_Hamming() stays its own function: its ambiguity
+//   handling is genuinely different in shape, not just formula -
+//   compute_Hamming_distance() returns a plain float (not an
+//   ML_string_distance), its closest-neighbor resolution calls the
+//   simpler resolveAmbiguities() (not
+//   resolveAmbiguitiesUsingTransitionProbabilities()), and its
+//   correction pass borrows compute_JC() as an ML estimate regardless
+//   of the model. Forcing this into the same template as the other
+//   three would need enough extra parameterization (a
+//   "closest-neighbor resolver" callable, a separate
+//   "correction-estimate" callable, a storage-shape switch) that it
+//   would be harder to read than the duplication it replaced -
+//   judged not worth it.
+// - fillMatrixRowGeneric<RawDistance>(): shared by all four
+//   fillMatrixRow_* wrappers, including Hamming. Unlike the
+//   full-matrix versions, none of the four *row*-streaming originals
+//   had a live ambiguity-resolution pass - all four had it entirely
+//   commented out already (dead code, deleted here rather than kept
+//   as an inert comment four times over) - so once that's gone, even
+//   Hamming's row version reduces to exactly the same shape as the
+//   other three (raw distance -> a plain float, no ML type or
+//   closest-neighbor bookkeeping needed at all), letting all four
+//   unify into one template.
+//
+// Bug found and fixed during this consolidation: fillMatrixRow_JC's
+// `mem_eff_flag` branch was inverted relative to its three siblings
+// (`if (mem_eff_flag)` instead of `if (!mem_eff_flag)`). Verified
+// live (not just read): `fastdist -D JC -e -O phylip` on an 8-sequence
+// test set printed zeros for the entire lower triangle instead of the
+// real distances, while the same command with `-D K2P` produced
+// output byte-identical to the non-memory-efficient full matrix (the
+// correct reference). fillMatrixRowGeneric() below uses the
+// three-out-of-four (correct) direction uniformly, so this bug cannot
+// recur in any of the four models.
+//
+// The `row = -1` (relying on unsigned wraparound to make `row+1`
+// become `0`) trick every original fillMatrixRow_* used to switch
+// between "start at row+1" and "start at 0" is replaced by an
+// explicit `startCol` variable below - a reader doesn't have to know
+// unsigned integer wraparound is happening on purpose to understand
+// the control flow, and it can't silently invert again the way JC's
+// copy did.
+
+namespace {
+
+// Shared by fillMatrix_JC/_K2P/_TN93 - see the consolidation comment
+// above for why fillMatrix_Hamming isn't included here.
+template <class RawDistance, class ComputeRawFn, class ComputeMLFn, class CorrectAmbiguitiesFn>
+// NOLINTNEXTLINE(readability-function-cognitive-complexity) - same shape as the fillMatrix_{JC,K2P,TN93} it replaces, all three were already at this same complexity before consolidation.
+void fillMatrixML(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
+                   const sequence_translation_model &trans_model,
+                   ComputeRawFn computeRaw, ComputeMLFn computeML,
+                   CorrectAmbiguitiesFn correctAmbiguities) {
+	const size_t numSequences = seqs.size();
+	dm.resize(numSequences);
+
+	//extended information used to compute ambiguities
+	static DistanceMatrix<int,pair<RawDistance,ML_string_distance>,
+	empty_Data_init<int>,empty_Data_printOn<int>,
+	empty_Data_init<pair<RawDistance,ML_string_distance> >,
+	empty_Data_printOn<pair<RawDistance,ML_string_distance> > >
+	extendedDistanceInfo(numSequences);
+	extendedDistanceInfo.resize(numSequences);
+
+	for ( size_t i = 0 ; i < numSequences ; i++ ){
+		dm.setDistance(i,i,0);
+		size_t closestNeig = i;
+		float closestDist =  FLT_MAX;
+
+		DNA_b128_String &si = seqs[i];
+
+		//if has ambig find closest string and resolve.
+		if ( si.hasAmbiguities() ){
+			for ( size_t k = 0 ; k < i ; k++ ){
+				float dist = dm.getDistance(k,i);
+				if (  dist < closestDist && dist >= 0 ){
+					closestDist = dist;
+					closestNeig = k;
+				}
+			}
+		}
+
+		for ( size_t j = i+1 ; j < numSequences ; j++ ){
+			RawDistance sd = computeRaw(si,seqs[j]);
+			ML_string_distance ml_dist = computeML(sd);
+
+			dm.setDistance(i,j,ml_dist.distance);
+			extendedDistanceInfo.setDistance(i,j,pair<RawDistance,ML_string_distance>(sd,ml_dist));
+
+			if ( ml_dist.distance < closestDist && ml_dist.distance >= 0 ){
+				closestDist = ml_dist.distance;
+				closestNeig = j;
+			}
+		}
+
+		if ( si.hasAmbiguities() && ! trans_model.no_ambig_resolve ){
+			ML_string_distance ml_dist = extendedDistanceInfo.getDistance(i,closestNeig).second;
+			si.resolveAmbiguitiesUsingTransitionProbabilities(seqs[closestNeig],ml_dist);
+		}
+	}
+
+	//UPDATE USING AMBIGUITIES
+	if ( !trans_model.no_ambiguities ){
+		for (size_t i = 0 ; i < numSequences ; i++ ){
+			DNA_b128_String &si = seqs[i];
+			for ( size_t j = i+1 ; j < numSequences ; j++ ){
+				if ( si.hasAmbiguities() || seqs[j].hasAmbiguities() ){
+					RawDistance sd = extendedDistanceInfo.getDistance(i,j).first;
+					ML_string_distance ml_dist = extendedDistanceInfo.getDistance(i,j).second;
+					sd = correctAmbiguities(sd,ml_dist,si,seqs[j]);
+
+					ml_dist = computeML(sd);
+					dm.setDistance(i,j,ml_dist.distance);
+				}
+			}
+		}
+	}
+}
+
+// Shared by fillMatrixRow_{Hamming,JC,K2P,TN93} - see the
+// consolidation comment above for why the row-streaming family unifies
+// across all four models where the full-matrix family doesn't.
+template <class RawDistance, class ComputeRawFn, class ComputeFinalFn>
+void fillMatrixRowGeneric(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
+                           size_t row, bool mem_eff_flag,
+                           ComputeRawFn computeRaw, ComputeFinalFn computeFinal) {
+	const size_t numSequences = seqs.size();
+	dm.resize(numSequences);
+
+	DNA_b128_String &si = seqs[row];
+	dm.setDistance(row,0);
+
+	// Non-memory-efficient (regular row streaming, e.g.
+	// --output-format=binary): only the upper triangle (j>row) is
+	// computed; j<row is explicitly zeroed, since those distances were
+	// already produced when this pair was computed as an earlier row.
+	// Memory-efficient (--memory-efficient): every row is
+	// self-contained, so the whole range [0,numSequences) is
+	// recomputed from scratch, including a harmless redundant
+	// self-comparison at j==row (computeRaw(si,si) evaluates to ~0,
+	// the same value dm.setDistance(row,0) above already set).
+	const size_t startCol = mem_eff_flag ? 0 : row+1;
+	if ( !mem_eff_flag ){
+		for ( size_t j = 0 ; j < row ; j++ ){
+			dm.setDistance(j,0);
+		}
+	}
+
+	for ( size_t j = startCol ; j < numSequences ; j++ ){
+		RawDistance sd = computeRaw(si,seqs[j]);
+		dm.setDistance(j,computeFinal(sd));
+	}
+}
+
+} // namespace
+
 void
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 fillMatrix_Hamming(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
@@ -347,7 +508,7 @@ fillMatrix_Hamming(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 			for ( size_t j = i+1 ; j < numSequences ; j++ ){
 				if ( si.hasAmbiguities() || seqs[j].hasAmbiguities() ){
 					simple_string_distance sd = extendedDistanceInfo.getDistance(i,j);
-					ML_string_distance ml_dist = compute_JC(strlen,sd);
+					ML_string_distance ml_dist = compute_JC(static_cast<int>(strlen),sd);
 					sd = DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(sd,ml_dist,si,seqs[j]);
 
 					//hamming
@@ -361,269 +522,80 @@ fillMatrix_Hamming(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 }
 
 
-// Same fillMatrix* family, same NOLINT rationale as fillMatrix_Hamming
-// above.
 void
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 fillMatrix_JC(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 		sequence_translation_model trans_model){
 
-	const size_t numSequences = seqs.size();
 	const size_t strlen = seqs[0].getNumChars();
 
-	dm.resize(numSequences);
-
-	//extended information used to compute ambiguities
-	static DistanceMatrix<int,pair<simple_string_distance,ML_string_distance>,
-	empty_Data_init<int>,empty_Data_printOn<int>,
-	empty_Data_init<pair<simple_string_distance,ML_string_distance> >,
-	empty_Data_printOn<pair<simple_string_distance,ML_string_distance> > >
-	extendedDistanceInfo(numSequences);
-
-	extendedDistanceInfo.resize(numSequences);
-
-	for ( size_t i = 0 ; i < numSequences ; i++ ){
-		dm.setDistance(i,i,0);
-		size_t closestNeig = i;
-		float closestDist =  FLT_MAX;
-
-		DNA_b128_String &si = seqs[i];
-
-		//if has ambig find closest string and resolve.
-		if ( si.hasAmbiguities() ){
-			for ( size_t k = 0 ; k < i ; k++ ){
-				float dist = dm.getDistance(k,i);
-				if (  dist < closestDist && dist >= 0 ){
-					closestDist = dist;
-					closestNeig = k;
-				}
-			}
-		}
-
-
-		ML_string_distance  ml_dist;
-		for ( size_t j = i+1 ; j < numSequences ; j++ ){
-			simple_string_distance sd = DNA_b128_String::computeDistance(si,seqs[j]);
-			//     cout << sd << endl;
-			ml_dist = compute_JC(strlen,sd);
-
-			dm.setDistance(i,j,ml_dist.distance);
-			extendedDistanceInfo.setDistance(i,j,pair<simple_string_distance,ML_string_distance>(sd,ml_dist));
-
-			if ( ml_dist.distance < closestDist && ml_dist.distance >= 0 ){
-				closestDist = ml_dist.distance;
-				closestNeig = j;
-			}
-		}
-
-		if ( si.hasAmbiguities() && ! trans_model.no_ambig_resolve ){
-			ml_dist = extendedDistanceInfo.getDistance(i,closestNeig).second;
-			si.resolveAmbiguitiesUsingTransitionProbabilities(seqs[closestNeig],ml_dist);
-		}
-	}
-
-	//UPDATE USING AMBIGUITIES
-	if ( !trans_model.no_ambiguities ){
-		for (size_t i = 0 ; i < numSequences ; i++ ){
-			DNA_b128_String &si = seqs[i];
-			for ( size_t j = i+1 ; j < numSequences ; j++ ){
-				if ( si.hasAmbiguities() || seqs[j].hasAmbiguities() ){
-					simple_string_distance sd = extendedDistanceInfo.getDistance(i,j).first;
-					ML_string_distance ml_dist = extendedDistanceInfo.getDistance(i,j).second;
-					sd = DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(sd,ml_dist,si,seqs[j]);
-
-					ml_dist = compute_JC(strlen,sd);
-					dm.setDistance(i,j,ml_dist.distance);
-				}
-			}
-		}
-	}
+	fillMatrixML<simple_string_distance>(dm, seqs, trans_model,
+		[](const DNA_b128_String &a, const DNA_b128_String &b){
+			return DNA_b128_String::computeDistance(a,b);
+		},
+		[strlen](simple_string_distance sd){
+			return compute_JC(static_cast<int>(strlen),sd);
+		},
+		[](simple_string_distance sd, ML_string_distance ml, const DNA_b128_String &a, const DNA_b128_String &b){
+			return DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(sd,ml,a,b);
+		});
 }
 
 
-
-// Same fillMatrix* family, same NOLINT rationale as fillMatrix_Hamming
-// above.
 void
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 fillMatrix_K2P(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 		sequence_translation_model trans_model){
 
-	const size_t numSequences = seqs.size();
 	const size_t strlen = seqs[0].getNumChars();
 
-	dm.resize(numSequences);
-
-
-	//extended information used to compute ambiguities
-	static DistanceMatrix<int,pair<simple_string_distance,ML_string_distance>,
-	empty_Data_init<int>,empty_Data_printOn<int>,
-	empty_Data_init<pair<simple_string_distance,ML_string_distance> >,
-	empty_Data_printOn<pair<simple_string_distance,ML_string_distance> > >
-	extendedDistanceInfo(numSequences);
-	extendedDistanceInfo.resize(numSequences);
-
-	for ( size_t i = 0 ; i < numSequences ; i++ ){
-		dm.setDistance(i,i,0);
-		int closestNeig = i;
-		float closestDist =  FLT_MAX;
-		DNA_b128_String &si = seqs[i];
-
-		//if has ambig find closest string and resolve.
-		if ( si.hasAmbiguities() ){
-			for ( size_t k = 0 ; k < i ; k++ ){
-				float dist = dm.getDistance(k,i);
-				if (  dist < closestDist && dist >= 0 ){
-					closestDist = dist;
-					closestNeig = k;
-				}
-			}
-		}
-
-
-		for ( size_t j = i+1 ; j < numSequences ; j++ ){
-			simple_string_distance sd = DNA_b128_String::computeDistance(si,seqs[j]);
-			ML_string_distance  ml_dist;
+	fillMatrixML<simple_string_distance>(dm, seqs, trans_model,
+		[](const DNA_b128_String &a, const DNA_b128_String &b){
+			return DNA_b128_String::computeDistance(a,b);
+		},
+		[strlen,&trans_model](simple_string_distance sd){
 			if ( trans_model.no_tstvratio ) {
-				ml_dist = compute_K2P(strlen,sd);
-			} else {
-				ml_dist = compute_K2P_fixratio(strlen,sd,trans_model.tstvratio);
-}
-
-			dm.setDistance(i,j,ml_dist.distance);
-			extendedDistanceInfo.setDistance(i,j,pair<simple_string_distance,ML_string_distance>(sd,ml_dist));
-
-			if ( ml_dist.distance < closestDist && ml_dist.distance >= 0 ){
-				closestDist = ml_dist.distance;
-				closestNeig = j;
+				return compute_K2P(static_cast<int>(strlen),sd);
 			}
-		}
-
-		if ( si.hasAmbiguities() && ! trans_model.no_ambig_resolve ){
-			ML_string_distance  ml_dist = extendedDistanceInfo.getDistance(i,closestNeig).second;
-			si.resolveAmbiguitiesUsingTransitionProbabilities(seqs[closestNeig],ml_dist);
-		}
-	}
-
-	//UPDATE USING AMBIGUITIES
-	if( ! trans_model.no_ambiguities ){
-		for ( size_t i = 0 ; i < numSequences ; i++ ){
-			DNA_b128_String &si = seqs[i];
-			for ( size_t j = i+1 ; j < numSequences ; j++ ){
-				if ( si.hasAmbiguities() || seqs[j].hasAmbiguities() ){
-					simple_string_distance sd = extendedDistanceInfo.getDistance(i,j).first;
-					ML_string_distance ml_dist = extendedDistanceInfo.getDistance(i,j).second;
-					sd = DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(sd,ml_dist,si,seqs[j]);
-					if ( trans_model.no_tstvratio ) {
-						ml_dist = compute_K2P(strlen,sd);
-					} else {
-						ml_dist = compute_K2P_fixratio(strlen,sd,trans_model.tstvratio);
-}
-
-					dm.setDistance(i,j,ml_dist.distance);
-				}
-			}
-		}
-	}
-
+			return compute_K2P_fixratio(static_cast<int>(strlen),sd,trans_model.tstvratio);
+		},
+		[](simple_string_distance sd, ML_string_distance ml, const DNA_b128_String &a, const DNA_b128_String &b){
+			return DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(sd,ml,a,b);
+		});
 }
 
 
-
-// Same fillMatrix* family, same NOLINT rationale as fillMatrix_Hamming
-// above.
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
-void fillMatrix_TN93(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs, 
+void fillMatrix_TN93(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 		DNA_b128_String::base_frequences freqs,
 		sequence_translation_model trans_model){
 
-	const size_t numSequences = seqs.size();
 	const size_t strlen = seqs[0].getNumChars();
 
-	dm.resize(numSequences);
-
-
-	//extended information used to compute ambiguities
-	static DistanceMatrix<int,pair<TN_string_distance,ML_string_distance>,
-	empty_Data_init<int>,empty_Data_printOn<int>,
-	empty_Data_init<pair<TN_string_distance,ML_string_distance> >,
-	empty_Data_printOn<pair<TN_string_distance,ML_string_distance> > >
-	extendedDistanceInfo(numSequences);
-	extendedDistanceInfo.resize(numSequences);
-
-	for ( size_t i = 0 ; i < numSequences ; i++ ){
-		dm.setDistance(i,i,0);
-		size_t closestNeig = i;
-		float closestDist =  FLT_MAX;
-
-		DNA_b128_String &si = seqs[i];
-
-		//if has ambig find closest string and resolve.
-		if ( si.hasAmbiguities() ){
-			for ( size_t k = 0 ; k < i ; k++ ){
-				float dist = dm.getDistance(k,i);
-				if (  dist < closestDist && dist >= 0 ){
-					closestDist = dist;
-					closestNeig = k;
-				}
-			}
-		}
-
-
-		ML_string_distance  ml_dist;
-		for ( size_t j = i+1 ; j < numSequences ; j++ ){
-			TN_string_distance tn = DNA_b128_String::computeTAMURANEIDistance(si,seqs[j]);
-
+	fillMatrixML<TN_string_distance>(dm, seqs, trans_model,
+		[](const DNA_b128_String &a, const DNA_b128_String &b){
+			return DNA_b128_String::computeTAMURANEIDistance(a,b);
+		},
+		[strlen,freqs,&trans_model](TN_string_distance tn){
+			// compute_Tamura_Nei{,_fixratio}() must keep int strlen/numAs/
+			// numCs/numGs/numTs (lint_plan.md's Phase 2 investigation:
+			// strlen participates in a signed subtraction internally) -
+			// cast once here rather than changing their signatures.
+			const int strlenAsInt = static_cast<int>(strlen);
+			const int numAs = static_cast<int>(freqs.num_As_);
+			const int numCs = static_cast<int>(freqs.num_Cs_);
+			const int numGs = static_cast<int>(freqs.num_Gs_);
+			const int numTs = static_cast<int>(freqs.num_Ts_);
 			if ( trans_model.no_tstvratio ) {
-				ml_dist = compute_Tamura_Nei(strlen,tn,freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_);
-			} else {
-				ml_dist = compute_Tamura_Nei_fixratio(strlen,tn,
-						freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_,
-						trans_model.tstvratio, trans_model.pyrtvratio);
-}
-			dm.setDistance(i,j,ml_dist.distance);
-			extendedDistanceInfo.setDistance(i,j,pair<TN_string_distance,ML_string_distance>(tn,ml_dist));
-
-			if ( ml_dist.distance < closestDist && ml_dist.distance >= 0 ){
-				closestDist = ml_dist.distance;
-				closestNeig = j;
+				return compute_Tamura_Nei(strlenAsInt,tn,numAs,numCs,numGs,numTs);
 			}
-		}
-
-		if ( si.hasAmbiguities() && ! trans_model.no_ambig_resolve ){
-			ml_dist = extendedDistanceInfo.getDistance(i,closestNeig).second;
-			si.resolveAmbiguitiesUsingTransitionProbabilities(seqs[closestNeig],ml_dist);
-		}
-	}
-
-	//UPDATE USING AMBIGUITIES
-	if( !trans_model.no_ambiguities ){
-		for ( size_t i = 0 ; i < numSequences ; i++ ){
-			DNA_b128_String &si = seqs[i];
-			for ( size_t j = i+1 ; j < numSequences ; j++ ){
-				if ( si.hasAmbiguities() || seqs[j].hasAmbiguities() ){
-					TN_string_distance tn = extendedDistanceInfo.getDistance(i,j).first;
-					ML_string_distance ml_dist = extendedDistanceInfo.getDistance(i,j).second;
-					if ( trans_model.no_transition_probs ){
-						tn = DNA_b128_String::correctDistanceWithAmbiguitiesUsingBackgroundFrequences(tn,si,seqs[j]);
-					}
-					else {
-						tn = DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(tn,ml_dist,si,seqs[j]);
-					}
-					if ( trans_model.no_tstvratio ) {
-						ml_dist = compute_Tamura_Nei(strlen,tn,freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_);
-					} else {
-						ml_dist = compute_Tamura_Nei_fixratio(strlen,tn,
-								freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_,
-								trans_model.tstvratio, trans_model.pyrtvratio);
-}
-
-					dm.setDistance(i,j,ml_dist.distance);
-
-				}
+			return compute_Tamura_Nei_fixratio(strlenAsInt,tn,
+					numAs,numCs,numGs,numTs,
+					trans_model.tstvratio, trans_model.pyrtvratio);
+		},
+		[&trans_model](TN_string_distance tn, ML_string_distance ml, const DNA_b128_String &a, const DNA_b128_String &b){
+			if ( trans_model.no_transition_probs ){
+				return DNA_b128_String::correctDistanceWithAmbiguitiesUsingBackgroundFrequences(tn,a,b);
 			}
-		}
-	}
+			return DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(tn,ml,a,b);
+		});
 }
 
 //-------- mehmood warka dang---------------
@@ -672,361 +644,72 @@ void fillMatrixRow(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 	}
 }
 
-void fillMatrixRow_K2P(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
+void fillMatrixRow_Hamming(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 		sequence_translation_model trans_model, size_t row, bool mem_eff_flag){
-
-
-	//saves the number of sequences and the length of the first sequence
-	const size_t numSequences = seqs.size();
-	const size_t strlen = seqs[0].getNumChars();
-
-	//Resizes the datamatrix to fit the sequences
-	dm.resize(numSequences);
-
-
-	//extended information used to compute ambiguities
-	static DistanceRow<int,pair<simple_string_distance,ML_string_distance>,
-	empty_Data_init<int>,empty_Data_printOn<int>,
-	empty_Data_init<pair<simple_string_distance,ML_string_distance> >,
-	empty_Data_printOn<pair<simple_string_distance,ML_string_distance> > >
-	extendedDistanceInfo(numSequences);
-	extendedDistanceInfo.resize(numSequences);
-
-
-	//same sequence has of course distance zero
-	dm.setDistance(row,0);
-	int closestNeig = row;
-	float closestDist =  FLT_MAX;
-	//saves the actual sequence within si
-	DNA_b128_String &si = seqs[row];
-	/*
-    //if has ambig find closest string and resolve.
-    if ( si.hasAmbiguities() ){
-      for ( size_t k = 0 ; k < row ; k++ ){
-		float dist = dm.getDistance(row);
-		if (  dist < closestDist && dist >= 0 ){
-		  closestDist = dist;
-		  closestNeig = k;
-		}
-      }
-    }*/
-	if (!mem_eff_flag){
-		for ( size_t j = 0 ; j < row ; j++ ){
-			dm.setDistance(j, 0);
-		}
-	}else{
-		row=-1;
-	}
-
-	//Calculates distances from si to every other sequence. One row of the matrix
-	for ( size_t j = row+1 ; j < numSequences ; j++ ){
-		simple_string_distance sd = DNA_b128_String::computeDistance(si,seqs[j]);
-		ML_string_distance  ml_dist;
-
-		//Controlls if the tstvratio exists for K2P.
-		if ( trans_model.no_tstvratio ) {
-			ml_dist = compute_K2P(strlen,sd);
-		} else {
-			ml_dist = compute_K2P_fixratio(strlen,sd,trans_model.tstvratio);
-}
-
-		//Sets distance in the matrix between i and j
-		dm.setDistance(j,ml_dist.distance);
-		extendedDistanceInfo.setDistance(j,pair<simple_string_distance,ML_string_distance>(sd,ml_dist));
-
-		//Controlling if new distance is the closest neighbor
-		if ( ml_dist.distance < closestDist && ml_dist.distance >= 0 ){
-			closestDist = ml_dist.distance;
-			closestNeig = j;
-		}
-	}
-	/*
-    //Looks at ambiguities
-    if ( si.hasAmbiguities() && ! trans_model.no_ambig_resolve ){
-      ML_string_distance  ml_dist = extendedDistanceInfo.getDistance(closestNeig).second;
-      si.resolveAmbiguitiesUsingTransitionProbabilities(seqs[closestNeig],ml_dist);
-    }
-
-  //UPDATE USING AMBIGUITIES
-  if( ! trans_model.no_ambiguities ){
-      DNA_b128_String &si = seqs[row];
-      for ( size_t j = row+1 ; j < numSequences ; j++ ){
-		if ( si.hasAmbiguities() || seqs[j].hasAmbiguities() ){
-		  simple_string_distance sd = extendedDistanceInfo.getDistance(j).first;
-		  ML_string_distance ml_dist = extendedDistanceInfo.getDistance(j).second;
-		  sd = DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(sd,ml_dist,si,seqs[j]);
-		  if ( trans_model.no_tstvratio )
-		    ml_dist = compute_K2P(strlen,sd);
-		  else
-		    ml_dist = compute_K2P_fixratio(strlen,sd,trans_model.tstvratio);
-		  //sets distance with ambiguities
-		  dm.setDistance(j,ml_dist.distance);
-		}
-      }
-
-  }*/
-
-}
-void
-fillMatrixRow_Hamming(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
-		sequence_translation_model trans_model, size_t row, bool mem_eff_flag){
-
-	const size_t numSequences = seqs.size();
-	const size_t strlen = seqs[0].getNumChars();
-
-	dm.resize(numSequences);
-
-	//extended information used to compute ambiguities
-	static DistanceRow<int,simple_string_distance,
-	empty_Data_init<int>,empty_Data_printOn<int>,
-	empty_Data_init<simple_string_distance>, empty_Data_printOn<simple_string_distance> >
-	extendedDistanceInfo(numSequences);
-	extendedDistanceInfo.resize(numSequences);
-
-	//
-	// The loop will resolve the ambiguities according to the translation model
-	//
-	dm.setDistance(row,0);
-	size_t closestNeig = row;
-	float closestDist =  FLT_MAX;
-
-	DNA_b128_String &si = seqs[row];
-	//only if it has ambiguities does it need to be resolved
-	//start by checking the allready computed distances for si
-	//We don't use ambiguities no more!
-	/*if ( si.hasAmbiguities() ){
-        for ( size_t k = 0 ; k < i ; k++ ){
-          float dist = dm.getDistance(k,i);
-          if (  dist < closestDist && dist >= 0 ){
-            closestDist = dist;
-            closestNeig = k;
-          }
-        }
-    }*/
-	if (!mem_eff_flag){
-			for ( size_t j = 0 ; j < row ; j++ ){
-				dm.setDistance(j, 0);
-			}
-		}else{
-			row=-1;
-		}
-	// compute the remaining distances for si
-	for ( size_t j = row+1 ; j < numSequences ; j++ ){
-		//compute distance without using the ambiguities
-		simple_string_distance sd = DNA_b128_String::computeDistance(si,seqs[j]);
-		float hamdist = compute_Hamming_distance(sd);
-
-		dm.setDistance(j,hamdist);
-		extendedDistanceInfo.setDistance(j,sd);
-
-		if ( hamdist < closestDist && hamdist >= 0 ){//update the closest neighbor
-			closestDist = hamdist;
-			closestNeig = j;
-		}
-	}
-	//all distances for si have been compted
-	//We don't use ambiguities no more!
-	//Resolve the ambiguities according to the closest neighbor
-	/*    if ( si.hasAmbiguities() && ! trans_model.no_ambig_resolve ){
-      si.resolveAmbiguities(seqs[closestNeig]);
-    }
-  }
-
- //We don't use ambiguities no more!
-  //Update the computed distances with the ambiguities
-  if ( !trans_model.no_ambiguities ){
-    for ( size_t i = 0 ; i < numSequences ; i++ ){
-      DNA_b128_String &si = seqs[i];
-      for ( size_t j = i+1 ; j < numSequences ; j++ ){
-        if ( si.hasAmbiguities() || seqs[j].hasAmbiguities() ){
-          simple_string_distance sd = extendedDistanceInfo.getDistance(i,j);
-	  ML_string_distance ml_dist = compute_JC(strlen,sd);
-          sd = DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(sd,ml_dist,si,seqs[j]);
-
-          //hamming
-          dm.setDistance(i,j,compute_Hamming_distance(sd));
-
-        }
-      }
-    }
-  }	*/
-
+	fillMatrixRowGeneric<simple_string_distance>(dm, seqs, row, mem_eff_flag,
+		[](const DNA_b128_String &a, const DNA_b128_String &b){
+			return DNA_b128_String::computeDistance(a,b);
+		},
+		[](simple_string_distance sd){
+			return compute_Hamming_distance(sd);
+		});
 }
 
 void fillMatrixRow_JC(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 		sequence_translation_model trans_model, size_t row, bool mem_eff_flag){
-		const size_t numSequences = seqs.size();
-		const size_t strlen = seqs[0].getNumChars();
 
-		dm.resize(numSequences);
+	const size_t strlen = seqs[0].getNumChars();
 
-		//extended information used to compute ambiguities
-		static DistanceRow<int,pair<simple_string_distance,ML_string_distance>,
-		empty_Data_init<int>,empty_Data_printOn<int>,
-		empty_Data_init<pair<simple_string_distance,ML_string_distance> >,
-		empty_Data_printOn<pair<simple_string_distance,ML_string_distance> > >
-		extendedDistanceInfo(numSequences);
-
-		extendedDistanceInfo.resize(numSequences);
-
-		dm.setDistance(row,0);
-		size_t closestNeig = row;
-		float closestDist =  FLT_MAX;
-
-		DNA_b128_String &si = seqs[row];
-
-		//if has ambig find closest string and resolve.
-		/*if ( si.hasAmbiguities() ){
-        for ( size_t k = 0 ; k < i ; k++ ){
-          float dist = dm.getDistance(k,i);
-          if (  dist < closestDist && dist >= 0 ){
-            closestDist = dist;
-            closestNeig = k;
-          }
-        }
-    }*/
-		if (mem_eff_flag){
-				for ( size_t j = 0 ; j < row ; j++ ){
-					dm.setDistance(j, 0);
-				}
-			}else{
-				row=-1;
-			}
-
-		ML_string_distance  ml_dist;
-		for ( size_t j = row+1 ; j < numSequences ; j++ ){
-			simple_string_distance sd = DNA_b128_String::computeDistance(si,seqs[j]);
-			//     cout << sd << endl;
-			ml_dist = compute_JC(strlen,sd);
-
-			dm.setDistance(j,ml_dist.distance);
-			extendedDistanceInfo.setDistance(j,pair<simple_string_distance,ML_string_distance>(sd,ml_dist));
-
-			if ( ml_dist.distance < closestDist && ml_dist.distance >= 0 ){
-				closestDist = ml_dist.distance;
-				closestNeig = j;
-			}
-		}
-
-		/*  if ( si.hasAmbiguities() && ! trans_model.no_ambig_resolve ){
-      ml_dist = extendedDistanceInfo.getDistance(i,closestNeig).second;
-      si.resolveAmbiguitiesUsingTransitionProbabilities(seqs[closestNeig],ml_dist);
-    }
-  }
-
-  //UPDATE USING AMBIGUITIES
-  if ( !trans_model.no_ambiguities ){
-    for (size_t i = 0 ; i < numSequences ; i++ ){
-      DNA_b128_String &si = seqs[i];
-      for ( size_t j = i+1 ; j < numSequences ; j++ ){
-        if ( si.hasAmbiguities() || seqs[j].hasAmbiguities() ){
-          simple_string_distance sd = extendedDistanceInfo.getDistance(i,j).first;
-          ML_string_distance ml_dist = extendedDistanceInfo.getDistance(i,j).second;
-          sd = DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(sd,ml_dist,si,seqs[j]);
-
-          ml_dist = compute_JC(strlen,sd);
-          dm.setDistance(i,j,ml_dist.distance);
-        }
-      }
-    }*/
+	fillMatrixRowGeneric<simple_string_distance>(dm, seqs, row, mem_eff_flag,
+		[](const DNA_b128_String &a, const DNA_b128_String &b){
+			return DNA_b128_String::computeDistance(a,b);
+		},
+		[strlen](simple_string_distance sd){
+			return compute_JC(static_cast<int>(strlen),sd).distance;
+		});
 }
 
+void fillMatrixRow_K2P(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
+		sequence_translation_model trans_model, size_t row, bool mem_eff_flag){
+
+	const size_t strlen = seqs[0].getNumChars();
+
+	fillMatrixRowGeneric<simple_string_distance>(dm, seqs, row, mem_eff_flag,
+		[](const DNA_b128_String &a, const DNA_b128_String &b){
+			return DNA_b128_String::computeDistance(a,b);
+		},
+		[strlen,&trans_model](simple_string_distance sd){
+			if ( trans_model.no_tstvratio ) {
+				return compute_K2P(static_cast<int>(strlen),sd).distance;
+			}
+			return compute_K2P_fixratio(static_cast<int>(strlen),sd,trans_model.tstvratio).distance;
+		});
+}
 
 void fillMatrixRow_TN93(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 		DNA_b128_String::base_frequences freqs,
 		sequence_translation_model trans_model, size_t row, bool mem_eff_flag){
-	const size_t numSequences = seqs.size();
+
 	const size_t strlen = seqs[0].getNumChars();
 
-	dm.resize(numSequences);
-
-
-	//extended information used to compute ambiguities
-	static DistanceRow<int,pair<TN_string_distance,ML_string_distance>,
-	empty_Data_init<int>,empty_Data_printOn<int>,
-	empty_Data_init<pair<TN_string_distance,ML_string_distance> >,
-	empty_Data_printOn<pair<TN_string_distance,ML_string_distance> > >
-	extendedDistanceInfo(numSequences);
-	extendedDistanceInfo.resize(numSequences);
-
-
-	dm.setDistance(row,0);
-	size_t closestNeig = row;
-	float closestDist =  FLT_MAX;
-
-	DNA_b128_String &si = seqs[row];
-
-	//if has ambig find closest string and resolve.
-	/*if ( si.hasAmbiguities() ){
-      for ( size_t k = 0 ; k < i ; k++ ){
-	float dist = dm.getDistance(k,i);
-	if (  dist < closestDist && dist >= 0 ){
-	  closestDist = dist;
-	  closestNeig = k;
-	}
-      }
-    }*/
-
-	if (!mem_eff_flag){
-			for ( size_t j = 0 ; j < row ; j++ ){
-				dm.setDistance(j, 0);
+	fillMatrixRowGeneric<TN_string_distance>(dm, seqs, row, mem_eff_flag,
+		[](const DNA_b128_String &a, const DNA_b128_String &b){
+			return DNA_b128_String::computeTAMURANEIDistance(a,b);
+		},
+		[strlen,freqs,&trans_model](TN_string_distance tn){
+			// Same must-stay-int rationale as fillMatrix_TN93 above.
+			const int strlenAsInt = static_cast<int>(strlen);
+			const int numAs = static_cast<int>(freqs.num_As_);
+			const int numCs = static_cast<int>(freqs.num_Cs_);
+			const int numGs = static_cast<int>(freqs.num_Gs_);
+			const int numTs = static_cast<int>(freqs.num_Ts_);
+			if ( trans_model.no_tstvratio ) {
+				return compute_Tamura_Nei(strlenAsInt,tn,numAs,numCs,numGs,numTs).distance;
 			}
-		}else{
-			row=-1;
-		}
-
-	ML_string_distance  ml_dist;
-	for ( size_t j = row+1 ; j < numSequences ; j++ ){
-		TN_string_distance tn = DNA_b128_String::computeTAMURANEIDistance(si,seqs[j]);
-
-		if ( trans_model.no_tstvratio ) {
-			ml_dist = compute_Tamura_Nei(strlen,tn,freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_);
-		} else {
-			ml_dist = compute_Tamura_Nei_fixratio(strlen,tn,
-					freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_,
-					trans_model.tstvratio, trans_model.pyrtvratio);
-}
-		dm.setDistance(j,ml_dist.distance);
-		extendedDistanceInfo.setDistance(j,pair<TN_string_distance,ML_string_distance>(tn,ml_dist));
-
-		if ( ml_dist.distance < closestDist && ml_dist.distance >= 0 ){
-			closestDist = ml_dist.distance;
-			closestNeig = j;
-		}
-	}
-	/*
-    if ( si.hasAmbiguities() && ! trans_model.no_ambig_resolve ){
-      ml_dist = extendedDistanceInfo.getDistance(i,closestNeig).second;
-      si.resolveAmbiguitiesUsingTransitionProbabilities(seqs[closestNeig],ml_dist);
-    }
-  }
-
-  //UPDATE USING AMBIGUITIES
-  if( !trans_model.no_ambiguities ){
-    for ( size_t i = 0 ; i < numSequences ; i++ ){
-      DNA_b128_String &si = seqs[i];
-      for ( size_t j = i+1 ; j < numSequences ; j++ ){
-        if ( si.hasAmbiguities() || seqs[j].hasAmbiguities() ){
-          TN_string_distance tn = extendedDistanceInfo.getDistance(i,j).first;
-          ML_string_distance ml_dist = extendedDistanceInfo.getDistance(i,j).second;
-          if ( trans_model.no_transition_probs ){
-            tn = DNA_b128_String::correctDistanceWithAmbiguitiesUsingBackgroundFrequences(tn,si,seqs[j]);
-          }
-          else {
-            tn = DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(tn,ml_dist,si,seqs[j]);
-          }
-          if ( trans_model.no_tstvratio )
-            ml_dist = compute_Tamura_Nei(strlen,tn,freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_);
-          else
-            ml_dist = compute_Tamura_Nei_fixratio(strlen,tn,
-						  freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_,
-						  trans_model.tstvratio, trans_model.pyrtvratio);
-
-          dm.setDistance(i,j,ml_dist.distance);
-
-        }
-      }
-    }*/
+			return compute_Tamura_Nei_fixratio(strlenAsInt,tn,
+					numAs,numCs,numGs,numTs,
+					trans_model.tstvratio, trans_model.pyrtvratio).distance;
+		});
 }
 
 
