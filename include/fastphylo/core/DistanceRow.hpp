@@ -52,11 +52,11 @@ public:
   
   //---------------------------------
   //GET AND SET DISTANCE
-  DistanceType getDistance(int j) const{
+  DistanceType getDistance(size_t j) const{
       return D[j];
   };
-  
-  void setDistance(int j, DistanceType d) {
+
+  void setDistance(size_t j, DistanceType d) {
       D[j] = d;
   };
 

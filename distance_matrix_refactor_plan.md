@@ -164,32 +164,93 @@ skipping it and leaving them broken.
 
 ## Phases
 
-### Phase A - Inventory, no code changes
+### Phase A - Inventory, no code changes (done)
 
-Full enumeration of every `int`-indexed accessor across the three
-classes and every call site (526 occurrences, 23 files). For each of
-the three known `field = -1`-on-unsigned sites (`Sequences2Distance
-Matrix.cpp`'s four `fillMatrixRow_*` copies, `DistanceRow`'s stream
-constructor, `FloatDistanceMatrix`'s stream constructor), confirm by
-tracing (not assuming) whether the wrapped value ever reaches an
-accessor call, and classify each as: working-and-load-bearing (must be
-preserved or deliberately replaced with an explicit named idiom),
-dead/vestigial (can be deleted), or already-safe (int-typed, no
-wraparound). Produces a concrete site-by-site list the rest of the
-plan executes against, rather than discovering issues mid-refactor.
+Full enumeration confirmed (not just the original estimate): **508
+call-site occurrences across 28 files** (close to the original 526/23
+estimate; the small drift is just codebase churn since that number was
+written, not a sign the original count was wrong). Of those 28, the
+in-scope set (active build) is 17 files; the rest are the already-known
+out-of-scope callers.
 
-### Phase B - Widen the three classes' index parameters to `size_t`
+**A fourth `field = -1`-on-unsigned site, missed by the plan's original
+inventory**: `DistanceMatrix_impl.hpp:59`, in `DistanceMatrix(std::istream&)`
+- `size = -1;` immediately followed by `objInitFromStream(in)`, which
+unconditionally overwrites `size` before any accessor call (`if
+(newSize != size) { size = newSize; ...}` - `newSize` is never
+`SIZE_MAX` in practice, so this branch always fires). Same
+"harmless, immediately overwritten" shape as the other two documented
+sites below - traced, not assumed.
 
-`getDistance`/`setDistance`/`getIdentifier`/`setIdentifier` (and any
-other `int`-indexed method Phase A's inventory turns up) across
-`DistanceMatrix`/`FloatDistanceMatrix`/`DistanceRow`. Update every
-caller in the active build, verifying via full rebuild + `ctest` +
-`RunExamples.sh` after each file or logical cluster of files - same
-discipline as every other phase of this engagement. Update the
-out-of-scope callers (`fastprot_mpi/` etc.) too, on a best-effort,
-unable-to-fully-verify basis, flagged the same way Phase C of
-`project_layout_plan.md` flagged its own unverifiable `fastprot_mpi`
-fix.
+Classification of all four `field = -1`-on-unsigned sites, each traced
+individually:
+- `DistanceMatrix_impl.hpp:59` (`size = -1`) - **already-safe**:
+  overwritten before any accessor call, confirmed above.
+- `FloatDistanceMatrix_impl.hpp:40-41` (`rows = -1; columns = -1;`) -
+  **already-safe**: `objInitFromStream()`'s own override unconditionally
+  reassigns both fields before any accessor call, same shape as above.
+- `DistanceRow_impl.hpp:38` (`columns = -1`) - **dead, and actually
+  broken**, confirmed rather than assumed: `DistanceRow` never
+  overrides `objInitFromStream()` (grep confirms no such override in
+  `DistanceRow.hpp`), so this constructor calls `Object`'s no-op
+  base version - `columns` stays at the wrapped `SIZE_MAX` forever
+  and `D` is never resized. Matches the `//Doesn't function here :)`
+  comment directly above it. Also confirmed **unused**: zero call
+  sites for `DistanceRow(istream&)` anywhere in the active or
+  out-of-scope source tree. Left in place, not deleted, since deleting
+  a public constructor is a design decision outside this refactor's
+  stated scope (index types), not something to fold in opportunistically.
+- `Sequences2DistanceMatrix.cpp`'s four `fillMatrixRow_*` `row = -1`
+  sites - re-confirmed safe during Phase C below (never reach an
+  accessor while wrapped), and replaced with an explicit named idiom
+  there per Phase C's own plan.
+
+**`removeLastRow()`/`addRow()` underflow risk, noted but out of
+scope**: both do unguarded `--rows`/`size--` on already-`size_t`
+members (pre-existing, not part of this refactor's `int`/`size_t`
+parameter question). Every in-scope caller (`NeighborJoining.hpp`/
+`.cpp`, `LeastSquaresFit.cpp`) only calls `removeLastRow()` inside a
+loop that stops at 3 remaining nodes, so the underflow is never
+triggered in practice - confirmed via grepping every caller, not
+assumed safe.
+
+**The four out-of-scope files with call sites
+(`iterative_tree_merger/`, `sequence_based_tree_reconstruction/`,
+`buildtree.cpp`) are not wired into any CMake target at all** -
+confirmed via grep, not assumed. This corrects the plan's original
+premise that Phase B needed to "update them for consistency even
+though they can't be verified by building": since they're not merely
+unverifiable but **entirely uncompiled**, and `int`->`size_t` is never
+a hard compile error (only implicit widening), there is no actual
+compile-break risk to guard against by touching them. Phase B below
+leaves them untouched rather than making blind, unverifiable edits to
+dead code for stylistic consistency alone.
+
+### Phase B - Widen the three classes' index parameters to `size_t` (done)
+
+`getDistance`/`setDistance`/`getIdentifier`/`setIdentifier` widened
+from `int`/mixed to `size_t` across all three classes
+(`DistanceMatrix`, `FloatDistanceMatrix`, `DistanceRow`) - header-only
+change, no `_impl.hpp` bodies needed touching since the accessor
+bodies themselves already indexed `std::vector`s with the parameter
+directly.
+
+**Zero call-site changes were needed anywhere in the active build** -
+confirmed by rebuilding immediately after the header change: 0
+compile errors. Traced why beforehand (not just gotten lucky): every
+in-scope caller already uses `size_t`-typed loop variables/`.size()`
+results (verified directly in `NeighborJoining.hpp`, the single
+largest caller at 136 call sites, all already `size_t` end to end) -
+the `int` parameter was the one thing not already following the
+codebase's own established convention, exactly as the plan's "Goal"
+section framed it: one API predating the rest of the codebase's shift
+to `size_t`, not 300+ independent problems.
+
+Measured via a `clang-tidy --checks='-*,bugprone-narrowing-conversions'`
+before/after diff across the same 57 in-scope files: **285 -> 170
+findings, 115 resolved by this header-only change alone**, zero source
+edits elsewhere. Verified: full rebuild (0 errors) + `ctest` (2/2) +
+`RunExamples.sh` (byte-identical) after the change.
 
 ### Phase C - Consolidate `Sequences2DistanceMatrix.cpp`'s fillMatrix*/fillMatrixRow* families
 
