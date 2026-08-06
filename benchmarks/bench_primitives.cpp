@@ -17,6 +17,7 @@
 //   ./bench_primitives
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <chrono>
 #include <cstdlib>

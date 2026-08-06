@@ -13,7 +13,7 @@ applyFixFactor(StrDblMatrix &dm, double fixFactor){
   for ( int i = 0 ; i < size ; i++ ){
     for ( int j = 0 ; j < size ; j++ ){
       double d = dm.getDistance(i,j);
-      if ( isfinite(d) && d>biggest ){
+      if ( std::isfinite(d) && d>biggest ){
         biggest = d;
       }
     }
@@ -24,7 +24,7 @@ applyFixFactor(StrDblMatrix &dm, double fixFactor){
   for ( int i = 0 ; i < size ; i++ ){
     for ( int j = 0 ; j < size ; j++ ){
       double d = dm.getDistance(i,j);
-      if ( !isfinite(d) || d<0 ){
+      if ( !std::isfinite(d) || d<0 ){
         dm.setDistance(i,j,biggest);
 	changed  = true;
       }
@@ -116,7 +116,7 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
 
     for ( size_t j = 0 ; j < entriesPerRow ; j++ ){
       float f = dm.getDistance(i,j);
-      if ( ! isfinite(f) ){
+      if ( ! std::isfinite(f) ){
 	USER_WARNING("warning float not finite (use fix factor) " << f );
 
 	if (  writeXml ) { 

@@ -2,6 +2,7 @@
 #include "fastphylo/core/Simulator.hpp"
 #include "fastphylo/core/std_c_utils.h"
 #include "fastphylo/core/log_utils.hpp"
+#include <array>
 #include <sstream>
 #include <cmath>
 

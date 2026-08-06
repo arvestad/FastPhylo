@@ -27,7 +27,7 @@ applyFixFactor(StrFloMatrix &dm, float fixFactor){
   for ( int i = 0 ; i < size ; i++ ){
     for ( int j = 0 ; j < size ; j++ ){
       float d = dm.getDistance(i,j);
-      if ( isfinite(d) && d>biggest ){
+      if ( std::isfinite(d) && d>biggest ){
         biggest = d;
       }
     }
@@ -38,7 +38,7 @@ applyFixFactor(StrFloMatrix &dm, float fixFactor){
   for ( int i = 0 ; i < size ; i++ ){
     for ( int j = 0 ; j < size ; j++ ){
       float d = dm.getDistance(i,j);
-      if ( !isfinite(d) || d<0 ){
+      if ( !std::isfinite(d) || d<0 ){
         dm.setDistance(i,j,biggest);
 	changed  = true;
       }
