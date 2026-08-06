@@ -1,12 +1,3 @@
-find_program(GENGETOPT gengetopt)
-if(NOT GENGETOPT)
- set(GENGETOPTDEP "${CMAKE_CURRENT_BINARY_DIR}/external/install/bin/gengetopt")
-if(WIN32)
- set(GENGETOPTDEP "${GENGETOPTDEP}.exe")
-endif(WIN32)
- set(GENGETOPT "${GENGETOPTDEP}")
-endif(NOT GENGETOPT)
-
 # Modernization Phase 5 (modernization_plan.md): was CMakeForceCompiler's
 # CMAKE_FORCE_CXX_COMPILER(mpic++/mpiCC ...), a deprecated (CMake docs:
 # "once intended for... cross-compiling toolchain files", superseded
@@ -22,48 +13,16 @@ if(BUILD_WITH_MPI)
 endif()
 
 
-set(GENGETOPT_VERSION 2.22.2)
-
-set(DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/external/downloads" INTERNAL)
-set(BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/build INTERNAL)
-set(INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/install INTERNAL)
-
-
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/download)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/build)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/install)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt)
-if(BUILD_WITH_MPI)
-  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt)
-endif()
-
 set(ARCH_FLAGS "-msse2")
 
   add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/fastphylo-${PACKAGE_VERSION}-win32.exe" COMMAND makensis "${CMAKE_CURRENT_BINARY_DIR}/script.nsi" DEPENDS fastdist fnj fastprot fastprot_mpi)
 
   add_custom_target(win32installer DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/fastphylo-${PACKAGE_VERSION}-win32.exe")
 
-  # Fallback for a dev machine with no system gengetopt on PATH (see
-  # find_program(GENGETOPT gengetopt) above) - self-builds one from
-  # source. Independent of the now-removed STATIC option; this stays
-  # until gengetopt itself is migrated away from (a separate, larger
-  # decision, tracked outside this lint pass).
-  add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/external/download/gengetopt-${GENGETOPT_VERSION}.tar.gz" COMMAND wget --directory-prefix=external/download "ftp://ftp.gnu.org/gnu/gengetopt/gengetopt-${GENGETOPT_VERSION}.tar.gz")
-
-  add_custom_command(OUTPUT "${GENGETOPTDEP}" COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/build_gengetopt.sh" ${GENGETOPT_VERSION} "${CMAKE_CURRENT_BINARY_DIR}/external/install" DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/external/download/gengetopt-${GENGETOPT_VERSION}.tar.gz" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/external/build")
-
-
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.h
-                     COMMAND ${GENGETOPT} -i ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot/gengetopt/cmdline.ggo --output-dir=${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt
-                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot/gengetopt/cmdline.ggo ${GENGETOPTDEP}
-                     VERBATIM)
-
-if(BUILD_WITH_MPI)
-  add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.h
-                     COMMAND ${GENGETOPT} -i ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot_mpi/gengetopt/cmdline.ggo --output-dir=${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt
-                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot_mpi/gengetopt/cmdline.ggo ${GENGETOPTDEP}
-                     VERBATIM)
-endif()
+# gengetopt_migration_plan.md, Phase E: fastprot/fastprot_mpi (Phase D)
+# were the last two apps still using gengetopt - every self-built
+# gengetopt/FTP-fallback/generated-code machinery that used to live
+# here is now fully removed, not just unreferenced.
 
 if(WITH_LIBXML)
   find_package(LibXml2)
@@ -200,14 +159,6 @@ if(WITH_LIBXML)
  set(FNJ_XML_SRCS apps/fnj/XmlInputStream.cpp)
 endif(WITH_LIBXML)
 
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.c PROPERTIES GENERATED true)
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.h PROPERTIES GENERATED true)
-if(BUILD_WITH_MPI)
-  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c PROPERTIES GENERATED true)
-  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.h PROPERTIES GENERATED true)
-endif()
-
-
 # Layout Phase C2 (project_layout_plan.md): fastprot's protein-specific
 # "library" pieces, moved into the shared fastphylo library (same
 # treatment as dna/ - domain-specific code that still belongs in the
@@ -226,10 +177,12 @@ ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp
 ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCompare.cpp
 )
 
+# fastprot is the third app migrated off gengetopt onto CLI11
+# (gengetopt_migration_plan.md, Phase D) - no generated cmdline.c to
+# list here anymore.
 set(FASTPROT_SRCS apps/fastprot/main.cpp
 apps/fastprot/FastaInputStream.cpp
 apps/fastprot/PhylipMaInputStream.cpp
-${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.c
 )
 
 if(WITH_LIBXML)
@@ -237,6 +190,9 @@ if(WITH_LIBXML)
 endif(WITH_LIBXML)
 
 if(BUILD_WITH_MPI)
+  # fastprot_mpi is the fourth app migrated off gengetopt onto CLI11
+  # (gengetopt_migration_plan.md, Phase D) - no generated cmdline.c to
+  # list here anymore.
   set(FASTPROT_MPI_SRCS apps/fastprot_mpi/main.cpp
   apps/fastprot_mpi/FastaInputStream.cpp
   apps/fastprot_mpi/DataOutputStream.cpp
@@ -248,7 +204,6 @@ if(BUILD_WITH_MPI)
   apps/fastprot_mpi/Matrix.cpp
   apps/fastprot_mpi/MaximumLikelihood.cpp
   apps/fastprot_mpi/ProtSeqUtils.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c
   )
   # fastprot_mpi is out of this plan's scope (project_layout_plan.md:
   # deferred, to be folded into fastprot on a future request) and was
@@ -327,7 +282,8 @@ find_package(LAPACK REQUIRED)
 add_executable(fastprot ${FASTPROT_SRCS} ${FASTPROT_XML_SRCS})
 target_include_directories(fastprot PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot
-  ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt
+  ${CMAKE_CURRENT_SOURCE_DIR}/apps
+  ${CMAKE_SOURCE_DIR}/third_party
 )
 target_link_libraries(fastprot PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK Threads::Threads)
 
@@ -336,7 +292,8 @@ if(BUILD_WITH_MPI)
   add_executable(fastprot_mpi ${FASTPROT_MPI_SRCS} ${FASTPROT_MPI_XML_SRCS})
   target_include_directories(fastprot_mpi PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot_mpi
-    ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt
+    ${CMAKE_CURRENT_SOURCE_DIR}/apps
+    ${CMAKE_SOURCE_DIR}/third_party
   )
   target_link_libraries(fastprot_mpi PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK Threads::Threads MPI::MPI_CXX)
 endif(BUILD_WITH_MPI)

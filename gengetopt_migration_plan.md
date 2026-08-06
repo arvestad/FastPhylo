@@ -313,26 +313,74 @@ here (`JC`/`K2P`/`TN93`/`HAMMING`, all fast and consistent) + a
 `--seed`-reproducibility check and a `--number-of-runs`+`xml`
 conflict check (both matched expected behavior exactly).
 
-### Phase D - Migrate `fastprot` (and `fastprot_mpi`, if Phase A includes it)
+### Phase D - Migrate `fastprot` and `fastprot_mpi` together (done)
 
-14 options, the largest single enum (`distance-function`×10). If
-`fastprot_mpi` is in scope, do both together given how much of their
-option set is identical - matches the "near-duplicate, migrate as a
-pair" treatment already used for other `fastprot`/`fastprot_mpi`
-duplication elsewhere in this project. `RunExamples.sh` covers
-`fastprot` extensively (examples 6/7/11-18, including the ML path and
-binary-output path); `fastprot_mpi` has no example coverage today
-(confirmed absent from `RunExamples.sh`) - needs the same manual
-verification discipline as `--help`/`--version` above, or a decision
-to add minimal coverage first.
+`fastprot` (14 options, the largest single enum -
+`distance-function`×10, bound directly to `ModelMatrix.hpp`'s existing
+`model_type` domain enum) and `fastprot_mpi` (13 options, a
+near-duplicate `.ggo` minus `--sd` and with a smaller
+`distance-function` choice set - WAG/JTT/DAY/ARVE/MVR/LG only)
+migrated together, per Phase A's decision to include `fastprot_mpi`.
 
-### Phase E - Remove all now-dead gengetopt infrastructure
+**`fastprot_mpi` caveat, called out explicitly rather than hidden**:
+this file cannot be built or run in the environment this migration was
+done in (`BUILD_WITH_MPI` defaults `OFF`, no MPI installation
+available - it was never build-tested even before this change, per
+`project_layout_plan.md`'s own note). It also uses the legacy `MPI::`
+C++ bindings, deprecated since MPI-3 and removed outright from modern
+MPI implementations (OpenMPI 5+, recent MPICH) - a separate,
+likely-fatal, pre-existing problem this migration does not attempt to
+fix. The CLI-parsing swap itself mirrors `fastprot`'s pattern exactly
+(same struct shape, same domain-enum reuse trick), reviewed carefully
+by hand since it can't be compiler-verified. One incidental behavior
+change, flagged rather than silently carried: the pre-existing code
+read `args_info.input_format_arg` one line *before* `cmdline_parser()`
+populated it (an uninitialized-memory read, harmless in practice only
+because `WITH_LIBXML` defaults `ON`) - `FastprotMpiOptions::parseArgs()`
+always fully parses before returning, so that field is now a
+well-defined default rather than uninitialized memory if that
+`#ifndef` block ever does compile in. A strict improvement, not
+something this migration tried to preserve bit-for-bit.
 
-Once every in-scope app is migrated: delete the remaining `.ggo`
-files, `find_program(GENGETOPT)`, the FTP-fetch `add_custom_command`s,
-`build_gengetopt.sh`, `GENGETOPT_VERSION`, and every `MAKE_DIRECTORY`/
-generated-file plumbing in `src/c++/CMakeLists.txt` tied to them - full
-removal, matching the `STATIC` precedent, not a kept-around fallback.
+`RunExamples.sh` covers `fastprot` extensively (examples 6/7/11-18,
+including the ML path and binary-output path) - all still
+byte-identical. `fastprot_mpi` has no example coverage (confirmed
+absent, and can't be added without an MPI installation) - left as a
+gap for whoever eventually picks up its separate MPI-bindings
+modernization, not this migration's to solve.
+
+Verified (for `fastprot`; `fastprot_mpi` per the caveat above):
+full clean rebuild + `ctest` (2/2) + `RunExamples.sh`
+(byte-identical) + `RunCliChecks.sh` (extended with a `fastprot`
+`check_app` entry, all pass) + a manual `--help`/`--version`/
+bad-value/unknown-flag check against a captured pre-migration baseline
++ the protein maximum-likelihood hot-path sanity check from
+`lint_plan.md`'s Phase 7 (`fastprot -D WAG -m`), repeated here since
+`fastprot` sits directly on that path.
+
+### Phase E - Remove all now-dead gengetopt infrastructure (done)
+
+Once every in-scope app was migrated (`fastprot`/`fastprot_mpi` being
+the last two), the entire gengetopt toolchain had nothing left
+depending on it - folded into the same pass as Phase D rather than a
+separate one, since it was now pure deletion with no remaining
+consumer to break. Removed: `find_program(GENGETOPT)`, the
+FTP-fetch `add_custom_command`s, `build_gengetopt.sh`,
+`GENGETOPT_VERSION`, every remaining `.ggo` file
+(`fastprot`/`fastprot_mpi`'s - `fnj`/`fastdist`'s were already gone
+from Phases B/C), and every `MAKE_DIRECTORY`/generated-file/
+`set_source_files_properties` line tied to them in
+`src/c++/CMakeLists.txt` - full removal, matching the `STATIC`
+precedent, not a kept-around fallback. Also updated two now-stale
+mentions of `gengetopt` as a required system package in
+`docs/index.xml.cmake`'s RPM/deb build instructions (forward-looking
+install instructions, not the page's separate historical build-log
+transcript, which was left alone - already stale in other ways
+predating this change and not this migration's to fix), and updated
+`github_actions_release_builds_plan.md` to mark its
+gengetopt-provisioning open question and Phase B (add
+`apt-get install gengetopt`) both moot, since there's nothing left to
+provision on any platform now.
 
 ### Phase F - Final verification and sign-off
 
@@ -340,15 +388,16 @@ Full clean rebuild + `ctest` + `RunExamples.sh` (byte-identical, same
 discipline as every prior phase in this engagement), plus the
 manual `--help`/`--version`/error-path smoke-test matrix across every
 migrated app (since none of that is covered by the automated
-regression suite). Update `github_actions_release_builds_plan.md` to
-note its Windows-gengetopt open question is now moot, once this lands
-before that plan's Phase D.
+regression suite).
 
 ## What's explicitly out of scope
 
 - Any new CLI functionality (subcommands, config files, completion)
   beyond what gengetopt already provided.
-- `fastprot_mpi`, unless Phase A explicitly decides otherwise.
+- Fixing `fastprot_mpi`'s deprecated `MPI::` C++ bindings or its
+  broader untested/unbuildable state - Phase D migrated its CLI
+  parsing (per Phase A's decision to include it) but explicitly did
+  not attempt to fix or verify the rest of the file.
 - Re-litigating option names/behavior "while we're in there" - this is
   a mechanical migration, not a UX redesign. Any option Lasse actually
   wants changed should be its own follow-up, after this lands.

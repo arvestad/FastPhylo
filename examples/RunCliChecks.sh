@@ -81,6 +81,15 @@ check_app fastdist "fastdist 1.0.10" outfile input-format memory-efficient \
     tstvratio pyrtvratio no-tstvratio fixfactor number-of-runs \
     print-relaxng-input print-relaxng-output
 
+check_app fastprot "fastprot 1.0.10" outfile input-format memory-efficient \
+    output-format bootstraps no-incl-orig seed distance-function model-file \
+    remove-indels maximum-likelihood sd pfam speed print-relaxng-input \
+    print-relaxng-output
+
+# fastprot_mpi is out of scope for this script - only built with
+# -DBUILD_WITH_MPI=ON, which needs an MPI installation this repo's CI
+# doesn't provide (see gengetopt_migration_plan.md's Phase D note).
+
 echo
 if [ "$failures" -eq 0 ]; then
     echo "All CLI checks passed."

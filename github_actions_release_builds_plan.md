@@ -135,11 +135,11 @@ attempt harder than it needed to be.
 
 ## Open questions to settle before implementation
 
-- **gengetopt**: provision it (apt/vcpkg/brew) as an interim step, or
-  wait until the separately-planned migration away from gengetopt
-  lands first? Doing both dependency-provisioning *and* a from-scratch
-  CLI-parsing rewrite in the same effort is more than either needs to
-  be.
+- **gengetopt**: **resolved, moot.** `gengetopt_migration_plan.md`
+  landed (all four apps moved to CLI11, a vendored header-only
+  library) and removed gengetopt from the build entirely - no
+  provisioning question left for any platform, including Windows,
+  which was this question's main motivation.
 - **"Reasonably modern OS versions"**: a concrete floor per platform
   (which Ubuntu LTS, which Windows version, which macOS version)
   affects both the GitHub-hosted runner choice and glibc-compatibility
@@ -170,12 +170,12 @@ whether Windows/macOS need full static linking (closer to reviving
 `STATIC`'s original *intent*, properly this time) or whether dynamic
 linking against each OS's own libraries is good enough.
 
-### Phase B - Fix `build-and-test.yml`'s Linux job in place
+### Phase B - Fix `build-and-test.yml`'s Linux job in place (moot)
 
-Add `apt-get install gengetopt` to remove the FTP self-build
-dependency from every CI run. Small, immediately useful regardless of
-the rest of this plan, low risk, can land independently and before
-Phase A's questions are even settled.
+Was going to add `apt-get install gengetopt` to remove the FTP
+self-build dependency from every CI run - no longer needed,
+`gengetopt_migration_plan.md` removed gengetopt from the build
+entirely, so this CI job has nothing left to fix here.
 
 ### Phase C - Add macOS to the matrix
 
@@ -187,8 +187,8 @@ configure/build/ctest/RunExamples.sh shape as the Linux job.
 ### Phase D - Add Windows to the matrix
 
 The real work: `vcpkg` in manifest mode (a `vcpkg.json` listing
-libxml2, a BLAS/LAPACK provider, and gengetopt if Phase A's question
-about it isn't resolved by migrating away first), `CMAKE_TOOLCHAIN_FILE`
+libxml2 and a BLAS/LAPACK provider - gengetopt no longer needed here,
+removed entirely by `gengetopt_migration_plan.md`), `CMAKE_TOOLCHAIN_FILE`
 wiring, and verifying `RunExamples.sh` actually runs correctly under
 Windows path/line-ending conventions - this project's file I/O has had
 real CRLF-handling surprises before (see project memory from the lint

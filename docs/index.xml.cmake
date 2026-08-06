@@ -463,7 +463,7 @@ If you want to build the html documentation ( i.e. this page ) you need to pass 
 <para>
 On a CentOS or Fedora machine, first log in as root and install the dependencies
 <programlisting><![CDATA[
-# yum install xmlto libxml2-devel cmake gcc-c++ binutils gengetopt
+# yum install xmlto libxml2-devel cmake gcc-c++ binutils
 ]]></programlisting>
 
 Check that cmake is version 2.6 or later
@@ -487,7 +487,7 @@ $ cmake -DCMAKE_INSTALL_PREFIX=/ -DBUILD_DOCBOOK=ON /tmp/source && make package
 <para>
 On a Debian or Ubuntu machine, first log in as root and install the dependencies
 <programlisting><![CDATA[
-# apt-get install libxml2-dev cmake g++ binutils gengetopt
+# apt-get install libxml2-dev cmake g++ binutils
 ]]></programlisting>
 
 Check that cmake is version 2.6 or later
