@@ -32,3 +32,7 @@ jobs:
           for f in ex*.out; do
             diff -q "$f" "expected_output/$f"
           done
+
+      - name: Run CLI regression checks (--help/--version/error paths)
+        working-directory: examples
+        run: FASTPHYLOPATH="${{ github.workspace }}/build/src/c++" bash RunCliChecks.sh

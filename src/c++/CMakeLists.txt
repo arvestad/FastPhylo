@@ -33,7 +33,6 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/download)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/build)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/install)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt)
 if(BUILD_WITH_MPI)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt)
@@ -60,11 +59,6 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fa
                      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastdist/gengetopt/cmdline.ggo ${GENGETOPTDEP}
                      VERBATIM)
 
-
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt/fnj_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt/fnj_gengetopt.h
-                     COMMAND ${GENGETOPT} -i ${CMAKE_CURRENT_SOURCE_DIR}/apps/fnj/gengetopt/cmdline.ggo --output-dir=${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt
-                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/apps/fnj/gengetopt/cmdline.ggo ${GENGETOPTDEP}
-                     VERBATIM)
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.h
                      COMMAND ${GENGETOPT} -i ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot/gengetopt/cmdline.ggo --output-dir=${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt
@@ -195,6 +189,9 @@ if(WITH_LIBXML)
 endif(WITH_LIBXML)
 
 
+# fnj is the first app migrated off gengetopt onto CLI11
+# (gengetopt_migration_plan.md, Phase B) - no generated cmdline.c to
+# list here anymore.
 set(FNJ_SRCS apps/fnj/main.cpp
 apps/fnj/DataInputStream.cpp
 apps/fnj/DataOutputStream.cpp
@@ -202,15 +199,12 @@ apps/fnj/TreeTextOutputStream.cpp
 apps/fnj/XmlOutputStream.cpp
 apps/fnj/PhylipDmInputStream.cpp
 apps/fnj/BinaryInputStream.cpp
-${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt/fnj_gengetopt.c
 )
 
 if(WITH_LIBXML)
  set(FNJ_XML_SRCS apps/fnj/XmlInputStream.cpp)
 endif(WITH_LIBXML)
 
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt/fnj_gengetopt.c PROPERTIES GENERATED true)
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt/fnj_gengetopt.h PROPERTIES GENERATED true)
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.c PROPERTIES GENERATED true)
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.h PROPERTIES GENERATED true)
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.c PROPERTIES GENERATED true)
@@ -328,7 +322,7 @@ target_link_libraries(fastdist PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS})
 add_executable(fnj ${FNJ_SRCS} ${FNJ_XML_SRCS})
 target_include_directories(fnj PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/fnj
-  ${CMAKE_CURRENT_BINARY_DIR}/apps/fnj/gengetopt
+  ${CMAKE_SOURCE_DIR}/third_party
 )
 target_link_libraries(fnj PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS})
 

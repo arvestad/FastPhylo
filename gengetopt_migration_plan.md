@@ -175,44 +175,85 @@ piece of 2009-2011-era vendored-toolchain machinery in the build.
   would conflate "migrate" with "extend." The ease-of-adding-options
   win is about *future* work, not licence to expand scope here.
 
-## Open questions (Phase A settles these, no code yet)
+## Open questions - settled 2026-08-04
 
-- **`fastprot_mpi` scope**: include it in this migration (its `.ggo`
-  is a near-duplicate of `fastprot`'s, so the marginal cost of doing
-  both together in Phase D below is small) or defer it again,
-  consistent with every prior phase's "MPI stays out"? Leaning toward
-  *include* here specifically because leaving one straggler app on
-  gengetopt means the old toolchain/FTP-fallback machinery can't be
-  deleted at all - but this is Lasse's call, not a default.
-- **Vendoring mechanism**: single vendored header (recommended above)
-  vs. CMake `FetchContent` vs. requiring a system/vcpkg package.
-  Vendoring is recommended but should be confirmed, especially given
-  it sets precedent for how future header-only dependencies get added.
-- **Automated CLI-level tests**: `RunExamples.sh` won't cover
-  `--help`/`--version`/error paths. Worth adding a small dedicated
-  script/fixture set for those, or is a one-time manual verification
-  pass per app (documented in the migration commit) suffices?
+- **`fastprot_mpi` scope**: **in.** Leaving one straggler app on
+  gengetopt would mean the old FTP-fallback machinery could never be
+  fully deleted - direct instruction to include it.
+- **Vendoring mechanism**: **vendored header**, confirmed - a single
+  pinned `CLI11.hpp` in `third_party/`, not `FetchContent`/vcpkg/a
+  system package. (Note: this project's one existing header-only
+  dependency, `simde`, actually uses `find_path()` against a
+  system/brew install, *not* in-tree vendoring - an earlier draft of
+  this plan claimed otherwise. CLI11 is this project's first
+  genuinely vendored-in-tree dependency, not a repeat of an existing
+  pattern.)
+- **Automated CLI-level tests**: **add a small script.**
+  `examples/RunCliChecks.sh` (added in Phase B) checks, per migrated
+  app: `--version` exit code and exact output, `--help` exit code and
+  presence of every long option name, and that an invalid enum value
+  and an unrecognized flag both exit nonzero. Wired into
+  `.github/workflows/build-and-test.yml` right after
+  `RunExamples.sh`. Extend it with one more `check_app` call per app
+  as Phases C/D land.
 
 ## Phases
 
-### Phase A - Settle the open questions above
+### Phase A - Settle the open questions above (done)
 
-No code changes. `fastprot_mpi` in-or-out, vendoring mechanism, and
-whether to add dedicated CLI-level test coverage all shape Phase D/E's
-shape below.
+See "Open questions - settled 2026-08-04" above.
 
-### Phase B - Vendor CLI11, prove the pattern on `fnj`
+### Phase B - Vendor CLI11, prove the pattern on `fnj` (done)
 
-Add the pinned CLI11 header to the tree and wire it into
-`src/c++/CMakeLists.txt` as a plain include path (no custom commands,
-no generated files - itself a large simplification to verify early).
-Migrate `fnj` first: smallest option surface (10 options), no `float`
-options, only one enum with more than 3 values (`method`). Delete
-`fnj`'s `.ggo` and its generated-code custom commands. Verify:
-`RunExamples.sh` byte-identical (examples 8/9 exercise `fnj`
-directly), plus a manual `--help`/`--version`/bad-enum-value check
-against the baseline captured above. Get sign-off on the `--help`
-formatting call before repeating the pattern.
+Vendored `third_party/CLI11.hpp` (v2.7.2, the latest release at the
+time, confirmed via the GitHub releases API - not guessed). Wired into
+`src/c++/CMakeLists.txt` as a plain include path on `fnj`'s target
+only (`target_include_directories(fnj PRIVATE ... third_party)`) -
+`fastdist`/`fastprot`/`fastprot_mpi` are untouched and still build via
+gengetopt, confirmed by a full build succeeding with both toolchains
+present simultaneously.
+
+Migrated `fnj/main.cpp`: `gengetopt_args_info` replaced by a plain
+`FnjOptions` struct (values plus `_given` bools for the options whose
+*presence* matters, matching gengetopt's `..._given` fields exactly);
+`input-format`/`output-format` got their own scoped enums,
+`--method` binds directly to `NeighborJoining.hpp`'s existing
+`NJ_method` domain enum via `CLI::CheckedTransformer` (eliminating the
+old `resolveMethods()` translation function entirely - CLI11 doing the
+validation *is* the translation). `--dm-per-run` is accepted but still
+unused, matching pre-migration behavior exactly (confirmed via grep
+before touching it - nothing in `fnj` ever read
+`args_info.dm_per_run_arg` either). Deleted `apps/fnj/gengetopt/`
+(the `.ggo` and its directory) and every fnj-specific line in
+`src/c++/CMakeLists.txt`'s generated-code plumbing.
+
+Two real gaps found and fixed by diffing against the captured
+baseline, not assumed away:
+- **`--help` text leaked CLI11's internal validator repr** -
+  `CheckedTransformer`'s default behavior appends `value in {a->0,
+  b->1,...} OR {0,1,...}` to every enum option's description, which is
+  strictly worse than gengetopt's clean `(possible values=...)`.
+  Fixed with `.description("")` on each `CheckedTransformer`, since
+  the possible-values/default text is already written by hand in each
+  option's own description.
+- **Exit codes didn't match.** gengetopt exits `1` uniformly on any
+  parse problem (confirmed live: bad enum value, unrecognized flag -
+  both `1`). CLI11 assigns distinct codes per error subtype (105 for
+  a failed validator, 109 for an unexpected argument, etc.) and only
+  `0` for `--help`/`--version`. Fixed by catching `CLI::ParseError`,
+  calling `app.exit(e)` for its printed message, then explicitly
+  `std::exit`-ing `0` if the error is a `CLI::Success` (help/version)
+  or `1` otherwise - this is exactly the kind of gap the plan's own
+  "verify per app, don't assume" note about error paths was for.
+
+Verified: full clean rebuild (all four apps, two toolchains
+coexisting) + `ctest` (2/2) + `RunExamples.sh` (byte-identical,
+including fnj-exercising examples 8/9) + the new
+`RunCliChecks.sh` (all checks pass) + a manual side-by-side of
+`fnj --help`/`--version`/a bad enum value/an unknown flag against the
+baseline captured pre-migration. **`--help` formatting sign-off is
+pending** per this plan's own "get sign-off on the first migrated app"
+rule - not yet repeated on Phase C/D until that lands.
 
 ### Phase C - Migrate `fastdist`
 
