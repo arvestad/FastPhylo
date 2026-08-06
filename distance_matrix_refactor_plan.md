@@ -252,17 +252,94 @@ findings, 115 resolved by this header-only change alone**, zero source
 edits elsewhere. Verified: full rebuild (0 errors) + `ctest` (2/2) +
 `RunExamples.sh` (byte-identical) after the change.
 
-### Phase C - Consolidate `Sequences2DistanceMatrix.cpp`'s fillMatrix*/fillMatrixRow* families
+### Phase C - Consolidate `Sequences2DistanceMatrix.cpp`'s fillMatrix*/fillMatrixRow* families (done)
 
-Collapse the 4+4 near-identical functions into one parameterized
-full-matrix implementation and one parameterized row-streaming
-implementation, per "The Sequences2DistanceMatrix.cpp duplication"
-above. Replace the `row = -1` wraparound trick with an explicit,
-named idiom in the new shared function. This is real design work, not
-mechanical - budget real time for getting the per-model distance
-callable's signature right and verifying every one of the 4 (or 8)
-original call sites still produces byte-identical output for its
-model.
+**Scope refinement, decided while implementing, not assumed away**:
+the plan's original framing ("one parameterized full-matrix
+implementation and one parameterized row-streaming implementation")
+turned out to be exactly right for the row-streaming family but not
+quite for the full-matrix family, once actually reading all 8
+functions side by side rather than by their summary shape:
+
+- `fillMatrixRowGeneric<RawDistance>()` - **all four**
+  `fillMatrixRow_{Hamming,JC,K2P,TN93}` unify into this one template.
+  All four originals had their ambiguity-resolution second pass
+  entirely commented out already (dead code, deleted here rather than
+  kept as an inert comment four times over) - once that's gone, even
+  Hamming's row version (which in the full-matrix family below is
+  genuinely different in shape) reduces to the exact same skeleton as
+  the other three: compute a raw pairwise distance, convert it to a
+  plain float, done.
+- `fillMatrixML<RawDistance>()` - shared by `fillMatrix_JC`/`_K2P`/
+  `_TN93` only. `fillMatrix_Hamming` stays its own function: its
+  ambiguity handling is genuinely different in *shape*, not just
+  formula - `compute_Hamming_distance()` returns a plain `float` (not
+  an `ML_string_distance`), its closest-neighbor resolution calls the
+  simpler `resolveAmbiguities()` (not
+  `resolveAmbiguitiesUsingTransitionProbabilities()`), and its
+  correction pass borrows `compute_JC()` as an ML estimate regardless
+  of the model. Forcing Hamming into the same template as the other
+  three would need enough extra parameterization (a
+  "closest-neighbor-resolver" callable, a separate
+  "correction-estimate" callable, a storage-shape switch between
+  `RawDistance` alone and `pair<RawDistance,ML_string_distance>`) that
+  the result would read *harder* than the duplication it replaced -
+  judged not worth it. Net: 8 functions -> 3 pieces of source code
+  (`fillMatrixML` instantiated 3x, `fillMatrix_Hamming` kept,
+  `fillMatrixRowGeneric` instantiated 4x).
+
+**A real, live, previously-uncaught bug found and fixed during this
+consolidation**: `fillMatrixRow_JC`'s `mem_eff_flag` branch was
+inverted relative to its three siblings (`if (mem_eff_flag)` instead
+of `if (!mem_eff_flag)`) - and, since the condition governs *both*
+branches via if/else, this meant JC's row-streaming path had the
+*regular* (`--output-format=binary`) and *memory-efficient*
+(`--memory-efficient`) behaviors swapped, not just one of them wrong.
+Verified live, not just read: `fastdist -D JC -e -O phylip` on an
+8-sequence test set printed zeros for the entire lower triangle
+instead of the real distances (comparing against the full-matrix
+reference, the correct behavior for `-e`), while the same command
+with `-D K2P` produced output byte-identical to its own full-matrix
+reference. Neither `RunExamples.sh` nor `RunCliChecks.sh` exercises
+`fastdist`'s `--memory-efficient` flag at all, so this had zero
+regression coverage before now. `fillMatrixRowGeneric()` uses the
+three-out-of-four (correct) direction uniformly, so this specific bug
+class cannot recur in any of the four models going forward.
+
+Verified the fix didn't regress the three already-correct models nor
+change unrelated behavior, via a genuine before/after comparison (a
+`git worktree` at the pre-Phase-C commit, not just re-reading the new
+code): `K2P`/`Hamming`/`TN93`'s binary-row-streaming output is
+byte-identical before and after, for both `--output-format=binary`
+and `--memory-efficient`. `JC`'s binary output changed by exactly one
+bit (`-0.0` -> `0.0`, IEEE-754 negative vs. positive zero, numerically
+and observably identical in every context) - traced to the fix
+correctly skipping a now-redundant self-distance recomputation for
+row 0 that the old buggy code's inverted branch used to redo. All
+four models' full-matrix output (`fillMatrix()`, untouched by this
+bug) is unchanged.
+
+The `row = -1` wraparound trick (relying on unsigned integer overflow
+to turn `row+1` into `0`) is gone from every model, replaced by an
+explicit `startCol` variable in `fillMatrixRowGeneric()` - readable
+without knowing wraparound is happening on purpose, and structurally
+unable to invert silently the way JC's copy did. The
+closest-neighbor/`closestDist` tracking in all four original row
+functions was also dead (written, never read outside the same
+commented-out block) - removed rather than carried into the new
+shared code.
+
+Verified: full clean rebuild (0 errors) + `ctest` (2/2) +
+`RunExamples.sh` (byte-identical) + `RunCliChecks.sh` (61/61) +
+`bench_primitives` (healthy speedups, 7x-68x depending on primitive/
+length, no regression - this consolidation touches the same hot path
+speed2026a measures) + the worktree-based before/after binary
+comparison described above. Measured via the same
+`clang-tidy --checks='-*,bugprone-narrowing-conversions'` diff used in
+Phase B: 170 -> 150 findings (Phase B: 285 -> 170; this phase: a
+further 20 resolved by removing the duplication, on top of the dead
+code and wraparound trick that are gone regardless of what
+`clang-tidy` reports).
 
 ### Phase D - Remaining narrowing-conversions call sites
 
