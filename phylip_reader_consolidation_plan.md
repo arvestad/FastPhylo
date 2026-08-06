@@ -347,16 +347,32 @@ exactly as predicted (`"Sequence not of correct length: Gamma"`) -
 then restored the correct implementation and re-verified all three
 tests pass, plus a full `ctest`/`RunExamples.sh` re-run.
 
-### Phase D - Final verification
+### Phase D - Final verification (done)
 
-Full clean rebuild + `ctest` + `RunExamples.sh`, plus a rerun of
-whatever standalone test(s) Phase C produced for the unreachable copy.
+Full clean rebuild (fresh `build/`): 0 errors. `ctest`: 3/3, including
+the new `SequenceTree_PhylipReader_test` (permanent regression
+coverage for a function that had none before this plan).
+`RunExamples.sh`: byte-identical. `RunCliChecks.sh`: 61/61.
+
+All 4 phases of this plan are now complete. Net result: the three
+independently-copy-pasted interleaved-PHYLIP readers now share one
+implementation of the part that was actually duplicated (the
+continuation-lines loop and its completion check), a second real, live
+bug is fixed (`DNA_b128_StringsFromPHYLIP`'s spurious exception on any
+file without a trailing newline - same pattern as
+`distance_matrix_refactor_plan.md`'s `fillMatrixRow_JC` finding), and
+`SequenceTree::mapSequencesOntoTree(istream&)` has real test coverage
+for the first time, which is also how its own genuine incompatibility
+with this project's normal PHYLIP continuation-line format was found -
+flagged for whoever next touches that code path, not fixed here.
 
 ## Decisions
 
-- Branch: TBD - continue on `lint-cleanup`, or its own branch, given
-  this is structural rather than lint-mechanical (same open question
-  `distance_matrix_refactor_plan.md` has for its own scope).
+- Branch: `phylip-reader-consolidation`, off `modernize-cpp17`'s tip
+  (after merging `distance_matrix_refactor_plan.md`'s branch in first,
+  since that plan also touched `Sequences2DistanceMatrix.cpp` and two
+  diverged branches editing the same file independently was worth
+  avoiding).
 - Not blocking the rest of `lint_plan.md` (Phases 5's remaining two
   categories, or Phases 6-7) - this is follow-up work, flagged at
   review time, not scheduled ahead of the lint pass finishing.
