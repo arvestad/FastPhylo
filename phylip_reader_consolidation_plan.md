@@ -118,16 +118,119 @@ here:
 
 ## Phases
 
-### Phase A - Prove or disprove each of the four differences
+### Phase A - Prove or disprove each of the four differences (done)
 
-For each difference listed above, determine definitively whether it's
-a real behavioral distinction or a no-op restated differently, the
-same rigor used for the `bootstrapSequences` stride-chunking finding
-elsewhere in this Phase 5 pass (reasoned proof + empirical byte-for-byte
-comparison, not just one or the other). Write up the finding for each
-of the four before touching any code - this phase produces the actual
-design constraints Phase B needs, rather than discovering them
-mid-refactor.
+Each of the four settled, by reasoning plus empirical test where the
+reasoning alone wasn't conclusive - not assumed either way.
+
+**1. Different data structures - confirmed real, not reconcilable.**
+`SequenceTree.cpp` resolves each name through a hash map onto existing
+tree nodes, with unmatched names redirected to a single shared
+`garbage` string (cleared and reused per unmatched entry - confirmed
+harmless, since nothing ever reads `garbage`'s content back).
+`Sequences2DistanceMatrix.cpp`/`Sequence.cpp` write positionally into
+a freshly-sized vector, no name resolution, every file entry kept.
+This is inherent to what each caller needs (map onto an *existing*
+tree vs. build a fresh list) - Phase B's shared implementation needs a
+small data-access abstraction ("get me the buffer for position *i*"),
+not a shared data structure.
+
+**2. Different stop conditions - proven equivalent under normal
+operation, but `SequenceTree.cpp`'s version has a latent crash the
+other two don't.** `Sequences2DistanceMatrix.cpp`/`Sequence.cpp` check
+`anySequenceComplete()` (any position reaching `seqlen`) each pass;
+`SequenceTree.cpp` instead tracks one pointer,
+`actualNodeString` (the last node matched during the first pass), and
+checks only its length. Proof of equivalence: every position in the
+vector-based readers grows by exactly one line per outer-loop pass
+(confirmed by re-reading the inner loop - no path skips a position
+without appending to it, aside from the empty-line retry which
+re-attempts the *same* position rather than skipping ahead), so under
+that uniform-growth invariant "any one reaches `seqlen`" implies "all
+have" - checking one arbitrary matched position is equivalent to
+checking all of them, and `SequenceTree.cpp`'s choice to track
+specifically a *real* (non-`garbage`) position sidesteps `garbage`'s
+own irregular growth rate (multiple unmatched names in the same file
+would otherwise inflate a naive shared counter faster than the real
+per-node rate). **But**: `actualNodeString` starts `nullptr` and is
+only ever assigned inside the `if (iter != str2node.end())` branch -
+if a PHYLIP file's names matched *zero* tree nodes, the continuation
+loop's first condition check (`actualNodeString->length()`) would be a
+null-pointer dereference. Not proven to be live (no reachable caller
+exists to test end-to-end against - see "Reachability" above), but a
+real latent defect independent of the consolidation question, and a
+concrete argument for Phase B's shared implementation to use the
+any-of-all-real-positions style uniformly rather than porting
+`SequenceTree.cpp`'s one-pointer idiom forward - it's both equivalent
+under normal operation *and* strictly safer.
+
+**3. The `fin.eof()` difference between the two `anySequenceComplete()`
+copies - confirmed a real, live, previously-uncaught bug, not a no-op.**
+`Sequences2DistanceMatrix.cpp`'s outer loop is `while (whileTrue ||
+fin.eof())`; `Sequence.cpp`'s is `while (whileTrue)`, no `fin.eof()`
+clause. Verified live with a constructed multi-line interleaved PHYLIP
+file (3 sequences, 250 chars each, forcing genuine multi-pass
+continuation reading) in two variants, with and without a trailing
+newline after the final data line:
+- `fastdist -I phylip <file-without-trailing-newline>` (routes through
+  `DNA_b128_StringsFromPHYLIP`) **throws immediately**: `"Sequence not
+  of correct length: Alpha    length is 250"` - self-contradictory,
+  since 250 *is* the correct `seqlen`. Root cause: the final content
+  read (no trailing newline) sets `eofbit` on the *same* call that
+  successfully completes the last sequence; `whileTrue` becomes
+  `false` from `anySequenceComplete()`, but `fin.eof()` is now `true`,
+  so `whileTrue || fin.eof()` is still `true` and the outer loop runs
+  one more full pass over an already-exhausted stream, hitting the
+  `myStr.empty() && fin.eof()` branch on its very first iteration.
+- `fastdist -I phylip <file-with-trailing-newline>`: succeeds (the
+  final content read stops at the newline delimiter without hitting
+  real EOF, so `fin.eof()` is still `false` at the check).
+- `fastprot -I phylip` (routes through `Sequence::readSequences`, no
+  `fin.eof()` clause) succeeds identically on **both** file variants -
+  byte-identical output regardless of trailing newline.
+
+  This is a real, exploitable robustness gap in `fastdist`'s PHYLIP
+  reader today: **any interleaved multi-line PHYLIP file whose last
+  line lacks a trailing newline throws a spurious exception**, a very
+  common real-world file-ending convention this project doesn't
+  otherwise reject. Zero regression coverage exists for this
+  (`RunExamples.sh`'s `seq.phylip` happens to end with a trailing
+  newline). The shared implementation must use the
+  `Sequence.cpp`/proven-correct form (no `fin.eof()` clause) -
+  `DNA_b128_StringsFromPHYLIP`'s current behavior is the *wrong* one
+  to preserve, not a variant to parameterize over. This is the second
+  real bug this consolidation effort has turned up (after
+  `distance_matrix_refactor_plan.md`'s `fillMatrixRow_JC` finding) -
+  same pattern: duplicated code silently drifting into an actual
+  defect in one copy, invisible until the copies are compared side by
+  side.
+
+**4. The name-field-skip, only in `SequenceTree.cpp`'s continuation
+reader - confirmed real, and not safely droppable without more
+information.** `SequenceTree.cpp`'s `readInterleavedContinuationLines()`
+peeks at each continuation line's first character; if it's *not*
+whitespace, it discards the next 10 characters before reading sequence
+data, treating them as a stray name field a well-formed interleaved
+file's continuation lines shouldn't have. Neither
+`Sequences2DistanceMatrix.cpp` nor `Sequence.cpp` does this. Checked
+whether it's actually load-bearing by reading how each of the three
+readers' underlying append functions handle unexpected characters,
+since that determines what "not doing this" actually costs:
+`Sequence.cpp`'s `appendAllNonChars()` only strips literal `' '`
+characters and blindly appends everything else, including
+non-nucleotide letters, with **no validation at all** - a stray name
+prefix would be silently spliced into the sequence data as if it were
+real bases. `DNA_b128_String::append()` is pickier (a `switch` over
+IUPAC nucleotide/ambiguity codes plus `' '`/`-`/`.`, falling through
+to a loop-terminating `default` for anything else), so it would
+*truncate* rather than corrupt - a different, but still real, failure
+mode. Since `SequenceTree.cpp`'s function has no live caller to
+determine whether real input ever actually exercises this path (see
+"Reachability"), and the two other readers would each mishandle it
+differently if it ever did occur, this isn't provably a no-op - it's a
+genuine defensive feature specific to `SequenceTree.cpp`'s use case,
+kept as an opt-in parameter in the shared implementation rather than
+either dropped or forced onto the other two callers.
 
 ### Phase B - Design the shared implementation
 
