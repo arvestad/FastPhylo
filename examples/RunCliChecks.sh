@@ -75,6 +75,12 @@ check_app fnj "fnj 1.0.10" outfile input-format output-format print-counts \
     analyze-run-number method dm-per-run number-of-runs bootstraps \
     print-relaxng-input print-relaxng-output
 
+check_app fastdist "fastdist 1.0.10" outfile input-format memory-efficient \
+    output-format distance-function bootstraps no-incl-orig seed \
+    no-ambiguities no-ambig-resolve no-transprob ambiguity-frequency-model \
+    tstvratio pyrtvratio no-tstvratio fixfactor number-of-runs \
+    print-relaxng-input print-relaxng-output
+
 echo
 if [ "$failures" -eq 0 ]; then
     echo "All CLI checks passed."

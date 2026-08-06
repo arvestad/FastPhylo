@@ -12,7 +12,7 @@
 #include "fastphylo/dna/NeighborJoining.hpp"
 #include <ctime>
 #include "fastphylo/core/log_utils.hpp"
-#include "CLI11.hpp"
+#include "CliHelpFormatter.hpp"
 
 #include "DataInputStream.hpp"
 #include "DataOutputStream.hpp"
@@ -63,19 +63,6 @@ struct FnjOptions {
 	bool print_relaxng_output = false;
 	std::string inputfile;
 	bool inputfile_given = false;
-};
-
-// gengetopt's --help always led with "Usage: <name> [OPTION]...";
-// CLI11's default Formatter drops the "Usage: " label whenever a
-// program name is available (which it always is here), so this small
-// override reinstates it - the one --help-formatting request from
-// review of fnj's migration (Phase B) worth carrying into every
-// later-migrated app.
-class FastphyloHelpFormatter : public CLI::Formatter {
-  public:
-	std::string make_usage(const CLI::App *app, std::string name) const override {
-		return CLI::Formatter::make_usage(app, "Usage: " + name);
-	}
 };
 
 // Builds the CLI11 App and parses argv into a FnjOptions. Exits the

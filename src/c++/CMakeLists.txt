@@ -32,7 +32,6 @@ set(INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/install INTERNAL)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/download)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/build)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/install)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt)
 if(BUILD_WITH_MPI)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot_mpi/gengetopt)
@@ -52,12 +51,6 @@ set(ARCH_FLAGS "-msse2")
   add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/external/download/gengetopt-${GENGETOPT_VERSION}.tar.gz" COMMAND wget --directory-prefix=external/download "ftp://ftp.gnu.org/gnu/gengetopt/gengetopt-${GENGETOPT_VERSION}.tar.gz")
 
   add_custom_command(OUTPUT "${GENGETOPTDEP}" COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/build_gengetopt.sh" ${GENGETOPT_VERSION} "${CMAKE_CURRENT_BINARY_DIR}/external/install" DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/external/download/gengetopt-${GENGETOPT_VERSION}.tar.gz" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/external/build")
-
-
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.h
-                     COMMAND ${GENGETOPT} -i ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastdist/gengetopt/cmdline.ggo --output-dir=${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt
-                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastdist/gengetopt/cmdline.ggo ${GENGETOPTDEP}
-                     VERBATIM)
 
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.c ${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.h
@@ -178,10 +171,12 @@ if(WITH_LIBXML)
   set(FASTPHYLO_IO_XML_SRCS ${FASTPHYLO_IO_DIR}/XmlInputStream.cpp)
 endif()
 
+# fastdist is the second app migrated off gengetopt onto CLI11
+# (gengetopt_migration_plan.md, Phase C) - no generated cmdline.c to
+# list here anymore.
 set(FASTDIST_SRCS apps/fastdist/main.cpp
 apps/fastdist/PhylipMaInputStream.cpp
 apps/fastdist/FastaInputStream.cpp
-${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.c
 )
 
 if(WITH_LIBXML)
@@ -189,7 +184,7 @@ if(WITH_LIBXML)
 endif(WITH_LIBXML)
 
 
-# fnj is the first app migrated off gengetopt onto CLI11
+# fnj was the first app migrated off gengetopt onto CLI11
 # (gengetopt_migration_plan.md, Phase B) - no generated cmdline.c to
 # list here anymore.
 set(FNJ_SRCS apps/fnj/main.cpp
@@ -205,8 +200,6 @@ if(WITH_LIBXML)
  set(FNJ_XML_SRCS apps/fnj/XmlInputStream.cpp)
 endif(WITH_LIBXML)
 
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.c PROPERTIES GENERATED true)
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt/fastdist_gengetopt.h PROPERTIES GENERATED true)
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.c PROPERTIES GENERATED true)
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/apps/fastprot/gengetopt/fastprot_gengetopt.h PROPERTIES GENERATED true)
 if(BUILD_WITH_MPI)
@@ -315,13 +308,15 @@ find_package(Threads REQUIRED)
 add_executable(fastdist ${FASTDIST_SRCS} ${FASTDIST_XML_SRCS})
 target_include_directories(fastdist PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastdist
-  ${CMAKE_CURRENT_BINARY_DIR}/apps/fastdist/gengetopt
+  ${CMAKE_CURRENT_SOURCE_DIR}/apps
+  ${CMAKE_SOURCE_DIR}/third_party
 )
 target_link_libraries(fastdist PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS})
 
 add_executable(fnj ${FNJ_SRCS} ${FNJ_XML_SRCS})
 target_include_directories(fnj PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/fnj
+  ${CMAKE_CURRENT_SOURCE_DIR}/apps
   ${CMAKE_SOURCE_DIR}/third_party
 )
 target_link_libraries(fnj PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS})

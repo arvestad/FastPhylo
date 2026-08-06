@@ -275,17 +275,43 @@ All three carry forward unchanged to Phase C/D: the
 move to a small shared header rather than being copy-pasted a second
 time (a call to make when Phase C actually starts, not decided here).
 
-### Phase C - Migrate `fastdist`
+### Phase C - Migrate `fastdist` (done)
 
-Most complex app: 18 options, the `sequence_translation_model`-building
-logic (`tstvratio`/`pyrtvratio`/`no-tstvratio`/`fixfactor`, several
-`_given` checks feeding conditional defaults), two enums
-(`input-format`×3, `output-format`×3, `distance-function`×4,
-`ambiguity-frequency-model`×2). Same verification discipline as Phase
-B: `RunExamples.sh` (examples 1-3), manual help/version/error check,
-plus the DNA-distance-model sanity checks already used in
-`lint_plan.md`'s Phase 7 (all four `-D` values) since this is
-hot-path-adjacent code.
+Migrated onto the same `FastdistOptions`-struct pattern as `fnj`.
+`--distance-function` binds directly to
+`dna_pairwise_sequence_likelihood.hpp`'s existing `sequence_model`
+domain enum (the same trick as `fnj`'s `--method`/`NJ_method`) - no
+new enum needed there, only for `input-format`/`output-format`
+(different value sets than `fnj`'s, so not shared) and
+`ambiguity-frequency-model` (no existing domain enum for `UNI`/`BASE`,
+so a small scoped enum was added). `fixfactor`/`seed`/`number-of-runs`
+all needed `_given` tracking, same as before - `fixfactor` is the
+interesting one: it has a default of `1.0` either way, but
+`useFixFactor` only applies it when `--fixfactor` was actually passed
+on the command line, so the struct field and the `_given` bool are
+genuinely both needed.
+
+`FastphyloHelpFormatter` (Phase B's `--help`-formatting fix) moved out
+of `fnj/main.cpp` into a new shared `apps/CliHelpFormatter.hpp`, now
+that a second app needs it - both `fnj` and `fastdist` targets gained
+`${CMAKE_CURRENT_SOURCE_DIR}/apps` on their include path for it.
+`fastdist`'s `.ggo`, its generated-code custom command, and every
+fastdist-specific line in `src/c++/CMakeLists.txt`'s gengetopt
+plumbing were removed the same way as `fnj`'s in Phase B;
+`fastprot`/`fastprot_mpi` are untouched and still build via gengetopt.
+
+Verified: full clean rebuild (three toolchains' worth of
+targets - CLI11 for fnj/fastdist, gengetopt still for fastprot -
+coexisting) + `ctest` (2/2) + `RunExamples.sh` (byte-identical,
+including fastdist's examples 1-3) + `RunCliChecks.sh` (extended with
+a `fastdist` `check_app` call, all pass) + a manual
+`--help`/`--version`/bad-enum-value/unknown-flag check against a
+captured pre-migration baseline (content and exit codes match,
+`--help` formatting matches the pattern signed off in Phase B) + the
+DNA-distance-model sanity check from `lint_plan.md`'s Phase 7 repeated
+here (`JC`/`K2P`/`TN93`/`HAMMING`, all fast and consistent) + a
+`--seed`-reproducibility check and a `--number-of-runs`+`xml`
+conflict check (both matched expected behavior exactly).
 
 ### Phase D - Migrate `fastprot` (and `fastprot_mpi`, if Phase A includes it)
 
