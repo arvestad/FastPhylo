@@ -341,22 +341,97 @@ further 20 resolved by removing the duplication, on top of the dead
 code and wraparound trick that are gone regardless of what
 `clang-tidy` reports).
 
-### Phase D - Remaining narrowing-conversions call sites
+### Phase D - Remaining narrowing-conversions call sites (done)
 
-Everything Phase B doesn't touch: `compute_Tamura_Nei`/
-`compute_Tamura_Nei_fixratio`'s `int strlen`/`numAs`/etc, which
-already (per `lint_plan.md`'s Phase 2 investigation) must stay `int`
-because of `strlen - sd.deletedPositions`'s signed subtraction - these
-get per-call-site explicit casts, not a type change. Sweep for
-whatever else remains after Phases B/C land, since some of the 352
-original findings could turn out to be unrelated to the DistanceMatrix
-family entirely.
+**Scope confirmed by direct discussion before starting**: of the 150
+findings remaining after Phase C, most turned out to be a genuinely
+different problem - 52+ were `double`->`float` precision loss (numeric
+formula code, e.g. `TamuraNei.cpp`'s ts/tv-ratio math), plus stream/
+`char` sentinel handling and libxml2 API calls, none of it about
+index types. Explicitly scoped this phase to *only* the
+DistanceMatrix-family-adjacent `size_t`->`int` sites, triaging each
+remaining finding by hand (not a blind sweep) into three buckets:
 
-### Phase E - Final verification
+- **Must-stay-`int`, cast at the call site** (the pattern the plan's
+  own text already anticipated for `compute_Tamura_Nei`/
+  `compute_Tamura_Nei_fixratio`'s `strlen`/`numAs`/`numCs`/`numGs`/
+  `numTs` params - confirmed these must stay `int` due to
+  `lint_plan.md`'s Phase 2 finding about signed subtraction inside
+  them): applied `static_cast<int>(...)` at all 11 call sites this
+  refactor's own Phase C code introduced in
+  `Sequences2DistanceMatrix.cpp`. Found one more real instance of the
+  same *class* of must-stay-signed constraint, not previously
+  documented: `NeighborJoining.cpp`'s `computeNJTree()` counts `i`
+  down through `0` with `i >= 0` - if `rows`/`columns` (fed by
+  `dm.getRows()`/`getColumns()`, both `size_t` since Phase B) were
+  ever widened instead of cast, the loop would never terminate (or
+  read out of bounds) once `i` underflowed. Cast at the two call
+  sites rather than widening, with a comment explaining why - the
+  wrong fix here would have been a real, live bug, not just a lint
+  regression.
+- **A `size_t` value assigned into `str2int_hashmap`'s `int` value
+  type** (`LeastSquaresFit.cpp`, `fnj/main.cpp`) - a project-wide
+  utility type, not part of the DistanceMatrix family itself, so
+  cast at the two call sites rather than changing the shared type.
+- **Genuinely safe to widen** - the `DataOutputStream::printRow()`
+  virtual hierarchy's `int row` parameter (base declaration +
+  `BinaryDmOutputStream`/`PhylipDmOutputStream`/`XmlOutputStream`
+  overrides, all four widened together to keep the override set
+  matching - a mismatched override would silently stop overriding
+  anything) and each implementation's `entriesPerRow` local variable,
+  all simple upward-counting loop bounds fed directly by `size_t`
+  values with no signed dependency. `PhylipDmOutputStream.cpp` had
+  one call site already `static_cast<int>`'d then immediately
+  `static_cast<size_t>`'d back for the loop condition - widening the
+  variable outright removed both casts, not just silenced the
+  warning. Same treatment for `applyFixFactor`/`applyFixFactorRow`
+  (`DistanceMatrix.cpp`/`FloatDistanceMatrix.cpp`/`DistanceRow.cpp`) -
+  their own free functions, directly part of this family, simple
+  upward loops.
 
-Full clean rebuild + `ctest` + `RunExamples.sh` + a benchmark re-run
-(this touches `fillMatrix*`, which is on the hot path measured by
-`bench_primitives`/`plan.md`'s speed2026a work).
+Explicitly left alone (confirmed unrelated by reading each site's
+actual code, not assumed from the finding's category label alone):
+`protein/Matrix.cpp`/`ExpectedDistance.cpp` (confirmed via grep - never
+touch `DistanceMatrix`/`FloatDistanceMatrix`/`DistanceRow`/
+`DistanceRow` at all, matches the plan's existing `protein/Matrix.hpp`
+exclusion), `DNA_b128_String.cpp` (its own internal capacity/index
+bookkeeping, unrelated), libxml2 API calls in both
+`XmlInputStream.cpp` files (`xmlRelaxNGNewMemParserCtxt`'s own
+signature, not project code), and `Sequences2DistanceMatrix.cpp`'s two
+pre-existing PHYLIP-parsing/bootstrap-resampling findings (unrelated
+to the fillMatrix family this plan is about).
+
+Measured via the same `clang-tidy` diff, on a freshly regenerated
+`compile_commands.json` after one run showed a spurious
+"Found compiler error(s)" on `TamuraNei.cpp` from a stale
+include-path cache (a tooling artifact, not a real code issue - the
+actual `cmake --build` succeeded with 0 errors throughout, and
+`TamuraNei.cpp` was never touched in this phase): **150 -> 111
+findings**, all 39 resolved sites confirmed to be the
+DistanceMatrix-adjacent `size_t`->`int` category; every remaining
+finding re-confirmed to be the out-of-scope `double`->`float`/stream/
+libxml2 categories, not a fix left undone.
+
+### Phase E - Final verification (done)
+
+Full clean rebuild (fresh `build/`, regenerated
+`compile_commands.json`): 0 errors. `ctest`: 2/2. `RunExamples.sh`:
+byte-identical. `RunCliChecks.sh`: 61/61. `bench_primitives`: healthy
+speedups (4x-56x depending on primitive/length), no regression - this
+phase's changes sit directly on the hot path `speed2026a`/
+`bench_primitives` measures. Plus a DNA-distance sanity check across
+all four models (`JC`/`K2P`/`TN93`/`HAMMING`) on a synthetic
+300-seq/8000bp dataset, matching `lint_plan.md`'s own Phase 7
+discipline - all fast (<0.1s) and consistent.
+
+All 5 phases of this plan are now complete. The `int`/`size_t`
+mismatch that motivated it is resolved everywhere it originated
+(`DistanceMatrix`/`FloatDistanceMatrix`/`DistanceRow`'s own accessors)
+and everywhere it was genuinely still visible in DistanceMatrix-
+adjacent code; a real, previously-uncaught, live bug
+(`fillMatrixRow_JC`'s inverted `--memory-efficient` behavior) was
+found and fixed as a direct consequence of the Phase C consolidation
+this plan called for from the start.
 
 ## Decisions
 

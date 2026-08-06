@@ -22,10 +22,10 @@ using std::endl;
 bool
 applyFixFactor(StrFloMatrix &dm, float fixFactor){
   float biggest = 0;
-  int size =dm.getSize();
+  size_t size =dm.getSize();
 
-  for ( int i = 0 ; i < size ; i++ ){
-    for ( int j = 0 ; j < size ; j++ ){
+  for ( size_t i = 0 ; i < size ; i++ ){
+    for ( size_t j = 0 ; j < size ; j++ ){
       float d = dm.getDistance(i,j);
       if ( isfinite(d) && d>biggest ){
         biggest = d;
@@ -35,8 +35,8 @@ applyFixFactor(StrFloMatrix &dm, float fixFactor){
 
   bool changed = false;
   biggest = biggest*fixFactor;
-  for ( int i = 0 ; i < size ; i++ ){
-    for ( int j = 0 ; j < size ; j++ ){
+  for ( size_t i = 0 ; i < size ; i++ ){
+    for ( size_t j = 0 ; j < size ; j++ ){
       float d = dm.getDistance(i,j);
       if ( !isfinite(d) || d<0 ){
         dm.setDistance(i,j,biggest);

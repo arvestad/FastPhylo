@@ -24,7 +24,7 @@ public:
   // rewrite; still shared here rather than duplicated, since the
   // ONEDIGIT/TENDIGIT-based formatting it uses is identical to
   // printPHYLIPfastSD's.
-  void printRow(StrFloRow &dm, std::string name, int row, bool mem_eff_flag) override;
+  void printRow(StrFloRow &dm, std::string name, size_t row, bool mem_eff_flag) override;
   // fastdist's main.cpp calls printHeader() unconditionally before its
   // printRow() streaming loop, needing it to actually write the count
   // line (there's no other point at which that line would be written in

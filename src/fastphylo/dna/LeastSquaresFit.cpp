@@ -218,7 +218,7 @@ computeL2(const StrDblMatrix &A,  const StrDblMatrix &B){
   
   str2int_hashmap name2Row(static_cast<int>(A.getSize()*1.7));
   for(size_t i=0 ; i<A.getSize() ; i++){
-    name2Row[A.getIdentifier(i)] = i;
+    name2Row[A.getIdentifier(i)] = static_cast<int>(i);
   }
 
   double l2sum = 0;
@@ -251,7 +251,7 @@ computeFloatL2(const StrFloMatrix &A,  const StrFloMatrix &B){
 
   str2int_hashmap name2Row(static_cast<int>(A.getSize()*1.7));
   for(size_t i=0 ; i<A.getSize() ; i++){
-    name2Row[A.getIdentifier(i)] = i;
+    name2Row[A.getIdentifier(i)] = static_cast<int>(i);
   }
 
   float l2sum = 0;

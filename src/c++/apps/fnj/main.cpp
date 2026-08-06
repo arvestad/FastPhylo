@@ -254,7 +254,7 @@ static void processRuns(DataInputStream &istream, tree2int_map &tree2count,
 			}
 		}
 		for(size_t namei=0; namei<dm.getSize(); namei++) {
-			name2id[dm.getIdentifier(namei)] = namei;
+			name2id[dm.getIdentifier(namei)] = static_cast<int>(namei);
 		}
 		buildTrees(dm, tree2count, methods, name2id);
 	}

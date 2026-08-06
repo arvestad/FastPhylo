@@ -508,7 +508,7 @@ fillMatrix_Hamming(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 			for ( size_t j = i+1 ; j < numSequences ; j++ ){
 				if ( si.hasAmbiguities() || seqs[j].hasAmbiguities() ){
 					simple_string_distance sd = extendedDistanceInfo.getDistance(i,j);
-					ML_string_distance ml_dist = compute_JC(strlen,sd);
+					ML_string_distance ml_dist = compute_JC(static_cast<int>(strlen),sd);
 					sd = DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(sd,ml_dist,si,seqs[j]);
 
 					//hamming
@@ -533,7 +533,7 @@ fillMatrix_JC(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 			return DNA_b128_String::computeDistance(a,b);
 		},
 		[strlen](simple_string_distance sd){
-			return compute_JC(strlen,sd);
+			return compute_JC(static_cast<int>(strlen),sd);
 		},
 		[](simple_string_distance sd, ML_string_distance ml, const DNA_b128_String &a, const DNA_b128_String &b){
 			return DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(sd,ml,a,b);
@@ -553,9 +553,9 @@ fillMatrix_K2P(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 		},
 		[strlen,&trans_model](simple_string_distance sd){
 			if ( trans_model.no_tstvratio ) {
-				return compute_K2P(strlen,sd);
+				return compute_K2P(static_cast<int>(strlen),sd);
 			}
-			return compute_K2P_fixratio(strlen,sd,trans_model.tstvratio);
+			return compute_K2P_fixratio(static_cast<int>(strlen),sd,trans_model.tstvratio);
 		},
 		[](simple_string_distance sd, ML_string_distance ml, const DNA_b128_String &a, const DNA_b128_String &b){
 			return DNA_b128_String::correctDistanceWithAmbiguitiesUsingTransitionProbabilities(sd,ml,a,b);
@@ -574,11 +574,20 @@ void fillMatrix_TN93(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs,
 			return DNA_b128_String::computeTAMURANEIDistance(a,b);
 		},
 		[strlen,freqs,&trans_model](TN_string_distance tn){
+			// compute_Tamura_Nei{,_fixratio}() must keep int strlen/numAs/
+			// numCs/numGs/numTs (lint_plan.md's Phase 2 investigation:
+			// strlen participates in a signed subtraction internally) -
+			// cast once here rather than changing their signatures.
+			const int strlenAsInt = static_cast<int>(strlen);
+			const int numAs = static_cast<int>(freqs.num_As_);
+			const int numCs = static_cast<int>(freqs.num_Cs_);
+			const int numGs = static_cast<int>(freqs.num_Gs_);
+			const int numTs = static_cast<int>(freqs.num_Ts_);
 			if ( trans_model.no_tstvratio ) {
-				return compute_Tamura_Nei(strlen,tn,freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_);
+				return compute_Tamura_Nei(strlenAsInt,tn,numAs,numCs,numGs,numTs);
 			}
-			return compute_Tamura_Nei_fixratio(strlen,tn,
-					freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_,
+			return compute_Tamura_Nei_fixratio(strlenAsInt,tn,
+					numAs,numCs,numGs,numTs,
 					trans_model.tstvratio, trans_model.pyrtvratio);
 		},
 		[&trans_model](TN_string_distance tn, ML_string_distance ml, const DNA_b128_String &a, const DNA_b128_String &b){
@@ -656,7 +665,7 @@ void fillMatrixRow_JC(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 			return DNA_b128_String::computeDistance(a,b);
 		},
 		[strlen](simple_string_distance sd){
-			return compute_JC(strlen,sd).distance;
+			return compute_JC(static_cast<int>(strlen),sd).distance;
 		});
 }
 
@@ -671,9 +680,9 @@ void fillMatrixRow_K2P(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 		},
 		[strlen,&trans_model](simple_string_distance sd){
 			if ( trans_model.no_tstvratio ) {
-				return compute_K2P(strlen,sd).distance;
+				return compute_K2P(static_cast<int>(strlen),sd).distance;
 			}
-			return compute_K2P_fixratio(strlen,sd,trans_model.tstvratio).distance;
+			return compute_K2P_fixratio(static_cast<int>(strlen),sd,trans_model.tstvratio).distance;
 		});
 }
 
@@ -688,11 +697,17 @@ void fillMatrixRow_TN93(StrFloRow &dm, std::vector<DNA_b128_String> &seqs,
 			return DNA_b128_String::computeTAMURANEIDistance(a,b);
 		},
 		[strlen,freqs,&trans_model](TN_string_distance tn){
+			// Same must-stay-int rationale as fillMatrix_TN93 above.
+			const int strlenAsInt = static_cast<int>(strlen);
+			const int numAs = static_cast<int>(freqs.num_As_);
+			const int numCs = static_cast<int>(freqs.num_Cs_);
+			const int numGs = static_cast<int>(freqs.num_Gs_);
+			const int numTs = static_cast<int>(freqs.num_Ts_);
 			if ( trans_model.no_tstvratio ) {
-				return compute_Tamura_Nei(strlen,tn,freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_).distance;
+				return compute_Tamura_Nei(strlenAsInt,tn,numAs,numCs,numGs,numTs).distance;
 			}
-			return compute_Tamura_Nei_fixratio(strlen,tn,
-					freqs.num_As_,freqs.num_Cs_,freqs.num_Gs_,freqs.num_Ts_,
+			return compute_Tamura_Nei_fixratio(strlenAsInt,tn,
+					numAs,numCs,numGs,numTs,
 					trans_model.tstvratio, trans_model.pyrtvratio).distance;
 		});
 }

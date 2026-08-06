@@ -131,7 +131,7 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
     fprintf(out, "%5lu\n", numNodes);
   }
 
-  int entriesPerRow = xml ? 0 : static_cast<int>(numNodes);
+  size_t entriesPerRow = xml ? 0 : numNodes;
 
   string row; // reused per row; one fwrite() flushes it at the end of each row
   row.reserve((xml ? numNodes : 0) * 26 + 32);
@@ -153,7 +153,7 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
       }
     }
 
-    for (size_t j = 0; j < static_cast<size_t>(entriesPerRow); j++) {
+    for (size_t j = 0; j < entriesPerRow; j++) {
       appendEntry(row, dm.getDistance(i, j), format);
     }
 
@@ -173,7 +173,7 @@ void PhylipDmOutputStream::printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, 
 // Not exercised by RunExamples.sh, so kept behaviorally identical to the
 // original per-entry implementation rather than risking an unverifiable
 // rewrite - see the header's comment.
-void PhylipDmOutputStream::printRow(StrFloRow &dm, string name, int row, bool mem_eff_flag) {
+void PhylipDmOutputStream::printRow(StrFloRow &dm, string name, size_t row, bool mem_eff_flag) {
 
   const size_t numNodes = dm.getColumns();
 
@@ -182,19 +182,19 @@ void PhylipDmOutputStream::printRow(StrFloRow &dm, string name, int row, bool me
   defstr[3] = '.';
   defstr[10] = 0;
 
-  int entriesPerRow = numNodes;
+  const size_t entriesPerRow = numNodes;
   fprintf(fp, "%-10s", name.c_str());
 
   float f = 0.0;
   if (!mem_eff_flag) {
-    for (size_t i = 0; i < static_cast<size_t>(row); ++i) {
+    for (size_t i = 0; i < row; ++i) {
       fprintf(fp, "%10f", f);
     }
   } else {
     row = 0;
   }
 
-  for (size_t j = row; j < static_cast<size_t>(entriesPerRow); j++) {
+  for (size_t j = row; j < entriesPerRow; j++) {
 
     float f = dm.getDistance(j);
 
