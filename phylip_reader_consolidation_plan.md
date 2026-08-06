@@ -232,16 +232,52 @@ genuine defensive feature specific to `SequenceTree.cpp`'s use case,
 kept as an opt-in parameter in the shared implementation rather than
 either dropped or forced onto the other two callers.
 
-### Phase B - Design the shared implementation
+### Phase B - Design the shared implementation (done)
 
-Once Phase A settles which differences are real, design one shared
-implementation (an algorithm plus a small data-access
-abstraction/callback covering "sequence *i*'s current length" / "the
-buffer to append line *i* into"), parameterized over whichever of the
-stop-condition and name-field-skip differences Phase A found to be
-genuine. If a difference turns out to be a no-op, don't parameterize
-over it - collapse it, same as the `stride`-chunking unifications
-already done in this file family.
+**Scope refinement, decided while designing, not assumed away**:
+Phase A's four differences all concern the *continuation-lines* phase
+specifically (stop condition, `fin.eof()`, name-field-skip) - none of
+them touch how each reader parses a sequence's *opening* line/name,
+which uses three genuinely different mechanisms per site (whitespace-
+delimited `fin >> names[i]` in `SequenceTree.cpp` vs. a fixed 10-char
+`getline` field in the other two) that Phase A never investigated with
+the same rigor. Consolidating *that* too would mean re-doing Phase A's
+investigation for a second, un-analyzed set of differences - out of
+scope for this plan as written. **This phase's shared implementation
+covers only the continuation-lines loop and its completion check** -
+the actual documented duplication (`anySequenceComplete()`/
+`readInterleavedLines()`/`readInterleavedContinuationLines()`), not
+the full top-level functions. Each reader keeps its own opening-line
+logic untouched.
+
+New header: `include/fastphylo/core/phylip_interleaved_reader.hpp`,
+holding two small templates:
+
+- `phylipAnySequenceComplete(numSequences, seqlen, getLength)` -
+  replaces the three near-identical `anySequenceComplete()`
+  definitions (and, per Phase A, `SequenceTree.cpp`'s single-pointer
+  `actualNodeString` check too, since the any-of-all form is both
+  equivalent under normal operation and safer).
+- `phylipReadInterleavedContinuation(fin, numSequences, seqlen,
+  getLength, appendLine)` - the shared "keep going until any position
+  is done" loop. **Uses the corrected form Phase A proved out - no
+  `|| fin.eof()`** - so the `DNA_b128_StringsFromPHYLIP` bug found in
+  Phase A cannot recur in any of the three migrated call sites.
+
+Deliberately *not* shared further: the per-position "read one line,
+validate, append" step stays a callback (`appendLine(fin, i)`) that
+each call site implements with its own mechanics (including that
+site's own retry-on-blank-line and end-of-file handling) - the
+mechanics genuinely differ (char-by-char validated reads vs.
+`getline`-then-process through three different, differently-
+permissive append functions), matching the same "don't force an
+unnatural unification" judgment already applied to
+`distance_matrix_refactor_plan.md`'s `fillMatrix_Hamming`.
+
+The name-field-skip difference (`SequenceTree.cpp` only) stays local
+to that reader's own `appendLine` callback, not parameterized into the
+shared templates at all - it's specific to one call site's mechanics,
+not a flag the shared loop itself needs to know about.
 
 ### Phase C - Migrate each call site, one at a time
 
