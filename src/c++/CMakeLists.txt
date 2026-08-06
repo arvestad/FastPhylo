@@ -329,6 +329,17 @@ add_executable(ProtSeqCompare_test ${FASTPHYLO_TESTS_DIR}/ProtSeqCompare_test.cp
 target_include_directories(ProtSeqCompare_test PRIVATE ${CMAKE_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
 add_test(NAME ProtSeqCompare_test COMMAND ProtSeqCompare_test)
 
+# phylip_reader_consolidation_plan.md, Phase C: SequenceTree::
+# mapSequencesOntoTree(istream&) has no live caller in any shipped
+# binary (only reachable via unbuilt simulated_phylogenies/ tools), so
+# this is the only way to verify that code path at all. Links the real
+# fastphylo library target directly (unlike ProtSeqCode_test/
+# ProtSeqCompare_test's narrow hand-picked source lists above) since
+# SequenceTree.cpp pulls in most of the core library.
+add_executable(SequenceTree_PhylipReader_test ${FASTPHYLO_TESTS_DIR}/SequenceTree_PhylipReader_test.cpp)
+target_link_libraries(SequenceTree_PhylipReader_test PRIVATE fastphylo)
+add_test(NAME SequenceTree_PhylipReader_test COMMAND SequenceTree_PhylipReader_test)
+
 # Phase 5 performance benchmark (plan.md). Not an add_test() - it prints
 # timing data, not a pass/fail result; see benchmarks/run_benchmarks.sh
 # for the reproducible one-command entry point.

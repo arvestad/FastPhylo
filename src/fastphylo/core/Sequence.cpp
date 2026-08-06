@@ -10,6 +10,7 @@
 //--------------------------------------------------
 
 #include "fastphylo/core/Sequence.hpp"
+#include "fastphylo/core/phylip_interleaved_reader.hpp"
 #include <array>
 #include <string>
 #include "fastphylo/core/log_utils.hpp"
@@ -18,63 +19,6 @@
 #include "fastphylo/core/stl_utils.hpp"
 
 using namespace std;
-
-namespace {
-// True once any single sequence has reached seqlen chars - the
-// (individually odd-looking, but preserved exactly) stopping condition
-// Sequence::readSequences()'s interleaved-line loop below checks in
-// two places. Same pattern, same rationale, as the near-identical
-// legacy PHYLIP readers in SequenceTree.cpp's mapSequencesOntoTree()
-// and Sequences2DistanceMatrix.cpp's DNA_b128_StringsFromPHYLIP() -
-// all three were evidently written from the same original template.
-bool anySequenceComplete(const std::vector<Sequence> &seqs, unsigned int seqlen) {
-  for (const auto &s : seqs) {
-    if (s.seq.length() == seqlen) {
-      return true;
-    }
-  }
-  return false;
-}
-
-// Sequences aren't necessarily complete after each has read its opening
-// line (see the caller's first loop, right before this is called) -
-// they may be spread out interleaving over several lines. Keeps
-// reading one more line per sequence until anySequenceComplete() says
-// at least one has reached seqlen.
-void readInterleavedLines(istream &fin, std::vector<Sequence> &seqs, int numSequences, unsigned int seqlen,
-                           char *line, int maxline) {
-  bool whileTrue = !anySequenceComplete(seqs, seqlen);
-
-  while ( whileTrue){
-    for ( int i = 0 ; i < numSequences ; i++ ){
-      Sequence &s = seqs[i];
-
-      fin.getline(line,maxline);
-
-      std::string myStr;
-      myStr=line;
-
-      if (myStr.empty()){
-        if( fin.eof() )
-          THROW_EXCEPTION("Sequence not of correct length: " << seqs[i].name<< "    length is " << seqs[i].seq.length());
-        i=i-1;
-        continue;
-      }
-
-      if ( !fin.fail() || fin.gcount()!=maxline-1 ){
-        appendAllNonChars(s.seq,line, fin.gcount() - (fin.eof()? 0: 1), ' ');
-      }
-
-      // check if any one of the sequences is read completely and has correct
-      // seq.length but some don't have that break the loop with error msg:
-      if ( anySequenceComplete(seqs, seqlen) ){
-        whileTrue = false;
-      }
-
-    }//end for loop
-  }
-}
-} // namespace
 
 hashstr Sequence::stringhasher;
 
@@ -319,7 +263,25 @@ Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin){
 //Mehmood's Changes here'
 		//The sequences aren't neccesarily on one line but my be spread out interleaving
 		//over several lines. Therefore we read until seqlen chars have been read.
-		readInterleavedLines(fin, seqs, numSequences, seqlen, line.data(), MAXLINE);
+		phylipReadInterleavedContinuation(fin, numSequences, static_cast<size_t>(seqlen),
+			[&seqs](int i) { return seqs[i].seq.length(); },
+			[&](istream &in, int i) {
+				Sequence &s = seqs[i];
+				while (true) {
+					in.getline(line.data(), MAXLINE);
+					std::string myStr = line.data();
+					if (myStr.empty()) {
+						if (in.eof()) {
+							THROW_EXCEPTION("Sequence not of correct length: " << seqs[i].name << "    length is " << seqs[i].seq.length());
+						}
+						continue;
+					}
+					if (!in.fail() || in.gcount() != MAXLINE-1) {
+						appendAllNonChars(s.seq, line.data(), in.gcount() - (in.eof()? 0: 1), ' ');
+					}
+					break;
+				}
+			});
 
 // Mehmood's changes end here
 
