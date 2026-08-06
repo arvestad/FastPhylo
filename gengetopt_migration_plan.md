@@ -251,9 +251,29 @@ coexisting) + `ctest` (2/2) + `RunExamples.sh` (byte-identical,
 including fnj-exercising examples 8/9) + the new
 `RunCliChecks.sh` (all checks pass) + a manual side-by-side of
 `fnj --help`/`--version`/a bad enum value/an unknown flag against the
-baseline captured pre-migration. **`--help` formatting sign-off is
-pending** per this plan's own "get sign-off on the first migrated app"
-rule - not yet repeated on Phase C/D until that lands.
+baseline captured pre-migration.
+
+**`--help` formatting sign-off: done, with three tweaks.** Reviewed
+side-by-side with Lasse; three changes requested and applied:
+1. A "Usage: " prefix before the usage line - CLI11's default
+   `Formatter::make_usage()` drops that label whenever a program name
+   is available (always true here), just printing `fnj [OPTIONS]
+   [FILE]` bare. Fixed with a small `FastphyloHelpFormatter :
+   CLI::Formatter` override of `make_usage()` that prepends `"Usage:
+   "` to the name before delegating to the base implementation - named
+   generically (not `Fnj...`) since it's meant to be reused verbatim
+   by every later-migrated app, not fnj-specific.
+2. Blank lines around the `Usage:`/`POSITIONALS:` sections - already
+   present in CLI11's default output (confirmed by inspection, not
+   assumed), no change needed.
+3. The app description's first word capitalized (`"builds
+   phylogenetic trees"` -> `"Builds phylogenetic trees"`) - a
+   one-word string literal change.
+
+All three carry forward unchanged to Phase C/D: the
+`FastphyloHelpFormatter` class, once a second app needs it, should
+move to a small shared header rather than being copy-pasted a second
+time (a call to make when Phase C actually starts, not decided here).
 
 ### Phase C - Migrate `fastdist`
 

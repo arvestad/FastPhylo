@@ -65,13 +65,27 @@ struct FnjOptions {
 	bool inputfile_given = false;
 };
 
+// gengetopt's --help always led with "Usage: <name> [OPTION]...";
+// CLI11's default Formatter drops the "Usage: " label whenever a
+// program name is available (which it always is here), so this small
+// override reinstates it - the one --help-formatting request from
+// review of fnj's migration (Phase B) worth carrying into every
+// later-migrated app.
+class FastphyloHelpFormatter : public CLI::Formatter {
+  public:
+	std::string make_usage(const CLI::App *app, std::string name) const override {
+		return CLI::Formatter::make_usage(app, "Usage: " + name);
+	}
+};
+
 // Builds the CLI11 App and parses argv into a FnjOptions. Exits the
 // process directly on --help/--version/a parse error, same as
 // gengetopt's cmdline_parser() did - kept as its own function so
 // main() reads the same as it did pre-migration.
 static FnjOptions parseArgs(int argc, char **argv) {
 	FnjOptions opts;
-	CLI::App app{"builds phylogenetic trees", "fnj"};
+	CLI::App app{"Builds phylogenetic trees", "fnj"};
+	app.formatter(std::make_shared<FastphyloHelpFormatter>());
 	app.footer("\nExample usage of this program can be found at its home page\n"
 	           "http://fastphylo.sourceforge.net/\n");
 	app.set_version_flag("-V,--version", FNJ_VERSION);
