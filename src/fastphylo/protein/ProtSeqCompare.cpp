@@ -13,9 +13,27 @@
 #include <simde/x86/sse2.h>
 #endif
 
+// __builtin_popcount is a GCC/Clang compiler builtin (works identically
+// on the ARM/simde path too - it isn't SSE-specific, every GCC/Clang
+// target supports it), not part of any standard header, and MSVC does
+// not provide it at all. __popcnt (<intrin.h>) is MSVC's equivalent
+// intrinsic. clang-cl defines _MSC_VER but still supports the GCC
+// builtin natively, so it is excluded from the MSVC branch.
+#if defined(_MSC_VER) && !defined(__clang__)
+#include <intrin.h>
+#endif
+
 namespace ProtSeqCode {
 
   namespace {
+
+    inline unsigned int popcount16(unsigned int mask) {
+#if defined(_MSC_VER) && !defined(__clang__)
+      return __popcnt(mask);
+#else
+      return static_cast<unsigned int>(__builtin_popcount(mask));
+#endif
+    }
 
     // Count mismatching bytes between a and b over exactly n bytes.
     // 16 bytes/iteration via SSE2 pcmpeqb+pmovmskb+popcount (NEON on
@@ -30,7 +48,7 @@ namespace ProtSeqCode {
         __m128i eq = _mm_cmpeq_epi8(va, vb);
         auto eq_mask = static_cast<unsigned int>(_mm_movemask_epi8(eq));
         unsigned int mismatch_mask = (~eq_mask) & 0xFFFFU;
-        mismatches += static_cast<std::size_t>(__builtin_popcount(mismatch_mask));
+        mismatches += static_cast<std::size_t>(popcount16(mismatch_mask));
       }
 
       for (; i < n; i++) {
