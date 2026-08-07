@@ -9,7 +9,6 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <libxml/tree.h>
 
 enum readstatus { DM_READ = 1, END_OF_RUN = 2, END_OF_RUNS = 3, ERROR = 4 };
 
