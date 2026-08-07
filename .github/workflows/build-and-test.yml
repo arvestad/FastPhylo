@@ -43,13 +43,6 @@ jobs:
               -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
               -DVCPKG_TARGET_TRIPLET=x64-windows
     runs-on: ${{ matrix.os }}
-    # Windows CI is new and unverified against a real MSVC/vcpkg build
-    # (no local Windows machine to test against beforehand, per
-    # github_actions_release_builds_plan.md's Phase D) - continue-on-
-    # error while it's being stabilized so a real MSVC/vcpkg surprise
-    # doesn't turn the whole check red on every push during that.
-    # Remove once confirmed green.
-    continue-on-error: ${{ matrix.os == 'windows-latest' }}
     defaults:
       run:
         # Uniform across all three OSes (Windows GitHub-hosted runners
