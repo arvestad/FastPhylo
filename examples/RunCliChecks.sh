@@ -28,23 +28,31 @@ check() {
     fi
 }
 
-# $1 = app name, $2 = expected exact "--version" output, remaining
-# args = long option names ("outfile", not "--outfile") expected to
-# appear in --help output.
+# $1 = app name, remaining args = long option names ("outfile", not
+# "--outfile") expected to appear in --help output. --version is
+# checked against "$app <anything>" rather than an exact string -
+# PACKAGE_VERSION is no longer a fixed number to hardcode here (it is
+# git-describe-derived for an ordinary build, or tag-derived for a
+# release build - see github_actions_release_builds_plan.md's Phase E),
+# just a format/plumbing check that the app name made it through.
 check_app() {
     local app="$1"
-    local expected_version="$2"
-    shift 2
+    shift
 
     echo "== $app =="
 
     check "$app --version exits 0" "$app" --version
-    if [ "$("$app" --version 2>&1)" = "$expected_version" ]; then
-        echo "  OK: $app --version prints '$expected_version'"
-    else
-        echo "  FAIL: $app --version printed '$("$app" --version 2>&1)', expected '$expected_version'"
-        failures=$((failures + 1))
-    fi
+    local actual_version
+    actual_version="$("$app" --version 2>&1)"
+    case "$actual_version" in
+        "$app "*)
+            echo "  OK: $app --version starts with '$app '"
+            ;;
+        *)
+            echo "  FAIL: $app --version printed '$actual_version', expected it to start with '$app '"
+            failures=$((failures + 1))
+            ;;
+    esac
 
     check "$app --help exits 0" "$app" --help
     for opt in "$@"; do
@@ -71,17 +79,17 @@ check_app() {
     fi
 }
 
-check_app fnj "fnj 1.0.10" outfile input-format output-format print-counts \
+check_app fnj outfile input-format output-format print-counts \
     analyze-run-number method dm-per-run number-of-runs bootstraps \
     print-relaxng-input print-relaxng-output
 
-check_app fastdist "fastdist 1.0.10" outfile input-format memory-efficient \
+check_app fastdist outfile input-format memory-efficient \
     output-format distance-function bootstraps no-incl-orig seed \
     no-ambiguities no-ambig-resolve no-transprob ambiguity-frequency-model \
     tstvratio pyrtvratio no-tstvratio fixfactor number-of-runs \
     print-relaxng-input print-relaxng-output
 
-check_app fastprot "fastprot 1.0.10" outfile input-format memory-efficient \
+check_app fastprot outfile input-format memory-efficient \
     output-format bootstraps no-incl-orig seed distance-function model-file \
     remove-indels maximum-likelihood sd pfam speed print-relaxng-input \
     print-relaxng-output

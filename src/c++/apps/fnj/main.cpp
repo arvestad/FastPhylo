@@ -64,7 +64,10 @@ enum class OutputFormat { Newick, Xml };
 // to the top-level CMakeLists.txt's PACKAGE_VERSION="1.0.3") - kept
 // exactly as-is rather than "fixed" to match PACKAGE_VERSION, since
 // that would be a behavior change outside this migration's scope.
-static constexpr const char *FNJ_VERSION = "fnj 1.0.10";
+// github_actions_release_builds_plan.md's Phase E: PACKAGE_VERSION
+// (config.h) is the single source of truth now, not an independently
+// hardcoded number here.
+static const std::string FNJ_VERSION = std::string("fnj ") + PACKAGE_VERSION;
 
 struct FnjOptions {
 	std::string outfile;

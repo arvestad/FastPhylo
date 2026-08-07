@@ -73,7 +73,10 @@ static void setStdoutBinaryMode() {}
 enum class InputFormat { Fasta, Phylip, Xml };
 enum class OutputFormat { Phylip, Xml, Binary };
 
-static constexpr const char *FASTPROT_MPI_VERSION = "fastprot_mpi 1.0.0";
+// github_actions_release_builds_plan.md's Phase E: PACKAGE_VERSION
+// (config.h) is the single source of truth now, not an independently
+// hardcoded number here.
+static const std::string FASTPROT_MPI_VERSION = std::string("fastprot_mpi ") + PACKAGE_VERSION;
 
 struct FastprotMpiOptions {
 	std::string outfile;

@@ -17,10 +17,41 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 enable_testing() # code_tests/ProtSeqCode_test and ProtSeqCompare_test as of speed2026a
 
-set(CPACK_PACKAGE_VERSION_MAJOR "1")
-set(CPACK_PACKAGE_VERSION_MINOR "0")
-set(CPACK_PACKAGE_VERSION_PATCH "3")
-set(PACKAGE_VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH})
+# github_actions_release_builds_plan.md's Phase A/E: the tag drives the
+# version, not the other way round - no checked-in number to keep in
+# sync with a release tag by hand, so no way for the two to drift
+# apart. Three ways PACKAGE_VERSION can end up set, in priority order:
+#
+# 1. Passed explicitly via -DPACKAGE_VERSION=X.Y.Z - what the
+#    tag-triggered release workflow does, reading the pushed git tag
+#    (v1.2.0 -> 1.2.0) and overriding whatever's checked in here.
+# 2. Derived live via `git describe --tags --always --dirty` when a
+#    .git directory is present (every ordinary dev/CI build - push/PR
+#    CI, a local `cmake && make`) - informative strings like
+#    "1.0.3-42-gabc1234", not a single frozen number nobody updates.
+# 3. The static fallback below, only reached when neither applies -
+#    e.g. a `make package_source` tarball extracted and built later,
+#    with no git history at all to describe.
+if(NOT DEFINED PACKAGE_VERSION)
+  find_package(Git QUIET)
+  if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      OUTPUT_VARIABLE PACKAGE_VERSION
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      RESULT_VARIABLE GIT_DESCRIBE_RESULT
+      ERROR_QUIET
+    )
+    if(NOT GIT_DESCRIBE_RESULT EQUAL 0)
+      unset(PACKAGE_VERSION)
+    endif()
+  endif()
+endif()
+if(NOT PACKAGE_VERSION)
+  set(PACKAGE_VERSION "1.0.3") # static fallback - no git info available
+endif()
+message(STATUS "fastphylo PACKAGE_VERSION: ${PACKAGE_VERSION}")
 
 option(BUILD_WITH_MPI "Build the MPI version of fastprot" OFF)
 option(BUILD_DOCBOOK "Build Docbook html documentation" OFF)
@@ -51,6 +82,10 @@ add_subdirectory(docs)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2 (>= 2.6.16 )")
 
 
+# Set directly rather than via CPACK_PACKAGE_VERSION_MAJOR/MINOR/PATCH
+# - PACKAGE_VERSION (above) isn't always a clean MAJOR.MINOR.PATCH
+# triplet (a git-describe dev build looks like "1.0.3-42-gabc1234").
+set(CPACK_PACKAGE_VERSION ${PACKAGE_VERSION})
 set(CPACK_SOURCE_GENERATOR TGZ;ZIP)
 set(CPACK_PACKAGE_CONTACT "arve@su.se")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Fastphylo is software project containing the implementations of the algorithms \"Fast Computation of Distance Estimators\", \"Fast Neighbor Joining\", and more.")

@@ -60,7 +60,10 @@ enum class OutputFormat { Phylip, Xml, Binary };
 // The .ggo's own "version" line (independently pinned there, not tied
 // to the top-level CMakeLists.txt's PACKAGE_VERSION="1.0.3") - kept
 // exactly as-is, same reasoning as fnj's/fastdist's *_VERSION.
-static constexpr const char *FASTPROT_VERSION = "fastprot 1.0.10";
+// github_actions_release_builds_plan.md's Phase E: PACKAGE_VERSION
+// (config.h) is the single source of truth now, not an independently
+// hardcoded number here.
+static const std::string FASTPROT_VERSION = std::string("fastprot ") + PACKAGE_VERSION;
 
 struct FastprotOptions {
 	std::string outfile;

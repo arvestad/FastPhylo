@@ -75,7 +75,10 @@ enum class AmbiguityFreqModel { Uni, Base };
 // The .ggo's own "version" line (independently pinned there, not tied
 // to the top-level CMakeLists.txt's PACKAGE_VERSION="1.0.3") - kept
 // exactly as-is, same reasoning as fnj's FNJ_VERSION.
-static constexpr const char *FASTDIST_VERSION = "fastdist 1.0.10";
+// github_actions_release_builds_plan.md's Phase E: PACKAGE_VERSION
+// (config.h) is the single source of truth now, not an independently
+// hardcoded number here.
+static const std::string FASTDIST_VERSION = std::string("fastdist ") + PACKAGE_VERSION;
 
 struct FastdistOptions {
 	std::string outfile;
