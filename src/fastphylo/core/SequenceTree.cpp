@@ -479,13 +479,20 @@ SequenceTree::mapSequencesOntoTree(std::istream &fin){
       return sequences[i]->length();
     },
     [&](istream &in, int i) {
+      // Skip any fully blank separator line(s) some interleaved PHYLIP
+      // variants put between blocks - readSequenceLine() itself already
+      // skips leading whitespace *within* a line generically, so no
+      // further special-casing of the line's first character is
+      // needed. This used to also blindly discard exactly 10 raw bytes
+      // whenever a continuation line didn't start with whitespace, on
+      // the assumption every continuation line repeats the (possibly
+      // blank) fixed-width name field - a stricter, older PHYLIP
+      // convention that made this reader unable to parse this
+      // project's own plain, unpadded continuation lines (the ones
+      // Sequences2DistanceMatrix.cpp/Sequence.cpp already read
+      // correctly, and the only convention any of this project's real
+      // fixtures actually use).
       char c = in.peek();
-      if (isspace(c) == 0) {
-        //skip first 10 chars
-        for (int j = 10; j != 0; j--) {
-          in.get();
-        }
-      }
       while (c == '\n') {
         c = in.get();
       }

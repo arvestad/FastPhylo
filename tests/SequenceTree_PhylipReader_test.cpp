@@ -1,32 +1,30 @@
 // Regression test for SequenceTree::mapSequencesOntoTree(std::istream&)
-// (SequenceTree.cpp), the one of the three legacy interleaved-PHYLIP
-// readers with no live caller in any shipped binary - see
-// phylip_reader_consolidation_plan.md. Written as a real, committed,
-// CMake-wired test as part of that plan's Phase C, since this is the
-// only way to verify this code path at all (its only other caller,
-// Simulator.cpp, is itself only reachable from the unbuilt
-// simulated_phylogenies/ tools).
+// (SequenceTree.cpp) - has no live caller anywhere in the codebase
+// (its only two callers were dead simulator-related code, deleted -
+// see project history), so this is the only way to verify this code
+// path at all.
 //
-// Two things discovered writing this test, worth recording since
-// nothing else in the project could have surfaced them without a live
-// caller to exercise this code against:
-// - readSequenceLine() normalizes nucleotide characters to lowercase
-//   (via nucleotide2char()) - every expected string below is
-//   lowercase, not a copy-paste of the uppercase input.
-// - This reader's continuation-line convention is genuinely
-//   incompatible with the plain, unpadded continuation lines the rest
-//   of this project's PHYLIP files use (the ones
-//   Sequences2DistanceMatrix.cpp/Sequence.cpp read correctly) - its
-//   peek-based name-field-skip logic (Phase A's difference #4) treats
-//   any continuation line starting with non-whitespace as having a
-//   stray 10-character name field to discard, so a plain
-//   already-verified-working example file, fed to this reader
-//   instead, throws mid-read. Confirmed by direct experiment - a
-//   plain continuation line throws `Bad character`; the same content
-//   padded with 10 leading spaces (as if every continuation line
-//   repeated a blank name field) reads correctly. All multi-line
-//   fixtures below use that space-padded form, since it's the only
-//   one this reader actually supports.
+// One thing discovered writing this test, worth recording since
+// nothing else in the project could have surfaced it without a live
+// caller to exercise this code against: readSequenceLine() normalizes
+// nucleotide characters to lowercase (via nucleotide2char()) - every
+// expected string below is lowercase, not a copy-paste of the
+// uppercase input.
+//
+// This reader used to be genuinely incompatible with the plain,
+// unpadded continuation lines the rest of this project's PHYLIP files
+// use (the ones Sequences2DistanceMatrix.cpp/Sequence.cpp already read
+// correctly) - a peek-based name-field-skip blindly discarded 10 raw
+// bytes whenever a continuation line didn't start with whitespace, on
+// the assumption every line repeats a fixed-width name field (a
+// stricter, older PHYLIP convention nothing in this project actually
+// produces). Since this function has no live caller and that stricter
+// convention added real incompatibility cost for no benefit, the skip
+// was removed rather than kept - see SequenceTree.cpp's
+// mapSequencesOntoTree(istream&). The multi-line fixtures below use
+// plain, flush-left continuation lines (this project's actual
+// convention) - the exact form that used to throw `Bad character`
+// mid-read.
 
 #undef NDEBUG
 #include <cassert>
@@ -76,9 +74,11 @@ static void test_single_line_sequences() {
 
 // Forces the interleaved-continuation loop (phylipReadInterleavedContinuation)
 // to actually run, exercising the migrated shared implementation rather
-// than just the opening-line read. Continuation lines are padded with
-// 10 leading spaces - see the file header comment for why plain,
-// unpadded ones (this project's usual convention) don't work here.
+// than just the opening-line read. Continuation lines are plain and
+// flush-left, no leading whitespace at all - this project's actual
+// convention, and the exact form that used to throw `Bad character`
+// before the peek-based 10-char name-field skip was removed (see the
+// file header comment).
 static void test_multiline_interleaved_sequences() {
 	SequenceTree tree = makeThreeLeafTree();
 
@@ -87,9 +87,9 @@ static void test_multiline_interleaved_sequences() {
 	    "Alpha     ACGTACGTAC\n"
 	    "Beta      TTTTAAAATT\n"
 	    "Gamma     GGGGCCCCGG\n"
-	    "          ACGTAC\n"
-	    "          TTAATT\n"
-	    "          GGCCCC\n");
+	    "ACGTAC\n"
+	    "TTAATT\n"
+	    "GGCCCC\n");
 	tree.mapSequencesOntoTree(phylip);
 
 	SequenceTree::NodeVector nodes;
@@ -134,11 +134,11 @@ static void test_unmatched_name_does_not_corrupt_real_sequences() {
 	    "Fake1     AAAAAAAAAAAAAAAA\n"
 	    "Gamma     GGGGCCCCGG\n"
 	    "Fake2     CCCCCCCCCCCCCCCC\n"
-	    "          ACGTAC\n"
-	    "          TTAATT\n"
-	    "          AAAAAA\n"
-	    "          GGCCCC\n"
-	    "          CCCCCC\n");
+	    "ACGTAC\n"
+	    "TTAATT\n"
+	    "AAAAAA\n"
+	    "GGCCCC\n"
+	    "CCCCCC\n");
 	tree.mapSequencesOntoTree(phylip);
 
 	SequenceTree::NodeVector nodes;
