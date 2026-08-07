@@ -279,13 +279,22 @@ target_link_libraries(fastphylo PUBLIC ${FASTPHYLO_XML_LIBS})
 
 find_package(Threads REQUIRED)
 
+# libm is a separate library needing explicit linking on Unix (sin/cos/
+# sqrt/etc historically lived outside libc there); on Windows every
+# math function is already part of the standard CRT and there is no
+# "m.lib" to link against at all - target_link_libraries(... m ...)
+# there fails at link time with "cannot open input file 'm.lib'".
+if(UNIX)
+  set(FASTPHYLO_MATH_LIB m)
+endif()
+
 add_executable(fastdist ${FASTDIST_SRCS} ${FASTDIST_XML_SRCS})
 target_include_directories(fastdist PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastdist
   ${CMAKE_CURRENT_SOURCE_DIR}/apps
   ${CMAKE_SOURCE_DIR}/third_party
 )
-target_link_libraries(fastdist PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS})
+target_link_libraries(fastdist PRIVATE fastphylo ${FASTPHYLO_MATH_LIB} ${FASTPHYLO_XML_LIBS})
 
 add_executable(fnj ${FNJ_SRCS} ${FNJ_XML_SRCS})
 target_include_directories(fnj PRIVATE
@@ -293,7 +302,7 @@ target_include_directories(fnj PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps
   ${CMAKE_SOURCE_DIR}/third_party
 )
-target_link_libraries(fnj PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS})
+target_link_libraries(fnj PRIVATE fastphylo ${FASTPHYLO_MATH_LIB} ${FASTPHYLO_XML_LIBS})
 
 
 find_package(BLAS REQUIRED)
@@ -304,7 +313,7 @@ target_include_directories(fastprot PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps
   ${CMAKE_SOURCE_DIR}/third_party
 )
-target_link_libraries(fastprot PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK Threads::Threads)
+target_link_libraries(fastprot PRIVATE fastphylo ${FASTPHYLO_MATH_LIB} ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK Threads::Threads)
 
 
 if(BUILD_WITH_MPI)
@@ -314,7 +323,7 @@ if(BUILD_WITH_MPI)
     ${CMAKE_CURRENT_SOURCE_DIR}/apps
     ${CMAKE_SOURCE_DIR}/third_party
   )
-  target_link_libraries(fastprot_mpi PRIVATE fastphylo m ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK Threads::Threads MPI::MPI_CXX)
+  target_link_libraries(fastprot_mpi PRIVATE fastphylo ${FASTPHYLO_MATH_LIB} ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK Threads::Threads MPI::MPI_CXX)
 endif(BUILD_WITH_MPI)
 
 
