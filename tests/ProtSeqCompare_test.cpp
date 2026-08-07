@@ -23,6 +23,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <random>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -91,27 +92,30 @@ void check_against_reference(const std::string &s1, const std::string &s2) {
   assert(got_tally == want_tally);
 }
 
-std::string random_seq(std::size_t len, unsigned int *seed) {
+std::string random_seq(std::size_t len, std::mt19937 &rng) {
   std::string s;
   s.reserve(len);
   for (std::size_t i = 0; i < len; i++) {
-    s += FULL_ALPHABET[rand_r(seed) % FULL_ALPHABET.size()];
+    s += FULL_ALPHABET[rng() % FULL_ALPHABET.size()];
 }
   return s;
 }
 
+// rand_r() is POSIX-only (no MSVC equivalent); std::mt19937 is standard
+// C++11, portable, and reproducible given the same seed - a strict
+// improvement for test code, not just a portability patch.
 void test_random_pairs_various_lengths_and_mismatch_rates() {
-  unsigned int seed = 12345;
+  std::mt19937 rng(12345);
   const std::array<std::size_t, 11> lengths = { 0, 1, 2, 17, 31, 32, 33, 100, 347, 1000, 3001 };
   for (unsigned long len : lengths) {
-    std::string s1 = random_seq(len, &seed);
+    std::string s1 = random_seq(len, rng);
     // low mismatch: copy s1 then perturb a few positions
     std::string s2_low = s1;
     for (std::size_t k = 0; k < len / 10; k++) {
-      s2_low[rand_r(&seed) % len] = FULL_ALPHABET[rand_r(&seed) % FULL_ALPHABET.size()];
+      s2_low[rng() % len] = FULL_ALPHABET[rng() % FULL_ALPHABET.size()];
 }
     // high mismatch: independent random sequence
-    std::string s2_high = random_seq(len, &seed);
+    std::string s2_high = random_seq(len, rng);
     check_against_reference(s1, s1); // identical
     if (len > 0) {
       check_against_reference(s1, s2_low);

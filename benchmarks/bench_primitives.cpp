@@ -22,6 +22,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
+#include <random>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -35,20 +36,23 @@ namespace {
 
 constexpr std::string_view CANONICAL = "ARNDCQEGHILKMFPSTWYV";
 
-std::string random_seq(std::size_t len, unsigned int *seed) {
+// rand_r() is POSIX-only (no MSVC equivalent); std::mt19937 is standard
+// C++11, portable, and reproducible given the same seed.
+std::string random_seq(std::size_t len, std::mt19937 &rng) {
   std::string s;
   s.reserve(len);
   for (std::size_t i = 0; i < len; i++) {
-    s += CANONICAL[rand_r(seed) % CANONICAL.size()];
+    s += CANONICAL[rng() % CANONICAL.size()];
 }
   return s;
 }
 
-std::string diverge(const std::string &s, double rate, unsigned int *seed) {
+std::string diverge(const std::string &s, double rate, std::mt19937 &rng) {
   std::string out = s;
+  std::uniform_real_distribution<double> unit_interval(0.0, 1.0);
   for (char & i : out) {
-    if ((rand_r(seed) / static_cast<double>(RAND_MAX)) < rate) {
-      i = CANONICAL[rand_r(seed) % CANONICAL.size()];
+    if (unit_interval(rng) < rate) {
+      i = CANONICAL[rng() % CANONICAL.size()];
 }
 }
   return out;
@@ -126,9 +130,9 @@ int main() { // NOLINT(bugprone-exception-escape) - a benchmark binary crashing 
   std::cout << "primitive,length,old_median_us,old_q1_us,old_q3_us,new_median_us,new_q1_us,new_q3_us,speedup\n";
 
   for (unsigned long len : lengths) {
-    unsigned int seed = 42 + static_cast<unsigned int>(len);
-    std::string s1 = random_seq(len, &seed);
-    std::string s2 = diverge(s1, DIVERGENCE, &seed);
+    std::mt19937 rng(42 + static_cast<unsigned int>(len));
+    std::string s1 = random_seq(len, rng);
+    std::string s2 = diverge(s1, DIVERGENCE, rng);
 
     std::vector<std::uint8_t> c1;
     std::vector<std::uint8_t> c2;
