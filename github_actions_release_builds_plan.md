@@ -1,5 +1,14 @@
 # Plan: GitHub Actions cross-platform release builds
 
+## Status
+
+**A-D done (2026-08-07)**: `build-and-test.yml` now runs on Linux,
+macOS, and Windows on every push/PR, all three green. Ten real,
+disclosed portability/behavior bugs found and fixed along the way -
+see Phase D below for the full list. **E-F not started**: artifact
+packaging, the tag-triggered release job, and the version-source
+mechanism (settled in Phase A, not yet implemented) remain.
+
 ## Goal
 
 Automated GitHub Actions builds producing distributable binaries for
@@ -224,36 +233,116 @@ Phase C so it isn't discovered as a surprise CI failure instead.
 
 ## Phases
 
-### Phase A - Settle the open questions above
+### Phase A - DONE (settle the open questions above)
 
-No code changes. Answers here shape every later phase - in particular
-whether Windows/macOS need full static linking (closer to reviving
-`STATIC`'s original *intent*, properly this time) or whether dynamic
-linking against each OS's own libraries is good enough.
+No code changes. See "Open questions - SETTLED" above for the full
+record: dynamic linking, `*-latest` for testing / `ubuntu-22.04` for
+the Linux release leg, two separate workflows, tag-drives-version.
 
-### Phase B - Fix `build-and-test.yml`'s Linux job in place (moot)
+### Phase B - moot
 
 Was going to add `apt-get install gengetopt` to remove the FTP
 self-build dependency from every CI run - no longer needed,
 `gengetopt_migration_plan.md` removed gengetopt from the build
-entirely, so this CI job has nothing left to fix here.
+entirely, so this CI job had nothing left to fix here.
 
-### Phase C - Add macOS to the matrix
+### Phase C - DONE (add macOS to the matrix)
 
-`macos-latest`, no additional dependency installation needed if Phase
-A settles on dynamic linking (Accelerate + system libxml2 already
-sufficient, per the current default build) - same
-configure/build/ctest/RunExamples.sh shape as the Linux job.
+`macos-latest` added to `build-and-test.yml`'s matrix. Only new
+dependency needed was `simde` (`brew install`) - Accelerate and system
+libxml2 already sufficient, matching the dynamic-linking decision.
+Verified green immediately (this session's own dev machine is Apple
+Silicon, so this path had effectively already been exercised all
+along). Also switched the build step to `cmake --build build
+--parallel` (portable) instead of `-j"$(nproc)"` (Linux/GNU-only,
+would have failed on macOS and Windows both).
 
-### Phase D - Add Windows to the matrix
+### Phase D - DONE (add Windows to the matrix)
 
-The real work: `vcpkg` in manifest mode (a `vcpkg.json` listing
-libxml2 and a BLAS/LAPACK provider - gengetopt no longer needed here,
-removed entirely by `gengetopt_migration_plan.md`), `CMAKE_TOOLCHAIN_FILE`
-wiring, and verifying `RunExamples.sh` actually runs correctly under
-Windows path/line-ending conventions - this project's file I/O has had
-real CRLF-handling surprises before (see project memory from the lint
-pass), worth specifically checking here rather than assuming it's fine.
+The real work, and it was real: 12 CI iterations to reach fully green,
+with no local Windows machine to test any of it against beforehand.
+`vcpkg` in manifest mode (`vcpkg.json` - `lapack-reference` only, not
+libxml2, per Phase A) via a relative `CMAKE_TOOLCHAIN_FILE` path
+(`${{ github.workspace }}` is not reliably available inside
+`strategy.matrix` - found the hard way on attempt 1), Ninja instead of
+the default Visual Studio generator (single-config output path,
+matching Linux/macOS), `ilammy/msvc-dev-cmd` for the compiler
+environment, and vcpkg binary caching via the GitHub Actions cache
+(`x-gha`) so `lapack-reference`'s ~15-minute cold Fortran build only
+happens once, not on every run.
+
+Six distinct, real source-level MSVC/Windows portability bugs found
+and fixed along the way - none of them CI plumbing, all genuine
+first-time-ever-Windows-compiled defects:
+
+1. `BitVector.cpp`: `unsigned long &` bound to a `vector<size_t>`
+   element - silently identical types on Linux/macOS (LP64), genuinely
+   different types on Windows (LLP64). Fixed with `auto &`.
+2. `ambiguity_nucleotide.hpp`/`DNA_b128_String.cpp`: 22 occurrences of
+   C99 compound-literal syntax (`(Type){...}`), never valid standard
+   C++, silently accepted by GCC/Clang as an extension. Fixed by
+   dropping the invalid parens (`Type{...}`, standard brace-init).
+   Also removed `sse2_wrapper.h`'s dead `getticks()` (GCC inline
+   assembly, zero callers, no MSVC equivalent).
+3. `NeighborJoining.hpp`: 10 C99 Variable-Length-Array declarations
+   sized by a runtime value, across 6 function templates - never valid
+   standard C++ either, same GCC/Clang-extension story. Fixed with
+   `std::vector<T>` - the more idiomatic modern C++ answer anyway, not
+   just a portability patch.
+4. `ProtSeqCompare.cpp`: `__builtin_popcount` (GCC/Clang builtin, no
+   MSVC equivalent) in genuinely hot-loop SIMD comparison code - fixed
+   with a small `popcount16()` wrapper (`__popcnt` from `<intrin.h>` on
+   real MSVC, the GCC builtin everywhere else including clang-cl).
+5. `rand_r()` (POSIX-only) in `ProtSeqCompare_test.cpp` and
+   `bench_primitives.cpp` - switched to `std::mt19937`, standard C++11
+   and more reproducible than `rand_r()` ever was.
+6. `isatty()`/`STDIN_FILENO` (POSIX-only, `<unistd.h>` does not exist
+   on MSVC) in `fnj`/`fastprot`/`fastprot_mpi`'s "no input data" stdin
+   check - fixed with a small `stdinIsATerminal()` helper using MSVC's
+   `_isatty()`/`_fileno()` from `<io.h>`.
+
+Plus real build/link/runtime-behavior gaps, not just compile errors:
+
+7. `fnj/DataInputStream.hpp` unconditionally included `<libxml/tree.h>`
+   with zero actual use of any libxml type - a real bug already, just
+   never observed before because libxml2 was always present everywhere
+   this project had ever been built. Deleted (not guarded) since it
+   was dead weight regardless of platform.
+8. `target_link_libraries(... m ...)`: Windows has no separate math
+   library at all (`m.lib` does not exist - every math function is
+   already part of the CRT). Introduced `FASTPHYLO_MATH_LIB`, `m` only
+   under `if(UNIX)`.
+9. Windows' CRT defaults stdout (and files opened via `fopen(..., "w")`/
+   `ofstream` in text mode) to text mode, silently translating every
+   `\n` this project's code writes into `\r\n` - invisible in the
+   compile/link/unit-test steps, but broke every single one of
+   `RunExamples.sh`'s byte-exact comparisons at once. Fixed at both
+   ends: `file_utils.cpp`'s four write-opening helpers now open in
+   binary mode, and a `setStdoutBinaryMode()` helper (`_setmode()`)
+   runs first thing in each app's `main()`.
+10. Two examples (`ex3`/`ex9`) need real XML support, which this
+    Windows build genuinely does not have (Phase A's own deliberate
+    decision); one (`ex16`, a raw binary float dump) is not required by
+    IEEE 754 to be bit-identical across math library implementations
+    for transcendental functions like `log`/`exp`. Both are real,
+    inherent, permanent platform differences, not bugs - excluded from
+    the byte-exact check specifically on the Windows leg via
+    `RunExamples.sh`'s new `SKIP_EXAMPLES` env var (a no-op everywhere
+    else), verification staying full-strength (all 20 examples) on
+    Linux/macOS.
+
+Also caught and fixed a bug in the fix for #10 itself: the first
+attempt added a second, Windows-only diff loop *after* `bash
+RunExamples.sh` in the workflow step - but `RunExamples.sh` already had
+its own internal, unconditional diff-and-report loop at the very end
+(read early in this engagement, not accounted for when writing that
+fix), which ran first and failed the whole step before the new loop
+was ever reached. The real CI run's output (unchanged from before the
+supposed fix) is what caught it. Fixed properly by parameterizing
+`RunExamples.sh`'s own existing loop instead of duplicating it.
+
+Confirmed green with `continue-on-error` removed (it was only there
+while this phase was being stabilized).
 
 ### Phase E - Packaging and release automation
 
