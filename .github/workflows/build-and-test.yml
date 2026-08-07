@@ -10,8 +10,41 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            cmake_extra_args: ""
+          - os: macos-latest
+            cmake_extra_args: ""
+          - os: windows-latest
+            # lapack-reference (vcpkg.json manifest) supplies BLAS/LAPACK
+            # via CMake's own FindBLAS/FindLAPACK - no libxml2 here (see
+            # github_actions_release_builds_plan.md's Phase A: it's an
+            # auto-detected optional feature everywhere now, and no
+            # longer needed for phylip, the default matrix format).
+            # Ninja (a single-config generator) instead of the default
+            # Visual Studio generator so binaries land directly in
+            # build/src/c++/, matching Linux/macOS - the default VS
+            # generator's per-config output subdirectory
+            # (build/src/c++/Release/) would otherwise need its own
+            # FASTPHYLOPATH handling.
+            cmake_extra_args: >-
+              -G Ninja
+              -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+              -DVCPKG_TARGET_TRIPLET=x64-windows
     runs-on: ${{ matrix.os }}
+    # Windows CI is new and unverified against a real MSVC/vcpkg build
+    # (no local Windows machine to test against beforehand, per
+    # github_actions_release_builds_plan.md's Phase D) - continue-on-
+    # error while it's being stabilized so a real MSVC/vcpkg surprise
+    # doesn't turn the whole check red on every push during that.
+    # Remove once confirmed green.
+    continue-on-error: ${{ matrix.os == 'windows-latest' }}
+    defaults:
+      run:
+        # Uniform across all three OSes (Windows GitHub-hosted runners
+        # ship Git Bash) rather than juggling bash/pwsh syntax
+        # differences per step.
+        shell: bash
     steps:
       - uses: actions/checkout@v4
 
@@ -32,8 +65,34 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install cmake simde
 
+      # Ninja for the single-config generator (see cmake_extra_args
+      # above); the MSVC dev-environment action puts cl.exe/link.exe on
+      # PATH, needed since Ninja itself doesn't set up a compiler
+      # environment the way the VS generator does automatically.
+      - name: Set up MSVC dev environment (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Ninja (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ninja -y
+
+      # vcpkg itself: GitHub's windows-latest image includes a
+      # pre-installed instance (some past images exposed it via
+      # $VCPKG_INSTALLATION_ROOT), but that has moved around across
+      # image versions - cloning our own pinned copy next to the repo
+      # is more predictable than relying on whatever the runner image
+      # happens to ship this month. vcpkg.json (manifest mode) drives
+      # what actually gets installed (lapack-reference) automatically
+      # during the Configure step below, via the toolchain file.
+      - name: Set up vcpkg (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          ./vcpkg/bootstrap-vcpkg.sh
+
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmake_extra_args }}
 
       - name: Build
         run: cmake --build build --parallel
