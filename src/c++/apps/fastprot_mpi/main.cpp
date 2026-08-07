@@ -18,11 +18,14 @@
 // fastprot_mpi is unbuilt/unverified in this environment regardless
 // (no MPI installed), but fixed here too for consistency.
 #ifdef _WIN32
+#include <fcntl.h>
 #include <io.h>
 static bool stdinIsATerminal() { return _isatty(_fileno(stdin)) != 0; }
+static void setStdoutBinaryMode() { _setmode(_fileno(stdout), _O_BINARY); }
 #else
 #include <unistd.h>
 static bool stdinIsATerminal() { return isatty(STDIN_FILENO) != 0; }
+static void setStdoutBinaryMode() {}
 #endif
 
 #include <string>
@@ -194,6 +197,7 @@ static FastprotMpiOptions parseArgs(int argc, char **argv) {
 
 
 int main (int argc, char **argv){
+	setStdoutBinaryMode();
 	if(stdinIsATerminal() && argc==1) {
 	    cout<<"No input data or parameters. Use -h,--help for more information"<<endl;
 	    exit(EXIT_FAILURE);

@@ -38,7 +38,12 @@ file_exists(const char *fname){
 
 FILE *
 open_write_file_interactive(const char *fname){
-	const char *mode ="w";
+	// Binary mode, not "w"/"a" (text mode) - on Windows the CRT
+	// translates every outgoing '\n' to "\r\n" in text mode, silently
+	// corrupting output that is meant to be byte-identical across
+	// platforms (this project's own code always writes '\n' explicitly,
+	// so it never relied on that translation for correctness).
+	const char *mode ="wb";
 	if ( file_exists(fname) != 0 ){
 		while ( true ){
 			cout << "File exists: \"" << fname << "\"" << endl;
@@ -46,11 +51,11 @@ open_write_file_interactive(const char *fname){
 			string choice;
 			cin >> choice;
 			if ( choice == "w" ){
-				mode = "w";
+				mode = "wb";
 				break;
 			}
 			else if ( choice == "a" ){
-				mode = "a";
+				mode = "ab";
 				break;
 			}
 			cout << "bad choice" << endl;
@@ -76,7 +81,8 @@ open_write_file_interactive(const char *fname){
 
 FILE *
 open_write_file(const char *fname){
-	const char *mode ="w";
+	// Binary mode - see open_write_file_interactive()'s comment above.
+	const char *mode ="wb";
 
 	FILE *ftmp = fopen(fname,mode);
 	if ( ftmp == nullptr ){
@@ -90,7 +96,8 @@ open_write_file(const char *fname){
 
 void
 open_write_stream_interactive(const char *fname, ofstream &of){
-	ofstream::openmode mode = ofstream::out;
+	// Binary mode - see open_write_file_interactive()'s comment above.
+	ofstream::openmode mode = ofstream::out | ofstream::binary;
 	if ( file_exists(fname) != 0 ){
 		while ( true ){
 			cout << "File exists: \"" << fname << "\"" << endl;
@@ -98,11 +105,11 @@ open_write_stream_interactive(const char *fname, ofstream &of){
 			string choice;
 			cin >> choice;
 			if ( choice == "w" ){
-				mode = ofstream::out;;
+				mode = ofstream::out | ofstream::binary;
 				break;
 			}
 			else if ( choice == "a" ){
-				mode = ofstream::app;
+				mode = ofstream::app | ofstream::binary;
 				break;
 			}
 			cout << "bad choice" << endl;
@@ -126,7 +133,8 @@ open_write_stream(const string fname, ofstream &of){
 
 void
 open_write_stream(const char *fname, ofstream &of){
-	ofstream::openmode mode = ofstream::out;
+	// Binary mode - see open_write_file_interactive()'s comment above.
+	ofstream::openmode mode = ofstream::out | ofstream::binary;
 
 	of.open(fname,mode);
 

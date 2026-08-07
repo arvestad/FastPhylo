@@ -17,6 +17,20 @@
 #include <fstream>
 #include <cassert>
 #include <map>
+// Windows' CRT defaults stdout to text mode, translating every '\n'
+// this project's own code writes into "\r\n" - this project's output
+// is meant to be byte-identical across platforms (RunExamples.sh
+// byte-diffs it), and the code always writes '\n' explicitly, never
+// relies on CRT translation, so binary mode is the correct default
+// here, not just a workaround. _setmode()/_fileno() are declared in
+// <io.h>/<fcntl.h>, MSVC-only.
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+static void setStdoutBinaryMode() { _setmode(_fileno(stdout), _O_BINARY); }
+#else
+static void setStdoutBinaryMode() {}
+#endif
 
 #include "config.h"
 #include "fastphylo/core/file_utils.hpp"
@@ -468,6 +482,7 @@ static void runFullMatrixOutput(DataInputStream &istream, DataOutputStream &ostr
 int
 main(int argc,
 		char **argv){
+	setStdoutBinaryMode();
 
 	FastdistOptions opts = parseArgs(argc, argv);
 	TRY_EXCEPTION();

@@ -10,11 +10,20 @@
 // this to compile at all. _isatty()/_fileno() are MSVC's equivalents,
 // declared in <io.h>.
 #ifdef _WIN32
+#include <fcntl.h>
 #include <io.h>
 static bool stdinIsATerminal() { return _isatty(_fileno(stdin)) != 0; }
+// Windows' CRT defaults stdout to text mode, translating every '\n'
+// this project's own code writes into "\r\n" - this project's output
+// is meant to be byte-identical across platforms (RunExamples.sh byte-
+// diffs it), and the code always writes '\n' explicitly, never relies
+// on CRT translation, so binary mode is the correct default here, not
+// just a workaround.
+static void setStdoutBinaryMode() { _setmode(_fileno(stdout), _O_BINARY); }
 #else
 #include <unistd.h>
 static bool stdinIsATerminal() { return isatty(STDIN_FILENO) != 0; }
+static void setStdoutBinaryMode() {}
 #endif
 
 #include "config.h"
@@ -271,6 +280,7 @@ static void processRuns(DataInputStream &istream, tree2int_map &tree2count,
 }
 
 int main (int argc, char **argv) {
+    setStdoutBinaryMode();
     if(stdinIsATerminal() && argc==1) {
       cout<<"No input data or parameters. Use -h,--help for more information"<<endl;
       exit(EXIT_FAILURE);
