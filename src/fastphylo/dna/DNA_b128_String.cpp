@@ -182,67 +182,67 @@ DNA_b128_String::append(const char *c_str){
       break;
     case 'm': case 'M': {
       _fastSetNucleotideUnknown(c_pos);
-      ambiguities.push_back((ambiguity_nucleotide_at_position)
+      ambiguities.push_back(ambiguity_nucleotide_at_position
       {{DNA_M_, 0.5, 0.5,   0,   0},c_pos});
       c_int = c_int | DNA_A_; }
       break;// 	A or C          K
     case 'r': case 'R': {
       _fastSetNucleotideUnknown(c_pos);
-      ambiguities.push_back((ambiguity_nucleotide_at_position)
+      ambiguities.push_back(ambiguity_nucleotide_at_position
       {{DNA_R_, 0.5, 0, 0.5,   0},c_pos});
       c_int = c_int | DNA_A_; }
       break;// 	A or G 	        Y
     case 'w': case 'W': {
       _fastSetNucleotideUnknown(c_pos);
-      ambiguities.push_back((ambiguity_nucleotide_at_position)
+      ambiguities.push_back(ambiguity_nucleotide_at_position
       {{DNA_W_, 0.5, 0, 0, 0.5},c_pos});
       c_int = c_int | DNA_A_;  }
       break;// 	A or T 	        W
     case 's': case 'S': {
       _fastSetNucleotideUnknown(c_pos);
-      ambiguities.push_back((ambiguity_nucleotide_at_position)
+      ambiguities.push_back(ambiguity_nucleotide_at_position
       {{DNA_S_, 0, 0.5, 0.5, 0},c_pos});
       c_int = c_int | DNA_A_;  }
       break;// 	C or G 	        S
     case 'y': case 'Y': {
       _fastSetNucleotideUnknown(c_pos);
-      ambiguities.push_back((ambiguity_nucleotide_at_position)
+      ambiguities.push_back(ambiguity_nucleotide_at_position
       {{DNA_Y_, 0, 0.5, 0, 0.5},c_pos});
       c_int = c_int | DNA_A_; }
       break;// 	C or T 	        R
     case 'k': case 'K': {
       _fastSetNucleotideUnknown(c_pos);
-      ambiguities.push_back((ambiguity_nucleotide_at_position)
+      ambiguities.push_back(ambiguity_nucleotide_at_position
       {{DNA_K_, 0, 0, 0.5, 0.5},c_pos});
       c_int = c_int | DNA_A_;  }
       break;// 	G or T 	        M
     case 'v': case 'V': {
       _fastSetNucleotideUnknown(c_pos);
-      ambiguities.push_back((ambiguity_nucleotide_at_position)
+      ambiguities.push_back(ambiguity_nucleotide_at_position
       {{DNA_V_, 0.333333, 0.333333, 0.333333, 0},c_pos});
       c_int = c_int | DNA_A_;  }
       break;// 	A or C or G 	B
     case 'h': case 'H':  {
       _fastSetNucleotideUnknown(c_pos);
-      ambiguities.push_back((ambiguity_nucleotide_at_position)
+      ambiguities.push_back(ambiguity_nucleotide_at_position
 			    {{DNA_H_, 0.333333, 0.333333, 0, 0.333333},c_pos});
       c_int = c_int | DNA_A_;  }
       break;// 	A or C or T 	D
     case 'd': case 'D': {
       _fastSetNucleotideUnknown(c_pos);
-      ambiguities.push_back((ambiguity_nucleotide_at_position)
+      ambiguities.push_back(ambiguity_nucleotide_at_position
       {{DNA_D_, 0.333333, 0, 0.333333, 0.333333},c_pos});
       c_int = c_int | DNA_A_; }
       break;// 	A or G or T 	H
     case 'b': case 'B': {
       _fastSetNucleotideUnknown(c_pos);
-      ambiguities.push_back((ambiguity_nucleotide_at_position)
+      ambiguities.push_back(ambiguity_nucleotide_at_position
       {{DNA_B_, 0, 0.333333, 0.333333, 0.333333},c_pos});
       c_int = c_int | DNA_A_; }
       break;// 	C or G or T 	V
     case 'n': case 'N': case 'x': case 'X': case '?': {
       _fastSetNucleotideUnknown(c_pos);
-      ambiguities.push_back((ambiguity_nucleotide_at_position)
+      ambiguities.push_back(ambiguity_nucleotide_at_position
       {{DNA_N_, 0.25, 0.25, 0.25, 0.25},c_pos});
       c_int = c_int | DNA_A_; }
       break;//  A or C or G or T  

@@ -518,31 +518,12 @@ void print_bits_b128(b128 a);
 void print_blocks_b128(b128 a, int block_size);
 
 
-  // HARDWARE TICKS COUNTER
-  typedef unsigned long long ticks;
-
-#if defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
-  static __inline__ ticks getticks(void)
-  {
-    unsigned a, d;
-    asm volatile("rdtsc" : "=a" (a), "=d" (d));
-    return ((ticks)a) | (((ticks)d) << 32);
-  }
-#elif defined(__aarch64__)
-  // ARM equivalent of rdtsc: the virtual counter register, readable from
-  // userspace (EL0) without a syscall.
-  static __inline__ ticks getticks(void)
-  {
-    unsigned long long val;
-    asm volatile("mrs %0, cntvct_el0" : "=r" (val));
-    return (ticks)val;
-  }
-#else
-  static __inline__ ticks getticks(void)
-  {
-    return 0;
-  }
-#endif
+  // HARDWARE TICKS COUNTER - removed (github_actions_release_builds_plan.md's
+  // Windows leg): getticks()/the ticks typedef had zero callers anywhere
+  // in the codebase, and used GCC-style inline assembly (asm volatile(...))
+  // that does not compile at all on MSVC x64 (no inline-asm support there).
+  // Dead code causing a real portability failure for no benefit - deleted
+  // rather than made MSVC-portable.
 
 
   
