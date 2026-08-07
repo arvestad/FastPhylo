@@ -69,7 +69,6 @@ ${FASTPHYLO_CORE_DIR}/Object.cpp
 ${FASTPHYLO_CORE_DIR}/Sequence.cpp
 ${FASTPHYLO_CORE_DIR}/SequenceTree.cpp
 ${FASTPHYLO_CORE_DIR}/SequenceTree_MostParsimonious.cpp
-${FASTPHYLO_CORE_DIR}/Simulator.cpp
 ${FASTPHYLO_CORE_DIR}/arg_utils_ext.cpp
 ${FASTPHYLO_CORE_DIR}/file_utils.cpp
 ${FASTPHYLO_CORE_DIR}/stl_utils.cpp
@@ -330,12 +329,15 @@ target_include_directories(ProtSeqCompare_test PRIVATE ${CMAKE_SOURCE_DIR}/inclu
 add_test(NAME ProtSeqCompare_test COMMAND ProtSeqCompare_test)
 
 # phylip_reader_consolidation_plan.md, Phase C: SequenceTree::
-# mapSequencesOntoTree(istream&) has no live caller in any shipped
-# binary (only reachable via unbuilt simulated_phylogenies/ tools), so
-# this is the only way to verify that code path at all. Links the real
-# fastphylo library target directly (unlike ProtSeqCode_test/
-# ProtSeqCompare_test's narrow hand-picked source lists above) since
-# SequenceTree.cpp pulls in most of the core library.
+# mapSequencesOntoTree(istream&) has no live caller anywhere in the
+# codebase - its only two callers (Simulator.cpp and
+# generating_block_transfer_data/Generate_sequence_data.cpp) were
+# themselves unbuilt, hardcoded-external-tool wrapper code and were
+# deleted outright, so this is the only way to verify this code path
+# at all. Links the real fastphylo library target directly (unlike
+# ProtSeqCode_test/ProtSeqCompare_test's narrow hand-picked source
+# lists above) since SequenceTree.cpp pulls in most of the core
+# library.
 add_executable(SequenceTree_PhylipReader_test ${FASTPHYLO_TESTS_DIR}/SequenceTree_PhylipReader_test.cpp)
 target_link_libraries(SequenceTree_PhylipReader_test PRIVATE fastphylo)
 add_test(NAME SequenceTree_PhylipReader_test COMMAND SequenceTree_PhylipReader_test)
