@@ -1,0 +1,204 @@
+name: Release
+
+# github_actions_release_builds_plan.md's Phase E. Two triggers:
+# - A real tag push (this repo's existing convention is bare X.Y.Z,
+#   e.g. "1.0.2"/"1.0.3" - no "v" prefix, confirmed by checking actual
+#   tag history rather than assumed) builds, packages, and publishes a
+#   real GitHub Release.
+# - workflow_dispatch (the "Run workflow" button in the Actions tab)
+#   runs the exact same build+package steps but never publishes
+#   anything - just uploads the same archives as regular downloadable
+#   run artifacts. This lets the whole pipeline be verified end to end
+#   without ever pushing a real tag - a real tag is a public, hard-to-
+#   fully-undo action (see this plan's Phase F), so being able to
+#   dry-run everything up to that point first is worth the small
+#   duplication versus build-and-test.yml.
+on:
+  push:
+    tags:
+      - "*.*.*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ubuntu-22.04, not ubuntu-latest, deliberately - Phase A:
+          # glibc symbol versioning is forward-only, so a binary built
+          # on a newer glibc will not run on an end-user machine with
+          # an older one. The push/PR build-and-test.yml matrix stays
+          # on ubuntu-latest (its job is catching breakage against
+          # *current* environments, not maximizing how old a machine
+          # the output can run on); only the release build needs the
+          # older, still-supported floor. macOS/Windows release legs
+          # stay on *-latest - macOS's version floor is a separate,
+          # not-yet-addressed deployment-target question, and Windows
+          # does not have glibc's forward-only problem the same way.
+          - os: ubuntu-22.04
+            cmake_extra_args: ""
+            archive_os: linux
+          - os: macos-latest
+            cmake_extra_args: ""
+            archive_os: macos
+          - os: windows-latest
+            # Same vcpkg/Ninja/toolchain-file setup as build-and-test.yml
+            # - see that file's own comments for the reasoning behind
+            # each piece (relative toolchain-file path, Ninja for a
+            # single-config output layout, etc).
+            cmake_extra_args: >-
+              -G Ninja
+              -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
+              -DVCPKG_TARGET_TRIPLET=x64-windows
+            archive_os: windows
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history/tags - PACKAGE_VERSION's git-describe fallback needs it
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libxml2-dev liblapack-dev libblas-dev
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmake simde
+
+      - name: Set up MSVC dev environment (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Ninja (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ninja -y
+
+      - name: Set up vcpkg (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          ./vcpkg/bootstrap-vcpkg.sh
+
+      - name: Export GitHub Actions cache credentials (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Enable vcpkg binary caching (Windows)
+        if: runner.os == 'Windows'
+        run: echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> "$GITHUB_ENV"
+
+      # Only a real tag push gets an explicit -DPACKAGE_VERSION - this
+      # repo's tags are bare X.Y.Z (github.ref_name already gives that
+      # directly, no "v" prefix to strip). A workflow_dispatch dry-run
+      # passes nothing extra here, so CMakeLists.txt's own git-describe
+      # fallback kicks in instead - its output (e.g.
+      # "1.0.3-165-gabc1234") makes it obvious at a glance that a given
+      # archive came from a dry-run, not an actual tagged release.
+      - name: Configure
+        run: |
+          version_arg=""
+          if [ "${{ github.event_name }}" = "push" ]; then
+            version_arg="-DPACKAGE_VERSION=${{ github.ref_name }}"
+          fi
+          cmake -B build -DCMAKE_BUILD_TYPE=Release $version_arg ${{ matrix.cmake_extra_args }}
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run unit tests (ctest)
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Run example regression suite
+        working-directory: examples
+        run: |
+          FASTPHYLOPATH="${{ github.workspace }}/build/src/c++" \
+          SKIP_EXAMPLES="${{ runner.os == 'Windows' && 'ex3.out ex9.out ex16.out' || '' }}" \
+          bash RunExamples.sh
+
+      - name: Run CLI regression checks (--help/--version/error paths)
+        working-directory: examples
+        run: FASTPHYLOPATH="${{ github.workspace }}/build/src/c++" bash RunCliChecks.sh
+
+      # Same value the Configure step above already resolved
+      # PACKAGE_VERSION to (github.ref_name for a real tag; the
+      # identical `git describe` fallback here for a dry run) - the
+      # archive name and each binary's own --version output should
+      # always agree on which exact build this is.
+      - name: Determine archive version string
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "version=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=$(git describe --tags --always --dirty)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Package (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          stage="fastphylo-${{ steps.version.outputs.version }}-${{ matrix.archive_os }}"
+          mkdir "$stage"
+          cp build/src/c++/fastdist build/src/c++/fnj build/src/c++/fastprot "$stage/"
+          cp README.md COPYING INSTALL "$stage/"
+          tar czf "$stage.tar.gz" "$stage"
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          stage="fastphylo-${{ steps.version.outputs.version }}-windows"
+          mkdir "$stage"
+          cp build/src/c++/fastdist.exe build/src/c++/fnj.exe build/src/c++/fastprot.exe "$stage/"
+          # vcpkg's CMake integration already copies any DLLs a binary
+          # actually needs (lapack-reference is dynamically linked,
+          # matching Phase A's "dynamic everywhere" decision) next to
+          # each .exe as part of the Build step above - bundle whatever
+          # is there so the archive is standalone on a machine with no
+          # vcpkg/Visual Studio installed.
+          cp build/src/c++/*.dll "$stage/" 2>/dev/null || true
+          cp README.md COPYING INSTALL "$stage/"
+          7z a -tzip "$stage.zip" "$stage"
+
+      - name: Upload archive as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fastphylo-${{ matrix.archive_os }}
+          path: |
+            fastphylo-*.tar.gz
+            fastphylo-*.zip
+          if-no-files-found: error
+
+  release:
+    # Only a real tag push publishes anything - workflow_dispatch stops
+    # after the build job's artifacts are uploaded (see that job's own
+    # comment for why).
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    # softprops/action-gh-release needs contents: write to create a
+    # release - many repos now default GITHUB_TOKEN to read-only, so
+    # this cannot be left implicit. Scoped to just this job (the build
+    # job only uploads a workflow artifact, which does not need it).
+    permissions:
+      contents: write
+    steps:
+      - name: Download all platform archives
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
