@@ -133,33 +133,94 @@ rather than forcing one uniform toolchain (e.g. OpenBLAS everywhere)
 across all three OSes, which is what most likely made the deleted
 attempt harder than it needed to be.
 
-## Open questions to settle before implementation
+## Open questions - SETTLED 2026-08-07
 
-- **gengetopt**: **resolved, moot.** `gengetopt_migration_plan.md`
-  landed (all four apps moved to CLI11, a vendored header-only
-  library) and removed gengetopt from the build entirely - no
-  provisioning question left for any platform, including Windows,
-  which was this question's main motivation.
-- **"Reasonably modern OS versions"**: a concrete floor per platform
-  (which Ubuntu LTS, which Windows version, which macOS version)
-  affects both the GitHub-hosted runner choice and glibc-compatibility
-  risk if the Linux binary needs to run on older distros than the
-  build runner itself ships (a classic "build on the oldest supported
-  target, not the newest available runner" concern - GitHub's
-  `ubuntu-latest` moves forward over time).
-- **Dynamic vs. static linking**: is "depends on the OS's own libxml2
-  dylib" (no vcpkg/brew needed on macOS, no bundling needed) an
-  acceptable portability model, or does "downloadable binary that just
-  works" require full static linking - i.e., properly redoing what the
-  old (now-removed) `STATIC` option was trying to do, just with
-  current dependency versions and a maintained package manager instead
-  of hand-rolled FTP fetches?
-- **Trigger and versioning**: the deleted workflow used `on: push:
-  tags: "v*"` plus `workflow_dispatch` - a reasonable starting point;
-  confirm it's still wanted, and decide whether release builds should
-  *also* run (without publishing) on every push/PR the way
-  `build-and-test.yml` already does, to catch cross-platform breakage
-  before a tag is ever cut.
+- **gengetopt**: resolved, moot (see below, unchanged from before).
+- **libxml2 dependency, resolved a different way than expected**: a
+  side investigation prompted by "what are the prospects this builds
+  right away on someone else's computer?" (`project_xml_optional_
+  phylip_default`) found `WITH_LIBXML=ON` used to unconditionally
+  compile the XML sources even when `find_package(LibXml2)` found
+  nothing - now fixed to auto-detect and gracefully build without XML
+  support (a configure-time warning, not a build failure) when
+  libxml2 isn't present. Combined with `fastprot`/`fastdist -O` and
+  `fnj -I` now defaulting to `phylip` (no external dependency at all)
+  instead of `xml`, **libxml2 is no longer a real blocker on any
+  platform, including Windows** - a Windows release build can simply
+  not provision libxml2 via vcpkg at all and still produce a fully
+  functional binary (just without `-O`/`-I xml`), rather than needing
+  vcpkg to supply it. This directly simplifies Phase D below.
+- **Linking model: dynamic.** Each platform uses its natural/available
+  libraries - `apt` on Linux (already proven), Accelerate + optional
+  system libxml2 on macOS (already proven), `vcpkg`-provided DLLs
+  bundled alongside the `.exe` on Windows for BLAS/LAPACK only (see
+  above - not libxml2). No full static linking; `STATIC`'s old intent
+  is not being revived.
+- **OS version floor**: `*-latest` runners for the push/PR
+  build-and-test matrix (Linux/macOS/Windows) - matches the existing
+  Linux job, moves forward automatically, and is the right call for a
+  job whose purpose is catching breakage against *current*
+  environments. The tag-triggered **release** job is the one exception:
+  Linux release binaries build on **`ubuntu-22.04`, not
+  `ubuntu-latest`** - glibc symbol versioning is forward-only (a binary
+  built against a newer glibc won't run on an end-user machine with an
+  older one), so the release build should target an older, still-
+  supported base rather than whatever's newest on the runner. macOS and
+  Windows release builds stay on `*-latest` - macOS's version floor is
+  handled via an explicit deployment-target flag instead (see Phase C),
+  and Windows doesn't have glibc's forward-only problem in the same way.
+- **Trigger and versioning, settled**: two separate jobs, not one.
+  Build-and-test matrix (Linux/macOS/Windows) runs on every push/PR,
+  same as today's Linux-only job, catching cross-platform breakage
+  continuously. A separate release/packaging job runs only on `v*` tags
+  - built, not just re-triggered from the push/PR job's artifacts, so
+  the Linux leg of *that* job can use `ubuntu-22.04` while the push/PR
+  matrix stays on `ubuntu-latest`.
+- **Version source, settled (folded in after "is the version noted
+  somewhere?", then refined after "is there a way of getting that
+  tag-dependent or vice versa?")**: found three *inconsistent* version
+  numbers today - root `CMakeLists.txt`'s `PACKAGE_VERSION` (1.0.3,
+  CPack-only), `fastprot`/`fastdist`/`fnj`'s independently-hardcoded
+  `--version` strings (1.0.10 each, already known/flagged as mismatched
+  with `PACKAGE_VERSION` during `gengetopt_migration_plan.md` and
+  deliberately left alone then as out of that migration's scope), and
+  `fastprot_mpi`'s own hardcoded string (1.0.0, a third value). No
+  GitHub release has ever actually been cut (`CHANGELOG.md`'s top
+  section is still `## Unreleased`), so nothing downstream depends on
+  any of these today - safe to unify now rather than freeze in place.
+
+  **Decision - tag drives version, not the other way round.** The
+  first draft ("assert the pushed tag matches a checked-in
+  `PACKAGE_VERSION`, fail if not") still left a manual sync step
+  someone could get wrong. Better: the release job reads the pushed
+  tag (`github.ref_name`, e.g. `v1.2.0`, strip the leading `v`) and
+  passes it straight to CMake as `-DPACKAGE_VERSION=1.2.0`, overriding
+  whatever's checked in - nothing to keep in sync, no mismatch
+  possible because there's nothing left to compare against. For
+  everyday (non-release) builds with no tag to derive from - push/PR
+  CI, a dev's local `cmake && make` - fall back to `git describe --tags
+  --always --dirty` when a `.git` directory is present (informative
+  dev-build strings like `1.0.3-42-gabc1234`), falling back further to
+  the checked-in static `PACKAGE_VERSION` only when there's no `.git`
+  at all (e.g. a `make package_source` tarball, extracted and built
+  later with no git history present). The four apps' hardcoded
+  `*_VERSION` constants get replaced with the resolved value flowed
+  through `config.h` (the same mechanism already carrying
+  `WITH_LIBXML` from CMake into the apps' `main.cpp` files - no new
+  plumbing pattern needed) - `--version` output is always correct for
+  however the binary was actually built, release or not. Mechanical
+  fix, not a design question - implemented as part of Phase E (where
+  "what version does this release get" naturally belongs), not
+  deferred further, but no code changes in Phase A itself.
+
+**New finding while settling these, worth flagging for Phase C**:
+GitHub's `macos-latest` runner has been Apple Silicon (arm64) since
+the `macos-14` image became its default - meaning the macOS CI job
+will need `simde` (this project's non-x86 SSE2-via-NEON shim,
+`DNA_b128/sse2_wrapper.h`), unlike what "no additional dependency
+installation needed" below originally assumed. `brew install simde`
+is one extra line, not a design question, but worth calling out before
+Phase C so it isn't discovered as a surprise CI failure instead.
 
 ## Phases
 

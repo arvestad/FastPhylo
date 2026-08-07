@@ -7,20 +7,36 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake libxml2-dev liblapack-dev libblas-dev
+
+      # BLAS/LAPACK (Accelerate) and libxml2 are both part of the OS on
+      # macOS already - no install needed for either (see
+      # github_actions_release_builds_plan.md's dependency-gap
+      # analysis). simde is the one real gap: GitHub's macos-latest
+      # runner has been Apple Silicon (arm64) since the macos-14
+      # default switch, and DNA_b128/sse2_wrapper.h needs it on any
+      # non-x86 CPU.
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmake simde
 
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: cmake --build build -j"$(nproc)"
+        run: cmake --build build --parallel
 
       - name: Run unit tests (ctest)
         run: ctest --test-dir build --output-on-failure
