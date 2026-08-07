@@ -102,6 +102,26 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git
           ./vcpkg/bootstrap-vcpkg.sh
 
+      # lapack-reference is a real from-source Fortran build (~15
+      # minutes cold) - vcpkg's own GitHub Actions binary cache means
+      # only the first run (or any run after vcpkg.json changes) pays
+      # that cost; every other run downloads the already-built package
+      # instead. The two ACTIONS_* variables are how vcpkg's "x-gha"
+      # binary source authenticates to the cache service - not reliably
+      # present in a plain shell's environment without this explicit
+      # export (the documented vcpkg + GitHub Actions caching pattern).
+      - name: Export GitHub Actions cache credentials (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Enable vcpkg binary caching (Windows)
+        if: runner.os == 'Windows'
+        run: echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> "$GITHUB_ENV"
+
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmake_extra_args }}
 

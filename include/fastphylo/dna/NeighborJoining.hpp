@@ -15,6 +15,7 @@
 #include "fastphylo/core/FloatDistanceMatrix.hpp"
 #include "fastphylo/core/DistanceRow.hpp"
 #include <string>
+#include <vector>
 #include <math.h>
 #include "fastphylo/core/log_utils.hpp"
 #include <iostream>
@@ -72,7 +73,7 @@ computeNeighborJoiningTree( DistanceMatrix< TreeNode_type *, double,
     }
 #endif
   //compute the row sums
-  double rowSums[origNumNodes];
+  std::vector<double> rowSums(origNumNodes);
   for ( size_t row = 0 ; row < origNumNodes ; row++ ){
     double sum = 0;
     size_t i = 0;
@@ -189,7 +190,7 @@ computeFloatNeighborJoiningTree( FloatDistanceMatrix< TreeNode_type *, float,
     }
 #endif
   //compute the row sums
-  float rowSums[origNumNodes];
+  std::vector<float> rowSums(origNumNodes);
   for ( size_t row = 0 ; row < origNumNodes ; row++ ){
     float sum = 0;
     size_t i = 0;
@@ -323,8 +324,8 @@ computeBioNJTree( DistanceMatrix< TreeNode_type *, double,
   }
 
   //compute the row sums
-  double rowSums[origNumNodes];
-  double varianceRowSums[origNumNodes];
+  std::vector<double> rowSums(origNumNodes);
+  std::vector<double> varianceRowSums(origNumNodes);
   for ( size_t row = 0 ; row < origNumNodes ; row++ ){
     double sum = 0;
     double sumV =0;
@@ -483,8 +484,8 @@ computeFloatBioNJTree( FloatDistanceMatrix< TreeNode_type *, float,
   }
 
   //compute the row sums
-  float rowSums[origNumNodes];
-  float varianceRowSums[origNumNodes];
+  std::vector<float> rowSums(origNumNodes);
+  std::vector<float> varianceRowSums(origNumNodes);
   for ( size_t row = 0 ; row < origNumNodes ; row++ ){
     float sum = 0;
     float sumV =0;
@@ -643,7 +644,7 @@ computeFNJTree( DistanceMatrix< TreeNode_type *, double,
 #endif
 
   //compute the row sums
-  double rowSums[origNumNodes];
+  std::vector<double> rowSums(origNumNodes);
   for ( size_t row = 0 ; row < origNumNodes ; row++ ){
     double sum = 0;
     size_t i = 0;
@@ -658,7 +659,7 @@ computeFNJTree( DistanceMatrix< TreeNode_type *, double,
     rowSums[row] = sum;
   }
   //compute visible set.
-  size_t visible_set[origNumNodes];
+  std::vector<size_t> visible_set(origNumNodes);
   for ( size_t i = 0 ; i < origNumNodes ; i++ ){
     double minVal = FLT_MAX;
     size_t minNeigh = i;
@@ -810,7 +811,7 @@ computeFloatFNJTree( FloatDistanceMatrix< TreeNode_type *, float,
 #endif
 
   //compute the row sums
-  float rowSums[origNumNodes];
+  std::vector<float> rowSums(origNumNodes);
   for ( size_t row = 0 ; row < origNumNodes ; row++ ){
     float sum = 0;
     size_t i = 0;
@@ -825,7 +826,7 @@ computeFloatFNJTree( FloatDistanceMatrix< TreeNode_type *, float,
     rowSums[row] = sum;
   }
   //compute visible set.
-  size_t visible_set[origNumNodes];
+  std::vector<size_t> visible_set(origNumNodes);
   for ( size_t i = 0 ; i < origNumNodes ; i++ ){
     float minVal = FLT_MAX;
     size_t minNeigh = i;
