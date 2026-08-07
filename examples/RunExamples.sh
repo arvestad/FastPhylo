@@ -70,9 +70,17 @@ run_example 18 "fastprot -I fasta protein_seq.fasta -D WAG -m" ex18.out
 # fnj_binary_input_gap: end-to-end round-trip through the binary format
 # now that BinaryInputStream::readDM(StrDblMatrix&, ...) is implemented
 # (used to exit(-1) with "Not implemented!"). Includes bootstrap
-# replicates (-b 3) sharing one header, exercising the input_was_read
+# replicates (-b 3) sharing one header, exercising the header/identifier
 # caching path, not just the single-matrix case.
 run_example 19 "fastprot -I fasta protein_seq.fasta -D JCK -b 3 -O binary | fnj -I binary -O xml -d 4" ex19.out
+# binary_dm_format_plan.md: the binary format used to have no
+# run-boundary marker, so multiple datasets in one binary stream
+# silently corrupted on read (fnj misread the 2nd dataset's header
+# bytes as more distance floats - reported count=3 where it should be
+# 1, and an empty 2nd run; exit code 0, no error). seq.phylip already
+# contains two concatenated datasets (see example 1), so -r 2 here
+# exercises exactly that - both runs must report count=1.
+run_example 20 "fastdist -I phylip seq.phylip -r 2 -O binary | fnj -I binary -r 2 -O xml -d 4" ex20.out
 
 echo
 for i in ex*.out; do 

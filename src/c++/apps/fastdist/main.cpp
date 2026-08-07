@@ -283,7 +283,11 @@ static std::unique_ptr<DataOutputStream> buildOutputStream(const FastdistOptions
 	case OutputFormat::Phylip: return std::make_unique<PhylipDmOutputStream>(outputfilename);
 	case OutputFormat::Xml: return std::make_unique<XmlOutputStream>(outputfilename);
 	//Mehmood's Changes here : email: malagori@kth.se
-	case OutputFormat::Binary: return std::make_unique<BinaryDmOutputStream>(outputfilename);
+	// binary_dm_format_plan.md: matricesPerRun is a single value fixed
+	// for the whole invocation - numboot/no_incl_orig never change per
+	// dataset even across ndatasets=opts.number_of_runs iterations.
+	case OutputFormat::Binary: return std::make_unique<BinaryDmOutputStream>(
+	    outputfilename, (opts.no_incl_orig ? 0 : 1) + static_cast<size_t>(opts.bootstraps));
 	default: exit(EXIT_FAILURE);
 	}
 }

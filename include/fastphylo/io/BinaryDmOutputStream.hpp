@@ -19,7 +19,12 @@
 // duplicate implementations of the same thing.
 class BinaryDmOutputStream : public DataOutputStream {
 public:
-  BinaryDmOutputStream(char *filename);
+  // matricesPerRun: how many print()/printRow() matrix bodies follow
+  // each printHeader() call before the next run's header (or EOF) -
+  // binary_dm_format_plan.md's run-boundary fix. Both real callers
+  // (fastprot/fastdist) already know this as a single value fixed for
+  // the whole program invocation: (no_incl_orig ? 0 : 1) + bootstraps.
+  BinaryDmOutputStream(char *filename, size_t matricesPerRun);
   void printHeader(size_t numNodes) override;
   void printStartRun(std::vector<std::string> &names, std::string &runId, Extrainfos &extrainfos) override;
   void print(StrDblMatrix &dm) override;
@@ -31,5 +36,6 @@ private:
   std::unique_ptr<std::ofstream> file_stream;
   std::ostream *ofs;
   std::vector<std::string> m_names;
+  size_t m_matricesPerRun;
   bool writeToCout;
 };
