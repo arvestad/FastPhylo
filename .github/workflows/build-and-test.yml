@@ -27,9 +27,20 @@ jobs:
             # generator's per-config output subdirectory
             # (build/src/c++/Release/) would otherwise need its own
             # FASTPHYLOPATH handling.
+            #
+            # Toolchain file path is relative, not ${{ github.workspace }}
+            # - that context variable isn't reliably available inside
+            # strategy.matrix (evaluated before a job's own runtime
+            # context is fully populated) and silently resolved to
+            # empty here on the first attempt, producing a bare
+            # "/vcpkg/..." argument that Git Bash's automatic POSIX-to-
+            # Windows path conversion then mangled into Git's own
+            # install root instead of the repo. A relative path works
+            # because the vcpkg clone (below) and this cmake invocation
+            # both run from the same default working directory.
             cmake_extra_args: >-
               -G Ninja
-              -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+              -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
               -DVCPKG_TARGET_TRIPLET=x64-windows
     runs-on: ${{ matrix.os }}
     # Windows CI is new and unverified against a real MSVC/vcpkg build
