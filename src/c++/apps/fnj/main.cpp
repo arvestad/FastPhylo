@@ -5,7 +5,17 @@
 #include <fstream>
 #include <cassert>
 #include <map>
+// isatty()/STDIN_FILENO are POSIX-only (<unistd.h> doesn't exist on
+// MSVC) - github_actions_release_builds_plan.md's Windows leg needs
+// this to compile at all. _isatty()/_fileno() are MSVC's equivalents,
+// declared in <io.h>.
+#ifdef _WIN32
+#include <io.h>
+static bool stdinIsATerminal() { return _isatty(_fileno(stdin)) != 0; }
+#else
 #include <unistd.h>
+static bool stdinIsATerminal() { return isatty(STDIN_FILENO) != 0; }
+#endif
 
 #include "config.h"
 #include "fastphylo/core/file_utils.hpp"
@@ -261,7 +271,7 @@ static void processRuns(DataInputStream &istream, tree2int_map &tree2count,
 }
 
 int main (int argc, char **argv) {
-    if((isatty(STDIN_FILENO) != 0) && argc==1) {
+    if(stdinIsATerminal() && argc==1) {
       cout<<"No input data or parameters. Use -h,--help for more information"<<endl;
       exit(EXIT_FAILURE);
     }

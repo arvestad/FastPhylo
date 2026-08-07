@@ -13,7 +13,17 @@
 #include "fastphylo/core/DistanceMatrix.hpp"
 #include "BinaryDmOutputStream.hpp"
 #include "PhylipDmOutputStream.hpp"
+// isatty()/STDIN_FILENO are POSIX-only (<unistd.h> doesn't exist on
+// MSVC) - see the same fix in fastprot/main.cpp and fnj/main.cpp.
+// fastprot_mpi is unbuilt/unverified in this environment regardless
+// (no MPI installed), but fixed here too for consistency.
+#ifdef _WIN32
+#include <io.h>
+static bool stdinIsATerminal() { return _isatty(_fileno(stdin)) != 0; }
+#else
 #include <unistd.h>
+static bool stdinIsATerminal() { return isatty(STDIN_FILENO) != 0; }
+#endif
 
 #include <string>
 #include <vector>
@@ -184,7 +194,7 @@ static FastprotMpiOptions parseArgs(int argc, char **argv) {
 
 
 int main (int argc, char **argv){
-	if(isatty(STDIN_FILENO) && argc==1) {
+	if(stdinIsATerminal() && argc==1) {
 	    cout<<"No input data or parameters. Use -h,--help for more information"<<endl;
 	    exit(EXIT_FAILURE);
 	  }
