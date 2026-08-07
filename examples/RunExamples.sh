@@ -83,6 +83,17 @@ run_example 19 "fastprot -I fasta protein_seq.fasta -D JCK -b 3 -O binary | fnj 
 run_example 20 "fastdist -I phylip seq.phylip -r 2 -O binary | fnj -I binary -r 2 -O xml -d 4" ex20.out
 
 echo
-for i in ex*.out; do 
+# SKIP_EXAMPLES (optional, space-separated ex*.out names): lets a
+# caller exclude specific fixtures from this byte-exact check without
+# hardcoding any platform-specific logic in this script. Used by
+# build-and-test.yml's Windows leg for the three examples with
+# expected, inherent platform differences (no libxml2 there at all;
+# last-bit floating-point non-portability in raw binary output) - see
+# that workflow file's own comment for the full explanation. Empty/
+# unset on every other caller, so this is a no-op everywhere else.
+for i in ex*.out; do
+    case " ${SKIP_EXAMPLES:-} " in
+        *" $i "*) echo "Skipping $i (SKIP_EXAMPLES)"; continue ;;
+    esac
     diff -q $i expected_output/$i
 done
