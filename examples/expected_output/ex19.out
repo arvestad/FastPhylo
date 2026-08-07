@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+ <root>
+  <runs>
+   <run id="" dim="4">
+    <identities>
+     <identity name="Cow"/>
+     <identity name="Carp"/>
+     <identity name="Chicken"/>
+     <identity name="Human"/>
+    </identities>
+    <tree>
+     <count>4</count>
+     <newick-xml><branch><branch><leaf>Human</leaf><leaf>Chicken</leaf></branch><leaf>Carp</leaf><leaf>Cow</leaf></branch></newick-xml>
+     <newick>((Human,Chicken),Carp,Cow);</newick>
+    </tree>
+   </run>
+  </runs>
+ </root>

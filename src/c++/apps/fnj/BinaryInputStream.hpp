@@ -31,5 +31,12 @@ protected:
   bool file_was_opened;
   int newSize;
   bool input_was_read;
+
+private:
+  // Shared by both readDM() overloads below: the "FASTPHYLO 1" tag +
+  // node-count header is written once per run (BinaryDmOutputStream::
+  // printHeader()), regardless of which matrix type reads it back, so
+  // parses it into newSize only on each stream's first readDM() call.
+  void readHeaderIfNeeded();
 };
 

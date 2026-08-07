@@ -340,6 +340,18 @@ add_executable(SequenceTree_PhylipReader_test ${FASTPHYLO_TESTS_DIR}/SequenceTre
 target_link_libraries(SequenceTree_PhylipReader_test PRIVATE fastphylo)
 add_test(NAME SequenceTree_PhylipReader_test COMMAND SequenceTree_PhylipReader_test)
 
+# fnj_binary_input_gap: BinaryInputStream::readDM(StrDblMatrix&, ...) was
+# an unimplemented stub. BinaryInputStream.cpp/.hpp live under
+# apps/fnj/ (not the shared fastphylo library, same as
+# PhylipDmInputStream/XmlInputStream), so this test compiles that one
+# source file directly - same pattern as ProtSeqCode_test/
+# ProtSeqCompare_test above - alongside linking fastphylo for
+# StrDblMatrix/BinaryDmOutputStream.
+add_executable(BinaryDmIO_test ${FASTPHYLO_TESTS_DIR}/BinaryDmIO_test.cpp apps/fnj/BinaryInputStream.cpp)
+target_include_directories(BinaryDmIO_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/apps/fnj)
+target_link_libraries(BinaryDmIO_test PRIVATE fastphylo)
+add_test(NAME BinaryDmIO_test COMMAND BinaryDmIO_test)
+
 # Phase 5 performance benchmark (plan.md). Not an add_test() - it prints
 # timing data, not a pass/fail result; see benchmarks/run_benchmarks.sh
 # for the reproducible one-command entry point.

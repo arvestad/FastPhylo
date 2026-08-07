@@ -17,7 +17,13 @@ function run_example {
 
     echo
     echo "Example "$1": "$2
-    $2 > $3
+    # eval, not a bare `$2 > $3`: unquoted word-splitting of $2 can't
+    # turn a "|" inside it into an actual pipeline (it's just passed as
+    # a literal argument to the first command) - this is why every
+    # example command containing a pipe used to be commented out
+    # (ex4/ex10) rather than actually broken/investigated. Confirmed by
+    # direct experiment while adding example 19's fastprot|fnj pipe.
+    eval "$2" > "$3"
     echo "Output in "$3
 }
 
@@ -41,11 +47,10 @@ run_example 14 "fastprot -I fasta protein_seq.fasta -D JCSS" ex14.out
 run_example 15 "fastprot -I fasta globin_family.fasta -D JCK" ex15.out
 # Binary output had no regression coverage at all before this fixture -
 # it was silently crashing on every "-O binary -o <file>" invocation
-# (see phase0_audit.md's output-speedup work). fnj's binary distance-
-# matrix reader is an unimplemented stub (BinaryInputStream.cpp), so
-# there's no round-trip to test against; this is a direct byte-diff of
-# fastprot's binary output instead, same convention as every other
-# example here.
+# (see phase0_audit.md's output-speedup work). This is a direct
+# byte-diff of fastprot's binary output; see example 19 below for the
+# actual round-trip through fnj's reader, which didn't exist yet when
+# this fixture was added.
 run_example 16 "fastprot -I fasta protein_seq.fasta -D JCK -O binary" ex16.out
 # Phylip's name column is left-justified padded to a MINIMUM of 10
 # chars, not truncated to a maximum - a name >10 chars must print in
@@ -62,6 +67,12 @@ run_example 17 "fastprot -I fasta protein_longnames.fasta -D JCK -O phylip" ex17
 # phase0_audit.md); ML now uses that primitive too.
 run_example 18 "fastprot -I fasta protein_seq.fasta -D WAG -m" ex18.out
 #run_example 10 "cat seq.phylip | fastdist -I phylip -O phylip -b 3 -r 2 | fnj -I phylip -O xml -r 2 -d 4" ex10.out
+# fnj_binary_input_gap: end-to-end round-trip through the binary format
+# now that BinaryInputStream::readDM(StrDblMatrix&, ...) is implemented
+# (used to exit(-1) with "Not implemented!"). Includes bootstrap
+# replicates (-b 3) sharing one header, exercising the input_was_read
+# caching path, not just the single-matrix case.
+run_example 19 "fastprot -I fasta protein_seq.fasta -D JCK -b 3 -O binary | fnj -I binary -O xml -d 4" ex19.out
 
 echo
 for i in ex*.out; do 
