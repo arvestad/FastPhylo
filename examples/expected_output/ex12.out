@@ -1,35 +1,5 @@
-<?xml version="1.0"?>
-<root>
- <runs>
-  <run id="" dim="4">
-   <identities>
-    <identity name="Cow"/>
-    <identity name="Carp"/>
-    <identity name="Chicken"/>
-    <identity name="Human"/>
-   </identities>
-   <dms>
-   <dm>
-    <row>
-     <entry>0.000000</entry>
-    </row>
-    <row>
-     <entry>0.290113</entry>
-     <entry>0.000000</entry>
-    </row>
-    <row>
-     <entry>1.992284</entry>
-     <entry>1.480237</entry>
-     <entry>0.000000</entry>
-    </row>
-    <row>
-     <entry>1.992284</entry>
-     <entry>1.480237</entry>
-     <entry>0.548450</entry>
-     <entry>0.000000</entry>
-    </row>
-   </dm>
-   </dms>
-  </run>
- </runs>
-</root>
+    4
+Cow         0.000000  0.290113  1.992284  1.992284
+Carp        0.290113  0.000000  1.480237  1.480237
+Chicken     1.992284  1.480237  0.000000  0.548450
+Human       1.992284  1.480237  0.548450  0.000000

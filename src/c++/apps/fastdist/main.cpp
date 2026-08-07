@@ -68,7 +68,7 @@ struct FastdistOptions {
 	bool outfile_given = false;
 	InputFormat input_format = InputFormat::Fasta;
 	bool memory_efficient = false;
-	OutputFormat output_format = OutputFormat::Xml;
+	OutputFormat output_format = OutputFormat::Phylip;
 	sequence_model distance_function = K2P;
 	int bootstraps = 0;
 	bool no_incl_orig = false;
@@ -122,7 +122,7 @@ static FastdistOptions parseArgs(int argc, char **argv) {
 	    {"phylip", OutputFormat::Phylip}, {"xml", OutputFormat::Xml}, {"binary", OutputFormat::Binary}};
 	app.add_option("-O,--output-format", opts.output_format,
 	                "output format. xml means the Fastphylo distance matrix XML format "
-	                "(possible values: phylip, xml, binary; default: xml)")
+	                "(possible values: phylip, xml, binary; default: phylip)")
 	    ->transform(CLI::CheckedTransformer(output_format_map).description(""));
 
 	static const std::map<std::string, sequence_model> distance_function_map{

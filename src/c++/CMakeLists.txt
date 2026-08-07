@@ -24,10 +24,30 @@ set(ARCH_FLAGS "-msse2")
 # gengetopt/FTP-fallback/generated-code machinery that used to live
 # here is now fully removed, not just unreferenced.
 
+# XML is an optional feature, auto-detected: if libxml2 isn't found,
+# build without XML support (a warning, not a configure/build failure)
+# rather than the previous behavior, where WITH_LIBXML=ON (the default)
+# unconditionally compiled the Xml*.cpp files regardless of whether
+# find_package(LibXml2) actually found anything - a missing libxml2
+# used to surface as a confusing build-time "header not found" error
+# deep in XmlInputStream.cpp, not a clear configure-time message.
+# Overwriting the WITH_LIBXML variable itself (not a separate derived
+# one) when it's not found means every later `if(WITH_LIBXML)` source-
+# list guard in this file, and the `#cmakedefine WITH_LIBXML` in
+# config.h.cmake (so every `#ifdef WITH_LIBXML` in the apps' own
+# main.cpp files too), automatically reflect real availability with no
+# further changes needed anywhere else.
 if(WITH_LIBXML)
   find_package(LibXml2)
   if(TARGET LibXml2::LibXml2)
     set(FASTPHYLO_XML_LIBS LibXml2::LibXml2)
+  else()
+    message(WARNING "libxml2 not found - building without XML input/output "
+      "support (fastprot/fastdist/fnj -I/-O xml will not be available). "
+      "Install libxml2 development headers (e.g. 'apt install libxml2-dev') "
+      "to enable it, or pass -DWITH_LIBXML=OFF to build without it "
+      "intentionally and silence this warning.")
+    set(WITH_LIBXML OFF)
   endif()
 endif()
 

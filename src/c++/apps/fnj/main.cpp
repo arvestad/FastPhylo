@@ -50,7 +50,7 @@ static constexpr const char *FNJ_VERSION = "fnj 1.0.10";
 struct FnjOptions {
 	std::string outfile;
 	bool outfile_given = false;
-	InputFormat input_format = InputFormat::Xml;
+	InputFormat input_format = InputFormat::Phylip;
 	OutputFormat output_format = OutputFormat::Xml;
 	bool print_counts = false;
 	int analyze_run_number = 0;
@@ -85,7 +85,7 @@ static FnjOptions parseArgs(int argc, char **argv) {
 	    {"phylip", InputFormat::Phylip}, {"xml", InputFormat::Xml}, {"binary", InputFormat::Binary}};
 	app.add_option("-I,--input-format", opts.input_format,
 	                "input format. 'xml' means the 'Fastphylo distance matrix XML format' "
-	                "(possible values: phylip, xml, binary; default: xml)")
+	                "(possible values: phylip, xml, binary; default: phylip)")
 	    ->transform(CLI::CheckedTransformer(input_format_map).description(""));
 
 	static const std::map<std::string, OutputFormat> output_format_map{
