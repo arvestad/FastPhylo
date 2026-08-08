@@ -15,6 +15,56 @@ Everything below was verified directly (grep for real call sites,
 cross-checked against what's actually built) on 2026-08-08/09, not
 assumed from reading alone.
 
+## "Is `FloatDistanceMatrix.cpp` needed?" - answered, and acted on (2026-08-08/09)
+
+**No, and neither was anything else in its parallel "float precision"
+NJ/tree pipeline - all deleted, `fa9aebb`/`b36b725`.** Confirmed by
+tracing the actual call graph, not just grepping the type name:
+`fnj/main.cpp` only ever instantiates the `buildTrees<T>` template
+with `T=StrDblMatrix`, so `computeNJTree(StrFloMatrix&, ...)` was
+never reached; `DataInputStream`'s abstract interface no longer even
+declares a `StrFloMatrix` `readDM` overload (commented out, with a
+2016-06-14 note from Lasse explaining why); `BinaryInputStream.cpp`
+already had its sibling `StrFloMatrix` overload deleted in this
+session's earlier `fnj_binary_input_gap` work for the identical
+reason ("had zero callers anywhere in the codebase"); every
+`SequenceTree::*Float*` method and every `computeFloat{NeighborJoining,
+BioNJ,FNJ}Tree` in `NeighborJoining.hpp` had zero external callers.
+Deleted ~1200 lines total: `FloatDistanceMatrix.hpp`/`.cpp`/`_impl.hpp`
+outright, the `computeFloat*Tree` functions, all `SequenceTree::*Float*`
+methods, and the one remaining unreachable stub
+(`XmlInputStream::readDM(StrFloMatrix&, ...)`, which just printed "Not
+implemented!" and called `exit(-1)` - not part of the virtual
+interface, so nothing could ever call it). `StrFloRow`
+(`DistanceRow<...,float,...>`, a completely separate class hierarchy
+used by `fastdist`'s real, live memory-efficient row-streaming output)
+is unrelated and was untouched.
+
+## `Extrainfos.hpp` - not dead, but a real interface-design smell
+
+`using Extrainfos = std::vector<std::string>;` - a bare, semantically
+opaque type alias threaded through the `readDM`/`printStartRun`
+signatures of **every** `DataInputStream`/`DataOutputStream` subclass
+across all three formats (Phylip, binary, XML) - roughly 60 files
+reference it. But only **XML** ever populates or reads it: it's
+per-sequence-name-indexed freeform text serialized into `<identity>`
+tags (`XmlOutputStream.cpp`) and parsed back (`XmlInputStream.cpp`).
+Phylip and binary formats carry an always-empty `Extrainfos&` parameter
+through their entire call chain without ever touching it.
+
+**Verdict: needs-design-decision, not mechanical.** The problem isn't
+size (the feature itself is small) - it's that a single XML-specific
+concern was baked into the generic cross-format interface every
+`DataInputStream`/`DataOutputStream` subclass has to implement, plus a
+name that gives no hint what it actually holds. A real fix means
+either renaming it to something that describes what it is (e.g.
+`SequenceIdentityAnnotations`) and/or removing it from the generic
+interface entirely (e.g. an XML-only side channel rather than a
+parameter every format's `readDM`/`printStartRun` must carry). Not
+attempted here - flagged for the same future design-decision pass as
+`Object.hpp`, given both require touching a wide interface rather than
+a local, mechanical change.
+
 ## "What is the purpose of `SequenceTree.cpp`?" - answered first
 
 **It's genuine, central, actively-used code - not cruft.** It's the
