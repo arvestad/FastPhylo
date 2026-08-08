@@ -289,39 +289,38 @@ int main (int argc, char **argv) {
       exit(EXIT_FAILURE);
     }
 	FnjOptions opts = parseArgs(argc, argv);
-	TRY_EXCEPTION();
+	try {
 	handleEarlyExitFlags(opts);
 	std::vector<NJ_method> methods{opts.method};
 	bool printCounts = opts.print_counts;
-	try {
-		std::unique_ptr<DataInputStream> istream = buildInputStream(opts);
-		std::unique_ptr<DataOutputStream> ostream = buildOutputStream(opts);
+	std::unique_ptr<DataInputStream> istream = buildInputStream(opts);
+	std::unique_ptr<DataOutputStream> ostream = buildOutputStream(opts);
 
-		vector<std::string> names;
-		Extrainfos extrainfos;
-		readstatus status = END_OF_RUN;
-		int run = 0;
+	vector<std::string> names;
+	Extrainfos extrainfos;
+	readstatus status = END_OF_RUN;
+	int run = 0;
 
-		while (status == END_OF_RUN && (opts.input_format == InputFormat::Xml || run<opts.number_of_runs)) {
-			string runId;
-			run++;
-			tree2int_map tree2count(static_cast<size_t>(opts.bootstraps * 1.3));
-			str2int_hashmap name2id;
+	while (status == END_OF_RUN && (opts.input_format == InputFormat::Xml || run<opts.number_of_runs)) {
+		string runId;
+		run++;
+		tree2int_map tree2count(static_cast<size_t>(opts.bootstraps * 1.3));
+		str2int_hashmap name2id;
 
-			processRuns(*istream, tree2count, methods, name2id, names, runId, extrainfos, opts, status);
+		processRuns(*istream, tree2count, methods, name2id, names, runId, extrainfos, opts, status);
 
-			if (status==END_OF_RUN) {
-				ostream->print(tree2count,printCounts, runId, names, extrainfos);
+		if (status==END_OF_RUN) {
+			ostream->print(tree2count,printCounts, runId, names, extrainfos);
 }
-			if (opts.analyze_run_number_given) {
-				break;
+		if (opts.analyze_run_number_given) {
+			break;
 }
-		}//end run loop
+	}//end run loop
 	}
-	catch(...){
-		throw;
+	catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		exit(EXIT_FAILURE);
 	}
-	CATCH_EXCEPTION()
 	catch(...){
 		std::cerr << "Unknown (non-Exception) error" << std::endl;
 		exit(EXIT_FAILURE);

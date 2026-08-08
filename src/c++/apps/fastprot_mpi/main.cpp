@@ -222,7 +222,7 @@ int main (int argc, char **argv){
 	double starttime, endtime;
 
 	prot_sequence_translation_model trans_model;
-	TRY_EXCEPTION();
+	try {
 
 	/*
   int inf = 0;
@@ -487,6 +487,14 @@ int main (int argc, char **argv){
 
 
 	MPI::Finalize();
-	CATCH_EXCEPTION();
+	}
+	catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	catch(...){
+		std::cerr << "Unknown (non-Exception) error" << std::endl;
+		exit(EXIT_FAILURE);
+	}
 	return 0;
 }

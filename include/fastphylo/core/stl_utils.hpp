@@ -14,6 +14,7 @@
 #include <vector>
 #include "fastphylo/core/file_utils.hpp"
 #include "fastphylo/core/log_utils.hpp"
+#include "fastphylo/core/Object.hpp"
 
 // --------------------------
 // String operators

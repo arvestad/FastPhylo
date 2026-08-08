@@ -488,8 +488,8 @@ main(int argc,
 	setStdoutBinaryMode();
 
 	FastdistOptions opts = parseArgs(argc, argv);
-	TRY_EXCEPTION();
 
+	try {
 	handleEarlyExitFlags(opts);
 
 	//-----------------------------------------------------
@@ -512,32 +512,29 @@ main(int argc,
 	// START BUILING MATRICES
 	//
 
-	try {
-		std::unique_ptr<DataInputStream> istream = buildInputStream(opts);
-		std::unique_ptr<DataOutputStream> ostream = buildOutputStream(opts);
+	std::unique_ptr<DataInputStream> istream = buildInputStream(opts);
+	std::unique_ptr<DataOutputStream> ostream = buildOutputStream(opts);
 
-		//Mehmood's Changes here : email: malagori@kth.se
-		if (opts.output_format == OutputFormat::Binary ) {
-			runRowStreamingOutput(*istream, *ostream, trans_model, ndatasets, numboot,
-			                       no_incl_orig, useFixFactor, fixfactor,
-			                       opts.input_format, RowOutputMode::Regular);
-		} else if ( opts.memory_efficient ) {
-			runRowStreamingOutput(*istream, *ostream, trans_model, ndatasets, numboot,
-			                       no_incl_orig, useFixFactor, fixfactor,
-			                       opts.input_format, RowOutputMode::MemoryEfficient);
-		}
-		else{
-			runFullMatrixOutput(*istream, *ostream, trans_model, ndatasets, numboot,
-			                     no_incl_orig, useFixFactor, fixfactor,
-			                     opts.input_format);
-		}
+	//Mehmood's Changes here : email: malagori@kth.se
+	if (opts.output_format == OutputFormat::Binary ) {
+		runRowStreamingOutput(*istream, *ostream, trans_model, ndatasets, numboot,
+		                       no_incl_orig, useFixFactor, fixfactor,
+		                       opts.input_format, RowOutputMode::Regular);
+	} else if ( opts.memory_efficient ) {
+		runRowStreamingOutput(*istream, *ostream, trans_model, ndatasets, numboot,
+		                       no_incl_orig, useFixFactor, fixfactor,
+		                       opts.input_format, RowOutputMode::MemoryEfficient);
 	}
-
-	catch(...){
-		throw;
+	else{
+		runFullMatrixOutput(*istream, *ostream, trans_model, ndatasets, numboot,
+		                     no_incl_orig, useFixFactor, fixfactor,
+		                     opts.input_format);
 	}
-
-	CATCH_EXCEPTION()
+	}
+	catch (const std::exception& e) {
+		cerr << e.what() << endl;
+		exit(EXIT_FAILURE);
+	}
 	catch(...){
 		cerr << "Unknown (non-Exception) error" << endl;
 		exit(EXIT_FAILURE);

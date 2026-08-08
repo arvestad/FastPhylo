@@ -247,29 +247,55 @@ place. The three apps with their own `catch(...)` "Unknown
 (non-Exception) error" fallback (`fastdist`/`fnj`/`fastprot`) each got
 `exit(EXIT_FAILURE)` added there too.
 
-### Phase 2 - replace the macros with real C++ (Finding 1)
+### Phase 2 + Phase 3 - delete `Exception` entirely, use `std::runtime_error` (Findings 1 + 2)
 
-Per app: replace `TRY_EXCEPTION(); ... CATCH_EXCEPTION() catch(...){...}`
-with a plain, visible `try { ... } catch (const Exception& e) { ... }
-catch (const std::exception& e) { ... }` (now that Finding 3 fixes
-`what()`, the second catch becomes genuinely useful instead of a
-`std::terminate`-avoidance stopgap). Delete `TRY_EXCEPTION`,
-`CATCH_EXCEPTION`, `CATCH_RETHROW` (already confirmed dead) from
-`Exception.hpp`. Decide whether `THROW_EXCEPTION` stays as-is (it
-still pulls its weight for `operator<<`-style messages) or becomes a
-small variadic helper - lower priority, can go either way without
-blocking the rest.
+**Done, superseding the original two-phase plan below.** Original plan
+was: fix `Exception`'s `what()` (Phase 3), then replace the macros with
+plain `try`/`catch (const Exception&)`/`catch (const std::exception&)`
+(Phase 2). The `what()` fix was implemented and confirmed working
+(catching as `const std::exception&` now returned the real message
+instead of the useless default) - but a direct question ("why isn't
+the standard exception good enough?") led to checking whether
+`Exception` earns its keep at all, not just whether its bug was fixed.
 
-### Phase 3 - fix `Exception`'s relationship to `std::exception` (Finding 2)
+It doesn't. Verified via grep: nothing anywhere in the tree reads
+`Exception`'s `.file`/`.function`/`.line`/`.stackTrace` fields directly,
+nothing catches it structurally (by type) except the macros themselves,
+and `addToStackTrace`/`CATCH_RETHROW` are entirely dead (Finding 1).
+All 57 `THROW_EXCEPTION` call sites across 16 files use identical
+generic streaming syntax (`THROW_EXCEPTION("msg" << var)`) - since
+it's a macro, none needed to change when its definition changed.
 
-Add `const char* what() const noexcept override` returning `message`
-(or a cached formatted string, if `printOn`'s output should be
-preserved verbatim). Decide whether `Exception` still needs to inherit
-`Object` - grep how much of `Object`'s interface (`hashCode`/`equals`/
-`toString`) `Exception` actually uses beyond `printOn`; if it's just
-`printOn`, that could be `Exception`'s own method instead, dropping
-the `Object` dependency entirely and leaving a small, standard-shaped
-exception type.
+Final shape: `THROW_EXCEPTION(MES)` now builds a `file:line (function):
+message` string and throws `std::runtime_error` directly - same
+diagnostic info as before (file/line/function), just as message text
+instead of struct fields, no custom class. `Exception.hpp`/`.cpp`
+deleted outright (Object dependency for this path gone with it).
+`TRY_EXCEPTION`/`CATCH_EXCEPTION`/`CATCH_RETHROW` deleted - each app's
+`main()` now has a plain, visible `try { ... } catch (const
+std::exception& e) { std::cerr << e.what() << ...; exit(EXIT_FAILURE);
+} catch (...) { ... }` (the inner no-op `catch(...){throw;}` wrapper
+each app had was also removed - it had zero behavioral effect).
+
+One real bug surfaced by this: `stl_utils.hpp` used `Object`/`objhash`/
+`objeq` without including `Object.hpp` directly - it relied on
+`Exception.hpp` transitively pulling it in. Fixed with a direct
+`#include "fastphylo/core/Object.hpp"` rather than restoring the
+transitive path.
+
+`fastprot_mpi` updated by inspection only (unverified, no MPI
+available) - same mechanical transformation, plus added the
+`catch(...)` "Unknown error" fallback it never had (bringing it in
+line with the other three apps).
+
+Verified: full rebuild + `ctest` 4/4 + `RunExamples.sh` 20/20
+byte-identical + `RunCliChecks.sh` all green, both with the default
+build and a separate `-DWITH_LIBXML=OFF` build (to catch any
+`Object.hpp`-transitive-include fallout in that code path too). Spot
+checked live error output - `fastdist` on a missing file now prints a
+single line (`.../PhylipMaInputStream.cpp:22 (PhylipSequenceReader):
+File doesn't exist: "..."`) and exits 1, replacing the old 7-line
+boxed format - strictly less code, same information.
 
 ### Phase 4 - modernize `file_utils` (Finding 3)
 
@@ -293,14 +319,14 @@ updated to match, verified via full rebuild + test suite.
 ## Explicitly out of scope
 
 - `fastprot_mpi` - consistent with every other phase in this
-  engagement, not verified (no MPI available); apply the same changes
-  by inspection/analogy only if asked.
-- Any change to `Object.hpp` itself beyond what Phase 3 needs from
-  `Exception`'s side - `Object` is used well beyond `Exception`
-  (`Sequence`, `DistanceMatrix`, etc.); a full `Object` redesign is a
-  separate, much bigger decision not raised here. Finding 5 confirmed
-  `Object`'s interface is all genuinely used, so there's no dead-code
-  case for touching it either.
+  engagement, not verified (no MPI available); Phase 2+3's changes were
+  applied there by inspection/analogy only (done).
+- Any change to `Object.hpp` itself - `Exception` no longer depends on
+  it at all (Phase 2+3 deleted `Exception` entirely), and `Object` is
+  used well beyond that (`Sequence`, `DistanceMatrix`, etc.); a full
+  `Object` redesign is a separate, much bigger decision not raised
+  here. Finding 5 confirmed `Object`'s interface is all genuinely used,
+  so there's no dead-code case for touching it either.
 - Reconciling `Exception`/`THROW_EXCEPTION` with `log_utils.hpp`'s
   `USER_ERROR`/`PROG_ERROR`/`MEM_CHECK` (Finding 5) - a real, separate
   design decision affecting 30+ call sites across the tree, not a

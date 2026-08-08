@@ -1,73 +1,23 @@
 //--------------------------------------------------
-//                                        
-// File: Exception.hpp                             
-//                             
-// Author: Isaac Elias         
-// e-mail: isaac@nada.kth.se   
-//                             
-// cvs: $Id: Exception.hpp,v 1.4 2006/12/26 15:18:48 isaac Exp $                                 
+//
+// File: Exception.hpp
 //
 //--------------------------------------------------
 #pragma once
 
-#include "fastphylo/core/Object.hpp"
-#include <string>
-#include <iostream>
-#include <exception>
 #include <sstream>
-#include <cstdlib>
+#include <stdexcept>
 
-//
-// Macros for catching and throwing
-//
-
-#define THROW_EXCEPTION(MES)  {std::ostringstream out; out << MES; throw Exception(__FILE__,__FUNCTION__,__LINE__,out.str());}
-#define TRY_EXCEPTION() try{
-// legacy_error_handling_plan.md Finding 0: an app that hit a real
-// Exception used to still exit 0 (success) here - nothing after this
-// catch block called exit(EXIT_FAILURE), so a caller checking the
-// exit code was silently lied to.
-#define CATCH_EXCEPTION() }catch(Exception exc){ std::cerr << exc <<std::endl; exit(EXIT_FAILURE);}
-#define CATCH_RETHROW() }catch(Exception exc1){ Exception exc2(__FILE__,__FUNCTION__,__LINE__,""); exc2.addToStackTrace(exc1); throw exc2;}
-
-
-class Exception : public Object , public std::exception
-{
-public:
-  std::string file;
-  std::string function;
-  int line;
-  
-  std::string message;
-
-
-std::string stackTrace;
-  
-Exception(std::string f, std::string func, int l, std::string mes);
-Exception(const Exception &exc);
-
-  void addToStackTrace(const Exception &exc){
-    std::ostringstream out;
-    exc.printOn(out);
-    stackTrace += out.str();
-  }
-  // Modernization Phase 0 (modernization_plan.md): throw() (means
-  // "never throws") is the pre-C++11 spelling of noexcept.
-  ~Exception() noexcept override {
-  }
-
-  std::ostream& printOn(std::ostream& os) const override;
-
-};
-
-
-
-
-
-
-
-
-
-
-
-
+// legacy_error_handling_plan.md Finding 2/Phase 3: this used to define a
+// hand-rolled Exception class (file/function/line fields, its own
+// printOn()-based formatting, double-inheriting a Java-style Object base
+// and std::exception without overriding what()). A direct audit found
+// nothing anywhere in the tree ever read those fields, caught Exception
+// structurally, or used its dead addToStackTrace()/CATCH_RETHROW()
+// mechanism - every one of THROW_EXCEPTION's 57 call sites just streams
+// a message. std::runtime_error already does exactly that, correctly,
+// with no custom class needed - THROW_EXCEPTION now builds the same
+// file/line/function-prefixed message text and throws that directly.
+#define THROW_EXCEPTION(MES) \
+  { std::ostringstream out; out << __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << "): " << MES; \
+    throw std::runtime_error(out.str()); }

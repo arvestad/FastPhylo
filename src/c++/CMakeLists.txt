@@ -83,7 +83,6 @@ set(FASTPHYLO_DNA_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/dna)
 
 set(FASTPHYLO_SRCS
 ${FASTPHYLO_CORE_DIR}/BitVector.cpp
-${FASTPHYLO_CORE_DIR}/Exception.cpp
 ${FASTPHYLO_CORE_DIR}/InitAndPrintOn_utils.cpp
 ${FASTPHYLO_CORE_DIR}/Object.cpp
 ${FASTPHYLO_CORE_DIR}/Sequence.cpp

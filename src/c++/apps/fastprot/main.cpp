@@ -368,7 +368,7 @@ int main (int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
   FastprotOptions opts = parseArgs(argc, argv);
-  TRY_EXCEPTION();
+  try {
   handleEarlyExitFlags(opts);
 
   prot_sequence_translation_model trans_model = buildTranslationModel(opts);
@@ -388,18 +388,17 @@ int main (int argc, char **argv) {
     // NOLINTNEXTLINE(bugprone-random-generator-seed) - bootstrap resampling, not a security context; time-seeding when no explicit --seed is the intended default.
     srand(static_cast<unsigned int>(time(nullptr)));
 }
-  try {
-    std::unique_ptr<DataInputStream> istream = buildInputStream(opts);
-    std::unique_ptr<DataOutputStream> ostream = buildOutputStream(opts);
-    bool binary_format_type = opts.memory_efficient || (opts.output_format == OutputFormat::Binary);
+  std::unique_ptr<DataInputStream> istream = buildInputStream(opts);
+  std::unique_ptr<DataOutputStream> ostream = buildOutputStream(opts);
+  bool binary_format_type = opts.memory_efficient || (opts.output_format == OutputFormat::Binary);
 
-    processRuns(*istream, *ostream, trans_model, ndatasets, numboot, no_incl_orig,
-                remove_indels, binary_format_type, opts.input_format);
+  processRuns(*istream, *ostream, trans_model, ndatasets, numboot, no_incl_orig,
+              remove_indels, binary_format_type, opts.input_format);
   }
-  catch(...){
-    throw;
+  catch (const std::exception& e) {
+    std::cerr << e.what() << std::endl;
+    exit(EXIT_FAILURE);
   }
-  CATCH_EXCEPTION()
   catch(...){
     std::cerr << "Unknown (non-Exception) error" << std::endl;
     exit(EXIT_FAILURE);
