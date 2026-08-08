@@ -13,6 +13,7 @@
 #include "fastphylo/core/Exception.hpp"
 #include "fastphylo/core/phylip_interleaved_reader.hpp"
 #include <array>
+#include <iomanip>
 #include <string>
 #include "fastphylo/core/log_utils.hpp"
 #include <fstream>

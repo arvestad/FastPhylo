@@ -10,6 +10,7 @@
 //--------------------------------------------------
 #pragma once
 
+#include <iomanip>
 #include <string>
 #include "fastphylo/core/file_utils.hpp"
 
