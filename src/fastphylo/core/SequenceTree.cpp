@@ -64,7 +64,7 @@ void SequenceTree::setNodeNames()
     {
         if (NAME(n).empty())
         {
-            NAME(n) = string("n") + n->getNodeId();
+            NAME(n) = "n" + std::to_string(n->getNodeId());
         }
     }
 }

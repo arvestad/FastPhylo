@@ -2,7 +2,6 @@
 #pragma once
 
 #include <string>
-#include <cstring>
 
 #include <list>
 // #include <ext/hash_map>
@@ -14,17 +13,6 @@
 #include "fastphylo/core/file_utils.hpp"
 #include "fastphylo/core/log_utils.hpp"
 #include "fastphylo/core/Object.hpp"
-
-// --------------------------
-// String operators
-//
-std::string operator+(const std::string &s, const int i);
-std::string operator+(const int i, const std::string &s);
-std::string operator+(const std::string &s, const float f);
-std::string operator+(const float f, const std::string &s);
-
-std::istream &operator>>(std::istream &in, std::string *str);
-std::ostream &operator<<(std::ostream &os, std::string *str);
 
 //--------------------------
 static inline void appendUntil(std::string &s, const char *chars, const int len, const char lastchar)
@@ -108,14 +96,6 @@ struct eqstr
         return s1 == s2;
     }
 };
-struct ltstr
-{
-    bool operator()(const std::string &s1, const std::string &s2) const
-    {
-        return strcmp(s1.c_str(), s2.c_str()) < 0;
-    }
-};
-
 struct hashstr
 {
     std::hash<std::string> chhash;
@@ -129,10 +109,6 @@ struct hashstr
 // typedef __gnu_cxx::hash_map<const std::string, std::string, hashstr, eqstr> str2str_hashmap;
 using str2int_hashmap = std::unordered_map<const std::string, int, hashstr, eqstr>;
 using str2str_hashmap = std::unordered_map<const std::string, std::string, hashstr, eqstr>;
-
-using str2int_map = std::map<const std::string, int, ltstr>;
-
-void print_map(str2int_map &m);
 
 //---------------------------------------------------------------
 // Object 2 Object Map

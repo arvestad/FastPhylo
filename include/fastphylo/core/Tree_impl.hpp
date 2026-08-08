@@ -153,7 +153,7 @@ TREE_TEMPLATE TREENODE *TREE::initSubtreeFromStream(std::istream &in)
     // INNER NODE
     else
     {
-        in.get(); // skip the ´(´
+        in.get(); // skip the ï¿½(ï¿½
         skipWhiteSpace(in);
 
         if (in.peek() == ')')
@@ -1029,7 +1029,7 @@ TREE_TEMPLATE std::ostream &TREENODE::printOn(std::ostream &os) const
         ownertree->dataPrintOn(outstr, data);
         std::string str = outstr.str();
         if (str.size() == 0)
-            str = std::string("n") + nodeId;
+            str = "n" + std::to_string(nodeId);
         if (xmlPrint)
         {
             return os << str << "</leaf>";
