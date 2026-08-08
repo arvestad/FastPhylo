@@ -6,6 +6,32 @@ on:
   pull_request:
 
 jobs:
+  # Independent of the build matrix below - doesn't need to compile
+  # anything, just checks every tracked C/C++ file against
+  # .clang-format. Mirrors the local pre-commit hook (.githooks/
+  # pre-commit) so a contributor who skipped opting into that still
+  # gets caught here before merge.
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+
+      - name: Check formatting
+        run: |
+          failed=0
+          while IFS= read -r -d '' f; do
+            if ! clang-format --dry-run --Werror --style=file "$f"; then
+              failed=1
+            fi
+          done < <(git ls-files -z '*.c' '*.cpp' '*.h' '*.hpp' -- ':!third_party')
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::One or more files don't match .clang-format - run 'clang-format -i <file>' (or 'git clang-format') locally and push again."
+            exit 1
+          fi
+
   build-and-test:
     strategy:
       fail-fast: false

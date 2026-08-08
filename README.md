@@ -39,3 +39,15 @@ The directory layout of this package:
 * examples           example invocations and expected output, used for regression testing
 * docs               the docbook sources for the html documentation on the homepage
 
+## Code style ##
+
+The whole repo is formatted per `.clang-format` (4-space indent, Allman braces). CI
+rejects any push/PR containing an unformatted file. To catch that before pushing,
+opt in to the repo's shared pre-commit hook once per clone:
+
+    git config core.hooksPath .githooks
+
+It blocks a commit if any staged C/C++ file doesn't match `.clang-format`, with the
+exact `clang-format -i` command to fix it. Most editors can also auto-format on save
+using the same `.clang-format` file, which is the easier day-to-day option.
+
