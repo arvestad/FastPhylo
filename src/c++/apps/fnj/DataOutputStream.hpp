@@ -14,9 +14,13 @@ class DataOutputStream
 {
   public:
     DataOutputStream(char *filename);
-    virtual ~DataOutputStream() {};
+    virtual ~DataOutputStream()
+    {
+    }
     virtual void print(tree2int_map &tree2count, bool printCounts, string &runId, vector<string> &names,
-                       Extrainfos &extrainfos) {};
+                       Extrainfos &extrainfos)
+    {
+    }
 
   protected:
     ostream *fp;

@@ -16,7 +16,9 @@
 class Object
 {
   public:
-    virtual ~Object() {};
+    virtual ~Object()
+    {
+    }
 
     // PRINTING
     virtual std::ostream &printOn(std::ostream &os) const;

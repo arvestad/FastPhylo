@@ -16,13 +16,27 @@ class DataOutputStream
     DataOutputStream();
     DataOutputStream(char *filename);
     virtual ~DataOutputStream();
-    virtual void print(StrDblMatrix &dm) {};
-    virtual void printSD(StrDblMatrix &dm) {};
-    virtual void printStartRun(std::vector<std::string> &names, std::string &runId, Extrainfos &extrainfos) {};
-    virtual void printEndRun() {};
-    virtual void printRows(const StrDblMatrix &dm) {};
-    virtual void printRow(StrFloRow &dm, std::string name, int row) {};
-    virtual void printHeader(size_t numNodes) {};
+    virtual void print(StrDblMatrix &dm)
+    {
+    }
+    virtual void printSD(StrDblMatrix &dm)
+    {
+    }
+    virtual void printStartRun(std::vector<std::string> &names, std::string &runId, Extrainfos &extrainfos)
+    {
+    }
+    virtual void printEndRun()
+    {
+    }
+    virtual void printRows(const StrDblMatrix &dm)
+    {
+    }
+    virtual void printRow(StrFloRow &dm, std::string name, int row)
+    {
+    }
+    virtual void printHeader(size_t numNodes)
+    {
+    }
 
     // Mehmood's addition here
     //  FAST PRINTING OF FLOATS

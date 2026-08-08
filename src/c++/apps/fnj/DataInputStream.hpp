@@ -21,7 +21,9 @@ enum readstatus
 class DataInputStream
 {
   public:
-    virtual ~DataInputStream() {};
+    virtual ~DataInputStream()
+    {
+    }
     virtual readstatus readDM(StrDblMatrix &dm, std::vector<std::string> &names, std::string &runId,
                               Extrainfos &extrainfos) = 0;
 };
