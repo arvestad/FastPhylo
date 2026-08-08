@@ -1,4 +1,5 @@
 #include "FastaInputStream.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include <cstdio>
 #include <fstream>
 

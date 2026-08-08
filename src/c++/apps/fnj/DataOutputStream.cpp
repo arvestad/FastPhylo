@@ -1,4 +1,5 @@
 #include "DataOutputStream.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include <cstdio>
 
 using namespace std;

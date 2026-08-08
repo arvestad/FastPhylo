@@ -6,6 +6,7 @@
  *       Email: malagori@kth.se
  */
 #include "BinaryInputStream.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include <cmath>
 #include <cstring>
 

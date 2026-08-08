@@ -1,84 +1,31 @@
 //--------------------------------------------------
-//                                        
+//
 // File: file_utils.hpp
-//                             
-// Author: Isaac Elias         
-// e-mail: isaac@nada.kth.se   
-//                             
-// cvs: $Id: file_utils.hpp,v 1.4 2006/09/10 10:18:26 isaac Exp $                                 
 //
 //--------------------------------------------------
 
 #pragma once
 
-
-#include <stdio.h>
-#include <iostream>
+#include <cstdio>
 #include <fstream>
-#include <iomanip>
+#include <istream>
 
-#include "fastphylo/core/Exception.hpp"
-#include <string>
-
-/* CHECK IF FILE EXISTS */
-int
-file_exists(const char *fname);
-
-
-// Modernization Phase 0 (modernization_plan.md): dynamic exception
-// specifications (throw(Exception)) were removed entirely in C++17 -
-// omitting the specifier is the modern equivalent (a function with no
-// exception-specification may throw anything, same runtime behavior
-// these always had for the one type they declared).
+// legacy_error_handling_plan.md Finding 3/Phase 4: this used to declare
+// 14 functions, mostly char*-first with a std::string overload as a
+// thin .c_str()-forwarding afterthought. A direct audit (redone after
+// Phase 0 deleted several files that were file_utils' only remaining
+// callers of open_write_stream/open_read_stream) found only these 3
+// with any live caller left anywhere in the tree; everything else -
+// the "interactive" prompt-and-retry family, open_write_stream,
+// open_read_stream, file_exists (only ever called by the two deleted
+// "interactive" functions), skipWhiteSpace(FILE*), skipUntil,
+// appendToken, appendUntil - was dead and has been removed.
 FILE *
 open_write_file(const char *fname);
-
-void
-open_write_stream(const char *fname, std::ofstream &of);
-
-void
-open_write_stream(const std::string fname, std::ofstream &of);
-
-FILE *
-open_write_file_interactive(const char *fname);
-
-void
-open_write_stream_interactive(const char *fname, std::ofstream &of);
-
-FILE *
-open_read_file(const char *fname);
-
-void
-open_read_stream(const char *fname,std::ifstream &fin);
-
-void
-open_read_stream(const std::string fname,std::ifstream &fin);
-
-
-FILE *
-open_read_file_interactive(const char *fname);
 
 // Added by Mehmood Khan Malagori; email: malagori@kth.se
 std::ofstream *
 open_write_binary(const char *fname);
-// end
-
-void
-open_read_stream_interactive(const char *fname,std::ifstream &fin);
-
-void
-skipWhiteSpace(FILE *f);
 
 void
 skipWhiteSpace(std::istream &in);
-
-void
-skipUntil(std::istream &in, char *chars);
-
-void
-appendToken(std::istream &in, std::string &str);
-
-void
-appendUntil(std::istream &in, std::string &str,  char *chars);
-
-

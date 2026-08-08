@@ -92,6 +92,14 @@ bolted together, neither fully realized.
 
 ## Finding 3 - `file_utils.hpp`: half the functions are dead, all of it is `char*`-based
 
+**Superseded by Phase 4's re-check below** - this table was correct at
+the time (2026-08-08, before Phase 0 landed) but Phase 0 deleted the
+only remaining callers of two of the "live" entries here, and two more
+turned out to be mis-assessed (an overload-name collision with
+`stl_utils.hpp`). Kept for the historical record of the original
+investigation; see Phase 4 for the final, correct live/dead count (3
+of 14 survive, not 7).
+
 Grepped every declared function for call sites outside
 `file_utils.cpp`/`.hpp` themselves. 7 of 14 have **zero**:
 
@@ -299,13 +307,50 @@ boxed format - strictly less code, same information.
 
 ### Phase 4 - modernize `file_utils` (Finding 3)
 
-Delete the 7 dead functions. Replace `file_exists` with
-`std::filesystem::exists` at its call site(s) and delete the wrapper.
-Convert the remaining live functions' primary signatures to
-`std::string`/`std::string_view`/`std::filesystem::path` as
-appropriate, collapsing each function to one real implementation
-rather than a `char*` original plus a `.c_str()`-forwarding
-`std::string` overload.
+**Done, with a larger scope than Finding 3's original table.**
+Finding 3 was assessed *before* Phase 0 deleted `sequence_nj.cpp`/
+`buildtree.cpp`/`iterative_tree_merger/` - which turned out to be the
+only remaining callers of `open_write_stream`/`open_read_stream`.
+Re-checking at Phase 4 time (always re-verify current state rather
+than trusting an earlier finding once other phases have landed)
+found both now fully dead too, plus two more the original table
+mis-assessed: `appendUntil` in `file_utils.hpp` (the 3-arg
+`istream`-based overload) turned out to share a name with a
+completely different 4-arg `appendUntil` in `stl_utils.hpp` - the
+original grep matched call sites for the latter, not the former,
+which has zero real callers. Likewise `skipWhiteSpace(FILE*)` - only
+the `istream&` overload is ever called.
+
+Final live/dead count: of the original 14 declared functions (18
+counting overloads separately), only 3 survive:
+`open_write_file`, `open_write_binary`, `skipWhiteSpace(std::istream&)`.
+Everything else deleted, including `file_exists` (its only 2 callers
+were the two already-dead "interactive" functions, so nothing needed
+a `std::filesystem::exists` replacement - it just became orphaned and
+was deleted directly).
+
+`open_write_file`/`open_write_binary` kept their `const char*`
+signature rather than moving to `std::string`/`path` as originally
+planned - their only remaining callers (`DataOutputStream`'s
+constructor family) pass a nullable `char *filename` where `nullptr`
+means "write to stdout", an idiom `std::string`/`string_view` can't
+represent without introducing `std::optional` or an overload set -
+that's a real design step belonging to `DataOutputStream`, not a
+`file_utils.hpp` signature-modernization detail. Not attempted here.
+
+Real bug surfaced while rebuilding: `file_utils.hpp` used to
+`#include "fastphylo/core/Exception.hpp"`, and 9 other files across
+the tree used `THROW_EXCEPTION` while relying on that entirely
+transitively (never including `Exception.hpp` directly themselves).
+Once the rewritten `file_utils.hpp` dropped that include (no longer
+needed by anything declared in the header itself), all 9 broke. Fixed
+correctly - each of the 9 now includes `Exception.hpp` directly -
+rather than papering over it by restoring the transitive path.
+
+Verified: full rebuild + `ctest` 4/4 + `RunExamples.sh` 20/20
+byte-identical + `RunCliChecks.sh` all green, plus a separate
+`-DWITH_LIBXML=OFF` build (several of the 9 broken files were
+XML-related).
 
 ### Phase 5 - delete the rest of the dead code found in the full `core/` audit (Finding 5)
 

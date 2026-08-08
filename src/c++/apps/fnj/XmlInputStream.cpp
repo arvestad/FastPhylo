@@ -1,4 +1,5 @@
 #include "XmlInputStream.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include <cstdio>
 
 using namespace std;

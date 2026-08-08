@@ -1,4 +1,5 @@
 #include "PhylipMaInputStream.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include <cstdio>
 
 using namespace std;

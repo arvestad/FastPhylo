@@ -10,6 +10,7 @@
 //--------------------------------------------------
 
 #include "fastphylo/dna/Sequences2DistanceMatrix.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include "fastphylo/dna/DNA_b128_String.hpp"
 #include "fastphylo/core/phylip_interleaved_reader.hpp"
 #include <array>

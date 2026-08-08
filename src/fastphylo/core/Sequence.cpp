@@ -10,6 +10,7 @@
 //--------------------------------------------------
 
 #include "fastphylo/core/Sequence.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include "fastphylo/core/phylip_interleaved_reader.hpp"
 #include <array>
 #include <string>
