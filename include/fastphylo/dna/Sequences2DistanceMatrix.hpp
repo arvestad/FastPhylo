@@ -13,7 +13,6 @@
 #define SEQUENCES2DISTANCEMATRIX_HPP
 
 #include "fastphylo/core/DistanceMatrix.hpp"
-#include "fastphylo/core/FloatDistanceMatrix.hpp"
 #include "fastphylo/core/DistanceRow.hpp"
 #include <string>
 #include "fastphylo/dna/DNA_b128_String.hpp"

@@ -15,7 +15,6 @@
 #include "fastphylo/core/InitAndPrintOn_utils.hpp"
 #include "fastphylo/core/Sequence.hpp"
 #include "fastphylo/core/DistanceMatrix.hpp"
-#include "fastphylo/core/FloatDistanceMatrix.hpp"
 #include "fastphylo/core/BitVector.hpp"
 
 //---------------------------------------
@@ -78,12 +77,10 @@ public:
   //removes all degree 2 nodes and makes an edge length a+b where
   //a and b are the lengths of the the two edges
   void shortcutDegree2Nodes();
-  void shortcutFloatDegree2Nodes();
 
   //---------------
   //returns the sum of all edge lengths
   double sumOfEdgeLengths();
-  float sumOfFloatEdgeLengths();
 
 
   //---------------
@@ -94,7 +91,6 @@ public:
   // since the likelihood of these are the same
   // All internal nodes have to have strings assigned to them.
   double compute_loglikelihood();
-  float computeFloat_loglikelihood();
 
   //--------------------------- 
   // MAKE CANONICAL
@@ -116,9 +112,6 @@ public:
   //The normalized meassure is thus RF(T1,T2)/(Splitts(T1)+Splitts(T2))
   static double
   computeRobinsonFoulds(SequenceTree &t1,SequenceTree &t2);
-  
-  static float
-    computeFloatRobinsonFoulds(SequenceTree &t1,SequenceTree &t2);
 
   void
   computeSplittSet(std::vector<BitVector> &splitts, SequenceTree::NodeVector &nodes,
@@ -143,20 +136,12 @@ public:
 
   void tree2distanceMatrix(StrDblMatrix &dm);
 
-
-  using NodeFloatMatrix = FloatDistanceMatrix<SequenceTree::Node *,float,
-  			 Data_init<SequenceTree::Node *>,Data_printOn<SequenceTree::Node *>,
-  			 Data_init<float>,Data_printOn<float> >;
-
-  void tree2FloatdistanceMatrix(StrFloMatrix &fdm);
   //--------------------------------------
   //All edges <=bound are removed.
   //The number of contracted edges are returned.
-  //Edges incident to leafs are not removed. 
+  //Edges incident to leafs are not removed.
   int
   contractEdgesShorterThan(double bound=0);
-  int
-   contractFloatEdgesShorterThan(float bound=0);
   //--------
   //takes an array of strings which should consist of name,seq pairs/
   //i.e. map{n1,s1,n2,s2,...nN,sN} 

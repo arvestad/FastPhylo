@@ -26,11 +26,6 @@ public:
   XmlInputStream(char *filename);
   ~XmlInputStream() override;
   readstatus readDM( StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos) override;
-  // Not an override - DataInputStream only declares the StrDblMatrix
-  // overload as the (pure) virtual interface; this StrFloMatrix
-  // overload is specific to this class (see DataInputStream.hpp's
-  // 2016-06-14 comment on why the two aren't symmetric).
-  readstatus readDM( StrFloMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos);
 protected:
   xmlTextReaderPtr reader;
   locator_t l;
