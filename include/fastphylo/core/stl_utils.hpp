@@ -7,7 +7,7 @@
 #include <iostream>
 #include <vector>
 #include "fastphylo/core/file_utils.hpp"
-#include "fastphylo/core/log_utils.hpp"
+#include "fastphylo/core/Exception.hpp"
 
 //--------------------------
 static inline void appendUntil(std::string &s, const char *chars, const int len, const char lastchar)
@@ -47,7 +47,7 @@ template <class T> std::istream &operator>>(std::istream &in, std::vector<T> &ve
 
     if (in.peek() != '{')
     {
-        USER_ERROR("Wrong vector format. e.g. {1,2,4}");
+        THROW_EXCEPTION("Wrong vector format. e.g. {1,2,4}");
     }
 
     in.get(); // skip {
@@ -61,7 +61,7 @@ template <class T> std::istream &operator>>(std::istream &in, std::vector<T> &ve
         skipWhiteSpace(in);
         if (in.peek() != ',')
         {
-            USER_ERROR("Wrong vector format. e.g. {1,2,4}");
+            THROW_EXCEPTION("Wrong vector format. e.g. {1,2,4}");
         }
         in.get(); // skip ','
     }

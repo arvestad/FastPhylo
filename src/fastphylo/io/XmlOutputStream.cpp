@@ -2,6 +2,7 @@
 #include <array>
 #include <cstdio>
 #include <cmath>
+#include <iostream>
 
 using namespace std;
 
@@ -76,7 +77,7 @@ void XmlOutputStream::printRow(StrFloRow &dm, string name, size_t row, bool mem_
 
         if (!isfinite(f))
         {
-            USER_WARNING("warning float not finite (use fix factor) " << f);
+            std::cerr << "warning: float not finite (use fix factor) " << f << std::endl;
             fprintf(fp, "     <entry>-1</entry>\n");
             continue;
         }

@@ -121,7 +121,7 @@ printPHYLIPfast(const StrDblMatrix &dm, FILE *out, bool writeXml ){
     for ( size_t j = 0 ; j < entriesPerRow ; j++ ){
       float f = dm.getDistance(i,j);
       if ( ! std::isfinite(f) ){
-    USER_WARNING("warning float not finite (use fix factor) " << f );
+    std::cerr << "warning: float not finite (use fix factor) " << f << std::endl;
 
     if (  writeXml ) {
       //	  xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const xmlChar * ) "-1" );

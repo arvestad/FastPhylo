@@ -298,7 +298,7 @@ void readSequenceLine(std::istream &fin, string *currseq)
         {
             if (isspace(c) == 0)
             {
-                USER_ERROR("Bad character \'" << c << "\'");
+                THROW_EXCEPTION("Bad character '" << c << "'");
             }
             else if (c != '\n')
             {
@@ -412,7 +412,7 @@ void SequenceTree::mapSequencesOntoTree(std::istream &fin)
     {
         if (SEQ(nodes[i]).length() != seqlen && !SEQ(nodes[i]).empty())
         {
-            USER_ERROR("Sequence not of correct length: " << nodes[i]->data.s.name);
+            THROW_EXCEPTION("Sequence not of correct length: " << nodes[i]->data.s.name);
         }
     }
 }
@@ -429,7 +429,7 @@ double SequenceTree::computeRobinsonFoulds(SequenceTree &t1, SequenceTree &t2)
     int numLeafs = t1.getNumLeafs();
     if (numLeafs != t2.getNumLeafs())
     {
-        USER_WARNING("trees have different num Leafs: " << numLeafs << "!=" << t2.getNumLeafs());
+        std::cerr << "warning: trees have different num Leafs: " << numLeafs << "!=" << t2.getNumLeafs() << std::endl;
         return -1;
     }
 
@@ -452,7 +452,7 @@ double SequenceTree::computeRobinsonFoulds(SequenceTree &t1, SequenceTree &t2)
         auto iter = name2index.find(NAME(nodes2[i]));
         if (iter == name2index.end())
         {
-            USER_WARNING("trees have different leafs. " << NAME(nodes2[i]) << " doesn't exist.");
+            std::cerr << "warning: trees have different leafs. " << NAME(nodes2[i]) << " doesn't exist." << std::endl;
             return -1;
         }
     }
@@ -630,7 +630,7 @@ void SequenceTree::makeCanonical(const str2int_hashmap &name2id)
         auto find = name2id.find(NAME(tmpvec[i]));
         if (find == name2id.end())
         {
-            USER_WARNING("name doesn't exist: \"" << NAME(tmpvec[i]) << "\"");
+            std::cerr << "warning: name doesn't exist: \"" << NAME(tmpvec[i]) << "\"" << std::endl;
         }
         leafs[(*find).second] = tmpvec[i];
     }

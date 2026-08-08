@@ -21,7 +21,7 @@
 #include "fastphylo/core/Object.hpp"
 #include "fastphylo/core/stl_utils.hpp"
 #include "fastphylo/core/file_utils.hpp"
-#include "fastphylo/core/log_utils.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include "fastphylo/core/InitAndPrintOn_utils.hpp"
 
 //
@@ -528,7 +528,7 @@ class TreeNode : public Object
     TreeNode(const TREENODE &n);
     TREENODE &operator=(const TREENODE &n)
     {
-        PROG_ERROR("Not implemented");
+        THROW_EXCEPTION("Not implemented");
         return *this;
     }
 

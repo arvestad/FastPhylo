@@ -14,6 +14,7 @@
 #include <iostream>
 #include "fastphylo/core/file_utils.hpp"
 #include "fastphylo/core/stl_utils.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include "fastphylo/core/Sequence.hpp"
 
 //
@@ -46,7 +47,7 @@ template <class DataType> struct empty_Data_init
 {
     void operator()(std::istream &in, const DataType &d) const
     {
-        PROG_ERROR("Empty init function called");
+        THROW_EXCEPTION("Empty init function called");
     }
 };
 

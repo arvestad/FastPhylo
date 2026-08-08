@@ -18,6 +18,7 @@
 #include <stack>
 #include <assert.h>
 #include "fastphylo/core/log_utils.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include <algorithm>
 #include "fastphylo/core/xml_output_global.hpp"
 
@@ -364,12 +365,12 @@ TREE_TEMPLATE void TREE::moveNode(TREENODE *node, TREENODE *newparent)
 {
     if (node->isRoot())
     {
-        USER_ERROR("Node is root and cannot be moved");
+        THROW_EXCEPTION("Node is root and cannot be moved");
         return;
     }
     if (newparent->isDescendantOf(node))
     {
-        USER_ERROR("Node cannot be moved to one of its children");
+        THROW_EXCEPTION("Node cannot be moved to one of its children");
         return;
     }
     node->detachFromParent();
@@ -436,7 +437,7 @@ TREE_TEMPLATE TREENODE *TREE::insertNodeOnPathToParent(TREENODE *n, Data newpare
 {
 
     if (n->isRoot())
-        USER_ERROR("can insert node on path to parent for the root");
+        THROW_EXCEPTION("can insert node on path to parent for the root");
 
     TREENODE *parent = n->parent;
     // remove n the parent.
@@ -569,7 +570,7 @@ TREE_TEMPLATE void TREE::reRootAt(TREENODE *n)
 {
     if (n->ownertree != this)
     {
-        PROG_ERROR("not correct owner tree");
+        THROW_EXCEPTION("not correct owner tree");
     }
     if (n == root)
         return;
@@ -712,7 +713,6 @@ TREE_TEMPLATE void TREE::collapse(TREENODE *n)
     }
     if (n->parent == NULL)
     {
-        PRINT(n->parent == NULL);
         reRootAt(n->getRightMostChild());
     }
 
@@ -800,7 +800,7 @@ TREE_TEMPLATE void TREE::makeCanonical(const std::vector<TREENODE *> &leafs)
     for (size_t i = 0; i < leafs.size(); i++)
     {
         if (((void *)leafs[i]->getTree()) != ((void *)this))
-            PROG_ERROR("leafs not from this tree");
+            THROW_EXCEPTION("leafs not from this tree");
 
         leafs[i]->nodeId = getNewNodeId();
     }
@@ -1548,7 +1548,7 @@ TREE_TEMPLATE void TREE::addNodesInIdOrder(std::vector<const TREENODE *> &nodes)
 //   nodeId = 0;
 //   for(size_t i=0;i<leafs.size();i++){
 //     if(((void*)leafs[i]->getTree())!=((void*)this))
-//       PROG_ERROR("leafs not from this tree");
+//       THROW_EXCEPTION("leafs not from this tree");
 
 //     leafs[i]->nodeId = getNewNodeId();
 //     nodesInIdOrder[i] = leafs[i];

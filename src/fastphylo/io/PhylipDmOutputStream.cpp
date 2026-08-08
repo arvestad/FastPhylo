@@ -2,6 +2,7 @@
 #include <array>
 #include <cstdio>
 #include <cmath>
+#include <iostream>
 
 using namespace std;
 
@@ -117,7 +118,7 @@ void appendEntry(std::string &row, float f, PhylipDmOutputStream::Format format)
 {
     if (!isfinite(f))
     {
-        USER_WARNING("warning float not finite (use fix factor) " << f);
+        std::cerr << "warning: float not finite (use fix factor) " << f << std::endl;
         row += format == PhylipDmOutputStream::Format::Plain ? "        -1" : "     <entry>-1</entry>\n";
         return;
     }
@@ -249,7 +250,7 @@ void PhylipDmOutputStream::printRow(StrFloRow &dm, string name, size_t row, bool
 
         if (!isfinite(f))
         {
-            USER_WARNING("warning float not finite (use fix factor) " << f);
+            std::cerr << "warning: float not finite (use fix factor) " << f << std::endl;
             fprintf(fp, "        -1");
             continue;
         }

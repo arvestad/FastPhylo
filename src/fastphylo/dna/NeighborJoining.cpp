@@ -1,6 +1,7 @@
 #include <cfloat>
 #include <cmath>
 #include "fastphylo/dna/NeighborJoining.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include "fastphylo/core/Sequence.hpp"
 
 using NJMatrix = DistanceMatrix<SequenceTree::Node *, double, Data_init<SequenceTree::Node *>,
@@ -42,6 +43,6 @@ void computeNJTree(StrDblMatrix &dm, SequenceTree &tree, NJ_method m)
         computeFNJTree(njdm, defdata);
         break;
     default:
-        PROG_ERROR("Unexpected method");
+        THROW_EXCEPTION("Unexpected method");
     }
 }

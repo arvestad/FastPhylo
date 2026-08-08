@@ -2,80 +2,27 @@
 //
 // File: log_utils.hpp
 //
-// Author: Isaac Elias
-// e-mail: isaac@nada.kth.se
-//
-// cvs: $Id: log_utils.hpp,v 1.12 2006/12/24 08:45:43 isaac Exp $
-//
 //--------------------------------------------------
 #pragma once
 
 #include <iostream>
 #include <cassert>
-#include <ctime>
-// If the PRINT statements should be executed
-#ifndef USE_PRINT
-#define USE_PRINT 1
-#endif
 
-// PRINT
-#ifndef PRINT
-#define PRINT(EXP)                                                                                                     \
-    if (USE_PRINT)                                                                                                     \
-    {                                                                                                                  \
-        std::cout << #EXP << " = " << (EXP) << std::endl;                                                              \
-    }
-#endif
-
-// PRINT_V
-#ifndef PRINT_V
-#define PRINT_V(EXP)                                                                                                   \
-    if (USE_PRINT)                                                                                                     \
-    {                                                                                                                  \
-        std::cout << __FILE__ << ":" << __LINE__ << "  (" << #EXP << ") = " << (EXP) << std::endl;                     \
-    }
-#endif
-
-// PRINT_V
-#ifndef PRINT_TIME
-#define PRINT_TIME(EXP)                                                                                                \
-    if (USE_PRINT)                                                                                                     \
-    {                                                                                                                  \
-        clock_t log_utils_time = clock();                                                                              \
-        EXP;                                                                                                           \
-        std::cout << __FILE__ << ":" << __LINE__ << "  (" << #EXP << ")  took time  "                                  \
-                  << double(clock() - log_utils_time) / (CLOCKS_PER_SEC / 1000) << " ms" << std::endl;                 \
-    }
-#endif
-
-// PRINT_EXP only prints the expression
-#ifndef PRINT_EXP
-#define PRINT_EXP(EXP)                                                                                                 \
-    if (USE_PRINT)                                                                                                     \
-    {                                                                                                                  \
-        std::cout << "executing: " << #EXP << std::endl;                                                               \
-        EXP;                                                                                                           \
-    }
-#endif
-
-// LINE
-#ifndef LINE
-#define LINE()                                                                                                         \
-    if (USE_PRINT)                                                                                                     \
-    {                                                                                                                  \
-        std::cout << __FILE__ << ":" << __LINE__ << std::endl;                                                         \
-    }
-#endif
-
-// SEPARATOR
-#ifndef SEPARATOR
-#define SEPARATOR()                                                                                                    \
-    if (USE_PRINT)                                                                                                     \
-    {                                                                                                                  \
-        std::cout << __FILE__ << ":" << __LINE__ << "------------------------------" << std::endl;                     \
-    }
-#endif
-
+// legacy_error_handling_plan.md Finding 5 / modern_cpp_core_cleanup_plan.md:
+// this used to define 11 macros (PRINT/PRINT_V/PRINT_TIME/PRINT_EXP/LINE/
+// SEPARATOR - all dead printf-debugging leftovers with zero real call
+// sites; MEM_CHECK/PROG_ERROR/USER_ERROR/USER_WARNING - a second,
+// uncoordinated error-reporting system that called exit() directly,
+// bypassing THROW_EXCEPTION's throw/unwind/catch entirely). All of
+// those are gone now: USER_ERROR/PROG_ERROR call sites became
+// THROW_EXCEPTION (identical streaming syntax, but unwinds properly -
+// exit() skips destructors of in-scope objects, so a mid-write
+// std::ofstream could lose buffered data); USER_WARNING call sites
+// became direct std::cerr writes (no control-flow behavior needed
+// wrapping); MEM_CHECK's 2 sites became a direct null-check + abort()
+// (still not an exception - minimizing further allocation while
+// already handling OOM is the one part of the old design worth
+// keeping). Only ASSERT_EQ remains, still genuinely used.
 #ifndef ASSERT_EQ
 #ifndef NDEBUG
 #define ASSERT_EQ(EXP1, EXP2)                                                                                          \
@@ -91,51 +38,4 @@
 #else
 #define ASSERT_EQ(EXP1, EXP2)
 #endif
-#endif
-
-// MEM_CHECK
-#ifndef MEM_CHECK
-#define MEM_CHECK(PTR)                                                                                                 \
-    if ((PTR) == NULL)                                                                                                 \
-    {                                                                                                                  \
-        std::cerr << "************\nOUT OF MEMORY\nfile: " << __FILE__ << "\nfunc: " << __FUNCTION__                   \
-                  << "\nline: " << __LINE__ << "\n"                                                                    \
-                  << #PTR << " == NULL " << "\n************" << std::endl;                                             \
-        exit(1);                                                                                                       \
-    }
-#endif
-
-// PROG_ERR
-#ifndef PROG_ERROR
-#define PROG_ERROR(EXP)                                                                                                \
-    if (true)                                                                                                          \
-    {                                                                                                                  \
-        std::cerr << "************\nPROGRAM ERROR\nfile: " << __FILE__ << "\nfunc: " << __FUNCTION__                   \
-                  << "\nline: " << __LINE__ << "\n"                                                                    \
-                  << EXP << "\n************" << std::endl;                                                             \
-        exit(1);                                                                                                       \
-    }
-#endif
-
-// USER_ERR
-#ifndef USER_ERROR
-#define USER_ERROR(EXP)                                                                                                \
-    if (true)                                                                                                          \
-    {                                                                                                                  \
-        std::cerr << "************\nUSER INPUT ERROR\nfile: " << __FILE__ << "\nfunc: " << __FUNCTION__                \
-                  << "\nline: " << __LINE__ << "\n"                                                                    \
-                  << EXP << "\n************" << std::endl;                                                             \
-        std::exit(1);                                                                                                  \
-    }
-#endif
-
-// USER_WARNING
-#ifndef USER_WARNING
-#define USER_WARNING(EXP)                                                                                              \
-    if (true)                                                                                                          \
-    {                                                                                                                  \
-        std::cerr << "************\nUSER WARNING\nfile: " << __FILE__ << "\nfunc: " << __FUNCTION__                    \
-                  << "\nline: " << __LINE__ << "\n"                                                                    \
-                  << EXP << "\n************" << std::endl;                                                             \
-    }
 #endif

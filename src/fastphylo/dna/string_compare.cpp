@@ -10,6 +10,7 @@
 //--------------------------------------------------
 
 #include "fastphylo/dna/string_compare.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include <string>
 #include <vector>
 #include <iostream>
@@ -27,7 +28,7 @@ int hamming_distance(const std::string &s1, const std::string &s2)
     int ham = 0;
     if (s1.length() != s2.length())
     {
-        USER_ERROR("Sequences of different length " << s1.length() << "!=" << s2.length() << ".");
+        THROW_EXCEPTION("Sequences of different length " << s1.length() << "!=" << s2.length() << ".");
     }
     for (size_t i = 0; i < s1.length(); i++)
     {
@@ -76,7 +77,7 @@ TN_string_distance TN_string_compare(const std::string &s1, const std::string &s
             TV++;
             break;
         case AMBIGIOUS:
-            USER_ERROR("amb in naive not handled");
+            THROW_EXCEPTION("amb in naive not handled");
         }
     }
 

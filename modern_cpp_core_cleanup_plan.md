@@ -94,45 +94,43 @@ cross-cutting for a mechanical pass).
 
 ### `log_utils.hpp` - a second, uncoordinated error/logging system
 
-Full file already read together on 2026-08-09. 11 macros total.
+**Done, 2026-08-09.** Full file already read together earlier. 11
+macros total.
 
-- **Dead (delete outright), 0 real call sites, verified excluding
-  comments**: `PRINT`, `PRINT_V`, `PRINT_TIME`, `PRINT_EXP`, `LINE`,
-  `SEPARATOR`, `ASSERT_EQ`. Every remaining textual occurrence of any
-  of these seven is inside a `//` comment - inert printf-debugging
-  leftovers, not live code. (`ASSERT`/`ASSERT_OP`/`DEBUG` were already
-  deleted in `legacy_error_handling_plan.md`'s Phase 5 - one of them,
-  `DEBUG`, had a latent syntax bug that only compiled because it was
-  never invoked; same pattern here.)
-- **`MEM_CHECK` (2 call sites) - the one macro with a real
-  justification, but shouldn't be a macro.** Guards `alloc_b128`/
-  `calloc_b128` (`sse2_wrapper.c`'s raw `malloc`/`calloc` wrappers for
-  SIMD-aligned buffers) - these genuinely can return `NULL` on failure
-  (unlike `new`, which throws `std::bad_alloc`), and minimizing
-  further allocation while handling OOM (rather than throwing, which
-  needs to allocate a `std::string` message) is a defensible choice
-  for this specific case. **Verdict**: inline the check directly at
-  both call sites (`if (!ptr) { std::cerr << ...; std::abort(); }` or
-  similar), delete the macro - not worth header-wide machinery for 2
-  sites.
-- **`USER_ERROR`, `PROG_ERROR` (26 call sites: 13 + 13) - no longer
-  justified, and actively worse than the alternative.** Call syntax is
-  byte-for-byte identical to `THROW_EXCEPTION`'s
-  (`USER_ERROR("msg" << var)`) - this is mechanical, not a redesign.
-  Worse than merely redundant: `exit()` skips destructors of
-  automatic-storage-duration objects, so any `std::ofstream` mid-write
-  when a `USER_ERROR`/`PROG_ERROR` fires loses its buffered-but-
-  unflushed data, where a thrown exception (unwinding normally, caught
-  centrally in each app's `main()`, `exit(EXIT_FAILURE)` only after
-  the full unwind - see `legacy_error_handling_plan.md`'s Phase 2+3)
-  guarantees every stream's destructor runs first. **Verdict**: rename
-  every call site to `THROW_EXCEPTION`, delete both macros.
-- **`USER_WARNING` (16 call sites) - no control-flow behavior (never
-  exits), so no real justification for being a macro either.**
-  **Verdict**: replace with a plain function (`void
-  user_warning(const std::string& msg)`) or inline
-  `std::cerr << ...` directly - real type-checking, no macro-hygiene
-  concerns, same diagnostic value.
+- **Dead (delete outright)**: `PRINT_V`, `PRINT_TIME`, `PRINT_EXP`,
+  `LINE`, `SEPARATOR` - confirmed 0 real call sites, verified
+  excluding comments. **Correction to this catalogue's earlier
+  claim**: `PRINT` was *not* actually dead - one real, non-commented
+  call site survived in `Tree_impl.hpp:715`
+  (`PRINT(n->parent == NULL)`, inside an `if (n->parent == NULL)`
+  block - printing a condition already established by the enclosing
+  `if`, zero debugging value). The original "0 real call sites" claim
+  was a genuine miss in the audit, only caught while executing this
+  phase (not before deleting anything - the macro was still fully
+  defined at that point, so nothing broke). Deleted that one call site
+  outright rather than keep the whole macro family alive for it.
+  (`ASSERT`/`ASSERT_OP`/`DEBUG` were already deleted in
+  `legacy_error_handling_plan.md`'s Phase 5 - one of them, `DEBUG`,
+  had a latent syntax bug that only compiled because it was never
+  invoked; same pattern here.)
+- **`MEM_CHECK` (2 call sites)** - inlined a direct `if (ptr ==
+  nullptr) { std::cerr << "out of memory" << std::endl; std::abort();
+  }` at both `DNA_b128_String.cpp` call sites, matching the reasoning
+  above (minimize further allocation while already handling OOM).
+  Macro deleted.
+- **`USER_ERROR`, `PROG_ERROR` (confirmed via full-tree re-grep before
+  touching anything: 13 + 12 = 25 real call sites across 12 files)** -
+  every call site renamed to `THROW_EXCEPTION` (syntax matched
+  exactly, purely mechanical). Both macros deleted.
+- **`USER_WARNING` (14 real call sites across 6 files)** - every call
+  site replaced with a direct `std::cerr << "warning: " << ... <<
+  std::endl;` - no function/macro wrapper at all, since (unlike
+  `THROW_EXCEPTION`) it needs no control-flow beyond an ordinary
+  statement. Dropped the old boxed format's file/line/function context
+  deliberately - these are user-facing messages about *data*
+  (non-finite floats, mismatched tree leaf sets), not internal
+  diagnostics, so that context wasn't earning its keep for the actual
+  audience. Macro deleted.
 - **Scope**: 15 files use `USER_ERROR`/`PROG_ERROR`/`USER_WARNING`/
   `MEM_CHECK` combined - `core/` (`DistanceMatrix.cpp`, `Sequence.cpp`,
   `SequenceTree.cpp`, `InitAndPrintOn_utils.hpp`, `stl_utils.hpp`,
@@ -253,28 +251,31 @@ clearer.
 
 ## Suggested execution order
 
-1. **Dead-code deletions across every file above** - lowest risk,
-   highest confidence, no design decisions: the 7 dead `log_utils.hpp`
-   macros, `string_int`/`string_double`/`int_double`, `ltstr`/
-   `str2int_map`/`print_map`, `obj_ptr2obj_ptr_hashmap`/
-   `obj2obj_hashmap`, `mapSequencesOntoTree(char**, int)`,
-   `SEQUENCE(node)`. The 4 `operator+` and the `string*`/`vector<T>`
-   stream operators need a build-time removal check first (comment
-   out, rebuild, see what breaks) since static grep can't fully
-   confirm operator-overload dead code the way it can for named
-   functions.
-2. **`USER_ERROR`/`PROG_ERROR` -> `THROW_EXCEPTION`, `USER_WARNING` ->
-   plain function, `MEM_CHECK` inlined** - mechanical but touches 15
-   files; verify with a full rebuild + `ctest` + `RunExamples.sh` +
-   `RunCliChecks.sh` after, same discipline as
-   `legacy_error_handling_plan.md`.
-3. **Relocate `Sequence_double` next to its real consumers**; delete
-   `string_int`/`string_double`/`int_double` as part of the same pass
-   (already covered by step 1, but natural to land together since
-   it's the same file).
-4. **`NAME`/`SEQ`/`EDGE` macros -> accessor methods** - bigger
-   (97 call sites) but still mechanical; do after the above so the
-   surrounding files are already settled.
+1. **Done.** Dead-code deletions across every file above: the
+   `log_utils.hpp` macro family, `string_int`/`string_double`/
+   `int_double`, `ltstr`/`str2int_map`/`print_map`,
+   `obj_ptr2obj_ptr_hashmap`/`obj2obj_hashmap`, `str2str_hashmap`,
+   `mapSequencesOntoTree(char**, int)`, `SEQUENCE(node)`. The 4
+   `operator+` overloads and the `string*`/`vector<T>` stream
+   operators were confirmed dead (all but one) via an actual
+   build-time removal check (`#if 0` + full rebuild), not just grep -
+   this surfaced the one genuinely live `operator+(string, int)`
+   overload (2 call sites), which was replaced with `std::to_string`
+   instead of kept.
+2. **Done.** `USER_ERROR`/`PROG_ERROR` -> `THROW_EXCEPTION`,
+   `USER_WARNING` -> direct `std::cerr`, `MEM_CHECK` inlined -
+   mechanical, touched 16 files. Verified with a full rebuild +
+   `ctest` + `RunExamples.sh` + `RunCliChecks.sh` on both Clang and a
+   real local GCC 14 build (per the `<iomanip>` lesson - these are all
+   widely-included headers), plus `-DWITH_LIBXML=OFF`.
+3. **Done.** `Sequence_double` stays in `InitAndPrintOn_utils.*` for
+   now (not relocated) - `string_int`/`string_double`/`int_double`
+   were deleted as part of step 1, which was the main win; relocating
+   the one remaining live struct is cosmetic and lower priority than
+   it looked before the dead 90% was cut.
+4. **`NAME`/`SEQ`/`EDGE` macros -> accessor methods** - not started.
+   Bigger (94 combined call sites now that `SEQUENCE`'s dead uses are
+   gone) but still mechanical; the natural next step.
 5. **`Object` redesign** - explicitly out of this catalogue's
    execution; needs its own dedicated discussion given its size and
    how many classes depend on it (`Sequence`, `DistanceMatrix`,

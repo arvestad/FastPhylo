@@ -1,5 +1,6 @@
 #include "PhylipDmOutputStream.hpp"
 #include <cstdio>
+#include <iostream>
 #include <libxml/xmlreader.h>
 
 using namespace std;
@@ -75,7 +76,7 @@ void printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, bool writeXml, bool wr
             float f = dm.getDistance(i, j);
             if (!isfinite(f))
             {
-                USER_WARNING("warning float not finite (use fix factor) " << f);
+                std::cerr << "warning: float not finite (use fix factor) " << f << std::endl;
 
                 if (writeXml || writeXmlSD)
                 {

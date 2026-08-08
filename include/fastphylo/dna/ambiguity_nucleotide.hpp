@@ -14,9 +14,9 @@
 
 #include "fastphylo/core/nucleotide.hpp"
 #include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include <assert.h>
 #include <string>
-#include <cstdlib>
 #include <cstdlib>
 #include <iostream>
 #include "fastphylo/core/log_utils.hpp"
@@ -113,10 +113,10 @@ static __inline ambiguity_nucleotide nucleotide2ambiguity_nucleotideUNIFORM(cons
         return ambiguity_nucleotide{n, 0.25, 0.25, 0.25, 0.25};
     } // an.probA = 0.25; an.probC = 0.25; an.probG = 0.25; an.probT = 0.25; break;
     case DNA_NOT_ALLOWED:
-        USER_WARNING("DNA_NOT_ALLOWED can not be used as input");
+        std::cerr << "warning: DNA_NOT_ALLOWED can not be used as input" << std::endl;
         break;
     case DNA_UNKNOWN_:
-        USER_WARNING("DNA_UNKOWN can not be used as input");
+        std::cerr << "warning: DNA_UNKOWN can not be used as input" << std::endl;
         break; // unkown is not handled
         //  default: USER_WARNING( "AMBIG_X_FLAG can not be used as input: "<<n );
     }
@@ -143,7 +143,7 @@ static __inline ambiguity_nucleotide regularnucleotide2ambiguity_nucleotide(cons
         return ambiguity_nucleotide{n, 0, 0, 0, 1.0};
     }
     default:
-        USER_WARNING("Input has to be regular nucleotide");
+        std::cerr << "warning: Input has to be regular nucleotide" << std::endl;
         break;
     }
 
@@ -176,7 +176,7 @@ static __inline ambiguity_nucleotide nucleotide2ambiguity_nucleotide(const nucle
         an.probT = 1.0;
         break;
     case DNA_UNKNOWN_:
-        USER_ERROR("DNA_UNKNOWN_ can not be input");
+        THROW_EXCEPTION("DNA_UNKNOWN_ can not be input");
         break; // unkown is not handled
     case DNA_M_:
         an.probA = (0.999999 * A) / (A + C);
@@ -229,10 +229,10 @@ static __inline ambiguity_nucleotide nucleotide2ambiguity_nucleotide(const nucle
         an.probT = (0.999999 * T) / (A + C + G + T);
         break;
     case DNA_NOT_ALLOWED:
-        USER_WARNING("DNA_NOT_ALLOWED can not be input");
+        std::cerr << "warning: DNA_NOT_ALLOWED can not be input" << std::endl;
         break;
     default:
-        USER_WARNING("AMBIG_X_FLAG can not be input: " << n);
+        std::cerr << "warning: AMBIG_X_FLAG can not be input: " << n << std::endl;
     }
     return an;
 }
@@ -462,7 +462,7 @@ static __inline ambiguity_distance compute_ambiguity_distance_using_transition_p
         }
         break;
     default:
-        USER_WARNING("Shouldn't be here: can only use regular nucleotides");
+        std::cerr << "warning: Shouldn't be here: can only use regular nucleotides" << std::endl;
         return dist;
     }
     //-----------------------------------

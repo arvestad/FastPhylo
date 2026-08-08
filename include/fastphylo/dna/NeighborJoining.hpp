@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 #include <math.h>
-#include "fastphylo/core/log_utils.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include <iostream>
 #include <float.h>
 #include "fastphylo/core/SequenceTree.hpp"
@@ -67,7 +67,7 @@ void computeNeighborJoiningTree(
     for (size_t i = 0; i < origNumNodes; i++)
         if (dm.getIdentifier(i)->getParent() != starroot)
         {
-            PROG_ERROR("The input nodes to NJ are not connected in a star");
+            THROW_EXCEPTION("The input nodes to NJ are not connected in a star");
         }
 #endif
     // compute the row sums
@@ -83,7 +83,7 @@ void computeNeighborJoiningTree(
                 sum += d;
             else
             {
-                USER_ERROR("Distance Matrix contains a non finite number: " << d);
+                THROW_EXCEPTION("Distance Matrix contains a non finite number: " << d);
             }
         }
         rowSums[row] = sum;
@@ -195,7 +195,7 @@ void computeBioNJTree(DistanceMatrix<TreeNode_type *, double, Data_init<TreeNode
     {
         if (dm.getIdentifier(i)->getParent() != starroot)
         {
-            PROG_ERROR("The input nodes to NJ are not connected in a star");
+            THROW_EXCEPTION("The input nodes to NJ are not connected in a star");
         }
     }
 #endif
@@ -229,7 +229,7 @@ void computeBioNJTree(DistanceMatrix<TreeNode_type *, double, Data_init<TreeNode
             }
             else
             {
-                USER_ERROR("Distance Matrix contains a non finite number: " << d);
+                THROW_EXCEPTION("Distance Matrix contains a non finite number: " << d);
             }
         }
         rowSums[row] = sum;
@@ -371,7 +371,7 @@ void computeFNJTree(DistanceMatrix<TreeNode_type *, double, Data_init<TreeNode_t
     for (size_t i = 0; i < origNumNodes; i++)
         if (dm.getIdentifier(i)->getParent() != starroot)
         {
-            PROG_ERROR("The input nodes to NJ are not connected in a star");
+            THROW_EXCEPTION("The input nodes to NJ are not connected in a star");
         }
 #endif
 
@@ -388,7 +388,7 @@ void computeFNJTree(DistanceMatrix<TreeNode_type *, double, Data_init<TreeNode_t
                 sum += d;
             else
             {
-                USER_ERROR("Distance Matrix contains a non finite number: " << d);
+                THROW_EXCEPTION("Distance Matrix contains a non finite number: " << d);
             }
         }
         rowSums[row] = sum;

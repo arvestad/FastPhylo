@@ -14,11 +14,12 @@
 #include <climits>
 #include <string>
 #include <cstring>*/
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <sstream>
 #include <climits>
-#include "fastphylo/core/log_utils.hpp"
+#include "fastphylo/core/Exception.hpp"
 #include <algorithm>
 
 using namespace std;
@@ -30,9 +31,17 @@ void DNA_b128_String::_init_mem(int capacity)
 
     numDatas = (128 + capacity) / 64; // the last allocated b128 is not used
     data = alloc_b128(numDatas);
-    MEM_CHECK(data);
+    if (data == nullptr)
+    {
+        std::cerr << "out of memory" << std::endl;
+        std::abort();
+    }
     unknownData = calloc_b128(numDatas);
-    MEM_CHECK(unknownData);
+    if (unknownData == nullptr)
+    {
+        std::cerr << "out of memory" << std::endl;
+        std::abort();
+    }
     ambiguities.clear();
 
     numChars = 0;
@@ -638,7 +647,7 @@ void DNA_b128_String::resolveAmbiguitiesUsingTransitionProbabilities(const DNA_b
                     curramb.probT = curramb.probT * mldist.T_T / totalprob;
                     break;
                 default:
-                    PROG_ERROR("ERROR SHOULDNT COME HERE");
+                    THROW_EXCEPTION("ERROR SHOULDNT COME HERE");
                 }
                 (*iter).ambiguity = curramb;
             }

@@ -254,7 +254,7 @@ void fillMatrix(StrDblMatrix &dm, std::vector<DNA_b128_String> &seqs, sequence_t
         fillMatrix_TN93(dm, seqs, freqs, trans_model);
         break;
     default:
-        PROG_ERROR("Non handled model: " << trans_model.model);
+        THROW_EXCEPTION("Non handled model: " << trans_model.model);
     }
 }
 
@@ -658,7 +658,7 @@ void fillMatrixRow(StrFloRow &dm, std::vector<DNA_b128_String> &seqs, sequence_t
         fillMatrixRow_TN93(dm, seqs, freqs, trans_model, row, mem_eff_flag);
         break;
     default:
-        PROG_ERROR("Non handled model: " << trans_model.model);
+        THROW_EXCEPTION("Non handled model: " << trans_model.model);
     }
 }
 
