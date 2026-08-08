@@ -104,7 +104,7 @@ void printPHYLIPfastSD(const StrDblMatrix &dm, FILE *out, bool writeXml, bool wr
                         // /Erik Sjolund char str[20];
                         //	    snprintf(str,20,"%10d",intpart);
                         //	    xmlNodePtr entryNode = xmlNewChild(rowNode,0, ( const xmlChar * ) "entry",  ( const
-                        //xmlChar * ) str );
+                        // xmlChar * ) str );
                         fprintf(out, "     <entry>%11d</entry>\n", intpart);
                     }
                     else
