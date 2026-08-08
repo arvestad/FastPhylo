@@ -402,6 +402,7 @@ int main (int argc, char **argv) {
   CATCH_EXCEPTION()
   catch(...){
     std::cerr << "Unknown (non-Exception) error" << std::endl;
+    exit(EXIT_FAILURE);
   }
   return 0;
 }

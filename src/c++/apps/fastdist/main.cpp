@@ -540,6 +540,7 @@ main(int argc,
 	CATCH_EXCEPTION()
 	catch(...){
 		cerr << "Unknown (non-Exception) error" << endl;
+		exit(EXIT_FAILURE);
 	}
 	return 0;
 }
