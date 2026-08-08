@@ -1,0 +1,8 @@
+# Commits listed here are skipped by `git blame` once you run:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# GitHub's own web blame view picks this file up automatically, no
+# local config needed for that.
+
+# Repo-wide clang-format reformat (Microsoft style: 4-space indent,
+# Allman braces) - mechanical only, no behavior change.
+67660aa9f0d90bfa984bbee0d534f1f9f60885ee
