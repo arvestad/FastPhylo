@@ -3,16 +3,11 @@
 
 #include <string>
 
-#include <list>
-// #include <ext/hash_map>
-// #include <ext/hash_set>
 #include <unordered_map>
-#include <map>
 #include <iostream>
 #include <vector>
 #include "fastphylo/core/file_utils.hpp"
 #include "fastphylo/core/log_utils.hpp"
-#include "fastphylo/core/Object.hpp"
 
 //--------------------------
 static inline void appendUntil(std::string &s, const char *chars, const int len, const char lastchar)
@@ -106,12 +101,4 @@ struct hashstr
 };
 
 // typedef __gnu_cxx::hash_map<const std::string, int, hashstr, eqstr> str2int_hashmap;
-// typedef __gnu_cxx::hash_map<const std::string, std::string, hashstr, eqstr> str2str_hashmap;
 using str2int_hashmap = std::unordered_map<const std::string, int, hashstr, eqstr>;
-using str2str_hashmap = std::unordered_map<const std::string, std::string, hashstr, eqstr>;
-
-//---------------------------------------------------------------
-// Object 2 Object Map
-
-using obj_ptr2obj_ptr_hashmap = std::unordered_map<Object *, Object *, objhash_ptr, objeq_ptr>;
-using obj2obj_hashmap = std::unordered_map<Object, Object, objhash, objeq>;

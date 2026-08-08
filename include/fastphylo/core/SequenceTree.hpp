@@ -13,6 +13,7 @@
 #include "fastphylo/core/Tree.hpp"
 #include <string>
 #include "fastphylo/core/InitAndPrintOn_utils.hpp"
+#include "fastphylo/core/Object.hpp"
 #include "fastphylo/core/Sequence.hpp"
 #include "fastphylo/core/DistanceMatrix.hpp"
 #include "fastphylo/core/BitVector.hpp"
@@ -25,7 +26,6 @@
 // access defines for the node data.
 #define NAME(node) (node)->data.s.name
 #define SEQ(node) (node)->data.s.seq
-#define SEQUENCE(node) (node)->data.s
 #define EDGE(node) (node)->data.dbl
 
 class SequenceTree : public Tree<Sequence_double, Data_init<Sequence_double>, Data_printOn<Sequence_double>>
@@ -143,10 +143,6 @@ class SequenceTree : public Tree<Sequence_double, Data_init<Sequence_double>, Da
     // Edges incident to leafs are not removed.
     int contractEdgesShorterThan(double bound = 0);
     //--------
-    // takes an array of strings which should consist of name,seq pairs/
-    // i.e. map{n1,s1,n2,s2,...nN,sN}
-    void mapSequencesOntoTree(char **nameseqPairs, int numPairs);
-
     void mapSequencesOntoTree(std::vector<Sequence> &seqs);
 
     // Takes a phylip sequence file and maps the sequences onto the tree

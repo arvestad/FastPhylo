@@ -244,40 +244,6 @@ int SequenceTree::contractEdgesShorterThan(double bound)
 //---------------------
 using str2node_map = std::unordered_map<const std::string, SequenceTree::Node *, hashstr, eqstr>;
 
-void SequenceTree::mapSequencesOntoTree(char **nameseqPairs, int numPairs)
-{
-
-    size_t numnodes = getNumNodes();
-    SequenceTree::NodeVector nodes;
-    nodes.reserve(numnodes);
-    addNodesInPrefixOrder(nodes);
-
-    // build hash map {name,node}
-    str2node_map str2node(static_cast<int>(numnodes * 1.5));
-    for (size_t i = 0; i < numnodes; i++)
-    {
-        if (!NAME(nodes[i]).empty())
-        {
-            str2node[NAME(nodes[i])] = nodes[i];
-        }
-    }
-
-    // go through the nameseq pairs and look up node
-    for (int i = 0; i < 2 * numPairs; i += 2)
-    {
-        auto iter = str2node.find(string(nameseqPairs[i]));
-        if (iter != str2node.end())
-        {
-            SEQ((*iter).second).clear();
-            SEQ((*iter).second).append(nameseqPairs[i + 1]);
-        }
-        else
-        {
-            //      USER_WARNING("Unknown name in tree: " << nameseqPairs[i]);
-        }
-    }
-}
-
 void SequenceTree::mapSequencesOntoTree(std::vector<Sequence> &seqs)
 {
     size_t numnodes = getNumNodes();
