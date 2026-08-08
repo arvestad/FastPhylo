@@ -14,16 +14,17 @@
 // through readSequences() at all - it calls the separate global
 // DNA_b128_StringsFromPHYLIP() directly on the underlying stream, so
 // `fp` stays accessible to it rather than private.
-class PhylipSequenceReader {
-public:
-  PhylipSequenceReader(char *filename);
-  ~PhylipSequenceReader();
+class PhylipSequenceReader
+{
+  public:
+    PhylipSequenceReader(char *filename);
+    ~PhylipSequenceReader();
 
-  bool readSequences(std::vector<Sequence> &seqs, std::string &runId, Extrainfos &extrainfos);
+    bool readSequences(std::vector<Sequence> &seqs, std::string &runId, Extrainfos &extrainfos);
 
-  std::istream *fp;
+    std::istream *fp;
 
-protected:
-  std::ifstream fin;
-  bool file_was_opened;
+  protected:
+    std::ifstream fin;
+    bool file_was_opened;
 };

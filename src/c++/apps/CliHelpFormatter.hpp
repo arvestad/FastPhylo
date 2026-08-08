@@ -8,9 +8,11 @@
 // this override reinstates it. Shared across every app migrated off
 // gengetopt (gengetopt_migration_plan.md) rather than copy-pasted per
 // app - fnj was first to need it, fastdist is the second.
-class FastphyloHelpFormatter : public CLI::Formatter {
+class FastphyloHelpFormatter : public CLI::Formatter
+{
   public:
-	std::string make_usage(const CLI::App *app, std::string name) const override {
-		return CLI::Formatter::make_usage(app, "Usage: " + name);
-	}
+    std::string make_usage(const CLI::App *app, std::string name) const override
+    {
+        return CLI::Formatter::make_usage(app, "Usage: " + name);
+    }
 };

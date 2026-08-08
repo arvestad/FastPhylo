@@ -18,6 +18,9 @@
 // a message. std::runtime_error already does exactly that, correctly,
 // with no custom class needed - THROW_EXCEPTION now builds the same
 // file/line/function-prefixed message text and throws that directly.
-#define THROW_EXCEPTION(MES) \
-  { std::ostringstream out; out << __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << "): " << MES; \
-    throw std::runtime_error(out.str()); }
+#define THROW_EXCEPTION(MES)                                                                                           \
+    {                                                                                                                  \
+        std::ostringstream out;                                                                                        \
+        out << __FILE__ << ":" << __LINE__ << " (" << __FUNCTION__ << "): " << MES;                                    \
+        throw std::runtime_error(out.str());                                                                           \
+    }

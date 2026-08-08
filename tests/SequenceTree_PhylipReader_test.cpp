@@ -35,41 +35,50 @@
 
 using namespace std;
 
-namespace {
+namespace
+{
 
-SequenceTree makeThreeLeafTree() {
-	istringstream newick("(Alpha:1,Beta:1,Gamma:1);");
-	return SequenceTree(newick);
+SequenceTree makeThreeLeafTree()
+{
+    istringstream newick("(Alpha:1,Beta:1,Gamma:1);");
+    return SequenceTree(newick);
 }
 
-}  // namespace
+} // namespace
 
 // Single-line sequences (no interleaving needed) - the baseline case.
-static void test_single_line_sequences() {
-	SequenceTree tree = makeThreeLeafTree();
+static void test_single_line_sequences()
+{
+    SequenceTree tree = makeThreeLeafTree();
 
-	istringstream phylip(
-	    " 3 8\n"
-	    "Alpha     ACGTACGT\n"
-	    "Beta      TTTTAAAA\n"
-	    "Gamma     GGGGCCCC\n");
-	tree.mapSequencesOntoTree(phylip);
+    istringstream phylip(" 3 8\n"
+                         "Alpha     ACGTACGT\n"
+                         "Beta      TTTTAAAA\n"
+                         "Gamma     GGGGCCCC\n");
+    tree.mapSequencesOntoTree(phylip);
 
-	SequenceTree::NodeVector nodes;
-	tree.addNodesInPrefixOrder(nodes);
+    SequenceTree::NodeVector nodes;
+    tree.addNodesInPrefixOrder(nodes);
 
-	string alpha, beta, gamma;
-	for (auto *n : nodes) {
-		if (NAME(n) == "Alpha") { alpha = SEQ(n);
-}
-		if (NAME(n) == "Beta") { beta = SEQ(n);
-}
-		if (NAME(n) == "Gamma") { gamma = SEQ(n);
-}
-	}
-	assert(alpha == "acgtacgt");
-	assert(beta == "ttttaaaa");
-	assert(gamma == "ggggcccc");
+    string alpha, beta, gamma;
+    for (auto *n : nodes)
+    {
+        if (NAME(n) == "Alpha")
+        {
+            alpha = SEQ(n);
+        }
+        if (NAME(n) == "Beta")
+        {
+            beta = SEQ(n);
+        }
+        if (NAME(n) == "Gamma")
+        {
+            gamma = SEQ(n);
+        }
+    }
+    assert(alpha == "acgtacgt");
+    assert(beta == "ttttaaaa");
+    assert(gamma == "ggggcccc");
 }
 
 // Forces the interleaved-continuation loop (phylipReadInterleavedContinuation)
@@ -79,34 +88,41 @@ static void test_single_line_sequences() {
 // convention, and the exact form that used to throw `Bad character`
 // before the peek-based 10-char name-field skip was removed (see the
 // file header comment).
-static void test_multiline_interleaved_sequences() {
-	SequenceTree tree = makeThreeLeafTree();
+static void test_multiline_interleaved_sequences()
+{
+    SequenceTree tree = makeThreeLeafTree();
 
-	istringstream phylip(
-	    " 3 16\n"
-	    "Alpha     ACGTACGTAC\n"
-	    "Beta      TTTTAAAATT\n"
-	    "Gamma     GGGGCCCCGG\n"
-	    "ACGTAC\n"
-	    "TTAATT\n"
-	    "GGCCCC\n");
-	tree.mapSequencesOntoTree(phylip);
+    istringstream phylip(" 3 16\n"
+                         "Alpha     ACGTACGTAC\n"
+                         "Beta      TTTTAAAATT\n"
+                         "Gamma     GGGGCCCCGG\n"
+                         "ACGTAC\n"
+                         "TTAATT\n"
+                         "GGCCCC\n");
+    tree.mapSequencesOntoTree(phylip);
 
-	SequenceTree::NodeVector nodes;
-	tree.addNodesInPrefixOrder(nodes);
+    SequenceTree::NodeVector nodes;
+    tree.addNodesInPrefixOrder(nodes);
 
-	string alpha, beta, gamma;
-	for (auto *n : nodes) {
-		if (NAME(n) == "Alpha") { alpha = SEQ(n);
-}
-		if (NAME(n) == "Beta") { beta = SEQ(n);
-}
-		if (NAME(n) == "Gamma") { gamma = SEQ(n);
-}
-	}
-	assert(alpha == "acgtacgtacacgtac");
-	assert(beta == "ttttaaaattttaatt");
-	assert(gamma == "ggggccccggggcccc");
+    string alpha, beta, gamma;
+    for (auto *n : nodes)
+    {
+        if (NAME(n) == "Alpha")
+        {
+            alpha = SEQ(n);
+        }
+        if (NAME(n) == "Beta")
+        {
+            beta = SEQ(n);
+        }
+        if (NAME(n) == "Gamma")
+        {
+            gamma = SEQ(n);
+        }
+    }
+    assert(alpha == "acgtacgtacacgtac");
+    assert(beta == "ttttaaaattttaatt");
+    assert(gamma == "ggggccccggggcccc");
 }
 
 // Two names in the file ("Fake1"/"Fake2") don't match any tree leaf,
@@ -124,44 +140,52 @@ static void test_multiline_interleaved_sequences() {
 // mapSequencesOntoTree(istream&)'s own trailing length-check error.
 // This test fails loudly (an aborted process, via USER_ERROR) if that
 // exclusion is ever lost.
-static void test_unmatched_name_does_not_corrupt_real_sequences() {
-	SequenceTree tree = makeThreeLeafTree();
+static void test_unmatched_name_does_not_corrupt_real_sequences()
+{
+    SequenceTree tree = makeThreeLeafTree();
 
-	istringstream phylip(
-	    " 5 16\n"
-	    "Alpha     ACGTACGTAC\n"
-	    "Beta      TTTTAAAATT\n"
-	    "Fake1     AAAAAAAAAAAAAAAA\n"
-	    "Gamma     GGGGCCCCGG\n"
-	    "Fake2     CCCCCCCCCCCCCCCC\n"
-	    "ACGTAC\n"
-	    "TTAATT\n"
-	    "AAAAAA\n"
-	    "GGCCCC\n"
-	    "CCCCCC\n");
-	tree.mapSequencesOntoTree(phylip);
+    istringstream phylip(" 5 16\n"
+                         "Alpha     ACGTACGTAC\n"
+                         "Beta      TTTTAAAATT\n"
+                         "Fake1     AAAAAAAAAAAAAAAA\n"
+                         "Gamma     GGGGCCCCGG\n"
+                         "Fake2     CCCCCCCCCCCCCCCC\n"
+                         "ACGTAC\n"
+                         "TTAATT\n"
+                         "AAAAAA\n"
+                         "GGCCCC\n"
+                         "CCCCCC\n");
+    tree.mapSequencesOntoTree(phylip);
 
-	SequenceTree::NodeVector nodes;
-	tree.addNodesInPrefixOrder(nodes);
+    SequenceTree::NodeVector nodes;
+    tree.addNodesInPrefixOrder(nodes);
 
-	string alpha, beta, gamma;
-	for (auto *n : nodes) {
-		if (NAME(n) == "Alpha") { alpha = SEQ(n);
-}
-		if (NAME(n) == "Beta") { beta = SEQ(n);
-}
-		if (NAME(n) == "Gamma") { gamma = SEQ(n);
-}
-	}
-	assert(alpha == "acgtacgtacacgtac");
-	assert(beta == "ttttaaaattttaatt");
-	assert(gamma == "ggggccccggggcccc");
+    string alpha, beta, gamma;
+    for (auto *n : nodes)
+    {
+        if (NAME(n) == "Alpha")
+        {
+            alpha = SEQ(n);
+        }
+        if (NAME(n) == "Beta")
+        {
+            beta = SEQ(n);
+        }
+        if (NAME(n) == "Gamma")
+        {
+            gamma = SEQ(n);
+        }
+    }
+    assert(alpha == "acgtacgtacacgtac");
+    assert(beta == "ttttaaaattttaatt");
+    assert(gamma == "ggggccccggggcccc");
 }
 
-int main() {  // NOLINT(bugprone-exception-escape) - a test binary crashing on an unexpected exception is a fine, loud failure mode.
-	test_single_line_sequences();
-	test_multiline_interleaved_sequences();
-	test_unmatched_name_does_not_corrupt_real_sequences();
-	cout << "SequenceTree_PhylipReader_test: all tests passed" << endl;
-	return 0;
+int main()
+{ // NOLINT(bugprone-exception-escape) - a test binary crashing on an unexpected exception is a fine, loud failure mode.
+    test_single_line_sequences();
+    test_multiline_interleaved_sequences();
+    test_unmatched_name_does_not_corrupt_real_sequences();
+    cout << "SequenceTree_PhylipReader_test: all tests passed" << endl;
+    return 0;
 }

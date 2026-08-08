@@ -20,27 +20,28 @@
 // Code 29: OTHER - any byte not covered above (see phase1_design.md for
 //          the disclosed behavior-change corner case this covers)
 
-namespace ProtSeqCode {
+namespace ProtSeqCode
+{
 
-  const std::size_t NUM_CANONICAL_AA = 20;
-  const std::size_t ALPHABET_SIZE = 30;
-  const std::uint8_t OTHER_CODE = 29;
+const std::size_t NUM_CANONICAL_AA = 20;
+const std::size_t ALPHABET_SIZE = 30;
+const std::uint8_t OTHER_CODE = 29;
 
-  //! Encodes a single residue character (case-insensitive) to its code.
-  std::uint8_t encode_residue(char c);
+//! Encodes a single residue character (case-insensitive) to its code.
+std::uint8_t encode_residue(char c);
 
-  //! Decodes a code back to its canonical uppercase character
-  //! representative. Not performance-sensitive; for messages/debugging.
-  char decode_residue(std::uint8_t code);
+//! Decodes a code back to its canonical uppercase character
+//! representative. Not performance-sensitive; for messages/debugging.
+char decode_residue(std::uint8_t code);
 
-  //! Encodes a whole sequence, one code per residue, in order.
-  void encode_sequence(const std::string &seq, std::vector<std::uint8_t> &out);
+//! Encodes a whole sequence, one code per residue, in order.
+void encode_sequence(const std::string &seq, std::vector<std::uint8_t> &out);
 
-  //! True iff code identifies one of the 20 canonical amino acids
-  //! (i.e. what getAAInd() would have accepted instead of sentinel 100).
-  inline bool is_canonical_aa(std::uint8_t code) {
+//! True iff code identifies one of the 20 canonical amino acids
+//! (i.e. what getAAInd() would have accepted instead of sentinel 100).
+inline bool is_canonical_aa(std::uint8_t code)
+{
     return code < NUM_CANONICAL_AA;
-  }
-
 }
 
+} // namespace ProtSeqCode

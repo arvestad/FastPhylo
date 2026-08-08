@@ -1,11 +1,11 @@
 //--------------------------------------------------
-//                                        
-// File: SequenceTree.cpp                              
-//                             
+//
+// File: SequenceTree.cpp
+//
 // Author: Mehmood Alam Khan,Isaac Elias
 // e-mail: malagori@kth.se, isaac@nada.kth.se
-//                             
-// cvs: $Id: SequenceTree.cpp,v 1.44 2006/12/08 11:09:13 isaac Exp $                                 
+//
+// cvs: $Id: SequenceTree.cpp,v 1.44 2006/12/08 11:09:13 isaac Exp $
 //
 //--------------------------------------------------
 
@@ -29,264 +29,291 @@
 using namespace std;
 
 //=---------------------
-void
-SequenceTree::verbosePrint(std::ostream &os){
-  os << "---- SequenceTree " << endl;
-  os << (*this) << endl << endl;
-  drawTree(os);
-  os << endl;
-  printNodeData(os);
-  os <<"----" <<endl;
+void SequenceTree::verbosePrint(std::ostream &os)
+{
+    os << "---- SequenceTree " << endl;
+    os << (*this) << endl << endl;
+    drawTree(os);
+    os << endl;
+    printNodeData(os);
+    os << "----" << endl;
 }
 
+void SequenceTree::printNodeData(std::ostream &os)
+{
 
-void
-SequenceTree::printNodeData(std::ostream &os){
-  
-  SequenceTree::NodeVector vec;
-  vec.reserve(getNumNodes());
-  addNodesInInfixOrder(vec);
-  for (auto & i : vec){
-    string str = i->data.s.toString();
-    if ( !str.empty() ) {
-      os << "[" << i->getNodeId() << "] " << str << endl;
-}
-  }
-}
-
-void
-SequenceTree::setNodeNames(){
-  SequenceTree::NodeVector vec;
-  vec.reserve(getNumNodes());
-  addNodesInInfixOrder(vec);
-  for (auto n : vec){
-    if ( NAME(n).empty() ) {
-      NAME(n) = string("n")+n->getNodeId();
-}
-  } 
-}
-void
-SequenceTree::printSequencesPhylip(SequenceTree::NodeVector &nodes,  std::ostream &os){
-  os << nodes.size() << "\t " << SEQ(nodes[0]).length() << endl;
-  for (auto n : nodes){
-    os << n->data.s << endl;
-  } 
-}
-void 
-SequenceTree::printSequencesPhylip(std::ostream &os){
-  SequenceTree::NodeVector nodes;
-  addNodesInInfixOrder(nodes);
-  printSequencesPhylip(nodes,os);
-}
-void
-SequenceTree::printSequences( std::ostream &os){
-  SequenceTree::NodeVector vec;
-  vec.reserve(getNumNodes());
-  addNodesInInfixOrder(vec);
-  for (auto n : vec){
-    if ( NAME(n).empty() ) {
-      continue;
-}
-    os << n->data.s << endl;
-  } 
-}
-void 
-SequenceTree::printSequencesWithoutGaps(std::ostream &os){
-  SequenceTree::NodeVector vec;
-  vec.reserve(getNumNodes());
-  addNodesInInfixOrder(vec);
-  for (auto n : vec){
-    if ( NAME(n).empty() ) {
-      continue;
-}
-    os << n->data.s << endl;
-  } 
+    SequenceTree::NodeVector vec;
+    vec.reserve(getNumNodes());
+    addNodesInInfixOrder(vec);
+    for (auto &i : vec)
+    {
+        string str = i->data.s.toString();
+        if (!str.empty())
+        {
+            os << "[" << i->getNodeId() << "] " << str << endl;
+        }
+    }
 }
 
-
-double
-SequenceTree::sumOfEdgeLengths(){
-  SequenceTree::NodeVector nodes;
-
-  addNodesInPrefixOrder(nodes);
-  double sum =0;
-  //skip the root
-  for(size_t i=1;i<nodes.size();i++) {
-    sum+=EDGE(nodes[i]);
+void SequenceTree::setNodeNames()
+{
+    SequenceTree::NodeVector vec;
+    vec.reserve(getNumNodes());
+    addNodesInInfixOrder(vec);
+    for (auto n : vec)
+    {
+        if (NAME(n).empty())
+        {
+            NAME(n) = string("n") + n->getNodeId();
+        }
+    }
+}
+void SequenceTree::printSequencesPhylip(SequenceTree::NodeVector &nodes, std::ostream &os)
+{
+    os << nodes.size() << "\t " << SEQ(nodes[0]).length() << endl;
+    for (auto n : nodes)
+    {
+        os << n->data.s << endl;
+    }
+}
+void SequenceTree::printSequencesPhylip(std::ostream &os)
+{
+    SequenceTree::NodeVector nodes;
+    addNodesInInfixOrder(nodes);
+    printSequencesPhylip(nodes, os);
+}
+void SequenceTree::printSequences(std::ostream &os)
+{
+    SequenceTree::NodeVector vec;
+    vec.reserve(getNumNodes());
+    addNodesInInfixOrder(vec);
+    for (auto n : vec)
+    {
+        if (NAME(n).empty())
+        {
+            continue;
+        }
+        os << n->data.s << endl;
+    }
+}
+void SequenceTree::printSequencesWithoutGaps(std::ostream &os)
+{
+    SequenceTree::NodeVector vec;
+    vec.reserve(getNumNodes());
+    addNodesInInfixOrder(vec);
+    for (auto n : vec)
+    {
+        if (NAME(n).empty())
+        {
+            continue;
+        }
+        os << n->data.s << endl;
+    }
 }
 
-  return sum;
+double SequenceTree::sumOfEdgeLengths()
+{
+    SequenceTree::NodeVector nodes;
+
+    addNodesInPrefixOrder(nodes);
+    double sum = 0;
+    // skip the root
+    for (size_t i = 1; i < nodes.size(); i++)
+    {
+        sum += EDGE(nodes[i]);
+    }
+
+    return sum;
 }
 
 //--------------------
-//SHORTCUT
-void SequenceTree::shortcutDegree2Nodes(){
-  SequenceTree::NodeVector vec;
-  addNodesWithDegree(vec,2);
+// SHORTCUT
+void SequenceTree::shortcutDegree2Nodes()
+{
+    SequenceTree::NodeVector vec;
+    addNodesWithDegree(vec, 2);
 
-  for (auto & i : vec){
-    SequenceTree::Node *n = i;
-    if ( i->isRoot() ){
-      SequenceTree::Node *child = n->getRightMostChild();
-      double newedge = EDGE(child) + EDGE(child->getLeftSibling());
-      shortcutNode(i);
-      EDGE(child) = -1;
-      EDGE(child->getRightMostChild()) = newedge;
+    for (auto &i : vec)
+    {
+        SequenceTree::Node *n = i;
+        if (i->isRoot())
+        {
+            SequenceTree::Node *child = n->getRightMostChild();
+            double newedge = EDGE(child) + EDGE(child->getLeftSibling());
+            shortcutNode(i);
+            EDGE(child) = -1;
+            EDGE(child->getRightMostChild()) = newedge;
+        }
+        else
+        {
+            double pedge = EDGE(n);
+            EDGE(n->getRightMostChild()) += pedge;
+            shortcutNode(i);
+        }
     }
-    else{
-      double pedge = EDGE(n);
-      EDGE(n->getRightMostChild()) += pedge;
-      shortcutNode(i);
+    if (getRoot()->getDegree() == 1)
+    {
+        reRootAtHighDegreeNode();
+        SequenceTree::Node *root = getRoot();
+        EDGE(root) = -1;
     }
-  }
-  if ( getRoot()->getDegree() == 1 ){
-    reRootAtHighDegreeNode();
-    SequenceTree::Node *root = getRoot();
-    EDGE(root) = -1;
-  }
 }
-
-
 
 //---------------
-//COMPUTE LIKELIHOOD
+// COMPUTE LIKELIHOOD
 
-double
-SequenceTree::compute_loglikelihood(){
+double SequenceTree::compute_loglikelihood()
+{
 
-  SequenceTree::NodeVector vec;
-  addNodesInPrefixOrder(vec);
+    SequenceTree::NodeVector vec;
+    addNodesInPrefixOrder(vec);
 
-  double hamdist;
-  
-  //skip the root node
-  double loglikelihood = 0;
-  for ( size_t i = 1 ; i < vec.size() ; i++ ){
-    SequenceTree::Node *n = vec[i];
-    double slen = 1.0*SEQ(n).size();
-    hamdist = hamming_distance(SEQ(n),SEQ(n->getParent()));
-    //   PRINT(n->data.s.name); PRINT(n->getParent()->data.s.name);PRINT(hamdist);
-    //cout <<"-----------"<< endl;
-    // if ( n->data.flt >=0 ){
-    //       //cout << "prob: " << n->data.flt << endl;
-    //       if ( hamdist != 0 ){
-    //         PRINT(hamdist);
-    //         PRINT(n->data.flt);
-    //         PRINT(hamdist*log(n->data.flt/3.0) + (slen - hamdist)*log(1 - n->data.flt));
-    //         loglikelihood += hamdist*log(n->data.flt/3.0) + (slen - hamdist)*log(1 - n->data.flt);
-    //         PRINT(loglikelihood);
-    //       }
-    //     }
-    //     else {//if no edge length available take optimadl edge length
-    double optprob = hamdist/slen;
-    optprob = ( 0.499 < optprob ? 0.499 : optprob );//we don't allow for more than 0.5 probability of change
-    //cout << "optprob: " << optprob << endl;
-    if ( hamdist != 0 ){
-      //PRINT(hamdist*log(optprob/3.0) + (slen - hamdist)*log(1 - optprob));
-      loglikelihood += (hamdist*log(optprob/3.0)) + ((slen - hamdist)*log(1 - optprob));
-      EDGE(n) = optprob;
+    double hamdist;
+
+    // skip the root node
+    double loglikelihood = 0;
+    for (size_t i = 1; i < vec.size(); i++)
+    {
+        SequenceTree::Node *n = vec[i];
+        double slen = 1.0 * SEQ(n).size();
+        hamdist = hamming_distance(SEQ(n), SEQ(n->getParent()));
+        //   PRINT(n->data.s.name); PRINT(n->getParent()->data.s.name);PRINT(hamdist);
+        // cout <<"-----------"<< endl;
+        // if ( n->data.flt >=0 ){
+        //       //cout << "prob: " << n->data.flt << endl;
+        //       if ( hamdist != 0 ){
+        //         PRINT(hamdist);
+        //         PRINT(n->data.flt);
+        //         PRINT(hamdist*log(n->data.flt/3.0) + (slen - hamdist)*log(1 - n->data.flt));
+        //         loglikelihood += hamdist*log(n->data.flt/3.0) + (slen - hamdist)*log(1 - n->data.flt);
+        //         PRINT(loglikelihood);
+        //       }
+        //     }
+        //     else {//if no edge length available take optimadl edge length
+        double optprob = hamdist / slen;
+        optprob = (0.499 < optprob ? 0.499 : optprob); // we don't allow for more than 0.5 probability of change
+        // cout << "optprob: " << optprob << endl;
+        if (hamdist != 0)
+        {
+            // PRINT(hamdist*log(optprob/3.0) + (slen - hamdist)*log(1 - optprob));
+            loglikelihood += (hamdist * log(optprob / 3.0)) + ((slen - hamdist) * log(1 - optprob));
+            EDGE(n) = optprob;
+        }
+        else
+        {
+            {
+                EDGE(n) = 0;
+            }
+        }
+        //}
+        // cout << "newlog " << loglikelihood << endl;
     }
-    else { {
-      EDGE(n) = 0;
-}
-}
-    //}
-    //cout << "newlog " << loglikelihood << endl;
-  }
-  //cout << "------"<< endl;
-  return loglikelihood;
+    // cout << "------"<< endl;
+    return loglikelihood;
 }
 
-void
-SequenceTree::computeEdgeLengths(){
-  SequenceTree::NodeVector nodes;
-  addNodesInPrefixOrder(nodes);
-  for(size_t i=1 ; i<nodes.size() ; i++){
-    EDGE(nodes[i]) = hamming_distance(SEQ(nodes[i]),SEQ(nodes[i]->getParent()));
-  }
-}
-
-
-int
-SequenceTree::contractEdgesShorterThan(double bound){
-  SequenceTree::NodeVector nodes;
-  addNodesInPrefixOrder(nodes);
-  int numC=0;
-  for(size_t i=1 ; i<nodes.size() ; i++){
-    if(nodes[i]->isLeaf()) { continue;
-}
-    if(EDGE(nodes[i])<=bound){
-      shortcutNode(nodes[i]);
-      numC++;
+void SequenceTree::computeEdgeLengths()
+{
+    SequenceTree::NodeVector nodes;
+    addNodesInPrefixOrder(nodes);
+    for (size_t i = 1; i < nodes.size(); i++)
+    {
+        EDGE(nodes[i]) = hamming_distance(SEQ(nodes[i]), SEQ(nodes[i]->getParent()));
     }
-  }
-  return numC;
+}
+
+int SequenceTree::contractEdgesShorterThan(double bound)
+{
+    SequenceTree::NodeVector nodes;
+    addNodesInPrefixOrder(nodes);
+    int numC = 0;
+    for (size_t i = 1; i < nodes.size(); i++)
+    {
+        if (nodes[i]->isLeaf())
+        {
+            continue;
+        }
+        if (EDGE(nodes[i]) <= bound)
+        {
+            shortcutNode(nodes[i]);
+            numC++;
+        }
+    }
+    return numC;
 }
 //---------------------
 using str2node_map = std::unordered_map<const std::string, SequenceTree::Node *, hashstr, eqstr>;
 
-void
-SequenceTree::mapSequencesOntoTree(char  **nameseqPairs, int numPairs){
+void SequenceTree::mapSequencesOntoTree(char **nameseqPairs, int numPairs)
+{
 
-  size_t numnodes = getNumNodes();
-  SequenceTree::NodeVector nodes;
-  nodes.reserve(numnodes);
-  addNodesInPrefixOrder(nodes);
+    size_t numnodes = getNumNodes();
+    SequenceTree::NodeVector nodes;
+    nodes.reserve(numnodes);
+    addNodesInPrefixOrder(nodes);
 
-    
-  //build hash map {name,node}
-  str2node_map str2node(static_cast<int>(numnodes*1.5));
-  for ( size_t i = 0 ; i < numnodes ; i++ ){
-    if ( !NAME(nodes[i]).empty() ){
-      str2node[NAME(nodes[i])] = nodes[i];
+    // build hash map {name,node}
+    str2node_map str2node(static_cast<int>(numnodes * 1.5));
+    for (size_t i = 0; i < numnodes; i++)
+    {
+        if (!NAME(nodes[i]).empty())
+        {
+            str2node[NAME(nodes[i])] = nodes[i];
+        }
     }
-  } 
 
-  //go through the nameseq pairs and look up node
-  for ( int i = 0 ; i < 2*numPairs ; i+=2 ){
-    auto iter = str2node.find(string(nameseqPairs[i]));
-    if ( iter != str2node.end() ){
-      SEQ((*iter).second).clear();
-      SEQ((*iter).second).append(nameseqPairs[i+1]);
+    // go through the nameseq pairs and look up node
+    for (int i = 0; i < 2 * numPairs; i += 2)
+    {
+        auto iter = str2node.find(string(nameseqPairs[i]));
+        if (iter != str2node.end())
+        {
+            SEQ((*iter).second).clear();
+            SEQ((*iter).second).append(nameseqPairs[i + 1]);
+        }
+        else
+        {
+            //      USER_WARNING("Unknown name in tree: " << nameseqPairs[i]);
+        }
     }
-    else{
-      //      USER_WARNING("Unknown name in tree: " << nameseqPairs[i]);
-    }
-  }
 }
 
-void
-SequenceTree::mapSequencesOntoTree( std::vector<Sequence> &seqs){
-  size_t numnodes = getNumNodes();
-  SequenceTree::NodeVector nodes;
-  nodes.reserve(numnodes);
-  addNodesInPrefixOrder(nodes);
+void SequenceTree::mapSequencesOntoTree(std::vector<Sequence> &seqs)
+{
+    size_t numnodes = getNumNodes();
+    SequenceTree::NodeVector nodes;
+    nodes.reserve(numnodes);
+    addNodesInPrefixOrder(nodes);
 
-    
-  //build hash map {name,node}
-  str2node_map str2node(static_cast<int>(numnodes*1.5));
-  for ( size_t i = 0 ; i < numnodes ; i++ ){
-    if ( !NAME(nodes[i]).empty() ){
-      str2node[NAME(nodes[i])] = nodes[i];
+    // build hash map {name,node}
+    str2node_map str2node(static_cast<int>(numnodes * 1.5));
+    for (size_t i = 0; i < numnodes; i++)
+    {
+        if (!NAME(nodes[i]).empty())
+        {
+            str2node[NAME(nodes[i])] = nodes[i];
+        }
     }
-  } 
 
-  //go through the nameseq pairs and look up node
-  for (auto & seq : seqs){
-    auto iter = str2node.find(seq.name);
-    if ( iter != str2node.end() ){
-      SEQ((*iter).second).clear();
-      SEQ((*iter).second).append(seq.seq);
+    // go through the nameseq pairs and look up node
+    for (auto &seq : seqs)
+    {
+        auto iter = str2node.find(seq.name);
+        if (iter != str2node.end())
+        {
+            SEQ((*iter).second).clear();
+            SEQ((*iter).second).append(seq.seq);
+        }
+        else
+        {
+            //      USER_WARNING("Unknown name in tree: " << nameseqPairs[i]);
+        }
     }
-    else{
-      //      USER_WARNING("Unknown name in tree: " << nameseqPairs[i]);
-    }
-  }
-
 }
 
 //--------------------
-namespace {
+namespace
+{
 // Reads one line's worth of sequence characters from fin into *currseq,
 // translating each via char2nucleotide() and stopping at end-of-line.
 // Shared between mapSequencesOntoTree(istream&)'s first pass (each
@@ -295,368 +322,351 @@ namespace {
 // line into whichever sequence pointer is currently active. This was
 // the main source of that function's cognitive complexity (61):
 // duplicated inline, its nesting counted twice.
-void readSequenceLine(std::istream &fin, string *currseq) {
-  while (true) {
-    char c = fin.get();
-    nucleotide n = char2nucleotide(c);
-    if (DNA_NOT_ALLOWED == n) {
-      if (isspace(c) == 0) {
-        USER_ERROR("Bad character \'" << c << "\'");
-      } else if (c != '\n') {
-        continue; // skip space
-      }
-      break; // if '\n'
+void readSequenceLine(std::istream &fin, string *currseq)
+{
+    while (true)
+    {
+        char c = fin.get();
+        nucleotide n = char2nucleotide(c);
+        if (DNA_NOT_ALLOWED == n)
+        {
+            if (isspace(c) == 0)
+            {
+                USER_ERROR("Bad character \'" << c << "\'");
+            }
+            else if (c != '\n')
+            {
+                continue; // skip space
+            }
+            break; // if '\n'
+        }
+        currseq->append(1, nucleotide2char(n));
     }
-    currseq->append(1, nucleotide2char(n));
-  }
 }
 
 } // namespace
 
-void
-SequenceTree::mapSequencesOntoTree(std::istream &fin){
+void SequenceTree::mapSequencesOntoTree(std::istream &fin)
+{
 
-  int numSequences;
-  unsigned int seqlen;
-  std::array<char, 100> tmp{};
-  fin.getline(tmp.data(),100);
-  // NOLINTNEXTLINE(bugprone-unchecked-string-to-number-conversion) - checked below.
-  if ( sscanf(tmp.data(),"%d %d",&numSequences,&seqlen) != 2 )
-    THROW_EXCEPTION("expected \"<num sequences> <sequence length>\", got \"" << tmp.data() << "\"");
+    int numSequences;
+    unsigned int seqlen;
+    std::array<char, 100> tmp{};
+    fin.getline(tmp.data(), 100);
+    // NOLINTNEXTLINE(bugprone-unchecked-string-to-number-conversion) - checked below.
+    if (sscanf(tmp.data(), "%d %d", &numSequences, &seqlen) != 2)
+        THROW_EXCEPTION("expected \"<num sequences> <sequence length>\", got \"" << tmp.data() << "\"");
 
-
-  //build hash map {name,node} and reserve mem for the sequences
-  str2node_map str2node(static_cast<int>(getNumNodes()*1.5));
-  SequenceTree::NodeVector nodes;
-  nodes.reserve(getNumNodes());
-  addNodesInPrefixOrder(nodes);
-  for ( size_t i = 0 ; i < nodes.size() ; i++ ){
-    SEQ(nodes[i]).clear();
-    SEQ(nodes[i]).reserve(seqlen+10);
-    if ( !NAME(nodes[i]).empty() ){
-      str2node[NAME(nodes[i])] = nodes[i];
-    }
-  }
-
-  //names in the file are matched agains a node sequences If the name
-  //doesn't exist in the tree then these sequences are read into a
-  //garbage string.
-  string garbage;
-  garbage.reserve(seqlen+10);
-  std::vector<string> names(numSequences);
-  std::vector<string *> sequences(numSequences,&garbage);
-
-
-  //read the names and map the sequences onto the tree
-
-  for ( int i = 0 ; i < numSequences ; i++ ){
-    fin >> names[i];
-    garbage.clear();
-
-    //find the node
-    auto iter = str2node.find(string(names[i]));
-    if ( iter != str2node.end() ){
-      sequences[i] = & SEQ(((*iter).second));
+    // build hash map {name,node} and reserve mem for the sequences
+    str2node_map str2node(static_cast<int>(getNumNodes() * 1.5));
+    SequenceTree::NodeVector nodes;
+    nodes.reserve(getNumNodes());
+    addNodesInPrefixOrder(nodes);
+    for (size_t i = 0; i < nodes.size(); i++)
+    {
+        SEQ(nodes[i]).clear();
+        SEQ(nodes[i]).reserve(seqlen + 10);
+        if (!NAME(nodes[i]).empty())
+        {
+            str2node[NAME(nodes[i])] = nodes[i];
+        }
     }
 
-    readSequenceLine(fin, sequences[i]);
-  }
+    // names in the file are matched agains a node sequences If the name
+    // doesn't exist in the tree then these sequences are read into a
+    // garbage string.
+    string garbage;
+    garbage.reserve(seqlen + 10);
+    std::vector<string> names(numSequences);
+    std::vector<string *> sequences(numSequences, &garbage);
 
-  //read remaining sequences
+    // read the names and map the sequences onto the tree
 
-  //The sequences aren't neccesarily on one line but my be spread out interleaving
-  //over several lines. Therefore we read until seqlen chars have been read.
-  phylipReadInterleavedContinuation(fin, numSequences, static_cast<size_t>(seqlen),
-    [&sequences, &garbage](int i) -> size_t {
-      // Only a real (matched) position may signal completion - one
-      // still pointing at the shared `garbage` buffer must never
-      // falsely trigger it, since every unmatched name in the file
-      // appends into that same buffer, inflating its length faster
-      // than any single real sequence grows (Phase A of
-      // phylip_reader_consolidation_plan.md). Returning a value that
-      // can never equal seqlen excludes it from the check.
-      if (sequences[i] == &garbage) {
-        return static_cast<size_t>(-1);
-      }
-      return sequences[i]->length();
-    },
-    [&](istream &in, int i) {
-      // Skip any fully blank separator line(s) some interleaved PHYLIP
-      // variants put between blocks - readSequenceLine() itself already
-      // skips leading whitespace *within* a line generically, so no
-      // further special-casing of the line's first character is
-      // needed. This used to also blindly discard exactly 10 raw bytes
-      // whenever a continuation line didn't start with whitespace, on
-      // the assumption every continuation line repeats the (possibly
-      // blank) fixed-width name field - a stricter, older PHYLIP
-      // convention that made this reader unable to parse this
-      // project's own plain, unpadded continuation lines (the ones
-      // Sequences2DistanceMatrix.cpp/Sequence.cpp already read
-      // correctly, and the only convention any of this project's real
-      // fixtures actually use).
-      char c = in.peek();
-      while (c == '\n') {
-        c = in.get();
-      }
+    for (int i = 0; i < numSequences; i++)
+    {
+        fin >> names[i];
+        garbage.clear();
 
-      garbage.clear();
-      readSequenceLine(in, sequences[i]);
-    });
+        // find the node
+        auto iter = str2node.find(string(names[i]));
+        if (iter != str2node.end())
+        {
+            sequences[i] = &SEQ(((*iter).second));
+        }
 
+        readSequenceLine(fin, sequences[i]);
+    }
 
-  // CHECK THAT ALL STRINGS HAVE THE SAME LENGTH
-  for ( size_t i = 0 ; i < nodes.size() ; i++ ) {
-    if ( SEQ(nodes[i]).length() != seqlen && !SEQ(nodes[i]).empty() ){
-      USER_ERROR("Sequence not of correct length: " << nodes[i]->data.s.name ); 
+    // read remaining sequences
+
+    // The sequences aren't neccesarily on one line but my be spread out interleaving
+    // over several lines. Therefore we read until seqlen chars have been read.
+    phylipReadInterleavedContinuation(
+        fin, numSequences, static_cast<size_t>(seqlen),
+        [&sequences, &garbage](int i) -> size_t {
+            // Only a real (matched) position may signal completion - one
+            // still pointing at the shared `garbage` buffer must never
+            // falsely trigger it, since every unmatched name in the file
+            // appends into that same buffer, inflating its length faster
+            // than any single real sequence grows (Phase A of
+            // phylip_reader_consolidation_plan.md). Returning a value that
+            // can never equal seqlen excludes it from the check.
+            if (sequences[i] == &garbage)
+            {
+                return static_cast<size_t>(-1);
+            }
+            return sequences[i]->length();
+        },
+        [&](istream &in, int i) {
+            // Skip any fully blank separator line(s) some interleaved PHYLIP
+            // variants put between blocks - readSequenceLine() itself already
+            // skips leading whitespace *within* a line generically, so no
+            // further special-casing of the line's first character is
+            // needed. This used to also blindly discard exactly 10 raw bytes
+            // whenever a continuation line didn't start with whitespace, on
+            // the assumption every continuation line repeats the (possibly
+            // blank) fixed-width name field - a stricter, older PHYLIP
+            // convention that made this reader unable to parse this
+            // project's own plain, unpadded continuation lines (the ones
+            // Sequences2DistanceMatrix.cpp/Sequence.cpp already read
+            // correctly, and the only convention any of this project's real
+            // fixtures actually use).
+            char c = in.peek();
+            while (c == '\n')
+            {
+                c = in.get();
+            }
+
+            garbage.clear();
+            readSequenceLine(in, sequences[i]);
+        });
+
+    // CHECK THAT ALL STRINGS HAVE THE SAME LENGTH
+    for (size_t i = 0; i < nodes.size(); i++)
+    {
+        if (SEQ(nodes[i]).length() != seqlen && !SEQ(nodes[i]).empty())
+        {
+            USER_ERROR("Sequence not of correct length: " << nodes[i]->data.s.name);
+        }
     }
 }
-
-}
-
-
-
 
 //----------------
 //-------------------
 // ROBINSON-FOULDS
 
-using BitVectorPtr_set = std::unordered_set<BitVector*, objhash_ptr, objeq_ptr>;
+using BitVectorPtr_set = std::unordered_set<BitVector *, objhash_ptr, objeq_ptr>;
 
-double
-SequenceTree::computeRobinsonFoulds(SequenceTree &t1, SequenceTree &t2){
+double SequenceTree::computeRobinsonFoulds(SequenceTree &t1, SequenceTree &t2)
+{
 
-  int numLeafs = t1.getNumLeafs();  
-  if(numLeafs != t2.getNumLeafs()){
-    USER_WARNING("trees have different num Leafs: " << numLeafs <<"!=" << t2.getNumLeafs());
-    return -1;
-  }
-
-  SequenceTree::NodeVector nodes1;
-  SequenceTree::NodeVector nodes2;
-  
-  //1. index map for leafs;
-  str2int_hashmap name2index(static_cast<int>(numLeafs*1.5));
-  t1.addLeafs(nodes1);
-  for(int i=0 ; i<numLeafs ; i++){
-    name2index[NAME(nodes1[i])] = i;
-  }
-
-  //check that all leafs are the same in the two trees
- 
-  t2.addLeafs(nodes2);
-  for(int i=0 ; i<numLeafs ; i++){
-    auto iter = name2index.find(NAME(nodes2[i]));
-    if(iter == name2index.end() ){
-      USER_WARNING("trees have different leafs. " << NAME(nodes2[i]) <<" doesn't exist.");
-      return -1;
+    int numLeafs = t1.getNumLeafs();
+    if (numLeafs != t2.getNumLeafs())
+    {
+        USER_WARNING("trees have different num Leafs: " << numLeafs << "!=" << t2.getNumLeafs());
+        return -1;
     }
-  }
-  //2. compute splitt set for each tree.
-  vector<BitVector> splitts1;
-  t1.computeSplittSet(splitts1,nodes1,name2index);
-  //t1.drawTree(cout);
-  vector<BitVector> splitts2;
-  t2.computeSplittSet(splitts2,nodes2,name2index);
-  //t2.drawTree(cout);
 
-  BitVectorPtr_set set1(static_cast<int>(numLeafs*1.5));
-  BitVectorPtr_set set2(static_cast<int>(numLeafs*1.5));
-    
- 
-  for(size_t i=0;i<splitts1.size();i++){
-    if(!nodes1[i]->isLeaf() && !nodes1[i]->isRoot()){
-      set1.insert(&splitts1[i]);
-      //printSplitt(splitts1[i],name2index);
+    SequenceTree::NodeVector nodes1;
+    SequenceTree::NodeVector nodes2;
+
+    // 1. index map for leafs;
+    str2int_hashmap name2index(static_cast<int>(numLeafs * 1.5));
+    t1.addLeafs(nodes1);
+    for (int i = 0; i < numLeafs; i++)
+    {
+        name2index[NAME(nodes1[i])] = i;
     }
-  }
-  for(size_t i=0;i<splitts2.size();i++){
-    if(!nodes2[i]->isLeaf() && !nodes2[i]->isRoot()){
-      set2.insert(&splitts2[i]);
-      //printSplitt(splitts2[i],name2index);
+
+    // check that all leafs are the same in the two trees
+
+    t2.addLeafs(nodes2);
+    for (int i = 0; i < numLeafs; i++)
+    {
+        auto iter = name2index.find(NAME(nodes2[i]));
+        if (iter == name2index.end())
+        {
+            USER_WARNING("trees have different leafs. " << NAME(nodes2[i]) << " doesn't exist.");
+            return -1;
+        }
     }
-  }
-  //3. compute RF formula over splitt sets;
-  
-  int in_1_notin_2=0;
-  int in_2_notin_1=0;
+    // 2. compute splitt set for each tree.
+    vector<BitVector> splitts1;
+    t1.computeSplittSet(splitts1, nodes1, name2index);
+    // t1.drawTree(cout);
+    vector<BitVector> splitts2;
+    t2.computeSplittSet(splitts2, nodes2, name2index);
+    // t2.drawTree(cout);
 
-  for (BitVector *bv : set1) {
-    if( set2.find(bv) == set2.end()){
-      //      PRINT("1 didn't find");PRINT(bv);printSplitt(*bv,name2index);
-      in_1_notin_2++;
+    BitVectorPtr_set set1(static_cast<int>(numLeafs * 1.5));
+    BitVectorPtr_set set2(static_cast<int>(numLeafs * 1.5));
+
+    for (size_t i = 0; i < splitts1.size(); i++)
+    {
+        if (!nodes1[i]->isLeaf() && !nodes1[i]->isRoot())
+        {
+            set1.insert(&splitts1[i]);
+            // printSplitt(splitts1[i],name2index);
+        }
     }
-  }
-  for (BitVector *bv : set2) {
-    if( set1.find(bv) == set1.end()){
-      //      PRINT("2 didn't find");PRINT(bv); printSplitt(*bv,name2index);
-      in_2_notin_1++;
+    for (size_t i = 0; i < splitts2.size(); i++)
+    {
+        if (!nodes2[i]->isLeaf() && !nodes2[i]->isRoot())
+        {
+            set2.insert(&splitts2[i]);
+            // printSplitt(splitts2[i],name2index);
+        }
     }
-  }
+    // 3. compute RF formula over splitt sets;
 
-  //PRINT(in_1_notin_2);PRINT(in_2_notin_1);
+    int in_1_notin_2 = 0;
+    int in_2_notin_1 = 0;
 
-  //The Robinson Foulds distance between two trees is
-  //the number of edges in one tree that are not in the other tree.
-  //i.e RF(T1,T2) = |Splitts(T1)\Splitts(T2)| + |Splitts(T2)\Splitts(T1)|
-  //The normalized meassure is thus RF(T1,T2)/(Splitts(T1)+Splitts(T2))
-  //The number of splitts in a binary tree is (remember leaf edges are not splitts)
-  //n-3, since the number of nodes in a rooted binary tree is n-1 and the root is not a
-  //splitt node and also the two edges from the root describe the same splitt.
+    for (BitVector *bv : set1)
+    {
+        if (set2.find(bv) == set2.end())
+        {
+            //      PRINT("1 didn't find");PRINT(bv);printSplitt(*bv,name2index);
+            in_1_notin_2++;
+        }
+    }
+    for (BitVector *bv : set2)
+    {
+        if (set1.find(bv) == set1.end())
+        {
+            //      PRINT("2 didn't find");PRINT(bv); printSplitt(*bv,name2index);
+            in_2_notin_1++;
+        }
+    }
 
-  return (static_cast<double>(in_1_notin_2) + in_2_notin_1)/( set1.size() + set2.size());
- 
+    // PRINT(in_1_notin_2);PRINT(in_2_notin_1);
+
+    // The Robinson Foulds distance between two trees is
+    // the number of edges in one tree that are not in the other tree.
+    // i.e RF(T1,T2) = |Splitts(T1)\Splitts(T2)| + |Splitts(T2)\Splitts(T1)|
+    // The normalized meassure is thus RF(T1,T2)/(Splitts(T1)+Splitts(T2))
+    // The number of splitts in a binary tree is (remember leaf edges are not splitts)
+    // n-3, since the number of nodes in a rooted binary tree is n-1 and the root is not a
+    // splitt node and also the two edges from the root describe the same splitt.
+
+    return (static_cast<double>(in_1_notin_2) + in_2_notin_1) / (set1.size() + set2.size());
 }
 
+void SequenceTree::computeSplittSet(std::vector<BitVector> &splitts, SequenceTree::NodeVector &nodes, // ForEachSplitt,
+                                    str2int_hashmap &name2index)
+{
 
-void
-SequenceTree::computeSplittSet(std::vector<BitVector> &splitts, SequenceTree::NodeVector &nodes,//ForEachSplitt,
-		 str2int_hashmap &name2index){
+    nodes.clear();
+    recalcNodeIdsPostfixOrderAndAddInOrder(nodes);
+    const size_t numNodes = nodes.size();
+    const size_t numLeafs = getNumLeafs();
+    splitts.clear();
+    splitts.resize(numNodes);
 
-  nodes.clear();
-  recalcNodeIdsPostfixOrderAndAddInOrder(nodes);
-  const size_t numNodes = nodes.size();
-  const size_t numLeafs = getNumLeafs();
-  splitts.clear();
-  splitts.resize(numNodes);
-  
-  for(size_t i=0 ; i<numNodes ; i++){  
-    if(nodes[i]->isLeaf()){
-      int index = name2index[NAME(nodes[i])];
-      splitts[i].setNumBits(numLeafs);
-      splitts[i].setBit(index);
-      splitts[i].flippAllIfPositionIsCleared(0);
+    for (size_t i = 0; i < numNodes; i++)
+    {
+        if (nodes[i]->isLeaf())
+        {
+            int index = name2index[NAME(nodes[i])];
+            splitts[i].setNumBits(numLeafs);
+            splitts[i].setBit(index);
+            splitts[i].flippAllIfPositionIsCleared(0);
+        }
+        else
+        {
+            SequenceTree::Node *child = nodes[i]->getRightMostChild();
+            splitts[i] = splitts[child->getNodeId()]; // set to first child
+            child = child->getLeftSibling();
+            for (; child != nullptr; child = child->getLeftSibling())
+            {
+                splitts[i].bitwiseEqual(splitts[child->getNodeId()]); // join the splitts
+            }
+        }
     }
-    else{
-      SequenceTree::Node *child= nodes[i]->getRightMostChild();
-      splitts[i] = splitts[child->getNodeId()];//set to first child
-      child = child->getLeftSibling();
-      for( ; child!=nullptr; child = child->getLeftSibling() ){
-	splitts[i].bitwiseEqual(splitts[child->getNodeId()]);//join the splitts
-      }
-    }
-  }
-  
 }
 
-void
-SequenceTree::printSplitt(BitVector &splitt, str2int_hashmap &name2index, std::ostream& os){
-  
-  vector<string> index2name(name2index.size());
-  
-  for (const auto &kv : name2index) {
-    index2name[kv.second] = kv.first;
-  }
-  os << splitt << "  Hashcode: " << splitt.hashCode() << " "; 
-  for(size_t i=0 ; i<splitt.getNumBits() ; i++){
-    os << "(" << index2name[i] << ","<<splitt.getBit(i) << ") ";
-  }
-  os << endl;
-}
+void SequenceTree::printSplitt(BitVector &splitt, str2int_hashmap &name2index, std::ostream &os)
+{
 
+    vector<string> index2name(name2index.size());
+
+    for (const auto &kv : name2index)
+    {
+        index2name[kv.second] = kv.first;
+    }
+    os << splitt << "  Hashcode: " << splitt.hashCode() << " ";
+    for (size_t i = 0; i < splitt.getNumBits(); i++)
+    {
+        os << "(" << index2name[i] << "," << splitt.getBit(i) << ") ";
+    }
+    os << endl;
+}
 
 //------------------------------------------------------------------------
 
+void SequenceTree::tree2distanceMatrix(StrDblMatrix &dm)
+{
+    int numLeafs = getNumLeafs();
 
-void
-SequenceTree::tree2distanceMatrix(StrDblMatrix &dm){
-  int numLeafs = getNumLeafs();
-
-  dm.resize(numLeafs);
-  SequenceTree::NodeVector leafs;
-  addLeafs(leafs);
-  for(size_t i=0;i<leafs.size();i++){
-    dm.setIdentifier(i,NAME(leafs[i]));
-    for(size_t j=i+1;j<leafs.size();j++) {
-      dm.setDistance(i,j,0);
-}
-  }
-  
-
-  SequenceTree::NodeVector nodesOnPath;
-  for(size_t i=0;i<leafs.size();i++){
-    for(size_t j=i+1;j<leafs.size();j++){
-      nodesOnPath.clear();
-      addNodesOnPathExceptLCA(nodesOnPath,leafs[i],leafs[j]);
-      double sum =0;
-      for(size_t e=0;e<nodesOnPath.size();e++){
-	sum+=EDGE(nodesOnPath[e]);
-      }
-      dm.setDistance(i,j,sum);
+    dm.resize(numLeafs);
+    SequenceTree::NodeVector leafs;
+    addLeafs(leafs);
+    for (size_t i = 0; i < leafs.size(); i++)
+    {
+        dm.setIdentifier(i, NAME(leafs[i]));
+        for (size_t j = i + 1; j < leafs.size(); j++)
+        {
+            dm.setDistance(i, j, 0);
+        }
     }
-  }
-}
 
+    SequenceTree::NodeVector nodesOnPath;
+    for (size_t i = 0; i < leafs.size(); i++)
+    {
+        for (size_t j = i + 1; j < leafs.size(); j++)
+        {
+            nodesOnPath.clear();
+            addNodesOnPathExceptLCA(nodesOnPath, leafs[i], leafs[j]);
+            double sum = 0;
+            for (size_t e = 0; e < nodesOnPath.size(); e++)
+            {
+                sum += EDGE(nodesOnPath[e]);
+            }
+            dm.setDistance(i, j, sum);
+        }
+    }
+}
 
 //--------------------------------------------------------------------
 
-void
-SequenceTree::createLeafNameToLeafIdMap(str2int_hashmap &name2id) const{
-  SequenceTree::const_NodeVector leafs;
-  addLeafs(leafs);
-  name2id.clear();
-  name2id.reserve(static_cast<size_t>(1.5*leafs.size()));
-  int leafId = 0;
-  
-  for(size_t i=0;i<leafs.size();i++) {
-    name2id[NAME(leafs[i])]=leafId++;
-}
-	    
-}
-//the leafs are added in order of their ids in name2id
-void
-SequenceTree::makeCanonical(const str2int_hashmap &name2id){
-  SequenceTree::NodeVector leafs(getNumLeafs());
-  SequenceTree::NodeVector  tmpvec;
-  addLeafs(tmpvec);
-  
-  for(size_t i=0;i<tmpvec.size();i++){
-    auto find = name2id.find(NAME(tmpvec[i]));
-    if (find==name2id.end()) {
-      USER_WARNING("name doesn't exist: \"" << NAME(tmpvec[i])<<"\"");
+void SequenceTree::createLeafNameToLeafIdMap(str2int_hashmap &name2id) const
+{
+    SequenceTree::const_NodeVector leafs;
+    addLeafs(leafs);
+    name2id.clear();
+    name2id.reserve(static_cast<size_t>(1.5 * leafs.size()));
+    int leafId = 0;
+
+    for (size_t i = 0; i < leafs.size(); i++)
+    {
+        name2id[NAME(leafs[i])] = leafId++;
     }
-    leafs[(*find).second] = tmpvec[i];  
-  }
-  makeCanonical(leafs);
 }
+// the leafs are added in order of their ids in name2id
+void SequenceTree::makeCanonical(const str2int_hashmap &name2id)
+{
+    SequenceTree::NodeVector leafs(getNumLeafs());
+    SequenceTree::NodeVector tmpvec;
+    addLeafs(tmpvec);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    for (size_t i = 0; i < tmpvec.size(); i++)
+    {
+        auto find = name2id.find(NAME(tmpvec[i]));
+        if (find == name2id.end())
+        {
+            USER_WARNING("name doesn't exist: \"" << NAME(tmpvec[i]) << "\"");
+        }
+        leafs[(*find).second] = tmpvec[i];
+    }
+    makeCanonical(leafs);
+}

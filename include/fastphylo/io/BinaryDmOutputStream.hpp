@@ -17,25 +17,26 @@
 // (fastdist: streams one row at a time as it's computed, for the
 // bootstrap path) are both kept - genuinely different use cases, not
 // duplicate implementations of the same thing.
-class BinaryDmOutputStream : public DataOutputStream {
-public:
-  // matricesPerRun: how many print()/printRow() matrix bodies follow
-  // each printHeader() call before the next run's header (or EOF) -
-  // binary_dm_format_plan.md's run-boundary fix. Both real callers
-  // (fastprot/fastdist) already know this as a single value fixed for
-  // the whole program invocation: (no_incl_orig ? 0 : 1) + bootstraps.
-  BinaryDmOutputStream(char *filename, size_t matricesPerRun);
-  void printHeader(size_t numNodes) override;
-  void printStartRun(std::vector<std::string> &names, std::string &runId, Extrainfos &extrainfos) override;
-  void print(StrDblMatrix &dm) override;
-  void printRow(StrFloRow &dm, std::string name, size_t row, bool mem_eff_flag) override;
+class BinaryDmOutputStream : public DataOutputStream
+{
+  public:
+    // matricesPerRun: how many print()/printRow() matrix bodies follow
+    // each printHeader() call before the next run's header (or EOF) -
+    // binary_dm_format_plan.md's run-boundary fix. Both real callers
+    // (fastprot/fastdist) already know this as a single value fixed for
+    // the whole program invocation: (no_incl_orig ? 0 : 1) + bootstraps.
+    BinaryDmOutputStream(char *filename, size_t matricesPerRun);
+    void printHeader(size_t numNodes) override;
+    void printStartRun(std::vector<std::string> &names, std::string &runId, Extrainfos &extrainfos) override;
+    void print(StrDblMatrix &dm) override;
+    void printRow(StrFloRow &dm, std::string name, size_t row, bool mem_eff_flag) override;
 
-private:
-  // Owns the file when writing to disk; unused (writeToCout) when
-  // writing to stdout, in which case ofs aliases &cout instead.
-  std::unique_ptr<std::ofstream> file_stream;
-  std::ostream *ofs;
-  std::vector<std::string> m_names;
-  size_t m_matricesPerRun;
-  bool writeToCout;
+  private:
+    // Owns the file when writing to disk; unused (writeToCout) when
+    // writing to stdout, in which case ofs aliases &cout instead.
+    std::unique_ptr<std::ofstream> file_stream;
+    std::ostream *ofs;
+    std::vector<std::string> m_names;
+    size_t m_matricesPerRun;
+    bool writeToCout;
 };

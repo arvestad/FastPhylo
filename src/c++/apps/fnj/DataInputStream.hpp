@@ -10,13 +10,20 @@
 #include <vector>
 #include <string>
 
-enum readstatus { DM_READ = 1, END_OF_RUN = 2, END_OF_RUNS = 3, ERROR = 4 };
+enum readstatus
+{
+    DM_READ = 1,
+    END_OF_RUN = 2,
+    END_OF_RUNS = 3,
+    ERROR = 4
+};
 
 class DataInputStream
 {
-public:
-  virtual ~DataInputStream() {};
-  virtual readstatus readDM(StrDblMatrix & dm, std::vector<std::string> & names, std::string & runId, Extrainfos & extrainfos ) = 0;
+  public:
+    virtual ~DataInputStream() {};
+    virtual readstatus readDM(StrDblMatrix &dm, std::vector<std::string> &names, std::string &runId,
+                              Extrainfos &extrainfos) = 0;
 };
 
 /*
@@ -27,4 +34,3 @@ public:
 
   /arve 2016-06-14
 */
-

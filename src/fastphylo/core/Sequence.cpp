@@ -1,11 +1,11 @@
 //--------------------------------------------------
-//                                        
-// File: Sequence.cpp                              
-//                             
+//
+// File: Sequence.cpp
+//
 // Author: Isaac Elias, Mehmood Alam Khan
 // e-mail: isaac@nada.kth.se, malagori@kth.se
-//                             
-// cvs: $Id: Sequence.cpp,v 1.45 2006/12/26 11:57:36 isaac Exp $                                 
+//
+// cvs: $Id: Sequence.cpp,v 1.45 2006/12/26 11:57:36 isaac Exp $
 //
 //--------------------------------------------------
 
@@ -23,119 +23,148 @@ using namespace std;
 
 hashstr Sequence::stringhasher;
 
-Sequence::Sequence(){
-	name = "";
-	seq = "";
+Sequence::Sequence()
+{
+    name = "";
+    seq = "";
 }
-Sequence::Sequence(std::string n, std::string s){
-	name = n;
-	seq = s;
+Sequence::Sequence(std::string n, std::string s)
+{
+    name = n;
+    seq = s;
 }
-Sequence::Sequence(const Sequence &s){
-	name = s.name;
-	seq = s.seq;
-}
-
-Sequence& Sequence::operator=(const Sequence &s){
-	name = s.name;
-	seq = s.seq;
-	return *this;
+Sequence::Sequence(const Sequence &s)
+{
+    name = s.name;
+    seq = s.seq;
 }
 
-std::ostream& Sequence::printOn(std::ostream& os) const{
-	if ( name.empty() && seq.empty() ) {
-		return os;
-}
-	if ( name.length() < 10 ){
-		os  << std::setw(10) << std::left;
-		os << name;
-	}
-	else { {
-		os << name << " ";
-}
-}
-	os << seq;
-	return os;
+Sequence &Sequence::operator=(const Sequence &s)
+{
+    name = s.name;
+    seq = s.seq;
+    return *this;
 }
 
-std::ostream& Sequence::printShort(std::ostream& os) const{
-	os << name;
-	return os;
+std::ostream &Sequence::printOn(std::ostream &os) const
+{
+    if (name.empty() && seq.empty())
+    {
+        return os;
+    }
+    if (name.length() < 10)
+    {
+        os << std::setw(10) << std::left;
+        os << name;
+    }
+    else
+    {
+        {
+            os << name << " ";
+        }
+    }
+    os << seq;
+    return os;
 }
 
-std::istream& Sequence::objInitFromStream(std::istream &in){
-	name.clear();
-	in >> name;
-	seq.clear();
-	in >> seq;
-	return in;
+std::ostream &Sequence::printShort(std::ostream &os) const
+{
+    os << name;
+    return os;
 }
 
-void Sequence::printWithoutGaps(std::ostream& os) const{
-	if ( name.empty() && seq.empty() ) {
-		return;
-}
-	if ( name.length() < 10 ){
-		os  << std::setw(10) << std::left;
-		os << name;
-	}
-	else { {
-		os << name << " ";
-}
+std::istream &Sequence::objInitFromStream(std::istream &in)
+{
+    name.clear();
+    in >> name;
+    seq.clear();
+    in >> seq;
+    return in;
 }
 
-	for(size_t i=0 ; i<seq.length() ; i++ ){
-		if(seq[i]!=' ') {
-			os<<seq[i];
-}
-	}
+void Sequence::printWithoutGaps(std::ostream &os) const
+{
+    if (name.empty() && seq.empty())
+    {
+        return;
+    }
+    if (name.length() < 10)
+    {
+        os << std::setw(10) << std::left;
+        os << name;
+    }
+    else
+    {
+        {
+            os << name << " ";
+        }
+    }
 
+    for (size_t i = 0; i < seq.length(); i++)
+    {
+        if (seq[i] != ' ')
+        {
+            os << seq[i];
+        }
+    }
 }
 
 // Hashes on the name if it exists otherwise the sequence
-size_t Sequence::hashCode() const {
-	if ( name.empty() ) {
-		return stringhasher(seq);
-}
-	return stringhasher(name);
+size_t Sequence::hashCode() const
+{
+    if (name.empty())
+    {
+        return stringhasher(seq);
+    }
+    return stringhasher(name);
 }
 // uses the name if it exists otherwise the sequence
-bool Sequence::equals(const Object *o) const {
-	// Modernization Phase 1 (modernization_plan.md): was a C-style cast,
-	// which for a base-to-derived pointer conversion between polymorphic
-	// types performs an *unchecked* static_cast - if o pointed to some
-	// other Object subclass, every access through otherseq below was
-	// undefined behavior (there was no null check, unlike BitVector's
-	// analogous equals(), which had a check that a C-style cast made
-	// dead code - see that fix). dynamic_cast plus this new check makes
-	// comparing to a differently-typed Object defined (false), not UB.
-	const auto *otherseq = dynamic_cast<const Sequence *>(o);
-	if ( otherseq == nullptr ) { return false;
-}
-	if ( name.empty() ){
-		if ( otherseq->name.empty() ) {
-			return seq == otherseq->seq;
-		} else {
-			return false;
-}
-	}
-	if ( otherseq->name.empty() ) {
-		return false;
+bool Sequence::equals(const Object *o) const
+{
+    // Modernization Phase 1 (modernization_plan.md): was a C-style cast,
+    // which for a base-to-derived pointer conversion between polymorphic
+    // types performs an *unchecked* static_cast - if o pointed to some
+    // other Object subclass, every access through otherseq below was
+    // undefined behavior (there was no null check, unlike BitVector's
+    // analogous equals(), which had a check that a C-style cast made
+    // dead code - see that fix). dynamic_cast plus this new check makes
+    // comparing to a differently-typed Object defined (false), not UB.
+    const auto *otherseq = dynamic_cast<const Sequence *>(o);
+    if (otherseq == nullptr)
+    {
+        return false;
+    }
+    if (name.empty())
+    {
+        if (otherseq->name.empty())
+        {
+            return seq == otherseq->seq;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    if (otherseq->name.empty())
+    {
+        return false;
+    }
+
+    return name == otherseq->name;
 }
 
-	return name == otherseq->name;
-}
+bool Sequence::onlyContains(std::string &chars)
+{
+    for (char i : seq)
+    {
+        if (chars.find(i) != std::string::npos)
+        {
+            return false;
+        }
+    }
 
-bool Sequence::onlyContains(std::string &chars){
-	for (char i : seq) {
-		if ( chars.find(i) != std::string::npos ) {
-			return false;
+    return true;
 }
-}
-
-	return true;
-}
-
 
 // //-----------------------------------------------
 // void
@@ -202,191 +231,199 @@ bool Sequence::onlyContains(std::string &chars){
 //         }
 
 //         s.seq.append(1,nucleotide2char(n));
-//       } 
+//       }
 //     }
 //   }
-
 
 //   // CHECK THAT ALL STRINGS HAVE THE SAME LENGTH
 //   for ( int i = 0 ; i < numSequences ; i++ )
 //     if ( seqs[startindex+i].seq.length() != seqlen ){
-//       USER_ERROR("Sequence not of correct length: " << seqs[i].name << "    length is " << seqs[i].seq.length()); 
+//       USER_ERROR("Sequence not of correct length: " << seqs[i].name << "    length is " << seqs[i].seq.length());
 //     }
 // }
 
+void Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin)
+{
+    int numSequences;
+    unsigned int seqlen;
+    const int MAXLINE = 16384;
+    std::array<char, MAXLINE> line{};
+    do
+    { // skip lines which does not contain two numbers.
+        fin.getline(line.data(), MAXLINE);
+        // NOLINTNEXTLINE(bugprone-unchecked-string-to-number-conversion) - the while condition below is exactly that
+        // check.
+    } while (sscanf(line.data(), "%d %d", &numSequences, &seqlen) != 2);
 
-void
-Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin){
-	int numSequences;
-	unsigned int seqlen;
-	const int MAXLINE = 16384;
-	std::array<char, MAXLINE> line{};
-	do {//skip lines which does not contain two numbers.
-		fin.getline(line.data(),MAXLINE);
-		// NOLINTNEXTLINE(bugprone-unchecked-string-to-number-conversion) - the while condition below is exactly that check.
-	}while(sscanf(line.data(),"%d %d",&numSequences,&seqlen) != 2 );
+    seqs.resize(numSequences);
 
-	seqs.resize(numSequences);
+    // read the names and sequences
+    std::array<char, 11> tmpName{};
+    for (int i = 0; i < numSequences; i++)
+    {
+        Sequence &s = seqs[i];
+        s.seq.clear();
+        s.seq.reserve(seqlen + 1);
 
-	//read the names and sequences
-	std::array<char, 11> tmpName{};
-	for ( int i = 0 ; i < numSequences ; i++ ){
-		Sequence &s = seqs[i];
-		s.seq.clear();
-		s.seq.reserve(seqlen+1);
+        fin.getline(tmpName.data(), 11); // reads atmost 10 chars
+        // skip lines without 10 chars per line
+        if (!fin.fail())
+        {
+            if (fin.eof())
+                THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
+            i--;
+            continue;
+        }
+        s.name.clear();
+        appendUntil(s.name, tmpName.data(), fin.gcount(), ' ');
 
-		fin.getline(tmpName.data(),11);//reads atmost 10 chars
-		//skip lines without 10 chars per line
-		if( !fin.fail() ){
-			if( fin.eof() ) THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
-			i--;
-			continue;
-		}
-		s.name.clear();
-		appendUntil(s.name,tmpName.data(),fin.gcount(), ' ');
+        fin.clear();
+        fin.getline(line.data(), MAXLINE);
 
-		fin.clear();
-		fin.getline(line.data(),MAXLINE);
+        while (fin.fail() && fin.gcount() == MAXLINE - 1)
+        { // didn't read all the line
+            appendAllNonChars(s.seq, line.data(), fin.gcount(), ' ');
+            fin.clear();
+            fin.getline(line.data(), MAXLINE);
+        }
+        if (!fin.fail())
+        { // we read it all including the newline char unless it ended with eof
+            appendAllNonChars(s.seq, line.data(), fin.gcount() - (fin.eof() ? 0 : 1), ' ');
+        }
+        else // fail
+            THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
+        //    PRINT_V(s.seq);
+    } // end for loop
 
-		while( fin.fail() && fin.gcount()==MAXLINE-1 ){//didn't read all the line
-			appendAllNonChars(s.seq,line.data(),fin.gcount(), ' ');
-			fin.clear();
-			fin.getline(line.data(),MAXLINE);
-		}
-		if( !fin.fail()) {//we read it all including the newline char unless it ended with eof
-			appendAllNonChars(s.seq,line.data(), fin.gcount() - (fin.eof()? 0: 1), ' ');
-		}
-		else //fail
-			THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
-		//    PRINT_V(s.seq);
-	}//end for loop
+    // Mehmood's Changes here'
+    // The sequences aren't neccesarily on one line but my be spread out interleaving
+    // over several lines. Therefore we read until seqlen chars have been read.
+    phylipReadInterleavedContinuation(
+        fin, numSequences, static_cast<size_t>(seqlen), [&seqs](int i) { return seqs[i].seq.length(); },
+        [&](istream &in, int i) {
+            Sequence &s = seqs[i];
+            while (true)
+            {
+                in.getline(line.data(), MAXLINE);
+                std::string myStr = line.data();
+                if (myStr.empty())
+                {
+                    if (in.eof())
+                    {
+                        THROW_EXCEPTION("Sequence not of correct length: " << seqs[i].name << "    length is "
+                                                                           << seqs[i].seq.length());
+                    }
+                    continue;
+                }
+                if (!in.fail() || in.gcount() != MAXLINE - 1)
+                {
+                    appendAllNonChars(s.seq, line.data(), in.gcount() - (in.eof() ? 0 : 1), ' ');
+                }
+                break;
+            }
+        });
 
-//Mehmood's Changes here'
-		//The sequences aren't neccesarily on one line but my be spread out interleaving
-		//over several lines. Therefore we read until seqlen chars have been read.
-		phylipReadInterleavedContinuation(fin, numSequences, static_cast<size_t>(seqlen),
-			[&seqs](int i) { return seqs[i].seq.length(); },
-			[&](istream &in, int i) {
-				Sequence &s = seqs[i];
-				while (true) {
-					in.getline(line.data(), MAXLINE);
-					std::string myStr = line.data();
-					if (myStr.empty()) {
-						if (in.eof()) {
-							THROW_EXCEPTION("Sequence not of correct length: " << seqs[i].name << "    length is " << seqs[i].seq.length());
-						}
-						continue;
-					}
-					if (!in.fail() || in.gcount() != MAXLINE-1) {
-						appendAllNonChars(s.seq, line.data(), in.gcount() - (in.eof()? 0: 1), ' ');
-					}
-					break;
-				}
-			});
+    // Mehmood's changes end here
 
-// Mehmood's changes end here
+    //	//The sequences aren't neccesarily on one line but my be spread out interleaving
+    //	//over several lines. Therefore we read until seqlen chars have been read.
+    //	while ( seqs[0].seq.length() < seqlen ){
+    //		for ( int i = 0 ; i < numSequences ; i++ ){
+    //			//      PRINT_V(i);
+    //			Sequence &s = seqs[i];
+    //			// mehmood's changes
+    //			//      fin.getline(tmpName,11);//reads atmost 10 chars
+    //			//      //skip lines without 10 chars per line
+    //			//      if( !fin.fail() ){
+    //			//	if( fin.eof() ) THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
+    //			//	i--;
+    //			//	continue;
+    //			//      }
+    //			//// mehmood's changes
+    //			fin.clear();
+    //			fin.getline(line,MAXLINE);
+    //			//PRINT_V(line);
+    //			while( fin.fail() && fin.gcount()==MAXLINE-1 ){//didn't read all the line
+    //				appendAllNonChars(s.seq,line,fin.gcount(), ' ');
+    //				fin.clear();
+    //				fin.getline(line,MAXLINE);
+    //				//PRINT_V(line);
+    //			}
+    //			if( !fin.fail()) {//we read it all including the newline char unless it ended with eof
+    //				appendAllNonChars(s.seq,line,fin.gcount() - (fin.eof()? 0: 1), ' ');
+    //			}
+    //			else //fail
+    //				THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
+    //			//PRINT_V(s.seq);
+    //		}//end for loop
+    //	}
 
-//	//The sequences aren't neccesarily on one line but my be spread out interleaving
-//	//over several lines. Therefore we read until seqlen chars have been read.
-//	while ( seqs[0].seq.length() < seqlen ){
-//		for ( int i = 0 ; i < numSequences ; i++ ){
-//			//      PRINT_V(i);
-//			Sequence &s = seqs[i];
-//			// mehmood's changes
-//			//      fin.getline(tmpName,11);//reads atmost 10 chars
-//			//      //skip lines without 10 chars per line
-//			//      if( !fin.fail() ){
-//			//	if( fin.eof() ) THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
-//			//	i--;
-//			//	continue;
-//			//      }
-//			//// mehmood's changes
-//			fin.clear();
-//			fin.getline(line,MAXLINE);
-//			//PRINT_V(line);
-//			while( fin.fail() && fin.gcount()==MAXLINE-1 ){//didn't read all the line
-//				appendAllNonChars(s.seq,line,fin.gcount(), ' ');
-//				fin.clear();
-//				fin.getline(line,MAXLINE);
-//				//PRINT_V(line);
-//			}
-//			if( !fin.fail()) {//we read it all including the newline char unless it ended with eof
-//				appendAllNonChars(s.seq,line,fin.gcount() - (fin.eof()? 0: 1), ' ');
-//			}
-//			else //fail
-//				THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
-//			//PRINT_V(s.seq);
-//		}//end for loop
-//	}
-
-	// CHECK THAT ALL STRINGS HAVE THE SAME LENGTH
-	for ( int i = 0 ; i < numSequences ; i++ ){
-		if ( seqs[i].seq.length() != seqlen ){
-			THROW_EXCEPTION("Sequence not of correct length: " << seqs[i].name << "    length is " << seqs[i].seq.length());
-		}
-	}
+    // CHECK THAT ALL STRINGS HAVE THE SAME LENGTH
+    for (int i = 0; i < numSequences; i++)
+    {
+        if (seqs[i].seq.length() != seqlen)
+        {
+            THROW_EXCEPTION("Sequence not of correct length: " << seqs[i].name << "    length is "
+                                                               << seqs[i].seq.length());
+        }
+    }
 }
 
-
-
-void 
-Sequence::printSequences(std::vector<Sequence> &seqs, std::ofstream &out){
-	out << seqs.size() << "\t " << seqs[0].seq.length() << endl;
-	for (const auto & seq : seqs){
-		out << seq << endl;
-	}
+void Sequence::printSequences(std::vector<Sequence> &seqs, std::ofstream &out)
+{
+    out << seqs.size() << "\t " << seqs[0].seq.length() << endl;
+    for (const auto &seq : seqs)
+    {
+        out << seq << endl;
+    }
 }
 
-void 
-Sequence::bootstrapSequences(std::vector<Sequence> &seqs, std::vector<Sequence> &boot){
+void Sequence::bootstrapSequences(std::vector<Sequence> &seqs, std::vector<Sequence> &boot)
+{
 
+    // ensure capacity in bootsequences
+    boot.resize(seqs.size());
 
-	//ensure capacity in bootsequences
-	boot.resize(seqs.size());
+    const size_t seqlen = seqs[0].seq.length();
+    for (size_t i = 0; i < seqs.size(); i++)
+    {
+        boot[i].name = seqs[i].name;
+        if (boot[i].seq.length() < seqlen)
+        {
+            boot[i].seq.assign(seqlen, ' ');
+        }
+        else if (boot[i].seq.length() > seqlen)
+        {
+            boot[i].seq.erase(seqlen);
+        }
 
-	const size_t seqlen = seqs[0].seq.length();
-	for ( size_t i = 0 ; i < seqs.size() ; i++ ){
-		boot[i].name = seqs[i].name;
-		if ( boot[i].seq.length() < seqlen ) {
-			boot[i].seq.assign(seqlen,' ');
-		} else if ( boot[i].seq.length() > seqlen ) {
-			boot[i].seq.erase(seqlen);
+        assert(boot[i].seq.length() == seqlen);
+    }
+
+    // Do the bootstrapping
+    size_t pos = 0;
+    vector<int> samplePositions(seqlen);
+
+    // Was two near-identical branches keyed on `32 < seqlen`, each
+    // doing this same fill (and, below, the same sampled-copy step) in
+    // stride-32 chunks vs a plain loop - an apparent unrolling attempt
+    // that changed nothing observable (rand() is a serial call, and
+    // plain array indexing has no dependency on iteration order
+    // either), verified and unified into one path - same finding as
+    // Sequences2DistanceMatrix.cpp's bootstrapSequences() (see that
+    // file's before/after for the fuller explanation).
+    for (pos = 0; pos < seqlen; pos++)
+    {
+        samplePositions[pos] = static_cast<int>(seqlen * 1.0 * rand() / (RAND_MAX + 1.0));
+    }
+
+    for (size_t seq = 0; seq < seqs.size(); seq++)
+    {
+        string &b = boot[seq].seq;
+        const string &s = seqs[seq].seq;
+        for (pos = 0; pos < seqlen; pos++)
+        {
+            b[pos] = s[samplePositions[pos]];
+        }
+    }
 }
-
-		assert( boot[i].seq.length() == seqlen );
-	}
-
-	// Do the bootstrapping
-	size_t pos=0;
-	vector<int> samplePositions(seqlen);
-
-	// Was two near-identical branches keyed on `32 < seqlen`, each
-	// doing this same fill (and, below, the same sampled-copy step) in
-	// stride-32 chunks vs a plain loop - an apparent unrolling attempt
-	// that changed nothing observable (rand() is a serial call, and
-	// plain array indexing has no dependency on iteration order
-	// either), verified and unified into one path - same finding as
-	// Sequences2DistanceMatrix.cpp's bootstrapSequences() (see that
-	// file's before/after for the fuller explanation).
-	for (pos=0; pos<seqlen; pos++) {
-		samplePositions[pos] = static_cast<int>(seqlen*1.0*rand()/(RAND_MAX+1.0));
-}
-
-	for( size_t seq=0; seq<seqs.size(); seq++){
-		string & b = boot[seq].seq;
-		const string & s = seqs[seq].seq;
-		for (pos=0; pos<seqlen; pos++) {
-			b[pos] = s[samplePositions[pos]];
-}
-	}
-}
-
-
-
-
-
-
-
-
-
-

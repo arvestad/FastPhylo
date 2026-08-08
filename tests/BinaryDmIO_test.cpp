@@ -39,71 +39,79 @@
 
 using namespace std;
 
-namespace {
+namespace
+{
 
 const char *kTestFile = "BinaryDmIO_test.bin";
 
-StrDblMatrix makeMatrix(vector<string> &names, double lastEntry) {
-	StrDblMatrix dm(names.size());
-	dm.setIdentifiers(names);
-	double v = 1.0;
-	for (size_t i = 0; i < names.size(); i++) {
-		for (size_t j = i; j < names.size(); j++) {
-			dm.setDistance(i, j, (i == names.size() - 1 && j == names.size() - 1) ? lastEntry : v);
-			v += 1.0;
-		}
-	}
-	return dm;
+StrDblMatrix makeMatrix(vector<string> &names, double lastEntry)
+{
+    StrDblMatrix dm(names.size());
+    dm.setIdentifiers(names);
+    double v = 1.0;
+    for (size_t i = 0; i < names.size(); i++)
+    {
+        for (size_t j = i; j < names.size(); j++)
+        {
+            dm.setDistance(i, j, (i == names.size() - 1 && j == names.size() - 1) ? lastEntry : v);
+            v += 1.0;
+        }
+    }
+    return dm;
 }
 
-void assertMatrixEquals(StrDblMatrix &dm, vector<string> &names, double lastEntry) {
-	assert(dm.getSize() == names.size());
-	double v = 1.0;
-	for (size_t i = 0; i < names.size(); i++) {
-		assert(dm.getIdentifier(i) == names[i]);
-		for (size_t j = i; j < names.size(); j++) {
-			double expected = (i == names.size() - 1 && j == names.size() - 1) ? lastEntry : v;
-			assert(dm.getDistance(i, j) == expected);
-			v += 1.0;
-		}
-	}
+void assertMatrixEquals(StrDblMatrix &dm, vector<string> &names, double lastEntry)
+{
+    assert(dm.getSize() == names.size());
+    double v = 1.0;
+    for (size_t i = 0; i < names.size(); i++)
+    {
+        assert(dm.getIdentifier(i) == names[i]);
+        for (size_t j = i; j < names.size(); j++)
+        {
+            double expected = (i == names.size() - 1 && j == names.size() - 1) ? lastEntry : v;
+            assert(dm.getDistance(i, j) == expected);
+            v += 1.0;
+        }
+    }
 }
 
-}  // namespace
+} // namespace
 
 // A single matrix, no bootstrap replicates - the plain
 // "fastprot -O binary" case (examples/RunExamples.sh's ex16). Also
 // covers the -1.0-for-non-finite convention BinaryDmOutputStream::
 // print() applies to infinite/NaN distances.
-static void test_single_matrix_round_trip() {
-	vector<string> names{"Alpha", "Beta", "Gamma"};
-	StrDblMatrix written = makeMatrix(names, numeric_limits<double>::infinity());
+static void test_single_matrix_round_trip()
+{
+    vector<string> names{"Alpha", "Beta", "Gamma"};
+    StrDblMatrix written = makeMatrix(names, numeric_limits<double>::infinity());
 
-	{
-		BinaryDmOutputStream out(const_cast<char *>(kTestFile), 1);
-		string runId = "run1";
-		Extrainfos extrainfos;
-		out.printStartRun(names, runId, extrainfos);
-		out.printHeader(names.size());
-		out.print(written);
-	}
+    {
+        BinaryDmOutputStream out(const_cast<char *>(kTestFile), 1);
+        string runId = "run1";
+        Extrainfos extrainfos;
+        out.printStartRun(names, runId, extrainfos);
+        out.printHeader(names.size());
+        out.print(written);
+    }
 
-	BinaryInputStream in(const_cast<char *>(kTestFile));
-	StrDblMatrix readBack;
-	vector<string> readNames;
-	string readRunId;
-	Extrainfos readExtrainfos;
+    BinaryInputStream in(const_cast<char *>(kTestFile));
+    StrDblMatrix readBack;
+    vector<string> readNames;
+    string readRunId;
+    Extrainfos readExtrainfos;
 
-	readstatus status = in.readDM(readBack, readNames, readRunId, readExtrainfos);
-	assert(status == DM_READ);
-	assertMatrixEquals(readBack, names, -1.0);
+    readstatus status = in.readDM(readBack, readNames, readRunId, readExtrainfos);
+    assert(status == DM_READ);
+    assertMatrixEquals(readBack, names, -1.0);
 
-	// Nothing more in the file - the second call must signal end-of-run,
-	// not misread trailing garbage or hang.
-	status = in.readDM(readBack, readNames, readRunId, readExtrainfos);
-	assert(status == END_OF_RUN);
+    // Nothing more in the file - the second call must signal end-of-run,
+    // not misread trailing garbage or hang.
+    status = in.readDM(readBack, readNames, readRunId, readExtrainfos);
+    assert(status == END_OF_RUN);
 
-	remove(kTestFile);
+    remove(kTestFile);
 }
 
 // One header, three matrix bodies - fastprot/fastdist's "-b 2" shape
@@ -113,41 +121,42 @@ static void test_single_matrix_round_trip() {
 // call for this run should consume the "FASTPHYLO 2"+size+
 // matricesPerRun+names header, and later calls must reuse the cached
 // names rather than re-parsing a header from mid-body bytes.
-static void test_multiple_matrices_share_one_header() {
-	vector<string> names{"One", "Two"};
-	StrDblMatrix original = makeMatrix(names, 42.0);
-	StrDblMatrix boot1 = makeMatrix(names, 43.0);
-	StrDblMatrix boot2 = makeMatrix(names, 44.0);
+static void test_multiple_matrices_share_one_header()
+{
+    vector<string> names{"One", "Two"};
+    StrDblMatrix original = makeMatrix(names, 42.0);
+    StrDblMatrix boot1 = makeMatrix(names, 43.0);
+    StrDblMatrix boot2 = makeMatrix(names, 44.0);
 
-	{
-		BinaryDmOutputStream out(const_cast<char *>(kTestFile), 3);
-		string runId = "run1";
-		Extrainfos extrainfos;
-		out.printStartRun(names, runId, extrainfos);
-		out.printHeader(names.size());
-		out.print(original);
-		out.print(boot1);
-		out.print(boot2);
-	}
+    {
+        BinaryDmOutputStream out(const_cast<char *>(kTestFile), 3);
+        string runId = "run1";
+        Extrainfos extrainfos;
+        out.printStartRun(names, runId, extrainfos);
+        out.printHeader(names.size());
+        out.print(original);
+        out.print(boot1);
+        out.print(boot2);
+    }
 
-	BinaryInputStream in(const_cast<char *>(kTestFile));
-	StrDblMatrix readBack;
-	vector<string> readNames;
-	string readRunId;
-	Extrainfos readExtrainfos;
+    BinaryInputStream in(const_cast<char *>(kTestFile));
+    StrDblMatrix readBack;
+    vector<string> readNames;
+    string readRunId;
+    Extrainfos readExtrainfos;
 
-	assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == DM_READ);
-	assertMatrixEquals(readBack, names, 42.0);
+    assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == DM_READ);
+    assertMatrixEquals(readBack, names, 42.0);
 
-	assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == DM_READ);
-	assertMatrixEquals(readBack, names, 43.0);
+    assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == DM_READ);
+    assertMatrixEquals(readBack, names, 43.0);
 
-	assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == DM_READ);
-	assertMatrixEquals(readBack, names, 44.0);
+    assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == DM_READ);
+    assertMatrixEquals(readBack, names, 44.0);
 
-	assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == END_OF_RUN);
+    assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == END_OF_RUN);
 
-	remove(kTestFile);
+    remove(kTestFile);
 }
 
 // Two full runs (each its own header + body) back to back in one
@@ -163,60 +172,62 @@ static void test_multiple_matrices_share_one_header() {
 // the plan doc), not a per-header parameter. Run 2 deliberately uses
 // different names than run 1, so this also proves the reader re-parses
 // fresh identifiers rather than reusing anything cached from run 1.
-static void test_multiple_runs_are_correctly_separated() {
-	vector<string> names1{"Alpha", "Beta", "Gamma"};
-	StrDblMatrix run1matrix = makeMatrix(names1, 100.0);
+static void test_multiple_runs_are_correctly_separated()
+{
+    vector<string> names1{"Alpha", "Beta", "Gamma"};
+    StrDblMatrix run1matrix = makeMatrix(names1, 100.0);
 
-	vector<string> names2{"X", "Y"};
-	StrDblMatrix run2matrix = makeMatrix(names2, 200.0);
+    vector<string> names2{"X", "Y"};
+    StrDblMatrix run2matrix = makeMatrix(names2, 200.0);
 
-	{
-		// One BinaryDmOutputStream across both runs, calling
-		// printStartRun()/printHeader()/print() twice in sequence -
-		// exactly how fastdist's processRuns() writes multiple datasets
-		// through a single DataOutputStream.
-		BinaryDmOutputStream out(const_cast<char *>(kTestFile), 1);
-		string runId1 = "run1";
-		Extrainfos extrainfos1;
-		out.printStartRun(names1, runId1, extrainfos1);
-		out.printHeader(names1.size());
-		out.print(run1matrix);
+    {
+        // One BinaryDmOutputStream across both runs, calling
+        // printStartRun()/printHeader()/print() twice in sequence -
+        // exactly how fastdist's processRuns() writes multiple datasets
+        // through a single DataOutputStream.
+        BinaryDmOutputStream out(const_cast<char *>(kTestFile), 1);
+        string runId1 = "run1";
+        Extrainfos extrainfos1;
+        out.printStartRun(names1, runId1, extrainfos1);
+        out.printHeader(names1.size());
+        out.print(run1matrix);
 
-		string runId2 = "run2";
-		Extrainfos extrainfos2;
-		out.printStartRun(names2, runId2, extrainfos2);
-		out.printHeader(names2.size());
-		out.print(run2matrix);
-	}
+        string runId2 = "run2";
+        Extrainfos extrainfos2;
+        out.printStartRun(names2, runId2, extrainfos2);
+        out.printHeader(names2.size());
+        out.print(run2matrix);
+    }
 
-	BinaryInputStream in(const_cast<char *>(kTestFile));
-	StrDblMatrix readBack;
-	vector<string> readNames;
-	string readRunId;
-	Extrainfos readExtrainfos;
+    BinaryInputStream in(const_cast<char *>(kTestFile));
+    StrDblMatrix readBack;
+    vector<string> readNames;
+    string readRunId;
+    Extrainfos readExtrainfos;
 
-	// Run 1: one matrix, then END_OF_RUN.
-	assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == DM_READ);
-	assertMatrixEquals(readBack, names1, 100.0);
-	assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == END_OF_RUN);
+    // Run 1: one matrix, then END_OF_RUN.
+    assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == DM_READ);
+    assertMatrixEquals(readBack, names1, 100.0);
+    assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == END_OF_RUN);
 
-	// Run 2: a fresh header (different names, size 2 not 3) and its one
-	// matrix, then END_OF_RUN.
-	assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == DM_READ);
-	assertMatrixEquals(readBack, names2, 200.0);
-	assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == END_OF_RUN);
+    // Run 2: a fresh header (different names, size 2 not 3) and its one
+    // matrix, then END_OF_RUN.
+    assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == DM_READ);
+    assertMatrixEquals(readBack, names2, 200.0);
+    assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == END_OF_RUN);
 
-	// True end of file - calling again still returns END_OF_RUN, not a
-	// crash or a misread of nonexistent trailing data.
-	assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == END_OF_RUN);
+    // True end of file - calling again still returns END_OF_RUN, not a
+    // crash or a misread of nonexistent trailing data.
+    assert(in.readDM(readBack, readNames, readRunId, readExtrainfos) == END_OF_RUN);
 
-	remove(kTestFile);
+    remove(kTestFile);
 }
 
-int main() {
-	test_single_matrix_round_trip();
-	test_multiple_matrices_share_one_header();
-	test_multiple_runs_are_correctly_separated();
-	cout << "BinaryDmIO_test: all tests passed" << endl;
-	return 0;
+int main()
+{
+    test_single_matrix_round_trip();
+    test_multiple_matrices_share_one_header();
+    test_multiple_runs_are_correctly_separated();
+    cout << "BinaryDmIO_test: all tests passed" << endl;
+    return 0;
 }

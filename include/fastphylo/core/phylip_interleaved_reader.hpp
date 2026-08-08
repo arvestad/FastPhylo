@@ -34,14 +34,16 @@
 // nullptr and is only assigned if some name in the file matches a
 // tree node, so the single-pointer form has a latent null-pointer
 // dereference the any-of-all form cannot have.
-template <class LengthFn>
-bool phylipAnySequenceComplete(int numSequences, std::size_t seqlen, LengthFn getLength) {
-	for (int i = 0; i < numSequences; i++) {
-		if (getLength(i) == seqlen) {
-			return true;
-		}
-	}
-	return false;
+template <class LengthFn> bool phylipAnySequenceComplete(int numSequences, std::size_t seqlen, LengthFn getLength)
+{
+    for (int i = 0; i < numSequences; i++)
+    {
+        if (getLength(i) == seqlen)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 // The interleaved-continuation-lines loop itself: repeatedly calls
@@ -61,15 +63,19 @@ bool phylipAnySequenceComplete(int numSequences, std::size_t seqlen, LengthFn ge
 // identical file correctly). This is the corrected form, now shared
 // by all three call sites - the bug cannot recur in any of them.
 template <class LengthFn, class AppendLineFn>
-void phylipReadInterleavedContinuation(std::istream &fin, int numSequences, std::size_t seqlen,
-                                        LengthFn getLength, AppendLineFn appendLine) {
-	bool whileTrue = !phylipAnySequenceComplete(numSequences, seqlen, getLength);
-	while (whileTrue) {
-		for (int i = 0; i < numSequences; i++) {
-			appendLine(fin, i);
-			if (phylipAnySequenceComplete(numSequences, seqlen, getLength)) {
-				whileTrue = false;
-			}
-		}
-	}
+void phylipReadInterleavedContinuation(std::istream &fin, int numSequences, std::size_t seqlen, LengthFn getLength,
+                                       AppendLineFn appendLine)
+{
+    bool whileTrue = !phylipAnySequenceComplete(numSequences, seqlen, getLength);
+    while (whileTrue)
+    {
+        for (int i = 0; i < numSequences; i++)
+        {
+            appendLine(fin, i);
+            if (phylipAnySequenceComplete(numSequences, seqlen, getLength))
+            {
+                whileTrue = false;
+            }
+        }
+    }
 }

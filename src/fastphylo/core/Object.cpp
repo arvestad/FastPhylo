@@ -16,73 +16,75 @@
 
 using namespace std;
 
-
 /*===============================================
  * Object methods
  */
 
-std::string Object::toString() const{
-  std::ostringstream out;
-  printOn(out);
-  return out.str();
+std::string Object::toString() const
+{
+    std::ostringstream out;
+    printOn(out);
+    return out.str();
 }
 
-ostream& Object::printOn(ostream& os) const{
-  //return os << "Object " << ((ptrdiff_t) this)<<" "; // if problem, then uncoment this line and comment below one
-  return os << "Object " << ( this)<<" ";
+ostream &Object::printOn(ostream &os) const
+{
+    // return os << "Object " << ((ptrdiff_t) this)<<" "; // if problem, then uncoment this line and comment below one
+    return os << "Object " << (this) << " ";
 }
 
-
-    
 /*=================================================
  * Out/In stream operators
  */
-ostream& operator<<(ostream & os, const Object *obj) {
+ostream &operator<<(ostream &os, const Object *obj)
+{
     return obj->printOn(os);
 }
 
-ostream& operator<<(ostream & os, const Object &obj){
+ostream &operator<<(ostream &os, const Object &obj)
+{
     return obj.printOn(os);
 }
 
-std::istream& operator>>(std::istream & in, Object &obj){
-  return obj.objInitFromStream(in);
+std::istream &operator>>(std::istream &in, Object &obj)
+{
+    return obj.objInitFromStream(in);
 }
 
-std::istream& operator>>(std::istream & in, Object *obj){
-  return obj->objInitFromStream(in);
+std::istream &operator>>(std::istream &in, Object *obj)
+{
+    return obj->objInitFromStream(in);
 }
-
 
 /*===================================================
  * String operators
  */
-string operator + (const string & s, const Object & obj) {
+string operator+(const string &s, const Object &obj)
+{
     string t = s;
     t.append(obj.toString());
     return t;
 }
 
-string operator + (const string & s, const Object * obj) {
+string operator+(const string &s, const Object *obj)
+{
     string t = s;
     t.append(obj->toString());
     return t;
 }
 
-string operator + (const Object & obj, const string & s) {
+string operator+(const Object &obj, const string &s)
+{
     string t;
     t.append(obj.toString());
     t.append(s);
     return t;
 }
 
-string operator + (const Object * obj, const string & s) {
+string operator+(const Object *obj, const string &s)
+{
     string t;
     t.append(obj->toString());
     t.append(s);
     return t;
 }
-
-
-
-

@@ -20,12 +20,9 @@
 // open_read_stream, file_exists (only ever called by the two deleted
 // "interactive" functions), skipWhiteSpace(FILE*), skipUntil,
 // appendToken, appendUntil - was dead and has been removed.
-FILE *
-open_write_file(const char *fname);
+FILE *open_write_file(const char *fname);
 
 // Added by Mehmood Khan Malagori; email: malagori@kth.se
-std::ofstream *
-open_write_binary(const char *fname);
+std::ofstream *open_write_binary(const char *fname);
 
-void
-skipWhiteSpace(std::istream &in);
+void skipWhiteSpace(std::istream &in);

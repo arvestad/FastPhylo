@@ -25,33 +25,50 @@
 // a distance matrix, not a distance matrix itself, and reading it
 // alongside this one confirmed the difference is real, not naming drift
 // (see project_layout_plan.md's Phase C audit).
-class DataOutputStream {
-public:
-  DataOutputStream(char *filename);
-  // fastdist's original DataOutputStream had no destructor at all (an
-  // empty inline `{}`), so `fp` - opened via fopen() in the constructor
-  // below whenever a filename is given - was never fclose()'d. A real
-  // file-descriptor leak on every invocation that writes to a named
-  // file, parallel to (but independent of) the BinaryDmOutputStream
-  // leak fixed earlier in this branch (Phase 6). fastprot's version
-  // already got this right; that's the version kept here.
-  virtual ~DataOutputStream();
+class DataOutputStream
+{
+  public:
+    DataOutputStream(char *filename);
+    // fastdist's original DataOutputStream had no destructor at all (an
+    // empty inline `{}`), so `fp` - opened via fopen() in the constructor
+    // below whenever a filename is given - was never fclose()'d. A real
+    // file-descriptor leak on every invocation that writes to a named
+    // file, parallel to (but independent of) the BinaryDmOutputStream
+    // leak fixed earlier in this branch (Phase 6). fastprot's version
+    // already got this right; that's the version kept here.
+    virtual ~DataOutputStream();
 
-  virtual void print(StrDblMatrix &dm) {}
-  virtual void printSD(StrDblMatrix &dm) {}
-  virtual void printStartRun(std::vector<std::string> &names, std::string &runId, Extrainfos &extrainfos) {}
-  virtual void printEndRun() {}
-  virtual void printRows(const StrDblMatrix &dm) {}
-  virtual void printRow(StrFloRow &dm, std::string name, size_t row, bool mem_eff_flag = false) {}
-  virtual void printHeader(size_t numNodes) {}
-  virtual void printBootstrapSpliter(size_t numNodes) {}
+    virtual void print(StrDblMatrix &dm)
+    {
+    }
+    virtual void printSD(StrDblMatrix &dm)
+    {
+    }
+    virtual void printStartRun(std::vector<std::string> &names, std::string &runId, Extrainfos &extrainfos)
+    {
+    }
+    virtual void printEndRun()
+    {
+    }
+    virtual void printRows(const StrDblMatrix &dm)
+    {
+    }
+    virtual void printRow(StrFloRow &dm, std::string name, size_t row, bool mem_eff_flag = false)
+    {
+    }
+    virtual void printHeader(size_t numNodes)
+    {
+    }
+    virtual void printBootstrapSpliter(size_t numNodes)
+    {
+    }
 
-  // Fast float-to-PHYLIP-field lookup tables, shared by PhylipDmOutputStream
-  // and XmlOutputStream's formatting code.
-  static const std::array<char, 128> ONEDIGIT;
-  static const std::array<char, 128> TENDIGIT;
+    // Fast float-to-PHYLIP-field lookup tables, shared by PhylipDmOutputStream
+    // and XmlOutputStream's formatting code.
+    static const std::array<char, 128> ONEDIGIT;
+    static const std::array<char, 128> TENDIGIT;
 
-protected:
-  bool file_was_opened;
-  FILE *fp;
+  protected:
+    bool file_was_opened;
+    FILE *fp;
 };

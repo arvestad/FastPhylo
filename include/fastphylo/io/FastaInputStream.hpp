@@ -31,21 +31,22 @@
 // multi-line-per-sequence file (not covered by RunExamples.sh, checked
 // separately since it's exactly where the two algorithms' structural
 // difference could have shown up).
-class FastaSequenceReader {
-public:
-  // allowedChars: the residue alphabet accepted in a sequence body
-  // (differs between DNA and protein - passed in rather than
-  // hardcoded).
-  FastaSequenceReader(char *filename, std::string allowedChars);
-  ~FastaSequenceReader();
+class FastaSequenceReader
+{
+  public:
+    // allowedChars: the residue alphabet accepted in a sequence body
+    // (differs between DNA and protein - passed in rather than
+    // hardcoded).
+    FastaSequenceReader(char *filename, std::string allowedChars);
+    ~FastaSequenceReader();
 
-  bool readSequences(std::vector<Sequence> &seqs, std::string &runId, Extrainfos &extrainfos);
+    bool readSequences(std::vector<Sequence> &seqs, std::string &runId, Extrainfos &extrainfos);
 
-protected:
-  bool readSeq(std::vector<Sequence> &seqs, std::string &line, int linesRead);
+  protected:
+    bool readSeq(std::vector<Sequence> &seqs, std::string &line, int linesRead);
 
-  std::istream *fp;
-  std::ifstream fin;
-  bool file_was_opened;
-  std::string allowedChars;
+    std::istream *fp;
+    std::ifstream fin;
+    bool file_was_opened;
+    std::string allowedChars;
 };

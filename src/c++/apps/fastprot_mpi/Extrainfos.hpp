@@ -1,14 +1,11 @@
 #ifndef EXTRAINFOS_HPP
 #define EXTRAINFOS_HPP
 
-
 #include <vector>
 
+typedef std::vector<std::string> Extrainfos;
 
-
-typedef std::vector< std::string > Extrainfos;
-
-//void freeXmlStrings( Extrainfos & extrainfos );
+// void freeXmlStrings( Extrainfos & extrainfos );
 
 /**
 class Extrainfos
@@ -18,8 +15,8 @@ public:
 
   virtual ~Extrainfos() {};
   virtual void clear() = 0;
-  virtual void print( size_type element,  FILE * fp) {   
-  virtual void setElement( size_type element, xmlChar * fp) {   
+  virtual void print( size_type element,  FILE * fp) {
+  virtual void setElement( size_type element, xmlChar * fp) {
   v
 
 };
