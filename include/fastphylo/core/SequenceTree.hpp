@@ -133,11 +133,6 @@ public:
   //computes the hamming distance for each edge.
   void computeEdgeLengths();
 
-  //PARSIMONY 
-  //computes the most parsimonious sequences given the
-  //sequences at the leafs.
-  size_t computeMostParsimoniousSequences();
-  
   //-----------------------------
   //
   // A distance matrix with identifiers as tree nodes.

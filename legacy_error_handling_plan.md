@@ -159,9 +159,76 @@ Phase 0 of this plan, before touching `file_utils` itself - it shrinks
 the surface area for Finding 3's cleanup and removes the only place
 the header/definition mismatch could ever have mattered.
 
+## Finding 5 - full audit of `src/fastphylo/core`/`include/fastphylo/core` (2026-08-08)
+
+Direct instruction: scrutinize every file in `core/`, not just
+`Exception`/`file_utils`. Systematic grep sweep of all 34 files (~7200
+lines) plus the closely-related `src/fastphylo/dna/LeastSquaresFit.*`.
+
+**More dead code, same shape as Finding 4 (confirmed via grep, zero
+live callers):**
+
+- `arg_utils.c`/`.h` + `arg_utils_ext.cpp`/`.hpp` - a pre-CLI11
+  leftover (`gengetopt_migration_plan.md`), zero callers anywhere.
+  `arg_utils_ext.cpp`/`arg_utils.c` were still listed in
+  `src/c++/CMakeLists.txt` and linked straight into `libfastphylo.a` -
+  dead code shipping in the binary, not just dead source.
+- `SequenceTree_MostParsimonious.cpp` (214 lines, also linked into
+  `libfastphylo.a`) - its only callers anywhere in the tree were two
+  more dead test files (`Tree_test.cpp`, `ParsimonyTest.cpp`).
+  Unreachable from any of the 4 built apps.
+- 6 more unbuilt test files beyond `DistanceMatrix_test.cpp` (already
+  deleted in Phase 0): `AML_star_test.cpp`, `Big_AML_test.cpp`,
+  `DNA_b128_String_test.cpp`, `LeastSquaresFit_test.cpp`,
+  `ParsimonyTest.cpp`, `Tree_test.cpp` - none registered in
+  `CMakeLists.txt`/`ctest`. The `AML_*` ones test code (`Big_AML.cpp`
+  etc.) that doesn't exist in the tree anymore at all.
+- `src/fastphylo/dna/LeastSquaresFit.cpp`/`.hpp` - one directory over
+  from `core/`, same pattern: linked into the library, zero callers
+  from any app.
+- `log_utils.hpp`'s `ASSERT`/`ASSERT_OP`/`DEBUG` macros - all zero
+  call sites. `DEBUG`'s body has a latent syntax bug (a string literal
+  directly adjacent to `__LINE__` with no `<<` between them - would
+  fail to compile if ever invoked) and `ASSERT_OP`'s `NDEBUG` branch
+  has a copy-paste bug (redefines `ASSERT_EQ` instead of `ASSERT_OP`) -
+  both dormant only because nothing calls either macro.
+
+All of the above deleted directly (Phase 5), verified via clean
+rebuild + `ctest` 4/4 + `RunExamples.sh` 20/20 byte-identical +
+`RunCliChecks.sh` all green after each step.
+
+**Checked and turned out fine - no action needed:** `Object`'s
+`equals()`/`hashCode()`/`toString()`/`objInitFromStream()` are all
+genuinely used elsewhere in the tree - `equals()`/`hashCode()` via the
+`objeq`/`objhash` functor structs (used by `SequenceTree`'s hash
+containers), `objInitFromStream()` overridden and called across 6
+classes (`Sequence`, `DistanceRow`, `DistanceMatrix`,
+`FloatDistanceMatrix`, `Tree`, `BitVector`). `Object` is not dead
+weight, just old-style (Java-flavored) C++ - only `Exception`'s
+specific double-inheritance from both `Object` and `std::exception`
+(Finding 2) is actually broken. No case for touching the other 7
+`Object`-derived classes here.
+
+**Real architectural finding, deliberately not acted on - too large
+for this plan:** there are **two parallel, uncoordinated
+error-handling systems** in this codebase. `Exception`/
+`THROW_EXCEPTION` throws a C++ exception, unwinds the stack, and (as
+of Phase 1) is caught cleanly in each `main()` and exits 1. But
+`log_utils.hpp`'s `USER_ERROR`/`PROG_ERROR`/`MEM_CHECK` macros (33+
+call sites across the tree, well beyond `core/`) call `exit(1)`/
+`std::exit(1)` **directly** from wherever they're invoked - no stack
+unwinding, no RAII cleanup, no chance for any `main()`'s catch blocks
+to run. Reconciling these into one consistent error-reporting
+convention is a genuine design decision (which one wins? does
+`USER_ERROR` become `THROW_EXCEPTION` everywhere, changing behavior
+at 20+ call sites?) touching far more of the tree than this plan's
+scope - flagging for a dedicated future plan, not attempting here.
+
 ## Phases
 
 ### Phase 0 - remove the dead, unbuilt legacy apps (Finding 4)
+
+**Done** (`deef6af`, 2026-08-08).
 
 Confirm none of `sequence_nj.cpp`/`buildtree.cpp`/
 `iterative_tree_merger/`/`tests/DistanceMatrix_test.cpp` is referenced
@@ -172,9 +239,13 @@ removes dead weight before it can complicate later greps.
 
 ### Phase 1 - fix the exit-code bug (Finding 0)
 
-Add `exit(EXIT_FAILURE);` to both catch branches in all four apps'
-`main()`. Trivial, high-value, zero design risk - do this regardless
-of how the rest of the plan goes, and independently of Phase 0.
+**Done** (`ba6d676`, 2026-08-08). Fixed at the source rather than per
+app: `CATCH_EXCEPTION()` itself now calls `exit(EXIT_FAILURE)` after
+printing, covering all four apps (including `fastprot_mpi`, which only
+uses that macro and has no separate `catch(...)` fallback) from one
+place. The three apps with their own `catch(...)` "Unknown
+(non-Exception) error" fallback (`fastdist`/`fnj`/`fastprot`) each got
+`exit(EXIT_FAILURE)` added there too.
 
 ### Phase 2 - replace the macros with real C++ (Finding 1)
 
@@ -210,6 +281,15 @@ appropriate, collapsing each function to one real implementation
 rather than a `char*` original plus a `.c_str()`-forwarding
 `std::string` overload.
 
+### Phase 5 - delete the rest of the dead code found in the full `core/` audit (Finding 5)
+
+**Done**, same commit as Finding 5's discovery. `arg_utils`/
+`arg_utils_ext` (4 files), `SequenceTree_MostParsimonious.cpp` (+ its
+declaration in `SequenceTree.hpp`), the 6 more dead test files,
+`LeastSquaresFit.cpp`/`.hpp`, and `log_utils.hpp`'s dead
+`ASSERT`/`ASSERT_OP`/`DEBUG` macros - all deleted, `CMakeLists.txt`
+updated to match, verified via full rebuild + test suite.
+
 ## Explicitly out of scope
 
 - `fastprot_mpi` - consistent with every other phase in this
@@ -218,4 +298,10 @@ rather than a `char*` original plus a `.c_str()`-forwarding
 - Any change to `Object.hpp` itself beyond what Phase 3 needs from
   `Exception`'s side - `Object` is used well beyond `Exception`
   (`Sequence`, `DistanceMatrix`, etc.); a full `Object` redesign is a
-  separate, much bigger decision not raised here.
+  separate, much bigger decision not raised here. Finding 5 confirmed
+  `Object`'s interface is all genuinely used, so there's no dead-code
+  case for touching it either.
+- Reconciling `Exception`/`THROW_EXCEPTION` with `log_utils.hpp`'s
+  `USER_ERROR`/`PROG_ERROR`/`MEM_CHECK` (Finding 5) - a real, separate
+  design decision affecting 30+ call sites across the tree, not a
+  mechanical cleanup like the rest of this plan.

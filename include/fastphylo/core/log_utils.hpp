@@ -11,8 +11,8 @@
 #pragma once
 
 #include <iostream>
-#include <assert.h>
-#include <time.h>
+#include <cassert>
+#include <ctime>
 // If the PRINT statements should be executed
 #ifndef USE_PRINT
 #define USE_PRINT 1
@@ -57,37 +57,13 @@ if(USE_PRINT){ std::cout << __FILE__<< ":" << __LINE__ << std::endl;}
 if(USE_PRINT){ std::cout << __FILE__<< ":" << __LINE__ << "------------------------------" << std::endl;}
 #endif
 
-//ASSERT
-#ifndef ASSERT
-#ifndef NDEBUG
-#define ASSERT(EXP, P1, P2)\
-if( !(EXP) ){ std::cerr << "************\nASSERT FAILED\nfile: "<< __FILE__ <<"\nfunc: " << __FUNCTION__<< "\nline: " << __LINE__<< "\n"\
- << "Expression not true: " << #EXP << "\n" << #P1 << " == " << (P1) << "\n" << #P2 << " == " << (P2) <<"\n**********" << std::endl; assert(EXP);}
-#else
-#define ASSERT(EXP, P1, P2) 
-#endif
-#endif
-
-
-
 #ifndef ASSERT_EQ
 #ifndef NDEBUG
 #define ASSERT_EQ(EXP1, EXP2)\
 if( !((EXP1)==(EXP2)) ){ std::cerr << "************\nASSERT_EQ FAILED\nfile: "<< __FILE__ <<"\nfunc: " << __FUNCTION__<< "\nline: " << __LINE__<< "\n"\
  << #EXP1 << " != " << #EXP2<< "\n" << #EXP1 << " = " << (EXP1) << "\n" << #EXP2 << " = " << (EXP2) <<"\n**********" << std::endl; assert((EXP1)==(EXP2));}
 #else
-#define ASSERT_EQ(EXP1, EXP2) 
-#endif
-#endif
-
-//ASSERT
-#ifndef ASSERT_OP
-#ifndef NDEBUG
-#define ASSERT_OP(EXP1, OP,EXP2)\
-if( !((EXP1)OP(EXP2)) ){ std::cerr << "************\nASSERT_OP FAILED\nfile: "<< __FILE__ <<"\nfunc: " << __FUNCTION__<< "\nline: " << __LINE__<< "\n"\
- << #EXP1 << " !" << #OP << " " << #EXP2<< "\n" << #EXP1 << " = " << (EXP1) << "\n" << #EXP2 << " = " << (EXP2) <<"\n**********" << std::endl; assert((EXP1)OP(EXP2));}
-#else
-#define ASSERT_EQ(EXP1, EXP2) 
+#define ASSERT_EQ(EXP1, EXP2)
 #endif
 #endif
 
@@ -115,16 +91,6 @@ if(true){ std::cerr << "************\nPROGRAM ERROR\nfile: "<< __FILE__ <<"\nfun
 if(true){ std::cerr << "************\nUSER WARNING\nfile: "<< __FILE__ <<"\nfunc: " << __FUNCTION__<< "\nline: " << __LINE__<< "\n" << EXP << "\n************"<< std::endl ;}
 #endif
 
-// DEBUG
-#ifndef USE_DEBUG
-#define USE_DEBUG 0
-#endif
-#ifdef DEBUG
-#warning "DEBUG defined else where / not compatiable"
-#else
-#define DEBUG(EXP) \
-if(USE_DEBUG) std::cout << __FILE__ << ":"__LINE__ <<"  (" << #EXP <<") = " << EXP << std::endl;
-#endif
 
 
 

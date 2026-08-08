@@ -88,13 +88,10 @@ ${FASTPHYLO_CORE_DIR}/InitAndPrintOn_utils.cpp
 ${FASTPHYLO_CORE_DIR}/Object.cpp
 ${FASTPHYLO_CORE_DIR}/Sequence.cpp
 ${FASTPHYLO_CORE_DIR}/SequenceTree.cpp
-${FASTPHYLO_CORE_DIR}/SequenceTree_MostParsimonious.cpp
-${FASTPHYLO_CORE_DIR}/arg_utils_ext.cpp
 ${FASTPHYLO_CORE_DIR}/file_utils.cpp
 ${FASTPHYLO_CORE_DIR}/stl_utils.cpp
 ${FASTPHYLO_DNA_DIR}/DNA_b128_String.cpp
 ${FASTPHYLO_DNA_DIR}/Sequences2DistanceMatrix.cpp
-${FASTPHYLO_DNA_DIR}/LeastSquaresFit.cpp
 ${FASTPHYLO_DNA_DIR}/NeighborJoining.cpp
 ${FASTPHYLO_DNA_DIR}/Kimura2parameter.cpp
 ${FASTPHYLO_DNA_DIR}/TamuraNei.cpp
@@ -104,7 +101,6 @@ ${FASTPHYLO_DNA_DIR}/string_compare.cpp
 ${FASTPHYLO_CORE_DIR}/DistanceMatrix.cpp
 ${FASTPHYLO_CORE_DIR}/FloatDistanceMatrix.cpp
 ${FASTPHYLO_CORE_DIR}/DistanceRow.cpp
-${FASTPHYLO_CORE_DIR}/arg_utils.c
 ${FASTPHYLO_CORE_DIR}/std_c_utils.c
 ${FASTPHYLO_CORE_DIR}/xml_output_global.cpp
 )
