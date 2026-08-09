@@ -98,7 +98,6 @@ ${FASTPHYLO_DNA_DIR}/dna_pairwise_sequence_likelihood.cpp
 ${FASTPHYLO_DNA_DIR}/string_compare.cpp
 ${FASTPHYLO_CORE_DIR}/DistanceMatrix.cpp
 ${FASTPHYLO_CORE_DIR}/DistanceRow.cpp
-${FASTPHYLO_CORE_DIR}/std_c_utils.c
 ${FASTPHYLO_CORE_DIR}/xml_output_global.cpp
 )
 
