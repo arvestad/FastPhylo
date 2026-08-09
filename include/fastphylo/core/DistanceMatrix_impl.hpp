@@ -129,25 +129,30 @@ DM_TEMPLATE std::istream &DISTANCEMATRIX::objInitFromStream(std::istream &in)
 
 DM_TEMPLATE std::ostream &DISTANCEMATRIX::printOn(std::ostream &out) const
 {
-    out << std::setw(5) << std::right << size << std::endl;
+    return out << *this;
+}
+
+DM_TEMPLATE std::ostream &operator<<(std::ostream &out, const DISTANCEMATRIX &dm)
+{
+    out << std::setw(5) << std::right << dm.size << std::endl;
 
     out.precision(6);
-    for (size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < dm.size; i++)
     {
         out << std::setw(10) << std::left;
-        idPrintOn(out, identifiers[i]);
+        dm.idPrintOn(out, dm.identifiers[i]);
         out << "  ";
         size_t j = 0;
         for (; j < i; j++)
         {
             out << std::setw(10) << std::right;
-            distPrintOn(out, D[j][i]);
+            dm.distPrintOn(out, dm.D[j][i]);
             out << " ";
         }
-        for (; j < size; j++)
+        for (; j < dm.size; j++)
         {
             out << std::setw(10) << std::right;
-            distPrintOn(out, D[i][j]);
+            dm.distPrintOn(out, dm.D[i][j]);
             out << " ";
         }
         out << std::endl;

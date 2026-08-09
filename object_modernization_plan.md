@@ -122,20 +122,52 @@ becomes structurally impossible rather than just "not currently hit."
 
 ### Phase 1 - printing: per-class free `operator<<`
 
-Move each class's existing `printOn(ostream&) const` body into a free
+**Done.** Moved each class's `printOn(ostream&) const` body into a free
 `operator<<(std::ostream&, const T&)` found via ADL, for `Sequence`,
 `Tree`, `TreeNode`, `DistanceMatrix`, `BitVector`, `DNA_b128_String`
-(6 classes - `DistanceRow` needs nothing here, see Finding 1).
-`toString()` (used for building message strings, e.g. via
-`THROW_EXCEPTION`) becomes a small free function or member per class
-built on the new `operator<<`, wherever it's still needed - check
-actual callers per class rather than keeping it everywhere by default.
-Mechanical: the formatting logic itself doesn't change, only how it's
-dispatched (no more `virtual`, no more upcast-through-`Object`).
-Verify: full rebuild (Clang + real GCC 14, per this engagement's
-standing rule for widely-included headers) + `ctest` + `RunExamples.sh`
-byte-identical + `RunCliChecks.sh`, since output formatting for these
-6 types is exactly what `RunExamples.sh` fixtures capture.
+(6 classes - `DistanceRow` needed nothing, confirmed via Finding 1: it
+never overrides `printOn` and grep found zero `<<` call sites on it
+anywhere). `printOn()` itself stays as a one-line forwarder
+(`return os << *this;`) so the class still satisfies `Object`'s virtual
+interface unchanged until Phase 4 removes `: public Object` - overload
+resolution already prefers the new exact-match free function over the
+inherited, conversion-requiring `Object::operator<<` at every real call
+site, so `printOn()` becomes unreachable dead code immediately, just
+not yet deleted.
+
+`toString()` turned out to have **zero callers anywhere in the tree**,
+on any of the 7 `Object`-derived classes (grepped `.toString(`/
+`->toString(` tree-wide) - not ported to any class, left as dead
+`Object`-inherited code to be removed with the rest of `Object.hpp` in
+Phase 4.
+
+Two of the six needed more than a pure cut-and-paste:
+- `Tree`/`TreeNode`'s free `operator<<` needed `friend` access inside
+  `Tree` (both overloads read `Tree`'s private `dataPrintOn` functor,
+  directly for `Tree` and via `TreeNode::getTree()` for `TreeNode`) -
+  standard C++ idiom for a free-function `operator<<` needing private
+  state, not a design compromise. `TreeNode::printOn`'s internal
+  recursive `os << child` (pointer) calls became `os << *child`
+  (reference) to match the new signature - safe, since the surrounding
+  loop already guarantees `child != nullptr` before each one.
+- `DistanceMatrix`'s free `operator<<` needed the same `friend`
+  treatment (private `size`/`identifiers`/`D`/`idPrintOn`/
+  `distPrintOn`).
+- `Sequence`, `BitVector`, `DNA_b128_String` needed no `friend` -
+  their `printOn` bodies only ever touched already-public accessors.
+
+`Tree::printOn`'s own `os << root` (a `TreeNode*`, relying on
+`Object`'s pointer `operator<<` kept alive by the previous commit for
+`NJMatrix`'s sake) was left untouched - still compiles unchanged via
+that pointer overload for now. Revisit in Phase 4: once `: public
+Object` is removed from `TreeNode`, this becomes `os << *root` using
+the new reference-form `operator<<` instead.
+
+Verified: full rebuild (Clang + real GCC 14, per this engagement's
+standing rule for widely-included headers) + `ctest` 4/4 +
+`RunExamples.sh` 20/20 byte-identical + `RunCliChecks.sh`, plus a
+`-DWITH_LIBXML=OFF` build - all green, confirming the dispatch-mechanism
+change produced byte-identical output for every fixture.
 
 ### Phase 2 - de-virtualize `objInitFromStream`; delete `DistanceRow`'s broken constructor
 

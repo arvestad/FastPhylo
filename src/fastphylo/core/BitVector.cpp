@@ -31,14 +31,18 @@ BitVector &BitVector::operator=(const BitVector &bv)
 
 std::ostream &BitVector::printOn(std::ostream &os) const
 {
+    return os << *this;
+}
 
-    for (size_t i = 0; i < numBits; i++)
+std::ostream &operator<<(std::ostream &os, const BitVector &bv)
+{
+    for (size_t i = 0; i < bv.getNumBits(); i++)
     {
         if (i % 32 == 0)
         {
             os << " ";
         }
-        os << getBit(i);
+        os << bv.getBit(i);
     }
     return os;
 }

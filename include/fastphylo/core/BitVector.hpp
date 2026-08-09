@@ -93,3 +93,8 @@ class BitVector : public Object
         return end;
     }
 };
+
+// Found via ADL - what `os << someBitVector` actually binds to (an
+// exact-match free function beats the inherited, conversion-requiring
+// Object::operator<<). printOn() above forwards here.
+std::ostream &operator<<(std::ostream &os, const BitVector &bv);

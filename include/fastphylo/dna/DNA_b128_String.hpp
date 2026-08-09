@@ -379,4 +379,9 @@ class DNA_b128_String : public Object
     }
 };
 
+// Found via ADL - what `os << someDNA_b128_String` actually binds to (an
+// exact-match free function beats the inherited, conversion-requiring
+// Object::operator<<). printOn() above forwards here.
+std::ostream &operator<<(std::ostream &os, const DNA_b128_String &s);
+
 #endif // DNA_b128_STRING_HPP

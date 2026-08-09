@@ -47,22 +47,25 @@ Sequence &Sequence::operator=(const Sequence &s)
 
 std::ostream &Sequence::printOn(std::ostream &os) const
 {
-    if (name.empty() && seq.empty())
+    return os << *this;
+}
+
+std::ostream &operator<<(std::ostream &os, const Sequence &s)
+{
+    if (s.name.empty() && s.seq.empty())
     {
         return os;
     }
-    if (name.length() < 10)
+    if (s.name.length() < 10)
     {
         os << std::setw(10) << std::left;
-        os << name;
+        os << s.name;
     }
     else
     {
-        {
-            os << name << " ";
-        }
+        os << s.name << " ";
     }
-    os << seq;
+    os << s.seq;
     return os;
 }
 

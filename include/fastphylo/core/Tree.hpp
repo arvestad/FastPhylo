@@ -141,6 +141,14 @@ class Tree : public Object
     // prints in the formate
     std::ostream &printOn(std::ostream &os) const override;
 
+    // The real formatting logic lives in the free operator<< overloads
+    // (object_modernization_plan.md Phase 1), which need friendship here
+    // since they read the private dataPrintOn functor (directly for
+    // Tree, and via TreeNode::getTree() for TreeNode).
+    template <class D, class DI, class DP> friend std::ostream &operator<<(std::ostream &os, const Tree<D, DI, DP> &t);
+    template <class D, class DI, class DP>
+    friend std::ostream &operator<<(std::ostream &os, const TreeNode<D, DI, DP> &n);
+
     //------------------
     // DRAWING
     // draws tree structure with each node id
@@ -541,6 +549,14 @@ class TreeNode : public Object
     // removes the node from the parent list. The node can not be the root.
     void detachFromParent();
 };
+
+// The real formatting logic, found via ADL - object_modernization_plan.md
+// Phase 1. printOn() above forwards here; this is what every ordinary
+// `os << someTree`/`os << someTreeNode` call site actually binds to (an
+// exact-match free function beats the inherited, conversion-requiring
+// Object::operator<<).
+TREE_TEMPLATE std::ostream &operator<<(std::ostream &os, const TREE &t);
+TREE_TEMPLATE std::ostream &operator<<(std::ostream &os, const TREENODE &n);
 
 //---------------------
 // INCLUDE THE IMPLEMENTATION

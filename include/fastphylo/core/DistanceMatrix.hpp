@@ -110,6 +110,13 @@ class DistanceMatrix : public Object
     //----------------------
     std::ostream &printOn(std::ostream &out) const override;
 
+    // The real formatting logic lives in the free operator<< below
+    // (object_modernization_plan.md Phase 1), which needs friendship
+    // here since it reads the private size/identifiers/D/idPrintOn/
+    // distPrintOn members directly.
+    template <class I, class DT, class II, class IP, class DI, class DP>
+    friend std::ostream &operator<<(std::ostream &os, const DistanceMatrix<I, DT, II, IP, DI, DP> &dm);
+
     //------------------- PRIVATE ------------------------
   private:
     DistInit distInit;
@@ -124,6 +131,11 @@ class DistanceMatrix : public Object
     // makes sure that the vectors are of the right size.
     void assureSize();
 };
+
+// Found via ADL - what `os << someDistanceMatrix` actually binds to
+// (an exact-match free function beats the inherited, conversion-requiring
+// Object::operator<<). printOn() above forwards here.
+DM_TEMPLATE std::ostream &operator<<(std::ostream &os, const DISTANCEMATRIX &dm);
 
 //--------------------------
 // Include the implementation

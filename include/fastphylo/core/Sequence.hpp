@@ -68,3 +68,10 @@ class Sequence : public Object
     // creates a bootstrapped data set from the sequences in seqs.
     static void bootstrapSequences(std::vector<Sequence> &seqs, std::vector<Sequence> &boot);
 };
+
+// The real formatting logic (Ex. "HUMAN    agct-agct"), found via ADL -
+// object_modernization_plan.md Phase 1. printOn() above forwards here;
+// this is what every ordinary `os << someSequence` call site actually
+// binds to (an exact-match free function beats the inherited,
+// conversion-requiring Object::operator<<).
+std::ostream &operator<<(std::ostream &os, const Sequence &s);

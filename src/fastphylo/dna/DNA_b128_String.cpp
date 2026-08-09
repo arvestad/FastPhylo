@@ -519,11 +519,15 @@ nucleotide DNA_b128_String::setNucleotide(int pos, nucleotide n)
 // PRINTING
 std::ostream &DNA_b128_String::printOn(std::ostream &out) const
 {
+    return out << *this;
+}
 
+std::ostream &operator<<(std::ostream &out, const DNA_b128_String &s)
+{
     // PENDING VERY SLOW especially when there are ambiguities.
-    for (size_t i = 0; i < numChars; i++)
+    for (int i = 0; i < s.getNumChars(); i++)
     {
-        out << nucleotide2char(getNucleotide(i));
+        out << nucleotide2char(s.getNucleotide(i));
     }
 
     return out;

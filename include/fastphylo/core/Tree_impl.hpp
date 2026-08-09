@@ -202,19 +202,23 @@ TREE_TEMPLATE TREENODE *TREE::initSubtreeFromStream(std::istream &in)
 // PRINTING AND DRAWING
 TREE_TEMPLATE std::ostream &TREE::printOn(std::ostream &os) const
 {
+    return os << *this;
+}
 
+TREE_TEMPLATE std::ostream &operator<<(std::ostream &os, const TREE &t)
+{
     if (xmlPrint)
     {
-        if (root != nullptr)
-            os << root;
+        if (t.root != nullptr)
+            os << *t.root;
         return os;
     }
     else
     {
-        if (root == nullptr)
+        if (t.root == nullptr)
             return os << "NULLTREE";
 
-        return os << root << ";";
+        return os << *t.root << ";";
     }
 }
 
@@ -1016,18 +1020,22 @@ TREE_TEMPLATE size_t TREENODE::getDegree() const
 
 TREE_TEMPLATE std::ostream &TREENODE::printOn(std::ostream &os) const
 {
+    return os << *this;
+}
 
-    if (isLeaf())
+TREE_TEMPLATE std::ostream &operator<<(std::ostream &os, const TREENODE &n)
+{
+    if (n.isLeaf())
     {
         if (xmlPrint)
         {
             os << "<leaf";
         }
         std::ostringstream outstr;
-        ownertree->dataPrintOn(outstr, data);
+        n.getTree()->dataPrintOn(outstr, n.data);
         std::string str = outstr.str();
         if (str.size() == 0)
-            str = "n" + std::to_string(nodeId);
+            str = "n" + std::to_string(n.getNodeId());
         if (xmlPrint)
         {
             return os << str << "</leaf>";
@@ -1041,31 +1049,31 @@ TREE_TEMPLATE std::ostream &TREENODE::printOn(std::ostream &os) const
     {
         // PENDING SLOW
 
-        const TREENODE *child = rightMostChild;
+        const TREENODE *child = n.getRightMostChild();
 
         if (xmlPrint)
         {
             os << "<branch";
-            ownertree->dataPrintOn(os, data);
-            os << child;
+            n.getTree()->dataPrintOn(os, n.data);
+            os << *child;
         }
         else
         {
             os << "(";
-            os << child;
+            os << *child;
         }
 
-        child = child->leftSibling;
+        child = child->getLeftSibling();
 
-        for (; child != nullptr; child = child->leftSibling)
+        for (; child != nullptr; child = child->getLeftSibling())
         {
             if (xmlPrint)
             {
-                os << child;
+                os << *child;
             }
             else
             {
-                os << "," << child;
+                os << "," << *child;
             }
         }
 
@@ -1080,7 +1088,7 @@ TREE_TEMPLATE std::ostream &TREENODE::printOn(std::ostream &os) const
 
         if (!xmlPrint)
         {
-            ownertree->dataPrintOn(os, data);
+            n.getTree()->dataPrintOn(os, n.data);
         }
 
         return os;
