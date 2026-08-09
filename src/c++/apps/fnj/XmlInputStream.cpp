@@ -54,7 +54,6 @@ XmlInputStream::XmlInputStream(char *filename)
     if (xmlTextReaderRelaxNGSetSchema(reader, schema) != 0)
     {
         THROW_EXCEPTION("failed to set relax ng schema");
-        exit(EXIT_FAILURE);
     }
 }
 
@@ -317,7 +316,6 @@ readstatus XmlInputStream::readDM(StrDblMatrix &dm, std::vector<std::string> &na
         if (xmlTextReaderIsValid(reader) != 1)
         {
             THROW_EXCEPTION("xml input does not validate");
-            exit(EXIT_FAILURE);
         }
         int depth = xmlTextReaderDepth(reader);
         auto type = static_cast<xmlReaderTypes>(xmlTextReaderNodeType(reader));

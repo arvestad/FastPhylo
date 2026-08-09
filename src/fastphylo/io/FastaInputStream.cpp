@@ -18,9 +18,7 @@ FastaSequenceReader::FastaSequenceReader(char *filename, string allowedChars) : 
     file_was_opened = false;
     if (filename == nullptr)
     {
-        {
-            fp = &cin;
-        }
+        fp = &cin;
     }
     else
     {
@@ -73,7 +71,6 @@ bool FastaSequenceReader::readSeq(vector<Sequence> &seqs, string &line, int line
     if (seqStr.empty() || seqStr.find_first_not_of(allowedChars) != string::npos)
     {
         THROW_EXCEPTION("Malformed Fasta format\n");
-        exit(EXIT_FAILURE);
     }
     else
     {
@@ -96,5 +93,4 @@ bool FastaSequenceReader::readSequences(vector<Sequence> &seqs, string &runId, E
         }
     }
     THROW_EXCEPTION("Malformed Fasta format\n");
-    exit(EXIT_FAILURE);
 }

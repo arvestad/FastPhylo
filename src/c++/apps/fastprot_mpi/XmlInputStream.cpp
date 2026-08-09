@@ -59,7 +59,6 @@ XmlInputStream::XmlInputStream(char *filename)
     if (xmlTextReaderRelaxNGSetSchema(reader, schema) != 0)
     {
         THROW_EXCEPTION("failed to set relax ng schema");
-        exit(EXIT_FAILURE);
     }
 }
 
@@ -89,7 +88,6 @@ bool XmlInputStream::readSequences(std::vector<Sequence> &seqs, std::string &run
         if (xmlTextReaderIsValid(reader) != 1)
         {
             THROW_EXCEPTION("xml input does not validate");
-            exit(EXIT_FAILURE);
         }
 
         int depth = xmlTextReaderDepth(reader);
@@ -208,7 +206,6 @@ bool XmlInputStream::readSequences(std::vector<Sequence> &seqs, std::string &run
         if (l.in_root)
         {
             THROW_EXCEPTION("failed to parse");
-            exit(EXIT_FAILURE);
         }
         else
         {

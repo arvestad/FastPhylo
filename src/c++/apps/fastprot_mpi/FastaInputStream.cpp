@@ -89,7 +89,6 @@ bool FastaInputStream::readSeq(vector<Sequence> &seqs, string &line, int linesRe
          seqStr.find_first_not_of("abcdefghiklmnopqrstuvwyzxABCDEFGHIKLMNOPQRSTUVWYZX -.?") != string::npos))
     {
         THROW_EXCEPTION("Malformed Fasta format\n");
-        exit(EXIT_FAILURE);
     }
     else
     {
@@ -113,5 +112,4 @@ bool FastaInputStream::readSequences(vector<Sequence> &seqs, string &runId, Extr
         }
     }
     THROW_EXCEPTION("Malformed Fasta format\n");
-    exit(EXIT_FAILURE);
 }

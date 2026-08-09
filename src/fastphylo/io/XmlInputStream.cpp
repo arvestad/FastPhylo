@@ -59,7 +59,6 @@ XmlSequenceReader::XmlSequenceReader(char *filename, const char *relaxngSchemaSt
     if (xmlTextReaderRelaxNGSetSchema(reader, schema) != 0)
     {
         THROW_EXCEPTION("failed to set relax ng schema");
-        exit(EXIT_FAILURE);
     }
 }
 
@@ -209,7 +208,6 @@ bool XmlSequenceReader::readSequences(std::vector<Sequence> &seqs, std::string &
         if (xmlTextReaderIsValid(reader) != 1)
         {
             THROW_EXCEPTION("xml input does not validate");
-            exit(EXIT_FAILURE);
         }
 
         int depth = xmlTextReaderDepth(reader);
@@ -242,7 +240,6 @@ bool XmlSequenceReader::readSequences(std::vector<Sequence> &seqs, std::string &
         if (l.in_root)
         {
             THROW_EXCEPTION("failed to parse");
-            exit(EXIT_FAILURE);
         }
         else
         {
