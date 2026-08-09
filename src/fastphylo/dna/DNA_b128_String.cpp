@@ -533,40 +533,6 @@ std::ostream &operator<<(std::ostream &out, const DNA_b128_String &s)
     return out;
 }
 
-//--------------------------------------------------------
-// EQUALS
-bool operator==(const DNA_b128_String::ambiguity_nucleotide_at_position &a,
-                const DNA_b128_String::ambiguity_nucleotide_at_position &b)
-{
-
-    return (a.position != b.position) || (a.ambiguity.n != b.ambiguity.n);
-}
-
-bool DNA_b128_String::equals(const Object *o) const
-{
-    const auto *s2 = dynamic_cast<const DNA_b128_String *>(o);
-    if (s2 == nullptr)
-    {
-        return false;
-    }
-    if (getNumChars() != s2->getNumChars())
-    {
-        return false;
-    }
-
-    // PENDING can probably be improved by using the sse2 instructions for comparing
-    if (memcmp(data, s2->data, sizeof(b128) * getNumUsedDatas()) != 0)
-    {
-        return false;
-    }
-    if (memcmp(unknownData, s2->unknownData, sizeof(b128) * getNumUsedDatas()) != 0)
-    {
-        return false;
-    }
-
-    return equal(ambiguities.begin(), ambiguities.end(), s2->ambiguities.begin());
-}
-
 //-------------------- AMBIGUITIES --------------------------------------------------------------
 
 // RESOLVE AMBIGUITIES

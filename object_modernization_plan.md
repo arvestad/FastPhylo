@@ -203,20 +203,52 @@ byte-identical + `RunCliChecks.sh`.
 
 ### Phase 3 - `Tree` equality/hashing; delete the 3 dead `equals()`/`hashCode()` overrides elsewhere
 
-Replace `Tree::equals(const Object*)`/`hashCode()` with a same-typed
-`bool operator==(const SequenceTree&, const SequenceTree&)` (or a
-`Tree<Data,...>` member, matching how narrowly the real caller -
-`tree2int_map` - actually needs it; check whether `Tree<>`'s other
-instantiations need this too or whether it can live directly on
-`SequenceTree`) and a `std::hash<SequenceTree>` specialization,
-replacing `objeq`/`objhash` at `tree2int_map`'s declaration
-(`SequenceTree.hpp:110`). Delete `Sequence::equals()`/`hashCode()`,
-`BitVector::equals()`/`hashCode()`, `DNA_b128_String::equals()`
-outright (Finding 2 - confirmed dead, not being replaced by anything).
-Verify `fnj`'s bootstrap-count output is unchanged (`RunExamples.sh`'s
-`-b`/bootstrap-flag examples, byte-identical) - this is the one phase
-touching actual runtime behavior of a live feature, not just dispatch
-mechanism.
+**Done.** Replaced `Tree::equals(const Object*)`/`hashCode()` with a
+free, same-typed `operator==`/`operator!=(const Tree<Data,...>&, const
+Tree<Data,...>&)` template (kept generic at the `Tree<>` level, same
+scope the old virtual overrides had - only `SequenceTree` has a live
+caller today, but nothing else needed narrowing it) and a
+`std::hash<Tree<Data,DataInitializer,DataPrintOn>>` partial
+specialization. Updated `tree2int_map` (`SequenceTree.hpp`) to
+`std::unordered_map<SequenceTree, int>`, relying on the new operators
+via their default template arguments instead of the `objeq`/`objhash`
+functors. Deleted `Sequence::equals()`/`hashCode()` (+ the now-orphaned
+`stringhasher` static member and its `hashstr`/`stl_utils.hpp`
+dependency), `BitVector::equals()`/`hashCode()`, and
+`DNA_b128_String::equals()` (+ its only caller, a backwards
+`ambiguity_nucleotide_at_position` `operator==` that returned `true`
+for *different* values - dead code, not a live bug, deleted rather
+than fixed) - all confirmed dead per Finding 2.
+
+**One real subtlety, not anticipated in this plan's original text:**
+`SequenceTree` is a distinct class that *derives from*
+`Tree<Sequence_double, ...>`, not an alias for it. Template partial
+specialization matching is structural/exact - `std::hash<Tree<Data,
+...>>` does **not** cover `SequenceTree` on its own, unlike
+`operator==`, where ordinary template argument deduction succeeds
+through a derived-to-unique-base relationship. Needed one additional
+explicit (non-partial) specialization, `std::hash<SequenceTree>` in
+`SequenceTree.hpp`, delegating to the `Tree<>` one via the same
+implicit upcast `operator==` already relies on. Caught by the Clang
+build failing outright (`hash<SequenceTree>`'s implicitly-deleted
+default constructor) - not a silent issue.
+
+**A second real bug caught only by the mandatory real-GCC-14 rebuild**
+(not Clang): removing `stl_utils.hpp` from `Sequence.hpp` (no longer
+needed once `stringhasher`/`hashstr` were gone) also dropped a
+transitive `<vector>` include that `Sequence.hpp` itself needs for its
+own `std::vector<Sequence>` parameters - invisible on Clang/libc++
+(something else in the chain still pulled it in) but a hard compile
+error on GCC/libstdc++. Fixed by adding `#include <vector>` directly
+to `Sequence.hpp`, the file that actually uses it - same category of
+bug, and same fix, as the `<iomanip>` case earlier this engagement.
+
+Verified: full rebuild (Clang + real GCC 14) + `ctest` 4/4 +
+`RunExamples.sh` 20/20 byte-identical (including example 19's `-b 3`
+bootstrap pipeline, the one real live consumer of this machinery) +
+`RunCliChecks.sh`, plus a manual `fnj --print-counts` run confirming
+bootstrap replicate counting is still correct, plus a
+`-DWITH_LIBXML=OFF` build.
 
 ### Phase 4 - delete `Object.hpp`/`.cpp`
 

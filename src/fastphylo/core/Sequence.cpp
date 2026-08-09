@@ -20,8 +20,6 @@
 
 using namespace std;
 
-hashstr Sequence::stringhasher;
-
 Sequence::Sequence()
 {
     name = "";
@@ -109,50 +107,6 @@ void Sequence::printWithoutGaps(std::ostream &os) const
             os << seq[i];
         }
     }
-}
-
-// Hashes on the name if it exists otherwise the sequence
-size_t Sequence::hashCode() const
-{
-    if (name.empty())
-    {
-        return stringhasher(seq);
-    }
-    return stringhasher(name);
-}
-// uses the name if it exists otherwise the sequence
-bool Sequence::equals(const Object *o) const
-{
-    // Modernization Phase 1 (modernization_plan.md): was a C-style cast,
-    // which for a base-to-derived pointer conversion between polymorphic
-    // types performs an *unchecked* static_cast - if o pointed to some
-    // other Object subclass, every access through otherseq below was
-    // undefined behavior (there was no null check, unlike BitVector's
-    // analogous equals(), which had a check that a C-style cast made
-    // dead code - see that fix). dynamic_cast plus this new check makes
-    // comparing to a differently-typed Object defined (false), not UB.
-    const auto *otherseq = dynamic_cast<const Sequence *>(o);
-    if (otherseq == nullptr)
-    {
-        return false;
-    }
-    if (name.empty())
-    {
-        if (otherseq->name.empty())
-        {
-            return seq == otherseq->seq;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    if (otherseq->name.empty())
-    {
-        return false;
-    }
-
-    return name == otherseq->name;
 }
 
 bool Sequence::onlyContains(std::string &chars)

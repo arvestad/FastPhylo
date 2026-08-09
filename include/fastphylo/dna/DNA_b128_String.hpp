@@ -122,11 +122,6 @@ class DNA_b128_String : public Object
     // returns the old nucleotide at the position
     nucleotide setNucleotide(int pos, nucleotide n);
 
-    //--------------------
-    // EQUALS
-    // VERY SLOW IMPLEMENTATION!
-    virtual bool equals(const Object *o) const;
-
     //------------------------------------
     // DISTANCE COMPUTATION
     //

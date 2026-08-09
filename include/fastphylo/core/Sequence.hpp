@@ -9,7 +9,7 @@
 #pragma once
 
 #include <string>
-#include "fastphylo/core/stl_utils.hpp"
+#include <vector>
 #include "fastphylo/core/Object.hpp"
 #include "fastphylo/core/log_utils.hpp"
 #include <fstream>
@@ -26,8 +26,6 @@
 class Sequence : public Object
 {
   public:
-    static hashstr stringhasher;
-
     std::string name;
     std::string seq;
 
@@ -46,12 +44,6 @@ class Sequence : public Object
     // print only name
     virtual std::ostream &printShort(std::ostream &os) const;
     virtual void printWithoutGaps(std::ostream &os) const;
-
-    //------------------------------------------
-    // Hashes on the name if it exists otherwise the sequence
-    size_t hashCode() const override;
-    // uses the name if it exists otherwise the sequence
-    bool equals(const Object *o) const override;
 
     //------------------------------------------
     // returns true if all characters in the sequences are in chars.

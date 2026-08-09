@@ -855,17 +855,17 @@ TREE_TEMPLATE void TREE::makeCanonical(const std::vector<TREENODE *> &leafs)
 }
 
 // EQUALS
-TREE_TEMPLATE bool TREE::equals(const Object *o) const
+TREE_TEMPLATE bool operator==(const TREE &t1, const TREE &t2)
 {
-    if (getNumNodes() != ((const TREE *)o)->getNumNodes())
+    if (t1.getNumNodes() != t2.getNumNodes())
         return false;
 
-    const_NodeVector nodes1;
-    nodes1.reserve(getNumNodes());
-    addNodesInPrefixOrder(nodes1);
-    const_NodeVector nodes2;
-    nodes2.reserve(getNumNodes());
-    ((const TREE *)o)->addNodesInPrefixOrder(nodes2);
+    typename TREE::const_NodeVector nodes1;
+    nodes1.reserve(t1.getNumNodes());
+    t1.addNodesInPrefixOrder(nodes1);
+    typename TREE::const_NodeVector nodes2;
+    nodes2.reserve(t2.getNumNodes());
+    t2.addNodesInPrefixOrder(nodes2);
 
     for (size_t i = 0; i < nodes1.size(); i++)
     {
@@ -874,23 +874,6 @@ TREE_TEMPLATE bool TREE::equals(const Object *o) const
     }
 
     return true;
-}
-
-// HASHCODE
-TREE_TEMPLATE size_t TREE::hashCode() const
-{
-    const_NodeVector nodes;
-    nodes.reserve(getNumNodes());
-    addNodesInPrefixOrder(nodes);
-
-    size_t hash = 5381;
-
-    for (size_t i = 0; i < nodes.size(); i++)
-        hash = ((hash << 5) + hash) + nodes[i]->getNodeId(); /* hash * 33 + c */
-
-    //  PRINT(hash);drawTreeIDs(std::cout);
-
-    return hash;
 }
 
 //-------------------------------------------------------

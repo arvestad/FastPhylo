@@ -11,8 +11,8 @@
 #include "fastphylo/core/Tree.hpp"
 #include <string>
 #include "fastphylo/core/InitAndPrintOn_utils.hpp"
-#include "fastphylo/core/Object.hpp"
 #include "fastphylo/core/Sequence.hpp"
+#include "fastphylo/core/stl_utils.hpp"
 
 //---------------------------------------
 // A REGULAR SEQUENCE TREE
@@ -107,4 +107,22 @@ class SequenceTree : public Tree<Sequence_double, Data_init<Sequence_double>, Da
     void mapSequencesOntoTree(std::istream &in);
 };
 
-using tree2int_map = std::unordered_map<const SequenceTree, int, objhash, objeq>;
+// SequenceTree is a distinct class that derives from Tree<Sequence_double,
+// ...>, not an alias for it - Tree.hpp's std::hash<Tree<Data,...>> partial
+// specialization only matches that exact template-id, not a class that
+// merely derives from one instantiation of it, so it doesn't cover
+// SequenceTree on its own. This explicit specialization delegates to it
+// via the same implicit derived-to-base conversion operator== already
+// relies on.
+namespace std
+{
+template <> struct hash<SequenceTree>
+{
+    size_t operator()(const SequenceTree &t) const
+    {
+        return std::hash<Tree<Sequence_double, Data_init<Sequence_double>, Data_printOn<Sequence_double>>>()(t);
+    }
+};
+} // namespace std
+
+using tree2int_map = std::unordered_map<SequenceTree, int>;

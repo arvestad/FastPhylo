@@ -312,14 +312,6 @@ class Tree : public Object
     //
     void makeCanonical(const std::vector<TREENODE *> &leafs);
 
-    // EQUALS
-    // Checks if the datastructures are identical with respect to the root
-    // and node ids. To check if two trees have the same topology the first call
-    // makeCanonical on both trees.
-    bool equals(const Object *o) const override;
-    // HASH CODE
-    size_t hashCode() const override;
-
     // just for checking that there are no bugs
     bool assertTreeStructure() const;
 
@@ -558,7 +550,46 @@ class TreeNode : public Object
 TREE_TEMPLATE std::ostream &operator<<(std::ostream &os, const TREE &t);
 TREE_TEMPLATE std::ostream &operator<<(std::ostream &os, const TREENODE &n);
 
+// EQUALS/HASH - object_modernization_plan.md Phase 3. Checks if the
+// datastructures are identical with respect to the root and node ids
+// (to compare topology, call makeCanonical() on both trees first).
+// Replaces Tree::equals(const Object*)/hashCode(): the old version
+// took a same-type comparison through a raw C-style cast from Object*
+// with no type check, undefined behavior if it were ever handed a
+// mismatched Tree<> instantiation. A same-typed operator== makes that
+// a compile error instead of a latent runtime hazard. Only public
+// accessors used, so no friendship needed.
+TREE_TEMPLATE bool operator==(const TREE &t1, const TREE &t2);
+TREE_TEMPLATE bool operator!=(const TREE &t1, const TREE &t2)
+{
+    return !(t1 == t2);
+}
+
 //---------------------
 // INCLUDE THE IMPLEMENTATION
 #include "fastphylo/core/Tree_impl.hpp"
+
+// std::hash specialization so Tree<> can be used as an unordered_map/
+// unordered_set key without a separate functor (e.g. SequenceTree.hpp's
+// tree2int_map). Partial specialization of a standard class template
+// for a user-defined class template is explicitly permitted by the
+// standard ([namespace.std]).
+namespace std
+{
+template <class Data, class DataInitializer, class DataPrintOn> struct hash<Tree<Data, DataInitializer, DataPrintOn>>
+{
+    size_t operator()(const Tree<Data, DataInitializer, DataPrintOn> &t) const
+    {
+        typename Tree<Data, DataInitializer, DataPrintOn>::const_NodeVector nodes;
+        nodes.reserve(t.getNumNodes());
+        t.addNodesInPrefixOrder(nodes);
+
+        size_t hash = 5381;
+        for (const auto *node : nodes)
+            hash = ((hash << 5) + hash) + node->getNodeId(); /* hash * 33 + c */
+
+        return hash;
+    }
+};
+} // namespace std
 //----------------------------

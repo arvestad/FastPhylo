@@ -72,9 +72,6 @@ class BitVector : public Object
         return is;
     }
 
-    size_t hashCode() const override;
-    bool equals(const Object *o) const override;
-
   private:
     std::vector<size_t> bits;
     size_t numBits;
