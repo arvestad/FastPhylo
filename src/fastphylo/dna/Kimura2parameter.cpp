@@ -116,7 +116,17 @@ ML_string_distance compute_K2P_fixratio(int strlen, simple_string_distance sd, f
     {
         bt_prob = b / n; // PENDING we should try using K here
         at_prob = a / n;
-        tp.distance = (-0.5 * log(1.0 - (2 * bt_prob) - at_prob)) - (0.25 * log(1 - (2.0 * at_prob)));
+        double combinedArg = 1.0 - (2.0 * bt_prob) - at_prob;
+        double transitionArg = 1.0 - (2.0 * at_prob);
+        if (combinedArg <= 0 || transitionArg <= 0)
+        {
+            warnTooDiverged("Kimura");
+            tp.distance = TOO_DIVERGED_DISTANCE;
+        }
+        else
+        {
+            tp.distance = (-0.5 * log(combinedArg)) - (0.25 * log(transitionArg));
+        }
     }
     else
     {

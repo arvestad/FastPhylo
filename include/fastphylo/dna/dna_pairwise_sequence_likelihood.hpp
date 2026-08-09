@@ -133,12 +133,41 @@ static __inline float compute_p_distance_GAPS(int strlen, simple_string_distance
 }
 
 //------------------------------------------------
+// SATURATION GUARD
+//
+// JC/K2P/TN93/F84's correction formulas each take a log() (K2P also a
+// sqrt()) whose argument goes non-positive once two sequences are
+// diverged enough that the model's assumptions break down (e.g. JC's
+// -3/4*ln(1-4/3*p) requires p<0.75). Left unguarded, that silently
+// produces NaN/Inf, which nothing catches until a downstream
+// isfinite() check far away from the actual cause (the output
+// writers' "-1" sentinel). Each formula below checks its own domain
+// up front instead and substitutes a fixed, clearly-flagged
+// "maximally diverged" distance.
+static constexpr double TOO_DIVERGED_DISTANCE = 2.5;
+
+static __inline void warnTooDiverged(const char *modelName)
+{
+    std::cerr << "warning: sequences too different for " << modelName
+              << " distance, using distance=" << TOO_DIVERGED_DISTANCE << std::endl;
+}
+
+//------------------------------------------------
 // JUKES CANTOR
 
 static __inline ML_string_distance compute_JC(int strlen, simple_string_distance sd)
 {
     ML_string_distance tp;
-    tp.distance = -(3.0 / 4.0) * log(1 - (4.0 / 3.0) * compute_p_distance(strlen, sd));
+    double p = compute_p_distance(strlen, sd);
+    if (p >= 0.75)
+    {
+        warnTooDiverged("Jukes-Cantor");
+        tp.distance = TOO_DIVERGED_DISTANCE;
+    }
+    else
+    {
+        tp.distance = -(3.0 / 4.0) * log(1 - (4.0 / 3.0) * p);
+    }
 
     strlen = strlen - sd.deletedPositions;
     float idprob = ((float)strlen - sd.transitions - sd.transversions) / strlen;
@@ -161,7 +190,13 @@ static __inline ML_string_distance compute_JC(int strlen, simple_string_distance
 // JC distance that takes the number of gaps into account
 static __inline float compute_JC_GAPS(int strlen, simple_string_distance sd, int gaps, float gap_weight)
 {
-    return -(3.0 / 4.0) * log(1 - (4.0 / 3.0) * compute_p_distance_GAPS(strlen, sd, gaps, gap_weight));
+    double p = compute_p_distance_GAPS(strlen, sd, gaps, gap_weight);
+    if (p >= 0.75)
+    {
+        warnTooDiverged("Jukes-Cantor");
+        return TOO_DIVERGED_DISTANCE;
+    }
+    return -(3.0 / 4.0) * log(1 - (4.0 / 3.0) * p);
 }
 
 //---------------------------------------------------
@@ -178,9 +213,19 @@ static __inline ML_string_distance compute_K2P(int strlen, simple_string_distanc
     float tvprob = sd.transversions / strlen;
     // std::cout << "Q... " << sd.transversions <<"/" << strlen << " .... " << Q << std::endl;
 
-    tp.distance = -0.5 * log((1.0 - 2.0 * tsprob - tvprob) * sqrt(1.0 - 2.0 * tvprob));
-    // the same as
-    // return 0.5*log( 1.0 /(1.0-2.0*P-Q) ) + 1.0/4.0*log( 1.0 /(1.0- 2.0*Q) );
+    double sqrtArg = 1.0 - 2.0 * tvprob;
+    double logArg = 1.0 - 2.0 * tsprob - tvprob;
+    if (sqrtArg <= 0 || logArg <= 0)
+    {
+        warnTooDiverged("Kimura");
+        tp.distance = TOO_DIVERGED_DISTANCE;
+    }
+    else
+    {
+        tp.distance = -0.5 * log(logArg * sqrt(sqrtArg));
+        // the same as
+        // return 0.5*log( 1.0 /(1.0-2.0*P-Q) ) + 1.0/4.0*log( 1.0 /(1.0- 2.0*Q) );
+    }
 
     float idprob = ((float)strlen - sd.transitions - sd.transversions) / strlen;
 
@@ -231,10 +276,19 @@ static __inline ML_string_distance compute_Tamura_Nei(int strlen, TN_string_dist
     float ts_pyrimidine_prob = sd.pyrimidine_transitions / strlen;
     float tv_prob = sd.transversions / strlen;
 
-    tp.distance =
-        -2.0 * piA * piG / piR * log(1.0 - piR * ts_purine_prob / (2.0 * piA * piG) - tv_prob / (2.0 * piR)) -
-        2.0 * piT * piC / piY * log(1.0 - piY * ts_pyrimidine_prob / (2.0 * piC * piT) - tv_prob / (2.0 * piY)) -
-        2.0 * (piR * piY - piA * piG * piY / piR - piT * piC * piR / piY) * log(1.0 - tv_prob / (2.0 * piR * piY));
+    double purineArg = 1.0 - (piR * ts_purine_prob / (2.0 * piA * piG)) - (tv_prob / (2.0 * piR));
+    double pyrimidineArg = 1.0 - (piY * ts_pyrimidine_prob / (2.0 * piC * piT)) - (tv_prob / (2.0 * piY));
+    double transversionArg = 1.0 - (tv_prob / (2.0 * piR * piY));
+    if (purineArg <= 0 || pyrimidineArg <= 0 || transversionArg <= 0)
+    {
+        warnTooDiverged("Tamura-Nei");
+        tp.distance = TOO_DIVERGED_DISTANCE;
+    }
+    else
+    {
+        tp.distance = (-2.0 * piA * piG / piR * log(purineArg)) - (2.0 * piT * piC / piY * log(pyrimidineArg)) -
+                      (2.0 * (piR * piY - (piA * piG * piY / piR) - (piT * piC * piR / piY)) * log(transversionArg));
+    }
 
     tp.A_A = 1.0 - ts_purine_prob - tv_prob;
     tp.A_C = tv_prob * 0.5;
@@ -295,9 +349,18 @@ static __inline ML_string_distance compute_FAKE_F84(int strlen, simple_string_di
     float Q = sd.transversions / strlen;
 
     // PENDING REALLY SLOW
-    tp.distance =
-        -2.0 * consts.A * log(1.0 - P / (2.0 * consts.A) - (consts.A - consts.B) * Q / (2.0 * consts.A * consts.C)) +
-        2.0 * (consts.A - consts.B - consts.C) * log(1.0 - Q / (2.0 * consts.C));
+    double transitionArg = 1.0 - (P / (2.0 * consts.A)) - ((consts.A - consts.B) * Q / (2.0 * consts.A * consts.C));
+    double transversionArg = 1.0 - (Q / (2.0 * consts.C));
+    if (transitionArg <= 0 || transversionArg <= 0)
+    {
+        warnTooDiverged("F84");
+        tp.distance = TOO_DIVERGED_DISTANCE;
+    }
+    else
+    {
+        tp.distance =
+            (-2.0 * consts.A * log(transitionArg)) + (2.0 * (consts.A - consts.B - consts.C) * log(transversionArg));
+    }
 
     float idprob = ((float)strlen - sd.transitions - sd.transversions) / strlen;
     float tsprob = ((float)sd.transversions) / strlen;
