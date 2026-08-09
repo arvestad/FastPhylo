@@ -273,9 +273,19 @@ clearer.
    were deleted as part of step 1, which was the main win; relocating
    the one remaining live struct is cosmetic and lower priority than
    it looked before the dead 90% was cut.
-4. **`NAME`/`SEQ`/`EDGE` macros -> accessor methods** - not started.
-   Bigger (94 combined call sites now that `SEQUENCE`'s dead uses are
-   gone) but still mechanical; the natural next step.
+4. **Done.** `NAME`/`SEQ`/`EDGE` macros -> `nodeName`/`nodeSeq`/
+   `nodeEdge` free function templates (70 combined call sites across
+   `SequenceTree.cpp`, `NeighborJoining.hpp`,
+   `SequenceTree_PhylipReader_test.cpp` - re-counted precisely via the
+   replacement script itself, not the catalogue's earlier "94"
+   estimate). Kept as templates over the node pointer type (`auto&`
+   return deduction) rather than hardcoding `SequenceTree::Node*` -
+   `NeighborJoining.hpp`'s own functions call these while still
+   generic over `TreeNode_type` (even though in practice always
+   instantiated as `SequenceTree::Node`), so this preserves the old
+   macros' purely structural/duck-typed behavior exactly rather than
+   narrowing it. Returns by reference so existing assignment call
+   sites (`NAME(n) = "..."`) kept working with just the name swapped.
 5. **`Object` redesign** - explicitly out of this catalogue's
    execution; needs its own dedicated discussion given its size and
    how many classes depend on it (`Sequence`, `DistanceMatrix`,

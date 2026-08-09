@@ -63,17 +63,17 @@ static void test_single_line_sequences()
     string alpha, beta, gamma;
     for (auto *n : nodes)
     {
-        if (NAME(n) == "Alpha")
+        if (nodeName(n) == "Alpha")
         {
-            alpha = SEQ(n);
+            alpha = nodeSeq(n);
         }
-        if (NAME(n) == "Beta")
+        if (nodeName(n) == "Beta")
         {
-            beta = SEQ(n);
+            beta = nodeSeq(n);
         }
-        if (NAME(n) == "Gamma")
+        if (nodeName(n) == "Gamma")
         {
-            gamma = SEQ(n);
+            gamma = nodeSeq(n);
         }
     }
     assert(alpha == "acgtacgt");
@@ -107,17 +107,17 @@ static void test_multiline_interleaved_sequences()
     string alpha, beta, gamma;
     for (auto *n : nodes)
     {
-        if (NAME(n) == "Alpha")
+        if (nodeName(n) == "Alpha")
         {
-            alpha = SEQ(n);
+            alpha = nodeSeq(n);
         }
-        if (NAME(n) == "Beta")
+        if (nodeName(n) == "Beta")
         {
-            beta = SEQ(n);
+            beta = nodeSeq(n);
         }
-        if (NAME(n) == "Gamma")
+        if (nodeName(n) == "Gamma")
         {
-            gamma = SEQ(n);
+            gamma = nodeSeq(n);
         }
     }
     assert(alpha == "acgtacgtacacgtac");
@@ -163,17 +163,17 @@ static void test_unmatched_name_does_not_corrupt_real_sequences()
     string alpha, beta, gamma;
     for (auto *n : nodes)
     {
-        if (NAME(n) == "Alpha")
+        if (nodeName(n) == "Alpha")
         {
-            alpha = SEQ(n);
+            alpha = nodeSeq(n);
         }
-        if (NAME(n) == "Beta")
+        if (nodeName(n) == "Beta")
         {
-            beta = SEQ(n);
+            beta = nodeSeq(n);
         }
-        if (NAME(n) == "Gamma")
+        if (nodeName(n) == "Gamma")
         {
-            gamma = SEQ(n);
+            gamma = nodeSeq(n);
         }
     }
     assert(alpha == "acgtacgtacacgtac");

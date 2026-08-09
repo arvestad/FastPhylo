@@ -62,15 +62,15 @@ void SequenceTree::setNodeNames()
     addNodesInInfixOrder(vec);
     for (auto n : vec)
     {
-        if (NAME(n).empty())
+        if (nodeName(n).empty())
         {
-            NAME(n) = "n" + std::to_string(n->getNodeId());
+            nodeName(n) = "n" + std::to_string(n->getNodeId());
         }
     }
 }
 void SequenceTree::printSequencesPhylip(SequenceTree::NodeVector &nodes, std::ostream &os)
 {
-    os << nodes.size() << "\t " << SEQ(nodes[0]).length() << endl;
+    os << nodes.size() << "\t " << nodeSeq(nodes[0]).length() << endl;
     for (auto n : nodes)
     {
         os << n->data.s << endl;
@@ -89,7 +89,7 @@ void SequenceTree::printSequences(std::ostream &os)
     addNodesInInfixOrder(vec);
     for (auto n : vec)
     {
-        if (NAME(n).empty())
+        if (nodeName(n).empty())
         {
             continue;
         }
@@ -103,7 +103,7 @@ void SequenceTree::printSequencesWithoutGaps(std::ostream &os)
     addNodesInInfixOrder(vec);
     for (auto n : vec)
     {
-        if (NAME(n).empty())
+        if (nodeName(n).empty())
         {
             continue;
         }
@@ -120,7 +120,7 @@ double SequenceTree::sumOfEdgeLengths()
     // skip the root
     for (size_t i = 1; i < nodes.size(); i++)
     {
-        sum += EDGE(nodes[i]);
+        sum += nodeEdge(nodes[i]);
     }
 
     return sum;
@@ -139,15 +139,15 @@ void SequenceTree::shortcutDegree2Nodes()
         if (i->isRoot())
         {
             SequenceTree::Node *child = n->getRightMostChild();
-            double newedge = EDGE(child) + EDGE(child->getLeftSibling());
+            double newedge = nodeEdge(child) + nodeEdge(child->getLeftSibling());
             shortcutNode(i);
-            EDGE(child) = -1;
-            EDGE(child->getRightMostChild()) = newedge;
+            nodeEdge(child) = -1;
+            nodeEdge(child->getRightMostChild()) = newedge;
         }
         else
         {
-            double pedge = EDGE(n);
-            EDGE(n->getRightMostChild()) += pedge;
+            double pedge = nodeEdge(n);
+            nodeEdge(n->getRightMostChild()) += pedge;
             shortcutNode(i);
         }
     }
@@ -155,7 +155,7 @@ void SequenceTree::shortcutDegree2Nodes()
     {
         reRootAtHighDegreeNode();
         SequenceTree::Node *root = getRoot();
-        EDGE(root) = -1;
+        nodeEdge(root) = -1;
     }
 }
 
@@ -175,8 +175,8 @@ double SequenceTree::compute_loglikelihood()
     for (size_t i = 1; i < vec.size(); i++)
     {
         SequenceTree::Node *n = vec[i];
-        double slen = 1.0 * SEQ(n).size();
-        hamdist = hamming_distance(SEQ(n), SEQ(n->getParent()));
+        double slen = 1.0 * nodeSeq(n).size();
+        hamdist = hamming_distance(nodeSeq(n), nodeSeq(n->getParent()));
         //   PRINT(n->data.s.name); PRINT(n->getParent()->data.s.name);PRINT(hamdist);
         // cout <<"-----------"<< endl;
         // if ( n->data.flt >=0 ){
@@ -197,12 +197,12 @@ double SequenceTree::compute_loglikelihood()
         {
             // PRINT(hamdist*log(optprob/3.0) + (slen - hamdist)*log(1 - optprob));
             loglikelihood += (hamdist * log(optprob / 3.0)) + ((slen - hamdist) * log(1 - optprob));
-            EDGE(n) = optprob;
+            nodeEdge(n) = optprob;
         }
         else
         {
             {
-                EDGE(n) = 0;
+                nodeEdge(n) = 0;
             }
         }
         //}
@@ -218,7 +218,7 @@ void SequenceTree::computeEdgeLengths()
     addNodesInPrefixOrder(nodes);
     for (size_t i = 1; i < nodes.size(); i++)
     {
-        EDGE(nodes[i]) = hamming_distance(SEQ(nodes[i]), SEQ(nodes[i]->getParent()));
+        nodeEdge(nodes[i]) = hamming_distance(nodeSeq(nodes[i]), nodeSeq(nodes[i]->getParent()));
     }
 }
 
@@ -233,7 +233,7 @@ int SequenceTree::contractEdgesShorterThan(double bound)
         {
             continue;
         }
-        if (EDGE(nodes[i]) <= bound)
+        if (nodeEdge(nodes[i]) <= bound)
         {
             shortcutNode(nodes[i]);
             numC++;
@@ -255,9 +255,9 @@ void SequenceTree::mapSequencesOntoTree(std::vector<Sequence> &seqs)
     str2node_map str2node(static_cast<int>(numnodes * 1.5));
     for (size_t i = 0; i < numnodes; i++)
     {
-        if (!NAME(nodes[i]).empty())
+        if (!nodeName(nodes[i]).empty())
         {
-            str2node[NAME(nodes[i])] = nodes[i];
+            str2node[nodeName(nodes[i])] = nodes[i];
         }
     }
 
@@ -267,8 +267,8 @@ void SequenceTree::mapSequencesOntoTree(std::vector<Sequence> &seqs)
         auto iter = str2node.find(seq.name);
         if (iter != str2node.end())
         {
-            SEQ((*iter).second).clear();
-            SEQ((*iter).second).append(seq.seq);
+            nodeSeq((*iter).second).clear();
+            nodeSeq((*iter).second).append(seq.seq);
         }
         else
         {
@@ -330,11 +330,11 @@ void SequenceTree::mapSequencesOntoTree(std::istream &fin)
     addNodesInPrefixOrder(nodes);
     for (size_t i = 0; i < nodes.size(); i++)
     {
-        SEQ(nodes[i]).clear();
-        SEQ(nodes[i]).reserve(seqlen + 10);
-        if (!NAME(nodes[i]).empty())
+        nodeSeq(nodes[i]).clear();
+        nodeSeq(nodes[i]).reserve(seqlen + 10);
+        if (!nodeName(nodes[i]).empty())
         {
-            str2node[NAME(nodes[i])] = nodes[i];
+            str2node[nodeName(nodes[i])] = nodes[i];
         }
     }
 
@@ -357,7 +357,7 @@ void SequenceTree::mapSequencesOntoTree(std::istream &fin)
         auto iter = str2node.find(string(names[i]));
         if (iter != str2node.end())
         {
-            sequences[i] = &SEQ(((*iter).second));
+            sequences[i] = &nodeSeq(((*iter).second));
         }
 
         readSequenceLine(fin, sequences[i]);
@@ -410,7 +410,7 @@ void SequenceTree::mapSequencesOntoTree(std::istream &fin)
     // CHECK THAT ALL STRINGS HAVE THE SAME LENGTH
     for (size_t i = 0; i < nodes.size(); i++)
     {
-        if (SEQ(nodes[i]).length() != seqlen && !SEQ(nodes[i]).empty())
+        if (nodeSeq(nodes[i]).length() != seqlen && !nodeSeq(nodes[i]).empty())
         {
             THROW_EXCEPTION("Sequence not of correct length: " << nodes[i]->data.s.name);
         }
@@ -441,7 +441,7 @@ double SequenceTree::computeRobinsonFoulds(SequenceTree &t1, SequenceTree &t2)
     t1.addLeafs(nodes1);
     for (int i = 0; i < numLeafs; i++)
     {
-        name2index[NAME(nodes1[i])] = i;
+        name2index[nodeName(nodes1[i])] = i;
     }
 
     // check that all leafs are the same in the two trees
@@ -449,10 +449,11 @@ double SequenceTree::computeRobinsonFoulds(SequenceTree &t1, SequenceTree &t2)
     t2.addLeafs(nodes2);
     for (int i = 0; i < numLeafs; i++)
     {
-        auto iter = name2index.find(NAME(nodes2[i]));
+        auto iter = name2index.find(nodeName(nodes2[i]));
         if (iter == name2index.end())
         {
-            std::cerr << "warning: trees have different leafs. " << NAME(nodes2[i]) << " doesn't exist." << std::endl;
+            std::cerr << "warning: trees have different leafs. " << nodeName(nodes2[i]) << " doesn't exist."
+                      << std::endl;
             return -1;
         }
     }
@@ -533,7 +534,7 @@ void SequenceTree::computeSplittSet(std::vector<BitVector> &splitts, SequenceTre
     {
         if (nodes[i]->isLeaf())
         {
-            int index = name2index[NAME(nodes[i])];
+            int index = name2index[nodeName(nodes[i])];
             splitts[i].setNumBits(numLeafs);
             splitts[i].setBit(index);
             splitts[i].flippAllIfPositionIsCleared(0);
@@ -579,7 +580,7 @@ void SequenceTree::tree2distanceMatrix(StrDblMatrix &dm)
     addLeafs(leafs);
     for (size_t i = 0; i < leafs.size(); i++)
     {
-        dm.setIdentifier(i, NAME(leafs[i]));
+        dm.setIdentifier(i, nodeName(leafs[i]));
         for (size_t j = i + 1; j < leafs.size(); j++)
         {
             dm.setDistance(i, j, 0);
@@ -596,7 +597,7 @@ void SequenceTree::tree2distanceMatrix(StrDblMatrix &dm)
             double sum = 0;
             for (size_t e = 0; e < nodesOnPath.size(); e++)
             {
-                sum += EDGE(nodesOnPath[e]);
+                sum += nodeEdge(nodesOnPath[e]);
             }
             dm.setDistance(i, j, sum);
         }
@@ -615,7 +616,7 @@ void SequenceTree::createLeafNameToLeafIdMap(str2int_hashmap &name2id) const
 
     for (size_t i = 0; i < leafs.size(); i++)
     {
-        name2id[NAME(leafs[i])] = leafId++;
+        name2id[nodeName(leafs[i])] = leafId++;
     }
 }
 // the leafs are added in order of their ids in name2id
@@ -627,10 +628,10 @@ void SequenceTree::makeCanonical(const str2int_hashmap &name2id)
 
     for (size_t i = 0; i < tmpvec.size(); i++)
     {
-        auto find = name2id.find(NAME(tmpvec[i]));
+        auto find = name2id.find(nodeName(tmpvec[i]));
         if (find == name2id.end())
         {
-            std::cerr << "warning: name doesn't exist: \"" << NAME(tmpvec[i]) << "\"" << std::endl;
+            std::cerr << "warning: name doesn't exist: \"" << nodeName(tmpvec[i]) << "\"" << std::endl;
         }
         leafs[(*find).second] = tmpvec[i];
     }

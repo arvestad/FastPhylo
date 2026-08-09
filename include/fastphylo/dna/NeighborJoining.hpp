@@ -143,8 +143,8 @@ void computeNeighborJoiningTree(
 
         double D_a2parent = 0.5 * (D_a2b + (rowSums[mini] - rowSums[minj]) / (numNodes - 2));
         double D_b2parent = 0.5 * (D_a2b + (rowSums[minj] - rowSums[mini]) / (numNodes - 2));
-        EDGE(a) = D_a2parent;
-        EDGE(b) = D_b2parent;
+        nodeEdge(a) = D_a2parent;
+        nodeEdge(b) = D_b2parent;
 
         // UPDATE DISTANCES
         for (size_t i = 0; i < numNodes - 1; i++)
@@ -172,9 +172,9 @@ void computeNeighborJoiningTree(
     //--------------
 
     // Resolve the final 3-taxon star with the standard three-point formula.
-    EDGE(dm.getIdentifier(0)) = 0.5 * (dm.getDistance(0, 1) + dm.getDistance(0, 2) - dm.getDistance(1, 2));
-    EDGE(dm.getIdentifier(1)) = 0.5 * (dm.getDistance(0, 1) + dm.getDistance(1, 2) - dm.getDistance(0, 2));
-    EDGE(dm.getIdentifier(2)) = 0.5 * (dm.getDistance(0, 2) + dm.getDistance(1, 2) - dm.getDistance(0, 1));
+    nodeEdge(dm.getIdentifier(0)) = 0.5 * (dm.getDistance(0, 1) + dm.getDistance(0, 2) - dm.getDistance(1, 2));
+    nodeEdge(dm.getIdentifier(1)) = 0.5 * (dm.getDistance(0, 1) + dm.getDistance(1, 2) - dm.getDistance(0, 2));
+    nodeEdge(dm.getIdentifier(2)) = 0.5 * (dm.getDistance(0, 2) + dm.getDistance(1, 2) - dm.getDistance(0, 1));
 }
 
 //-------------------- BIO NJ -------------------------------------------------------------
@@ -306,8 +306,8 @@ void computeBioNJTree(DistanceMatrix<TreeNode_type *, double, Data_init<TreeNode
 
         double D_a2parent = 0.5 * (D_a2b + (rowSums[mini] - rowSums[minj]) / (numNodes - 2));
         double D_b2parent = 0.5 * (D_a2b + (rowSums[minj] - rowSums[mini]) / (numNodes - 2));
-        EDGE(a) = D_a2parent;
-        EDGE(b) = D_b2parent;
+        nodeEdge(a) = D_a2parent;
+        nodeEdge(b) = D_b2parent;
 
         // UPDATE DISTANCES
         for (size_t i = 0; i < numNodes - 1; i++)
@@ -348,9 +348,9 @@ void computeBioNJTree(DistanceMatrix<TreeNode_type *, double, Data_init<TreeNode
     //--------------
 
     // Resolve the final 3-taxon star with the standard three-point formula.
-    EDGE(dm.getIdentifier(0)) = 0.5 * (dm.getDistance(0, 1) + dm.getDistance(0, 2) - dm.getDistance(1, 2));
-    EDGE(dm.getIdentifier(1)) = 0.5 * (dm.getDistance(0, 1) + dm.getDistance(1, 2) - dm.getDistance(0, 2));
-    EDGE(dm.getIdentifier(2)) = 0.5 * (dm.getDistance(0, 2) + dm.getDistance(1, 2) - dm.getDistance(0, 1));
+    nodeEdge(dm.getIdentifier(0)) = 0.5 * (dm.getDistance(0, 1) + dm.getDistance(0, 2) - dm.getDistance(1, 2));
+    nodeEdge(dm.getIdentifier(1)) = 0.5 * (dm.getDistance(0, 1) + dm.getDistance(1, 2) - dm.getDistance(0, 2));
+    nodeEdge(dm.getIdentifier(2)) = 0.5 * (dm.getDistance(0, 2) + dm.getDistance(1, 2) - dm.getDistance(0, 1));
 }
 //------------------------------- FAST NEIGHBOR JOINING -----------------------
 //

@@ -23,10 +23,28 @@
 // Each node has a struct of a sequence and a double.
 //--------------------------------------
 
-// access defines for the node data.
-#define NAME(node) (node)->data.s.name
-#define SEQ(node) (node)->data.s.seq
-#define EDGE(node) (node)->data.dbl
+// Accessors for a SequenceTree node's payload (a Sequence_double: a
+// Sequence + an edge length). Free function templates, not member
+// methods on TreeNode<Data,...> itself - Data varies across the
+// generic Tree<> framework's other instantiations, so these only make
+// sense for the specific Data shape SequenceTree uses. Kept as
+// templates (not hardcoded to SequenceTree::Node*) since
+// NeighborJoining.hpp's own templates call these while still generic
+// over the node type, matching the old macros' purely structural
+// (duck-typed) behavior exactly. Return by reference so existing
+// assignment call sites (e.g. NAME(n) = "...") keep working unchanged.
+template <class Node> inline auto &nodeName(Node *node)
+{
+    return node->data.s.name;
+}
+template <class Node> inline auto &nodeSeq(Node *node)
+{
+    return node->data.s.seq;
+}
+template <class Node> inline auto &nodeEdge(Node *node)
+{
+    return node->data.dbl;
+}
 
 class SequenceTree : public Tree<Sequence_double, Data_init<Sequence_double>, Data_printOn<Sequence_double>>
 {
