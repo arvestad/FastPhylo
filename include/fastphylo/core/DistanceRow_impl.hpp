@@ -33,14 +33,6 @@ DISTANCEROW::DistanceRow(const DISTANCEROW &dm)
 }
 
 // Doesn't function here :)
-DM_TEMPLATE
-DISTANCEROW::DistanceRow(std::istream &in)
-{
-    columns = -1;
-    objInitFromStream(in);
-}
-
-// Doesn't function here :)
 DM_TEMPLATE void DISTANCEROW::setDefaultValues(DistanceType &defval, Identifier &defid)
 {
 

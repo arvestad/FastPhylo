@@ -43,7 +43,6 @@ class DistanceRow : public Object
     // CONSTRUCTORS
     DistanceRow(size_t columns = 0);
     DistanceRow(const DistanceRow &dm);
-    DistanceRow(std::istream &in);
 
     // DIMENSIONS
     size_t getColumns() const

@@ -169,30 +169,37 @@ standing rule for widely-included headers) + `ctest` 4/4 +
 `-DWITH_LIBXML=OFF` build - all green, confirming the dispatch-mechanism
 change produced byte-identical output for every fixture.
 
-### Phase 2 - de-virtualize `objInitFromStream`; delete `DistanceRow`'s broken constructor
+### Phase 2 - delete `DistanceRow`'s broken constructor
 
-Drop `virtual`/`override` from `objInitFromStream()` on `Sequence`,
-`DistanceRow` (well - delete it there, see below), `Tree`,
-`DistanceMatrix`, `BitVector`; it becomes a plain method on each,
-called exactly the same way it already is (directly, by name, never
-polymorphically - Finding 1). Delete `DistanceRow`'s broken
-`istream&`-taking constructor and its dead `objInitFromStream()`
-declaration/definition at the same time (Finding 3) - it never worked
-and has no callers.
+**Done, smaller than originally scoped.** Deleted `DistanceRow`'s
+broken `istream&`-taking constructor and the "Doesn't function here :)"
+comment above it (Finding 3) - it never worked (called `Object`'s
+no-op default `objInitFromStream`, since `DistanceRow` never overrides
+it) and grep confirmed zero callers anywhere.
 
-This phase is also what removes the `NJMatrix`/`Object*`-pointer-
-operator requirement from the previous commit: once `objInitFromStream`/
-`printOn` aren't `virtual`, `DistanceMatrix<TreeNode<...>*, ...>`
-(`NJMatrix`) no longer eagerly instantiates them for a vtable that no
-longer exists - they become ordinary template members, lazily
-instantiated only if actually called (which, per the prior commit's
-finding, they never are for `NJMatrix`). Expect `Data_init<T*>`/
-`Data_printOn<T*>`'s generic `in >> d`/`os << i` to simply never
-instantiate for that specialization once this lands - if it does
-still get instantiated for some other reason, `TreeNode` will already
-have its own `operator<<`/direct-call `objInitFromStream` from this
-plan's earlier work, so a pointer-forwarding overload can be added
-narrowly rather than resurrecting `Object*`'s generic one.
+**Correction to this phase's original text above** (caught while
+executing, not before): dropping `virtual`/`override` from
+`objInitFromStream()` on `Sequence`/`Tree`/`DistanceMatrix`/
+`BitVector` would have been a no-op, not a real de-virtualization.
+C++ propagates virtualness from the base automatically whenever the
+signature matches and the class still derives from `Object` -
+removing the derived declaration's own `override` keyword doesn't
+remove the vtable entry; it only removes the compiler's override-
+mismatch safety check, for zero behavioral benefit. The vtable entry
+only actually disappears once `: public Object` itself is removed,
+which doesn't happen until Phase 4. Moved that part there instead of
+doing something cosmetic-only now.
+
+Same correction applies to this phase's `NJMatrix`/`Object*`-pointer-
+operator claim: that requirement isn't removed by touching
+`objInitFromStream`'s keywords at all - it goes away in Phase 4, when
+`DistanceMatrix`/`TreeNode` actually stop deriving from `Object` and
+`Data_init<T*>`/`Data_printOn<T*>` have no more virtual vtable to
+eagerly instantiate for. Re-verify this claim concretely there rather
+than assuming it from here.
+
+Verified: full rebuild (Clang + GCC 14) + `ctest` 4/4 + `RunExamples.sh`
+byte-identical + `RunCliChecks.sh`.
 
 ### Phase 3 - `Tree` equality/hashing; delete the 3 dead `equals()`/`hashCode()` overrides elsewhere
 
@@ -213,19 +220,36 @@ mechanism.
 
 ### Phase 4 - delete `Object.hpp`/`.cpp`
 
-Once all 7 classes have lost `: public Object`, delete
-`Object.hpp`/`.cpp` entirely, including the `operator<<(ostream&,
-const Object*)`/`operator>>(istream&, Object*)` pair kept alive by the
-previous commit specifically for `NJMatrix`'s sake (should be provably
-unnecessary by this point per Phase 2) and the `objeq`/`objhash`
-functor structs (superseded by Phase 3's `std::hash`
-specialization). Remove the now-dead `#include
-"fastphylo/core/Object.hpp"` from all 7 former derived classes' headers
-plus any file relying on it transitively for `objhash`/`objeq`
-(`SequenceTree.hpp` - already includes `Object.hpp` directly per a
-fix earlier this engagement, so update in place rather than remove
-outright). Full rebuild (Clang + GCC 14 + `-DWITH_LIBXML=OFF`) +
-`ctest` + `RunExamples.sh` + `RunCliChecks.sh` one final time.
+Once all 7 classes have lost `: public Object`, `objInitFromStream()`
+on `Sequence`/`Tree`/`DistanceMatrix`/`BitVector` naturally becomes an
+ordinary non-virtual method with no further action needed (Phase 2's
+deferred half) - just drop the now-meaningless `override` keyword at
+each of the 4 sites.
+
+Delete `Object.hpp`/`.cpp` entirely, including the
+`operator<<(ostream&, const Object*)`/`operator>>(istream&, Object*)`
+pair kept alive by the dead-code-cleanup commit specifically for
+`NJMatrix`'s sake, and the `objeq`/`objhash` functor structs
+(superseded by Phase 3's `std::hash` specialization). Concretely
+re-verify (not assume) that the `NJMatrix` pointer-operator
+requirement is actually gone once `DistanceMatrix`/`TreeNode` no
+longer derive from `Object` - `DistanceMatrix<TreeNode<...>*, ...>`'s
+`objInitFromStream`/`printOn` should now be ordinary template members,
+lazily instantiated only if actually called (never, for `NJMatrix`,
+per the earlier finding), so `Data_init<T*>`/`Data_printOn<T*>`'s
+generic `in >> d`/`os << i` should simply never instantiate for that
+specialization. If something still forces it, `TreeNode` already has
+its own reference-form `operator<<`/direct-call `objInitFromStream`
+from Phases 1-2, so a narrow pointer-forwarding overload can be added
+there rather than resurrecting `Object`'s generic one.
+
+Remove the now-dead `#include "fastphylo/core/Object.hpp"` from all 7
+former derived classes' headers plus any file relying on it
+transitively for `objhash`/`objeq` (`SequenceTree.hpp` - already
+includes `Object.hpp` directly per a fix earlier this engagement, so
+update in place rather than remove outright). Full rebuild (Clang +
+GCC 14 + `-DWITH_LIBXML=OFF`) + `ctest` + `RunExamples.sh` +
+`RunCliChecks.sh` one final time.
 
 ## Explicitly out of scope
 
