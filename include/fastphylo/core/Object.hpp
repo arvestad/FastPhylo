@@ -10,7 +10,6 @@
 
 #include <string>
 #include <iostream>
-#include "fastphylo/core/log_utils.hpp"
 
 class Object
 {
@@ -70,49 +69,19 @@ struct objhash
     }
 };
 
-struct objeq_ptr
-{
-    bool operator()(const Object *o1, const Object *o2) const
-    {
-        return o1->equals(o2);
-    }
-};
-struct objhash_ptr
-{
-    size_t operator()(const Object *o) const
-    {
-        return o->hashCode();
-    }
-};
-
-struct objeq_ref
-{
-    bool operator()(const Object &o1, const Object &o2) const
-    {
-        return o1.equals(o2);
-    }
-};
-struct objhash_ref
-{
-    size_t operator()(const Object &o) const
-    {
-        return o.hashCode();
-    }
-};
-
 /*
  * Out stream operators
  */
 std::ostream &operator<<(std::ostream &os, const Object &obj);
+// Needed for DistanceMatrix<T*, ...>/Data_init<T*>::operator() to compile
+// when T* is an Object-derived pointer (e.g. NJMatrix's TreeNode<...>*):
+// the class template's virtual objInitFromStream()/printOn() overrides are
+// instantiated for the vtable regardless of whether they're ever actually
+// called, and Data_init<T*>/Data_printOn<T*> stream through this pointer
+// overload via the derived-to-base implicit conversion.
 std::ostream &operator<<(std::ostream &os, const Object *obj);
 
 /*
  * Calls the Object.initFromStream
  */
-std::istream &operator>>(std::istream &in, Object &obj);
 std::istream &operator>>(std::istream &in, Object *obj);
-
-std::string operator+(const std::string &s, const Object &obj);
-std::string operator+(const std::string &s, const Object *obj);
-std::string operator+(const Object &obj, const std::string &s);
-std::string operator+(const Object *obj, const std::string &s);

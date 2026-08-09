@@ -8,8 +8,6 @@
 
 #include "fastphylo/core/Object.hpp"
 #include <string>
-#include <cstdio>
-#include <string>
 #include <iostream>
 #include <sstream>
 
@@ -35,55 +33,17 @@ ostream &Object::printOn(ostream &os) const
 /*=================================================
  * Out/In stream operators
  */
-ostream &operator<<(ostream &os, const Object *obj)
-{
-    return obj->printOn(os);
-}
-
 ostream &operator<<(ostream &os, const Object &obj)
 {
     return obj.printOn(os);
 }
 
-std::istream &operator>>(std::istream &in, Object &obj)
+ostream &operator<<(ostream &os, const Object *obj)
 {
-    return obj.objInitFromStream(in);
+    return obj->printOn(os);
 }
 
 std::istream &operator>>(std::istream &in, Object *obj)
 {
     return obj->objInitFromStream(in);
-}
-
-/*===================================================
- * String operators
- */
-string operator+(const string &s, const Object &obj)
-{
-    string t = s;
-    t.append(obj.toString());
-    return t;
-}
-
-string operator+(const string &s, const Object *obj)
-{
-    string t = s;
-    t.append(obj->toString());
-    return t;
-}
-
-string operator+(const Object &obj, const string &s)
-{
-    string t;
-    t.append(obj.toString());
-    t.append(s);
-    return t;
-}
-
-string operator+(const Object *obj, const string &s)
-{
-    string t;
-    t.append(obj->toString());
-    t.append(s);
-    return t;
 }
