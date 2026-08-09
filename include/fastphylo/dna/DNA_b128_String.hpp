@@ -19,7 +19,6 @@
 #include <iostream>
 #include <vector>
 #include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
-#include "fastphylo/core/Object.hpp"
 
 //-----------------------------------------------
 // DNA_b128_String
@@ -51,7 +50,7 @@
 //
 //
 
-class DNA_b128_String : public Object
+class DNA_b128_String
 {
   public:
     //------------------ CONSTRUCTORS ------------------------------------
@@ -91,12 +90,6 @@ class DNA_b128_String : public Object
     {
         return (getTotalCapacity() - getNumChars());
     }
-
-    //-----------------------------------
-    // PRINTING
-    // Overridden from Object.
-    // WARNINNG very slow.
-    virtual std::ostream &printOn(std::ostream &out = std::cout) const;
 
     //-----------------------------------------
     // APPEND
@@ -374,9 +367,7 @@ class DNA_b128_String : public Object
     }
 };
 
-// Found via ADL - what `os << someDNA_b128_String` actually binds to (an
-// exact-match free function beats the inherited, conversion-requiring
-// Object::operator<<). printOn() above forwards here.
+// WARNING very slow. Found via ADL.
 std::ostream &operator<<(std::ostream &os, const DNA_b128_String &s);
 
 #endif // DNA_b128_STRING_HPP

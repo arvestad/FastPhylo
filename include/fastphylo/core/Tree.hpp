@@ -16,7 +16,6 @@
 #include <istream>
 #include <vector>
 
-#include "fastphylo/core/Object.hpp"
 #include "fastphylo/core/stl_utils.hpp"
 #include "fastphylo/core/file_utils.hpp"
 #include "fastphylo/core/Exception.hpp"
@@ -48,7 +47,7 @@
 TREE_TEMPLATE class TreeNode;
 
 template <class Data, class DataInitializer = empty_Data_init<Data>, class DataPrintOn = empty_Data_printOn<Data>>
-class Tree : public Object
+class Tree
 {
   public:
     // types used in the tree
@@ -78,18 +77,15 @@ class Tree : public Object
     // The data after the inner node may not be separated by whitespace from the ')'. If it is
     // this has to be handled by the DataInitializer.
     Tree(char *newickstr);
+    // Same Newick format, read from a stream instead of a string in memory.
     Tree(std::istream &in)
     {
         _nullVariables();
         root = initSubtreeFromStream(in);
     }
 
-    ~Tree() override;
+    virtual ~Tree();
     TREE &operator=(const TREE &t);
-
-    // Init the tree from a stream.
-    // Inherited from Object.
-    std::istream &objInitFromStream(std::istream &is) override;
 
     //-----
     // Copy structure of another type of template tree.
@@ -138,13 +134,9 @@ class Tree : public Object
     //--------------------------------
     // PRINTING
 
-    // prints in the formate
-    std::ostream &printOn(std::ostream &os) const override;
-
-    // The real formatting logic lives in the free operator<< overloads
-    // (object_modernization_plan.md Phase 1), which need friendship here
-    // since they read the private dataPrintOn functor (directly for
-    // Tree, and via TreeNode::getTree() for TreeNode).
+    // The free operator<< overloads below need friendship here since
+    // they read the private dataPrintOn functor (directly for Tree,
+    // and via TreeNode::getTree() for TreeNode).
     template <class D, class DI, class DP> friend std::ostream &operator<<(std::ostream &os, const Tree<D, DI, DP> &t);
     template <class D, class DI, class DP>
     friend std::ostream &operator<<(std::ostream &os, const TreeNode<D, DI, DP> &n);
@@ -354,7 +346,7 @@ class Tree : public Object
 //-------------------------------------------------------
 
 TREE_TEMPLATE
-class TreeNode : public Object
+class TreeNode
 {
   public:
     using Data_type = Data;
@@ -405,9 +397,6 @@ class TreeNode : public Object
 
     // Create a child of this node whose data is d.
     TREENODE *addChild(Data d);
-
-    // printing a subtree.
-    std::ostream &printOn(std::ostream &os) const override;
 
     // reRoot
     void setAsRoot();
@@ -531,7 +520,7 @@ class TreeNode : public Object
     }
 
     // deletes all children
-    ~TreeNode() override;
+    virtual ~TreeNode();
 
     // copy node structure of other template type
     // creates a copy of the subtree the owner tree is not set

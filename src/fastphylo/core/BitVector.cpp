@@ -29,11 +29,6 @@ BitVector &BitVector::operator=(const BitVector &bv)
     return *this;
 }
 
-std::ostream &BitVector::printOn(std::ostream &os) const
-{
-    return os << *this;
-}
-
 std::ostream &operator<<(std::ostream &os, const BitVector &bv)
 {
     for (size_t i = 0; i < bv.getNumBits(); i++)

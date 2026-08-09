@@ -113,17 +113,6 @@ TREE_TEMPLATE TREE::~Tree()
 //---------------------------------------------------------
 // READING FROM STREAM
 
-TREE_TEMPLATE std::istream &TREE::objInitFromStream(std::istream &is)
-{
-    if (root != nullptr)
-        delete root;
-    _nullVariables();
-
-    root = initSubtreeFromStream(is);
-
-    return is;
-}
-
 TREE_TEMPLATE TREENODE *TREE::initSubtreeFromStream(std::istream &in)
 {
     //  cout << "parse: " << peek(f) << endl;
@@ -200,11 +189,6 @@ TREE_TEMPLATE TREENODE *TREE::initSubtreeFromStream(std::istream &in)
 
 //---------------------------------------------------------
 // PRINTING AND DRAWING
-TREE_TEMPLATE std::ostream &TREE::printOn(std::ostream &os) const
-{
-    return os << *this;
-}
-
 TREE_TEMPLATE std::ostream &operator<<(std::ostream &os, const TREE &t)
 {
     if (xmlPrint)
@@ -999,11 +983,6 @@ TREE_TEMPLATE size_t TREENODE::getDegree() const
         degree++;
 
     return degree;
-}
-
-TREE_TEMPLATE std::ostream &TREENODE::printOn(std::ostream &os) const
-{
-    return os << *this;
 }
 
 TREE_TEMPLATE std::ostream &operator<<(std::ostream &os, const TREENODE &n)

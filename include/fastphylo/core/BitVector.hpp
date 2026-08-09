@@ -10,13 +10,12 @@
 
 #include <string>
 #include <iostream>
-#include "fastphylo/core/Object.hpp"
 #include <vector>
 
 #define BITHOLDER_POS(POS) ((POS) & 0xfffff)
 #define BITVEC_POS(POS) ((POS) >> 5)
 
-class BitVector : public Object
+class BitVector
 {
 
   public:
@@ -66,12 +65,6 @@ class BitVector : public Object
     // all bits in which the vectors agree are set
     void bitwiseEqual(const BitVector &bv);
 
-    std::ostream &printOn(std::ostream &os) const override;
-    std::istream &objInitFromStream(std::istream &is) override
-    {
-        return is;
-    }
-
   private:
     std::vector<size_t> bits;
     size_t numBits;
@@ -91,7 +84,5 @@ class BitVector : public Object
     }
 };
 
-// Found via ADL - what `os << someBitVector` actually binds to (an
-// exact-match free function beats the inherited, conversion-requiring
-// Object::operator<<). printOn() above forwards here.
+// Found via ADL.
 std::ostream &operator<<(std::ostream &os, const BitVector &bv);

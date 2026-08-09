@@ -43,11 +43,6 @@ Sequence &Sequence::operator=(const Sequence &s)
     return *this;
 }
 
-std::ostream &Sequence::printOn(std::ostream &os) const
-{
-    return os << *this;
-}
-
 std::ostream &operator<<(std::ostream &os, const Sequence &s)
 {
     if (s.name.empty() && s.seq.empty())
@@ -71,15 +66,6 @@ std::ostream &Sequence::printShort(std::ostream &os) const
 {
     os << name;
     return os;
-}
-
-std::istream &Sequence::objInitFromStream(std::istream &in)
-{
-    name.clear();
-    in >> name;
-    seq.clear();
-    in >> seq;
-    return in;
 }
 
 void Sequence::printWithoutGaps(std::ostream &os) const

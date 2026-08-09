@@ -10,7 +10,6 @@
 
 #include <iomanip>
 #include <string>
-#include "fastphylo/core/file_utils.hpp"
 
 DM_TEMPLATE void DISTANCEMATRIX::assureSize()
 {
@@ -54,13 +53,6 @@ DM_TEMPLATE DISTANCEMATRIX &DISTANCEMATRIX::operator=(const DISTANCEMATRIX &dm)
     return *this;
 }
 
-DM_TEMPLATE
-DISTANCEMATRIX::DistanceMatrix(std::istream &in)
-{
-    size = -1;
-    objInitFromStream(in);
-}
-
 DM_TEMPLATE void DISTANCEMATRIX::setDefaultValues(DistanceType &defval, Identifier &defid)
 {
 
@@ -72,64 +64,6 @@ DM_TEMPLATE void DISTANCEMATRIX::setDefaultValues(DistanceType &defval, Identifi
         for (size_t j = 0; j <= i; j++)
             D[j][i] = defval;
     }
-}
-
-// CREATE FROM STREAM
-//  here is an example of a phylip file
-//  Should be given on full form
-//  the diagonal should be all 0s
-//
-//      7
-//  Bovine      0.0000  1.6866  1.7198  1.6606  1.5243  1.6043  1.5905
-//  Mouse       1.6866  0.0000  1.5232  1.4841  1.4465  1.4389  1.4629
-//  Gibbon      1.7198  1.5232  0.0000  0.7115  0.5958  0.6179  0.5583
-//  Orang       1.6606  1.4841  0.7115  0.0000  0.4631  0.5061  0.4710
-//  Gorilla     1.5243  1.4465  0.5958  0.4631  0.0000  0.3484  0.3083
-//  Chimp       1.6043  1.4389  0.6179  0.5061  0.3484  0.0000  0.2692
-//  Human       1.5905  1.4629  0.5583  0.4710  0.3083  0.2692  0.0000
-
-DM_TEMPLATE std::istream &DISTANCEMATRIX::objInitFromStream(std::istream &in)
-{
-
-    size_t newSize;
-    in >> newSize;
-
-    if (newSize != size)
-    {
-        size = newSize;
-        assureSize();
-    }
-
-    // read each line of the matrix and set the distances
-    for (size_t i = 0; i < size; i++)
-    {
-        idInit(in, identifiers[i]);
-
-        DistanceType dist;
-
-        // skip the lower left part
-        size_t j = 0;
-        while (j < i)
-        {
-            j++;
-            distInit(in, dist);
-        }
-
-        distInit(in, D[i][i]);
-
-        j++;
-        for (; j < size; j++)
-        {
-            distInit(in, D[i][j]);
-        }
-    }
-
-    return in;
-}
-
-DM_TEMPLATE std::ostream &DISTANCEMATRIX::printOn(std::ostream &out) const
-{
-    return out << *this;
 }
 
 DM_TEMPLATE std::ostream &operator<<(std::ostream &out, const DISTANCEMATRIX &dm)

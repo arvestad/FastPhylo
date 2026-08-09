@@ -10,7 +10,6 @@
 //--------------------------------------------------
 #pragma once
 
-#include "fastphylo/core/Object.hpp"
 #include <vector>
 #include <string>
 #include "fastphylo/core/InitAndPrintOn_utils.hpp"
@@ -37,7 +36,7 @@
 // A SYMMETRIC DISTANCE MATRIX
 
 DM_TEMPLATE
-class DistanceRow : public Object
+class DistanceRow
 {
   public:
     // CONSTRUCTORS

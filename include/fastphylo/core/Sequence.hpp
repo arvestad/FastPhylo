@@ -10,7 +10,6 @@
 
 #include <string>
 #include <vector>
-#include "fastphylo/core/Object.hpp"
 #include "fastphylo/core/log_utils.hpp"
 #include <fstream>
 #include "fastphylo/core/file_utils.hpp"
@@ -23,7 +22,7 @@
 //
 //
 
-class Sequence : public Object
+class Sequence
 {
   public:
     std::string name;
@@ -35,12 +34,8 @@ class Sequence : public Object
 
     Sequence &operator=(const Sequence &s);
 
-    std::istream &objInitFromStream(std::istream &in) override;
-
     //------------------------------------------
     // PRINTING
-    // Ex. "HUMAN    agct-agct"
-    std::ostream &printOn(std::ostream &os) const override;
     // print only name
     virtual std::ostream &printShort(std::ostream &os) const;
     virtual void printWithoutGaps(std::ostream &os) const;
@@ -61,9 +56,5 @@ class Sequence : public Object
     static void bootstrapSequences(std::vector<Sequence> &seqs, std::vector<Sequence> &boot);
 };
 
-// The real formatting logic (Ex. "HUMAN    agct-agct"), found via ADL -
-// object_modernization_plan.md Phase 1. printOn() above forwards here;
-// this is what every ordinary `os << someSequence` call site actually
-// binds to (an exact-match free function beats the inherited,
-// conversion-requiring Object::operator<<).
+// Ex. "HUMAN    agct-agct". Found via ADL.
 std::ostream &operator<<(std::ostream &os, const Sequence &s);

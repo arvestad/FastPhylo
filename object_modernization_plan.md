@@ -156,12 +156,13 @@ Two of the six needed more than a pure cut-and-paste:
 - `Sequence`, `BitVector`, `DNA_b128_String` needed no `friend` -
   their `printOn` bodies only ever touched already-public accessors.
 
-`Tree::printOn`'s own `os << root` (a `TreeNode*`, relying on
-`Object`'s pointer `operator<<` kept alive by the previous commit for
-`NJMatrix`'s sake) was left untouched - still compiles unchanged via
-that pointer overload for now. Revisit in Phase 4: once `: public
-Object` is removed from `TreeNode`, this becomes `os << *root` using
-the new reference-form `operator<<` instead.
+**Correction (caught while writing Phase 4, not accurate when first
+written):** the paragraph above originally claimed `Tree::printOn`'s
+`os << root` was "left untouched," relying on `Object`'s pointer
+`operator<<`. That was wrong - the actual code already used the
+dereferenced form (`os << *t.root`, `os << *child`) throughout, here
+in Phase 1. There was nothing left for Phase 4 to revisit on this
+point.
 
 Verified: full rebuild (Clang + real GCC 14, per this engagement's
 standing rule for widely-included headers) + `ctest` 4/4 +
@@ -252,36 +253,87 @@ bootstrap replicate counting is still correct, plus a
 
 ### Phase 4 - delete `Object.hpp`/`.cpp`
 
-Once all 7 classes have lost `: public Object`, `objInitFromStream()`
-on `Sequence`/`Tree`/`DistanceMatrix`/`BitVector` naturally becomes an
-ordinary non-virtual method with no further action needed (Phase 2's
-deferred half) - just drop the now-meaningless `override` keyword at
-each of the 4 sites.
+**Done, and larger than planned: `objInitFromStream` turned out to be
+fully dead, not merely non-polymorphic.** Before touching anything,
+re-verified Phase 1's Finding 1 claim ("`objInitFromStream` is called
+directly, by name, never polymorphically") rather than trusting it.
+It was wrong for `Sequence`: zero callers anywhere, direct or
+otherwise - `Sequence::readSequences` has its own separate parsing
+logic, never calling it. Same story for `Tree`: its own
+`objInitFromStream` body doesn't even call itself recursively for
+anything real, and grepping for constructions of any `Tree<>`
+instantiation via `istream` (`Tree<...>(someIstream)`,
+`SequenceTree(someIstream)`) outside the class's own declaration files
+found zero call sites (`SequenceBasedNJ.cpp`'s `b128Tree` typedef is
+the only other `Tree<>` instantiation anywhere, and that file has been
+unbuilt for multiple phases now). Same for `DistanceMatrix`'s
+`objInitFromStream` and its `istream&`-taking constructor - zero
+callers, confirmed by grep and then by the compiler itself (the
+rebuild succeeded through `DistanceMatrix.cpp` with the constructor
+gone, without complaint). `BitVector`'s `objInitFromStream` override
+was an inline no-op with no `istream&` constructor to call it at all.
 
-Delete `Object.hpp`/`.cpp` entirely, including the
+**Deleted outright, not just de-virtualized:** `objInitFromStream` on
+`Sequence`/`Tree`/`DistanceMatrix`/`BitVector` (declarations and
+definitions), `DistanceMatrix`'s now-pointless `istream&` constructor,
+and `DistanceMatrix`'s now-orphaned private `idInit`/`distInit`
+functor members (used nowhere else - `idPrintOn`/`distPrintOn` stay,
+genuinely used by Phase 1's `operator<<`). Also deleted every
+`printOn()` forwarder across all 6 classes Phase 1 touched (Sequence,
+Tree, TreeNode, DistanceMatrix, BitVector, DNA_b128_String) - Phase 1
+already established nothing calls them; Phase 4 is what finally
+removes the dead weight rather than leaving a forwarder with no
+purpose. `~Tree()`/`~TreeNode()` changed from `override` to plain
+`virtual` (not removed - `SequenceTree` is a real, live subclass of
+`Tree<Sequence_double,...>`, so polymorphic destruction through a
+`Tree<>*`/`TreeNode*` base pointer must stay safe regardless of
+`Object`; none of the other 5 classes have subclasses, so their
+implicit destructors needed no change at all).
+
+**A real mistake, caught by the build, not by review:** initially
+deleted `Tree(std::istream&)`/`SequenceTree(std::istream&)` too,
+believing them dead by the same reasoning as `objInitFromStream` (which
+that constructor doesn't even call - it goes through the separate,
+very much live `initSubtreeFromStream`, also used by the Newick-string
+constructor). They aren't dead:
+`tests/SequenceTree_PhylipReader_test.cpp:44` builds a tree from an
+`istringstream` via exactly this constructor. Missed on the first grep
+pass because the check looked for the literal call pattern
+(`SequenceTree(someIstream)`) but didn't verify what type `newick`
+actually was at that call site - it read as a Newick *string* by
+name, but is in fact declared as `istringstream newick(...)` two lines
+above. Restored both constructors (verified independent of
+`objInitFromStream`, so no conflict with deleting that); the failing
+`ctest` run caught it immediately, before any commit.
+
+**The `NJMatrix`/`Object*`-pointer-operator concern resolved itself
+exactly as predicted**, and was concretely re-verified rather than
+assumed: once `TreeNode`/`DistanceMatrix` no longer derive from
+`Object`, `NJMatrix` (`DistanceMatrix<TreeNode<...>*, ...>`) has no
+vtable left to eagerly instantiate `objInitFromStream`/`printOn`
+for, so `Data_init<TreeNode*>`/`Data_printOn<TreeNode*>`'s generic
+`in >> d`/`os << i` never got instantiated at all - the build went
+straight through with no pointer-operator overload needed anywhere.
+(It also turned out Phase 1's own `Tree`/`TreeNode` `operator<<`
+already used the dereferenced form throughout, not the pointer form a
+misremembered note in this plan's Phase 1 writeup claimed was "left
+untouched" - that note was simply inaccurate, corrected here.)
+
+Deleted `Object.hpp`/`.cpp` entirely, including the
 `operator<<(ostream&, const Object*)`/`operator>>(istream&, Object*)`
-pair kept alive by the dead-code-cleanup commit specifically for
-`NJMatrix`'s sake, and the `objeq`/`objhash` functor structs
-(superseded by Phase 3's `std::hash` specialization). Concretely
-re-verify (not assume) that the `NJMatrix` pointer-operator
-requirement is actually gone once `DistanceMatrix`/`TreeNode` no
-longer derive from `Object` - `DistanceMatrix<TreeNode<...>*, ...>`'s
-`objInitFromStream`/`printOn` should now be ordinary template members,
-lazily instantiated only if actually called (never, for `NJMatrix`,
-per the earlier finding), so `Data_init<T*>`/`Data_printOn<T*>`'s
-generic `in >> d`/`os << i` should simply never instantiate for that
-specialization. If something still forces it, `TreeNode` already has
-its own reference-form `operator<<`/direct-call `objInitFromStream`
-from Phases 1-2, so a narrow pointer-forwarding overload can be added
-there rather than resurrecting `Object`'s generic one.
+pair from the dead-code-cleanup commit (confirmed unnecessary per
+above) and the `objeq`/`objhash` functor structs (superseded by Phase
+3's `std::hash` specialization). Removed the `#include
+"fastphylo/core/Object.hpp"` from all 7 former derived classes'
+headers and the `Object.cpp` entry from `src/c++/CMakeLists.txt`.
+Grepped the whole tree for any remaining reference to `Object`/
+`objhash`/`objeq` afterward - none outside historical prose comments
+and the plan doc itself.
 
-Remove the now-dead `#include "fastphylo/core/Object.hpp"` from all 7
-former derived classes' headers plus any file relying on it
-transitively for `objhash`/`objeq` (`SequenceTree.hpp` - already
-includes `Object.hpp` directly per a fix earlier this engagement, so
-update in place rather than remove outright). Full rebuild (Clang +
-GCC 14 + `-DWITH_LIBXML=OFF`) + `ctest` + `RunExamples.sh` +
-`RunCliChecks.sh` one final time.
+Verified: a full clean rebuild from scratch (removed `build/` entirely
+first, not just incremental) + Clang + real GCC 14 + `ctest` 4/4 +
+`RunExamples.sh` 20/20 byte-identical + `RunCliChecks.sh`, plus a
+`-DWITH_LIBXML=OFF` build - all green.
 
 ## Explicitly out of scope
 

@@ -8,7 +8,6 @@
 //--------------------------------------------------
 #pragma once
 
-#include "fastphylo/core/Object.hpp"
 #include <vector>
 #include <string>
 #include "fastphylo/core/InitAndPrintOn_utils.hpp"
@@ -35,14 +34,13 @@
 // A SYMMETRIC DISTANCE MATRIX
 
 DM_TEMPLATE
-class DistanceMatrix : public Object
+class DistanceMatrix
 {
   public:
     // CONSTRUCTORS
     DistanceMatrix(size_t size = 0);
     DistanceMatrix(const DistanceMatrix &dm);
     DistanceMatrix &operator=(const DistanceMatrix &dm);
-    DistanceMatrix(std::istream &in);
 
     // DIMENSIONS
     size_t getSize() const
@@ -57,10 +55,6 @@ class DistanceMatrix : public Object
             assureSize();
         }
     }
-
-    // fills it from the stream. The stream should be on a
-    // regular phylip format.
-    std::istream &objInitFromStream(std::istream &is) override;
 
     // set all the matrix elements and identifiers to the supplied values.
     void setDefaultValues(DistanceType &defval, Identifier &defid);
@@ -107,21 +101,15 @@ class DistanceMatrix : public Object
     void swapRowToLast(size_t row);
     void removeLastRow();
 
-    //----------------------
-    std::ostream &printOn(std::ostream &out) const override;
-
-    // The real formatting logic lives in the free operator<< below
-    // (object_modernization_plan.md Phase 1), which needs friendship
-    // here since it reads the private size/identifiers/D/idPrintOn/
-    // distPrintOn members directly.
+    // The free operator<< below needs friendship here since it reads
+    // the private size/identifiers/D/idPrintOn/distPrintOn members
+    // directly.
     template <class I, class DT, class II, class IP, class DI, class DP>
     friend std::ostream &operator<<(std::ostream &os, const DistanceMatrix<I, DT, II, IP, DI, DP> &dm);
 
     //------------------- PRIVATE ------------------------
   private:
-    DistInit distInit;
     DistPrintOn distPrintOn;
-    IdentInit idInit;
     IdentPrintOn idPrintOn;
 
     size_t size;
@@ -132,9 +120,7 @@ class DistanceMatrix : public Object
     void assureSize();
 };
 
-// Found via ADL - what `os << someDistanceMatrix` actually binds to
-// (an exact-match free function beats the inherited, conversion-requiring
-// Object::operator<<). printOn() above forwards here.
+// Found via ADL.
 DM_TEMPLATE std::ostream &operator<<(std::ostream &os, const DISTANCEMATRIX &dm);
 
 //--------------------------
