@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: Sequence.hpp,v 1.9 2006/12/25 18:40:39 isaac Exp $
-//
 //--------------------------------------------------
 #pragma once
 

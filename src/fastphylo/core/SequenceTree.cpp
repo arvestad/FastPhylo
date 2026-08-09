@@ -5,8 +5,6 @@
 // Author: Mehmood Alam Khan,Isaac Elias
 // e-mail: malagori@kth.se, isaac@nada.kth.se
 //
-// cvs: $Id: SequenceTree.cpp,v 1.44 2006/12/08 11:09:13 isaac Exp $
-//
 //--------------------------------------------------
 
 #include "fastphylo/core/SequenceTree.hpp"

@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: DNA_b128_String.cpp,v 1.39 2006/12/28 13:17:18 isaac Exp $
-//
 //--------------------------------------------------
 
 #include "fastphylo/dna/DNA_b128_String.hpp"

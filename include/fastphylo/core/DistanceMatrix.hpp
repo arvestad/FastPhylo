@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: DistanceMatrix.hpp,v 1.12 2006/12/08 11:09:12 isaac Exp $
-//
 //--------------------------------------------------
 #pragma once
 

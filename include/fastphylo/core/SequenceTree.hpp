@@ -5,8 +5,6 @@
 // Author: Mehmood Alam Khan, Isaac Elias
 // e-mail: malagori@kth.se, isaac@nada.kth.se
 //
-// cvs: $Id: SequenceTree.hpp,v 1.22 2006/12/08 11:09:13 isaac Exp $
-//
 //--------------------------------------------------
 #pragma once
 

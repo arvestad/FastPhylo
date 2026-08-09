@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: Sequences2DistanceMatrix.hpp,v 1.7 2006/12/25 18:25:50 isaac Exp $
-//
 //--------------------------------------------------
 
 #ifndef SEQUENCES2DISTANCEMATRIX_HPP

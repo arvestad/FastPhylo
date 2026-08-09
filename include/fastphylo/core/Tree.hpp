@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: Tree.hpp,v 1.26 2006/12/19 09:24:36 isaac Exp $
-//
 // A generic Tree where each node has userdefined data.
 //--------------------------------------------------
 

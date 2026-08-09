@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: Kimura2parameter.cpp,v 1.4 2006/12/10 19:58:53 isaac Exp $
-//
 //--------------------------------------------------
 
 #include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"

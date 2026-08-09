@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: SequenceBasedNJ.cpp,v 1.2 2006/04/23 08:06:50 isaac Exp $
-//
 //--------------------------------------------------
 
 #include "SequenceBasedNJ.hpp"

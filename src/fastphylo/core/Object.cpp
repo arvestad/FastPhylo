@@ -4,7 +4,6 @@
 //
 // Author: Isaac Elias
 //
-// cvs: $Id: Object.cpp,v 1.6 2006/12/08 11:09:12 isaac Exp $
 ///////////////////////////////////////////////
 
 #include "fastphylo/core/Object.hpp"

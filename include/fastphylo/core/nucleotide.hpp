@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: nucleotide.hpp,v 1.6 2006/12/27 14:20:49 isaac Exp $
-//
 //--------------------------------------------------
 
 #pragma once

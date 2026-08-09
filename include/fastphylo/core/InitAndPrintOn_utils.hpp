@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: InitAndPrintOn_utils.hpp,v 1.10 2006/12/19 09:24:36 isaac Exp $
-//
 //--------------------------------------------------
 #pragma once
 

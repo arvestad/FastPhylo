@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: NeighborJoining.hpp,v 1.28 2006/12/08 11:09:13 isaac Exp $
-//
 //--------------------------------------------------
 #ifndef NEIGHBORJOINING_HPP
 #define NEIGHBORJOINING_HPP

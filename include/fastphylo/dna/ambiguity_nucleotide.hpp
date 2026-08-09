@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: ambiguity_nucleotide.hpp,v 1.21 2006/12/29 09:07:10 isaac Exp $
-//
 //--------------------------------------------------
 
 #ifndef AMBIGUITY_NUCLEOTIDE_HPP

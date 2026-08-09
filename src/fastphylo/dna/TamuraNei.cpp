@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: TamuraNei.cpp,v 1.3 2006/01/24 22:55:46 isaac Exp $
-//
 //--------------------------------------------------
 
 #include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"

@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: InitAndPrintOn_utils.cpp,v 1.6 2006/12/08 11:09:12 isaac Exp $
-//
 //--------------------------------------------------
 
 #include "fastphylo/core/InitAndPrintOn_utils.hpp"

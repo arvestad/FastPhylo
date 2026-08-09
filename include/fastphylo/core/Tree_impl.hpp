@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: Tree_impl.hpp,v 1.50 2006/12/19 12:36:23 isaac Exp $
-//
 // Implementation of Tree template in Tree.hpp
 //--------------------------------------------------
 #pragma once

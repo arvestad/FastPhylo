@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: computeDistance_DNA_b128_String.cpp,v 1.16 2006/12/27 15:22:22 isaac Exp $
-//
 //--------------------------------------------------
 
 #include <string>

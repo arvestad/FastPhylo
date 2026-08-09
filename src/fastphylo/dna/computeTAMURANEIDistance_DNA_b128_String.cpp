@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: computeTAMURANEIDistance_DNA_b128_String.cpp,v 1.5 2006/12/10 19:58:53 isaac Exp $
-//
 //--------------------------------------------------
 
 #include <string>

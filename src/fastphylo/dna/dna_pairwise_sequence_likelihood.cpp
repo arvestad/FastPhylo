@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: dna_pairwise_sequence_likelihood.cpp,v 1.1.1.1 2006/01/23 23:58:45 isaac Exp $
-//
 //--------------------------------------------------
 
 #include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"

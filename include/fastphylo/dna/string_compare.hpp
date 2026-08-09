@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: string_compare.hpp,v 1.1 2006/01/25 08:03:37 isaac Exp $
-//
 //--------------------------------------------------
 #ifndef STRING_COMPARE_HPP
 #define STRING_COMPARE_HPP

@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: DNA_b128_String.hpp,v 1.16 2006/12/28 08:50:04 isaac Exp $
-//
 //--------------------------------------------------
 
 #ifndef DNA_b128_STRING_HPP

@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: BitVector.cpp,v 1.9 2006/12/08 11:09:12 isaac Exp $
-//
 //--------------------------------------------------
 
 #include "fastphylo/core/BitVector.hpp"

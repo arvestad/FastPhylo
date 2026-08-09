@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: sse2_wrapper.h,v 1.3 2006/12/20 09:58:19 isaac Exp $
-//
 //--------------------------------------------------
 
 //

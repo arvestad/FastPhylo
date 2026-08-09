@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: dna_pairwise_sequence_likelihood.hpp,v 1.4 2006/12/09 11:45:26 isaac Exp $
-//
 //--------------------------------------------------
 #ifndef DNA_PAIRWISE_SEQUENCE_LIKELIHOOD_HPP
 #define DNA_PAIRWISE_SEQUENCE_LIKELIHOOD_HPP

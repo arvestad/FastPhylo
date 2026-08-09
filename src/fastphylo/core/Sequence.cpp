@@ -5,8 +5,6 @@
 // Author: Isaac Elias, Mehmood Alam Khan
 // e-mail: isaac@nada.kth.se, malagori@kth.se
 //
-// cvs: $Id: Sequence.cpp,v 1.45 2006/12/26 11:57:36 isaac Exp $
-//
 //--------------------------------------------------
 
 #include "fastphylo/core/Sequence.hpp"

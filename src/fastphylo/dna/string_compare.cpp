@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: string_compare.cpp,v 1.4 2006/12/08 11:09:14 isaac Exp $
-//
 //--------------------------------------------------
 
 #include "fastphylo/dna/string_compare.hpp"

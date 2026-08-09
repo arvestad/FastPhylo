@@ -5,8 +5,6 @@
 // Author: Isaac Elias,(addition and changes by Mehmood Alam Khan)
 // e-mail: isaac@nada.kth.se, malagori@kth.se
 //
-// cvs: $Id: Sequences2DistanceMatrix.cpp,v 1.51 2006/12/31 11:17:52 isaac Exp $
-//
 //--------------------------------------------------
 
 #include "fastphylo/dna/Sequences2DistanceMatrix.hpp"

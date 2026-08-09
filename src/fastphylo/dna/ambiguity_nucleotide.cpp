@@ -5,8 +5,6 @@
 // Author: Isaac Elias
 // e-mail: isaac@nada.kth.se
 //
-// cvs: $Id: ambiguity_nucleotide.cpp,v 1.11 2006/12/27 13:40:49 isaac Exp $
-//
 //--------------------------------------------------
 
 #include "fastphylo/dna/ambiguity_nucleotide.hpp"
