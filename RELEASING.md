@@ -30,6 +30,16 @@ Watch progress under the repo's **Actions** tab, then check the
 **Releases** page once it's done (should be 10-15 minutes for all
 three platforms).
 
+### Prereleases (beta/rc)
+
+For a prerelease, append `-` and a label to the version, e.g.
+`2.0.0-beta.1`. This still matches the release workflow's tag trigger
+(it just needs two dots present somewhere in the tag, which any
+`X.Y.Z`-prefixed prerelease tag has), and `release.yml` automatically
+marks the GitHub Release as a **prerelease** whenever the tag contains
+a `-` — no extra flag to remember. A plain `X.Y.Z` tag (no `-`)
+publishes as a normal release, same as always.
+
 ## Do a dry run first
 
 Before pushing a real tag, you can run the entire pipeline —
@@ -46,24 +56,23 @@ from the run page instead. Safe to run as many times as you like.
 
 ## Which branch to tag
 
-Tag whatever branch currently has the code you want to ship. As of
-this writing that's `modernize-cpp17`, not `master` — the
-modernization work (new project layout, C++17, CMake rewrite, this CI)
-hasn't been merged to `master` yet. Once it has, tag `master` as
-usual.
+Tag `master`. The plan for 2.0.0-beta.1 is to merge `modernize-cpp17`
+into `master` first, then tag `master` as usual — unlike the 1.0.x
+line, there's no reason to keep shipping from a long-lived side branch
+once it's ready, and `master` staying frozen on the old layout only
+invites confusion for the (small) existing user base.
 
-Note: `master` carries its own frozen copy of `release.yml` too, but
-only so the **Run workflow** button is visible in the Actions UI at
-all — GitHub requires a `workflow_dispatch` workflow to exist on the
-default branch to list it there. That copy is not what actually runs
-for a dry run against another branch (the branch you pick supplies its
-own copy of the workflow), and it plays no role in a real tag-push
-release either — a tag push always uses whatever `release.yml` exists
-at the tagged commit, regardless of default branch. If you ever change
-`release.yml` on `modernize-cpp17`, remember the `master` copy is now
-stale and won't reflect that change until you copy it over again (or,
-better, once `modernize-cpp17` merges into `master`, delete this note
-and rely on the one true copy).
+If you ever do need to tag a branch other than `master` again (a
+dry run of work still in progress, say): `master` carries its own
+frozen copy of `release.yml`, but only so the **Run workflow** button
+is visible in the Actions UI at all — GitHub requires a
+`workflow_dispatch` workflow to exist on the default branch to list it
+there. That copy is not what actually runs for a dry run against
+another branch (the branch you pick supplies its own copy of the
+workflow), and it plays no role in a real tag-push release either — a
+tag push always uses whatever `release.yml` exists at the tagged
+commit. Keep the `master` copy in sync with the real one if you rely
+on this.
 
 ## If something goes wrong mid-release
 

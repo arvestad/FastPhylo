@@ -197,8 +197,22 @@ jobs:
           path: artifacts
           merge-multiple: true
 
+      # softprops/action-gh-release defaults `prerelease` to false and
+      # does not infer it from the tag name - a semver prerelease tag
+      # (anything with a "-", e.g. "2.0.0-beta.1") must say so
+      # explicitly or it publishes as a normal release.
+      - name: Determine prerelease flag
+        id: prerelease
+        run: |
+          if [[ "${{ github.ref_name }}" == *-* ]]; then
+            echo "value=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/*
           generate_release_notes: true
+          prerelease: ${{ steps.prerelease.outputs.value }}
