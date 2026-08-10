@@ -20,11 +20,17 @@
 #include <algorithm>
 #include "fastphylo/core/xml_output_global.hpp"
 
-#define TREE_ASSERT(stmnt)                                                                                             \
-    if (true)                                                                                                          \
-    {                                                                                                                  \
-        stmnt;                                                                                                         \
-    }
+// Unlike its name suggests, this used to run unconditionally in every
+// build, including release: TREE_ASSERT(assertTreeStructure()) called
+// a full O(n) tree walk (two addNodesInPrefixOrder() vector builds)
+// purely for its ASSERT_EQ/assert side effects, which ASSERT_EQ itself
+// already strips under NDEBUG - so the walk ran for no observable
+// effect in release builds. Gated the same way ASSERT_EQ is.
+#ifndef NDEBUG
+#define TREE_ASSERT(stmnt) stmnt
+#else
+#define TREE_ASSERT(stmnt)
+#endif
 
 //-------------------------------------------------------
 // CONSTRUCTORS
@@ -73,6 +79,9 @@ TREE::Tree(const Tree<Data2, DataInit2, DataPrintOn2> &t, Data defaultData)
 
 TREE_TEMPLATE TREE &TREE::operator=(const TREE &t)
 {
+    if (this == &t)
+        return *this;
+
     if (root != nullptr)
         delete root;
     if (t.root == nullptr)
@@ -795,7 +804,10 @@ TREE_TEMPLATE void TREE::makeCanonical(const std::vector<TREENODE *> &leafs)
     TREENODE *newroot = nullptr;
     if (leafs[0]->getParent() == nullptr)
     {
-        TREENODE *newroot = leafs[0]->getLeftMostChild();
+        // leaf 0 is a lone root with no parent - shadowing this
+        // variable here used to leave the outer newroot at nullptr,
+        // which reRootAt(newroot) below would then dereference.
+        newroot = leafs[0]->getLeftMostChild();
         if (newroot == nullptr)
             return; // there is only one node in the whole tree
     }
