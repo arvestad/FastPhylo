@@ -154,22 +154,63 @@ done so this investigation doesn't re-discover it:
   matches (or could be made to match) `modelestimator`'s actual output
   - that's the concrete next step for this item, not building the
   custom-model path from scratch.
-- **`fastphylo-py` should benefit from this work, and currently
-  doesn't use this C++ library at all.** This is a real unknown this
-  plan can't resolve yet - `fastphylo-py`'s source, current
-  architecture, and relationship (if any) to this repository haven't
-  been investigated. Before design decisions in Q1 (e.g. how `Matrix`/
-  Eigen gets exposed) get finalized, find out: where `fastphylo-py`
-  lives, whether it currently reimplements ML distance computation
-  independently or wraps something else, and what it would take for it
-  to consume `libfastphylo` directly (Python bindings via `pybind11`/
-  similar, or some other mechanism). This could matter for Q1's
-  design - a library API that's easy to bind to Python is a real
-  constraint alongside raw speed, worth knowing about before, not
-  after, committing to a specific `Matrix`/Eigen shape. Scoped here as
-  "investigate and report back," not as a commitment to build Python
-  bindings within this plan - that's likely substantial enough to
-  deserve its own plan once more is known.
+- **`fastphylo-py` should benefit from this work.** Investigated
+  2026-08-10 (public at `github.com/arvestad/fastphylo-py`, pybind11 +
+  scikit-build-core, ships a compiled `_fastphylo` extension). Findings
+  that change this plan's shape:
+  - **DNA/tree side**: `src/cpp/fastphylo/` is a **vendored, stale copy**
+    of this library's core - it still has `Object.hpp`/`.cpp` and
+    `Exception.hpp`/`.cpp`, both of which this repo deleted (the
+    Object-modernization and legacy-error-handling work). It is not a
+    submodule, dependency, or otherwise synced to this repo - it was
+    forked at some pre-modernization point and has diverged since. It
+    is **not** a live consumer of anything this plan speeds up unless
+    someone re-syncs it or switches it to link the real library.
+  - **Protein ML side is a from-scratch reimplementation, not a wrapper
+    around `fastprot`'s code at all** - there is no `Matrix.hpp`,
+    `ModelMatrix.hpp`, or `MaximumLikelihood.cpp` in `fastphylo-py`.
+    Instead, `src/fastphylo/protein.py` defines the rate matrices and
+    does the **eigendecomposition in Python** (numpy/scipy), caching
+    each named model's decomposition once. Only the branch-length
+    optimization is in C++: `compute_protein_distances_cpp(names, seqs,
+    right_e, left_e, evals)`, taking the already-decomposed
+    eigenvectors/eigenvalues as plain numpy arrays and running
+    **Brent's bounded minimizer** per pair.
+  - **This bears directly on Q3**: `fastphylo-py` has already, on its
+    own, replaced this repo's finite-difference "Newton-Raphson" with
+    Brent's method for the same branch-length-optimization problem.
+    That's independent evidence (not just the user's hunch) that Q3's
+    experiment is worth doing, and a working reference implementation
+    to compare correctness/speed against instead of building the
+    Brent's-method experiment from a blank page.
+  - **This bears directly on Q1 and the "more models"/`modelestimator`
+    item**: `fastphylo-py`'s Python side already carries 16 named
+    protein models (WAG, JTT, JTT-DCMUT, LG, VT, HIVb, HIVw, cpREV,
+    BLOSUM62, Dayhoff, DCMUT, MtREV, RtREV, PMB, + 2 more) - more than
+    this repo's 9 post-`ARVE`-removal - and already has the exact split
+    this plan was trying to invent for `modelestimator` support:
+    *decomposition* (from a named model, or in principle from any
+    externally-supplied matrix) is separate from *optimization*, and
+    only the decomposition's output (eigenvectors + eigenvalues)
+    crosses the Python/C++ boundary. That argues for shaping `fastprot`
+    itself the same way - a thin, fast optimizer core that consumes a
+    precomputed decomposition, fed either by the library's own built-in
+    models or by an external one (`-F`/`--model-file`,
+    `modelestimator`) - rather than keeping decomposition and
+    optimization welded together as they are in today's
+    `MaximumLikelihood.cpp`. If that reshaping happens, the *same* C++
+    optimizer core becomes a natural candidate for `fastphylo-py` to
+    link against directly (replacing its standalone
+    `compute_protein_distances_cpp`), which is the actual "benefit from
+    this work" the user asked for - not exposing `Matrix`/Eigen to
+    Python at all, just the decomposition-in/optimize-out boundary
+    `fastphylo-py` already assumes.
+  - Not yet investigated, deliberately out of scope for Phase 0: whether
+    `fastphylo-py`'s Python-side eigendecomposition (numpy/scipy) is
+    itself a bottleneck at the "hundreds to thousands of sequences"
+    scale, and whether re-syncing or replacing its vendored C++ core is
+    worth doing at all - both are calls to make once Q1/Q3 have real
+    numbers, not now.
 
 ## The four questions, made concrete and measurable
 
@@ -377,13 +418,13 @@ from guessing ahead of time.
 ## Phases (draft - refine once this work actually starts)
 
 0. **Scope-settling prerequisites**, independent of profiling: remove
-   `ARVE` (small, self-contained); start the `fastphylo-py`
-   investigation (where it lives, current architecture, what
-   consuming `libfastphylo` would take) early enough to inform Q1's
-   design, even if the full answer isn't ready before profiling starts.
-   The IQ-TREE2 model-catalog expansion is *not* included here - real
-   sourcing work, its own plan when picked up, not a prerequisite for
-   the performance questions.
+   `ARVE` (small, self-contained) - **done**; investigate `fastphylo-py`
+   (where it lives, current architecture, what consuming `libfastphylo`
+   would take) - **done**, see "Scope decisions from direct feedback"
+   above. The IQ-TREE2 model-catalog expansion is *not* included here -
+   real sourcing work, its own plan when picked up, not a prerequisite
+   for the performance questions. Phase 0 is complete; ready to start
+   Phase 1.
 1. **Fresh profiling baseline** on current (2.0.0-beta.1) code, across
    a range of dataset sizes **weighted toward the stated hard case**
    (hundreds to thousands of sequences), not evenly spread. Confirms or
@@ -404,7 +445,10 @@ from guessing ahead of time.
 3. **Q3 - Brent's-method experiment** (also high expected impact, same
    reason as Q1 - scales with pairs × iterations). Independent of
    Phase 2 (touches the solver, not the matrix layer) - could run in
-   parallel with it.
+   parallel with it. `fastphylo-py`'s `compute_protein_distances_cpp`
+   (see "Scope decisions" above) already does exactly this swap for the
+   same problem - use it as a working reference for correctness/speed
+   comparison rather than designing the experiment from scratch.
 4. **Q2 - decomposition-cost-vs-dataset-size sweep**, then (if
    justified by that data) the embedded-constants experiment for the
    named models. Lower expected impact at the stated hard case than
