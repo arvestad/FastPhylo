@@ -374,6 +374,19 @@ target_include_directories(BinaryDmIO_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/a
 target_link_libraries(BinaryDmIO_test PRIVATE fastphylo)
 add_test(NAME BinaryDmIO_test COMMAND BinaryDmIO_test)
 
+# likelihood_calc()'s safeguarded Newton-Raphson search, checked
+# against real biological data (examples/globin_family.fasta) across
+# all 5 ML models - see planning/fastprot_ml_speedup_investigation_
+# plan.md's "Q3 results" for the bug this guards against (the previous
+# finite-difference solver could return unverified, badly wrong
+# answers on real, as opposed to narrow-divergence-synthetic, data).
+# Links fastphylo directly (needs ModelMatrix/Matrix/MaximumLikelihood/
+# ProtSeqCode together) rather than hand-picking sources.
+add_executable(MaximumLikelihood_test ${FASTPHYLO_TESTS_DIR}/MaximumLikelihood_test.cpp)
+target_link_libraries(MaximumLikelihood_test PRIVATE fastphylo BLAS::BLAS LAPACK::LAPACK)
+target_compile_definitions(MaximumLikelihood_test PRIVATE GLOBIN_FIXTURE_PATH="${CMAKE_SOURCE_DIR}/examples/globin_family.fasta")
+add_test(NAME MaximumLikelihood_test COMMAND MaximumLikelihood_test)
+
 # Phase 5 performance benchmark (plan.md). Not an add_test() - it prints
 # timing data, not a pass/fail result; see benchmarks/run_benchmarks.sh
 # for the reproducible one-command entry point.
