@@ -471,6 +471,134 @@ problem (`likelihood_deriv(t) = 0`):
   also the working tolerance for Q1's `float`-vs-`double` experiment
   above - same underlying justification, same bar.
 
+#### Q3 results (2026-08-10): this turned into a correctness finding, not just a performance one
+
+`benchmarks/bench_ml_solver.cpp` - standalone, exploratory (not wired
+into CMake). Implements a textbook Brent-Dekker root-finder against
+the real `likelihood_deriv()`, and a byte-for-byte copy of
+`likelihood_calc()`'s Newton loop (counting evaluations via a wrapper)
+so both solvers run the exact same math the shipped code does. Tested
+against `examples/globin_family.fasta` (real biological data, 25
+sequences, 300 pairs) across all 5 ML models, and against the larger
+synthetic datasets from Phase 1/2 (`benchmarks/data/ml_bench_*.fasta`,
+narrower 5-40% divergence range).
+
+**On synthetic data, nothing alarming**: 100% of pairs converge
+cleanly under the current Newton loop, Newton actually uses *fewer*
+evaluations than Brent (~9.3-9.5/pair vs. ~13.6-13.7/pair), and the
+two solvers' answers agree to just at the 3-decimal tolerance boundary
+(max diff 0.0010-0.0011). Taken alone, this would suggest Q3's premise
+- that Brent's method is a clear win - doesn't hold, and the
+finite-difference Newton loop is fine as-is.
+
+**On real data, it's a different story.** Across all 5 models on
+`globin_family.fasta`:
+
+| model | bracket failures | Newton "converged" cleanly | worst disagreement (distance units) |
+|---|---|---|---|
+| WAG | 0% | 56.3% | 0.089 |
+| JTT | 5% | 2.7% | 0.616 |
+| Dayhoff | 0% | 64.3% | 0.023 |
+| MVR | 0% | 8.0% | 0.270 |
+| LG | 42.7% | 93.7%\* | 3.803 |
+
+\*LG's high "converged" rate is misleading - see below, most of its
+problem cases are bracket failures, a different category, not counted
+against the "converged" percentage.
+
+For WAG/JTT/Dayhoff/MVR, the dominant failure mode is the existing
+Newton loop's third bail-out condition (`fabs(l_d) < fabs(l_new)`,
+"the derivative is getting larger") firing on the *very first*
+iteration - the worst WAG pair (seq[13] vs. seq[24], 74.7% observed
+substitution fraction) exits after only 2 evaluations. Diagnosing it
+by printing `likelihood_deriv(t)` across a grid: the function is a
+smooth, single-root, well-behaved curve (108.3 at t=1, monotonically
+decreasing through zero somewhere around t=170-190, bottoming out
+around t=300, easing back toward zero after) - Brent's method finds
+the true root at t=164.6 without difficulty (11 evaluations, valid
+bracket). Newton's starting value (`kimura_distance(N)`) lands at
+t≈192, already close to the root, where the function is *locally
+flat* (slope ≈ -0.0023/unit around there) - the finite-difference step
+(`delta = 0.001`, fixed regardless of local curvature) produces
+`l_new - l_d` on the order of 1e-6, indistinguishable from floating-
+point noise in `likelihood_deriv()`'s own internal sum. The resulting
+Newton step is unreliable, and the bail-out condition compares
+`l_d`/`l_new` (function *values* near the starting point) rather than
+checking whether the just-computed step actually improved anything -
+it fires on this noise and returns the single step's result as final,
+**never having evaluated the function at that returned point at all**,
+and with `|l_d|` nowhere near `tol` (0.001). This is not a hypothetical
+- it's the majority code path for MVR (92%) and JTT (94.3%) on real
+data, and worth calling this precisely what it is: **the shipped
+Newton loop can return distances that are wrong by several tenths of
+a PAM-scaled distance unit on real data, silently, for a large
+fraction of pairs, depending on model.** The syntheic-data benchmark
+above never surfaces this because its narrow 5-40% divergence range
+never lands sequences in the flat-derivative region where it happens.
+
+**Brent's method isn't simply "the fix" either - it has its own
+failure mode**, found via the same diagnostic on LG's worst pair
+(seq[7] vs. seq[12], 50.3% observed substitution fraction, the pair
+behind LG's 3.80 worst-case disagreement): `likelihood_deriv(t)` here
+is negative and monotonically shrinking in magnitude from t=1 onward
+(-19.7 at t=1, decaying through -1.8e-8 at t=80, -8.5e-11 at t=100,
+down to -1.8e-15 to -6.6e-15 by t=150-400) - the pair is *saturated*
+(so diverged that the likelihood is essentially flat past t≈80, with
+no real interior maximum). At t=500, floating-point roundoff in that
+already-near-zero computation happens to land on `+4.5e-16` - not a
+real root, just noise flipping the sign of a value that's already
+indistinguishable from zero. A naive Brent-Dekker implementation,
+seeing `f(1)<0` and `f(500)>0`, treats `[1,500]` as a valid bracket
+and dutifully converges (24 iterations) to `t=461` - a number with no
+real meaning, deep in the noise floor. Newton, by contrast, happens to
+get this one right: its starting value lands at t≈80.76 where
+`|likelihood_deriv|≈1.8e-8` already clears `tol=0.001` on the very
+first evaluation, so it "converges" in 1 eval to a value that's
+actually reasonable for a saturated pair. **This is structurally the
+same problem the DNA-side JC/K2P/TN93/F84 saturation guard
+(`TOO_DIVERGED_DISTANCE`, `dna_pairwise_sequence_likelihood.hpp`) was
+added for earlier in this engagement** - protein ML has an analogous
+"sequences too diverged for the model to pin down a finite distance"
+case, and neither solver handles it *robustly* today (Newton gets it
+right by luck of its starting point in this instance; a naive
+bracket-based Brent gets it wrong by trusting floating-point noise as
+a sign change). `LG`'s 42.7% "bracket failure" rate is largely this
+same phenomenon from the other side - `f(1)` and `f(500)` landing on
+the *same* sign (both sides of a fully-saturated, never-crosses-zero
+curve), which is the honest, safe failure mode (my harness reports it
+as "no comparison possible" rather than guessing), unlike the noisy
+sign-flip case above where a comparison silently happens to be wrong.
+
+**What this means for Q3 and for the plan going forward**:
+1. Q3's original framing ("is Brent's method faster/more robust than
+   Newton") undersold the actual issue - this isn't primarily a speed
+   question (on data where both solvers behave normally, Newton is
+   already faster per Q3's own numbers above). It's that **the current
+   solver's bail-out heuristics are not a safe approximation of
+   convergence** on real, diverse data, independent of which
+   root-finding algorithm is used.
+2. A production-quality fix needs **both** pieces: a bracket-based
+   method (Brent-Dekker or similar) for reliable convergence in the
+   normal case, **and** an explicit saturation/flatness check (in the
+   spirit of `TOO_DIVERGED_DISTANCE`) so deeply-diverged pairs get a
+   deliberate, documented sentinel/clamped answer instead of either
+   solver's failure mode (Newton's unverified bail-out, or Brent's
+   noise-as-root). Likely shape: check whether `likelihood_deriv(500)`
+   (or some fixed large `t`) is already within a small absolute
+   tolerance of 0 *before* trusting a bracket-based sign check, mirror
+   of the DNA-side guard's spirit though the exact mechanism will
+   differ (there it's a closed-form saturation test; here it needs to
+   be a numerical check on the derivative itself).
+3. `fastphylo-py`'s independent adoption of Brent's method (Phase 0's
+   finding) doesn't automatically mean it's immune to the second
+   failure mode above - worth keeping in mind if/when this repo's
+   fix is compared against it, not assumed safe by precedent alone.
+4. This is real enough, and independent enough of the rest of this
+   speed-focused plan, that it may deserve flagging to Lasse as a
+   correctness item on its own track, separate from (though
+   discovered by) this performance investigation - noting it here
+   rather than deciding unilaterally to fix it as part of "Q3."
+
 ### Q4 - Other input-independent precomputation
 
 Q2's embedded-eigendecomposition idea is the concrete instance found
@@ -627,6 +755,17 @@ codebase's actual numbers are what settles it, per this plan's own
    (see "Scope decisions" above) already does exactly this swap for the
    same problem - use it as a working reference for correctness/speed
    comparison rather than designing the experiment from scratch.
+   **Done, and turned into a correctness finding, not just a
+   performance one** - see "Q3 results" above. On real biological data,
+   the current Newton loop's bail-out heuristics return unverified,
+   sometimes badly-wrong answers on a large fraction of pairs
+   (model-dependent, up to 94% for MVR/JTT); a naive Brent-Dekker swap
+   fixes most of that but has its own failure mode on fully-saturated
+   pairs (floating-point noise mistaken for a sign change). A real fix
+   needs a bracket-based solver *and* an explicit saturation guard,
+   analogous to the DNA-side `TOO_DIVERGED_DISTANCE` work done earlier
+   this engagement. Flagged as possibly worth raising as its own
+   correctness track, separate from this plan's performance focus.
 4. **Q2 - decomposition-cost-vs-dataset-size sweep**, then (if
    justified by that data) the embedded-constants experiment for the
    named models. Lower expected impact at the stated hard case than
