@@ -107,12 +107,20 @@ done so this investigation doesn't re-discover it:
   to move the needle on large-`N` runs the way Q1/Q3 could). Profiling
   (Phase 1) should prioritize realistic large-`N` datasets accordingly,
   not just extend the size range for its own sake.
-- **Remove the `ARVE` model** ("non-standard"). Shrinks the named-model
-  set this plan's Q2/Q4 precomputation ideas apply to from 6 to 5
-  (`JTT`/`DAY`/`MVR`/`WAG`/`LG`). This is a small, independent
-  housekeeping change (`ModelMatrix.cpp`'s `get_arvestad()`, the
-  `arve` enum case, whatever CLI/docs surface it) - worth doing on its
-  own, doesn't need to wait for the rest of this investigation.
+- **Remove the `ARVE` model** ("non-standard"). **Done** (this branch):
+  `get_arvestad()`/`get_arve_eq()` and the `arve` enum case deleted
+  from both the main library (`ModelMatrix.hpp`/`.cpp`,
+  `ProtDistCalc.cpp`) and `fastprot_mpi`'s separate, otherwise-
+  unsynced copy (kept in step for this one mechanical change, unlike
+  the performance work, since it's low-risk and just textual);
+  `fastprot`'s and `fastprot_mpi`'s `-D`/`--distance-function` CLI help
+  text and `CheckedTransformer` maps updated to match. Verified: full
+  rebuild (Clang + real GCC 14) + `ctest` 4/4 + `RunExamples.sh` 20/20
+  byte-identical (no fixture used `ARVE`) + `RunCliChecks.sh`, a
+  `-DWITH_LIBXML=OFF` build, and a direct check that `-D ARVE` is now
+  rejected by CLI11's `CheckedTransformer`. Shrinks the named-model set
+  Q2/Q4's precomputation ideas apply to from 6 to 5 (`JTT`/`DAY`/`MVR`/
+  `WAG`/`LG`).
 - **Add more matrices, using IQ-TREE2's model catalog as the
   reference.** A real, separate sourcing task - IQ-TREE2 supports
   many more protein models (e.g. Dayhoff-DCMut, VT, PMB, Blosum62, the
@@ -138,6 +146,14 @@ done so this investigation doesn't re-discover it:
   distinction explicit wherever Q2/Q4 gets implemented, so "precompute
   for known models" code doesn't accidentally get asked to handle an
   arbitrary custom matrix too.
+  **Found while doing the `ARVE` removal above**: `fastprot`/
+  `fastprot_mpi` already have a `-F`/`--model-file` option
+  ("Read matrix and equilibrium distribution from file, when used
+  --distance-function is disregarded") - a custom-model mechanism may
+  already exist in some form. Not yet checked whether its file format
+  matches (or could be made to match) `modelestimator`'s actual output
+  - that's the concrete next step for this item, not building the
+  custom-model path from scratch.
 - **`fastphylo-py` should benefit from this work, and currently
   doesn't use this C++ library at all.** This is a real unknown this
   plan can't resolve yet - `fastphylo-py`'s source, current

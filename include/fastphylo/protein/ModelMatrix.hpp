@@ -16,7 +16,6 @@ enum model_type
     jcss,
     wag,
     day,
-    arve,
     jtt,
     mvr,
     lg
@@ -26,10 +25,6 @@ enum model_type
 Matrix get_model_matrix(model_type model);
 //! Gets the equilibrium distribution for the specified model
 DblVec get_model_vec(model_type model);
-//! The Arvestad rate matrix
-Matrix get_arvestad();
-//! The Arvestad equilibrium distribution
-DblVec get_arve_eq();
 //! The JTT rate matrix
 Matrix get_jtt();
 //! The JTT equilibrium distribution
