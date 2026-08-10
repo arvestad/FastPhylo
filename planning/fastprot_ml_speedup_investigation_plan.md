@@ -415,6 +415,77 @@ from guessing ahead of time.
   practice from `phase0_audit.md`, given thermal-throttling drift was
   observed there) rather than trusting a single before/after pair.
 
+## Phase 1 results (2026-08-10): fresh ML profiling baseline
+
+Environment: Apple Silicon (arm64), AppleClang 15, dedicated
+`build-ml-profile/` (RelWithDebInfo, `-O2 -g`, not the main `build/`
+dir) so this round doesn't disturb the existing build. Synthetic
+datasets via `benchmarks/gen_dataset.py`, weighted toward the stated
+hard case: 100/300/600/1000 protein sequences x 300 residues
+(`benchmarks/data/ml_bench_*x300.fasta`), `fastprot -D WAG -m`.
+
+**Wall-clock scaling** (median of 3 reps, `/dev/null` output to
+isolate compute from I/O):
+
+| n_seqs | pairs | median wall time |
+|---|---|---|
+| 100 | 4,950 | 0.150s |
+| 300 | 44,850 | 1.046s |
+| 600 | 179,700 | 4.099s |
+| 1000 | 499,500 | 11.092s |
+
+Scales essentially linearly with pair count (e.g. 600→1000 is 2.78x
+the pairs for 2.71x the time) - no surprises here, confirms per-pair
+cost is roughly constant as `N` grows, as expected once decomposition
+is cached once per run rather than per pair.
+
+**Profiling** (macOS `sample`, 1ms interval, 1000x300 dataset, 15s
+capture): confirms the once-per-run decomposition caching from
+`speed2026a`'s "ML speedup round" is still doing its job - zero
+`DGEEV`/`DSYEV`/`DGETRF`/`DGETRI`/`DLAHQR`/`DTREVC` samples anywhere in
+the profile. But it surfaces a **new, more specific finding** than
+`phase0_audit.md`'s post-caching round did:
+
+- Flat (top-of-stack) attribution: `fastprot`'s own code 36.1%,
+  `libBLAS.dylib` (Accelerate) 45.1%, `libsystem_malloc` 8.8%.
+- The call graph traces that 45.1% to exactly one call site:
+  `likelihood_calc` → `likelihood_deriv` → `MatrixExpm::at(t)` →
+  `Matrix::mult(left, eigenvectors_inv)` (`Matrix.cpp:318`, the
+  "two matrix multiplies" comment left after `speed2026a`'s "part 2"
+  round replaced the diagonal-factor multiply with a column-scale loop
+  - this is the *other*, still-dense, multiply) → `dgemm_` → deep
+  inside Accelerate's `DGEMM`/dispatch machinery. Within
+  `likelihood_deriv`'s own samples, 65.6% are inside `MatrixExpm::at`;
+  within that, 92.8% are inside `Matrix::mult`; within *that*, 99.5%
+  are inside `DGEMM` itself, not call/dispatch overhead layered
+  outside it.
+- **This is a 20x20 matrix multiply** - 8,000 multiply-adds, trivial
+  for even naive scalar code - going through a general-purpose BLAS
+  implementation via Accelerate that's built for problems orders of
+  magnitude larger. It's the single largest attributable cost in the
+  whole ML pipeline today, ahead of `likelihood_deriv`'s own
+  allocation/`elem_mult`/`elem_div` arithmetic that `speed2026a`'s
+  "part 2" round already reduced from 6 `Matrix` temporaries to 3.
+
+**What this changes for Q1**: the plan's existing Q1 framing (hand-
+rolled `Matrix` vs. Eigen, allocation/bounds-check overhead as the
+hypothesized culprit) is still right in direction but was aimed at the
+wrong primary target - the allocation overhead is real (`malloc` is
+8.8%) but smaller than this one `dgemm_` call site. A fixed-size
+`Eigen::Matrix<double,20,20>` multiply (compile-time unrolled, no
+external call, no BLAS dispatch/thread-pool/blocking logic sized for
+large matrices) is a strong candidate to eliminate most of that 45.1%
+directly, independent of whatever the allocation-layer swap saves
+separately. Phase 2's microbenchmark should measure this specific
+operation (20x20 dense multiply, called at the same rate `MatrixExpm::
+at` calls it) explicitly, not just generic elementwise ops.
+
+Not yet done, left for Phase 2: confirming Eigen (or a hand-rolled
+loop) is actually faster here in practice rather than just in theory -
+tiny-matrix BLAS overhead is a known general pattern, but this
+codebase's actual numbers are what settles it, per this plan's own
+"measurement, not general reasoning" rule.
+
 ## Phases (draft - refine once this work actually starts)
 
 0. **Scope-settling prerequisites**, independent of profiling: remove
@@ -429,7 +500,10 @@ from guessing ahead of time.
    a range of dataset sizes **weighted toward the stated hard case**
    (hundreds to thousands of sequences), not evenly spread. Confirms or
    corrects the "current state" section above; produces the actual
-   numbers Q1-Q4 get measured against.
+   numbers Q1-Q4 get measured against. **Done** - see "Phase 1 results"
+   above; found the per-iteration 20x20 `dgemm_` call in `MatrixExpm::
+   at` is now the single largest cost (45.1% of samples), sharpening
+   Q1's target beyond the allocation-layer hypothesis.
 2. **Q1 - matrix backend microbenchmark** (highest expected impact,
    given the hard case is large `N`): current `Matrix` vs. Eigen vs.
    (if the microbenchmark's own results justify spending the setup
