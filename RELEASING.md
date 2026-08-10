@@ -2,7 +2,7 @@
 
 This is the short, practical version. For the design rationale behind
 any of this (why Ubuntu 22.04 instead of latest, why two workflow
-triggers, etc.), see `github_actions_release_builds_plan.md`.
+triggers, etc.), see `planning/github_actions_release_builds_plan.md`.
 
 ## The short version
 

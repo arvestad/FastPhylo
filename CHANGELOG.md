@@ -51,7 +51,7 @@ is a beta - please report anything that looks wrong.
   `toupper()`+compare loop. Measured 5-7x speedup on the comparison
   primitive itself and 1.8-6x end-to-end depending on dataset size
   (see `benchmarks/RESULTS.md` for full methodology and numbers,
-  `phase0_audit.md`/`phase1_design.md` for the profiling and design
+  `planning/phase0_audit.md`/`planning/phase1_design.md` for the profiling and design
   work behind it). No minimum CPU feature is required beyond each
   platform's SIMD baseline (SSE2 on x86-64, NEON on AArch64, both
   present unconditionally on those architectures); a scalar fallback
