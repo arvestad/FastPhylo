@@ -144,7 +144,7 @@ static __inline float compute_p_distance_GAPS(int strlen, simple_string_distance
 // writers' "-1" sentinel). Each formula below checks its own domain
 // up front instead and substitutes a fixed, clearly-flagged
 // "maximally diverged" distance.
-static constexpr double TOO_DIVERGED_DISTANCE = 4.5;
+static constexpr double TOO_DIVERGED_DISTANCE = 10.0;
 
 static __inline void warnTooDiverged(const char *modelName)
 {
