@@ -1,13 +1,16 @@
 # Changelog
 
-## 2.0.0-beta.2 (Unreleased)
+## 2.0.0-beta.3 (Unreleased)
 
 ### Changed
 
 - `fastdist -D JC`/`-D K2P`/`-D TN93` (and F84) now clamp maximally-
   diverged pairs to distance `10.0` (was `2.5` in 2.0.0-beta.1, briefly
   `4.5` in between) - a better stand-in "giving up" value for a pair
-  too diverged for the model's correction formula to apply.
+  too diverged for the model's correction formula to apply. This was
+  also 2.0.0-beta.2's only change (tagged directly, without this
+  changelog entry) - beta.3 exists to carry the documentation, no
+  further code change on top of it.
 
 ## 2.0.0-beta.1
 
