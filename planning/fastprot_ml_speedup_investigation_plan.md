@@ -298,6 +298,104 @@ report accuracy-vs-speed for `float` the same way (a)/(b)/(c) get
 reported, using the 3-decimal-place tolerance from Q3 as the
 correctness bar.
 
+#### Q1 results (2026-08-10): microbenchmark
+
+`benchmarks/bench_matrix_backend.cpp` - a standalone, exploratory
+benchmark (Eigen 3.4.0 via Homebrew, not yet a project dependency;
+this is what decides whether it should become one - not wired into
+CMake). Uses a real rate matrix (WAG's, via `get_model_matrix(wag)`),
+decomposed once via LAPACK `dgeev_`/`dgetrf_`/`dgetri_` (duplicating
+`MatrixExpm`'s constructor logic locally rather than adding a
+benchmark-only accessor to production headers) and separately via
+Eigen's `EigenSolver`, then times the exact operations Phase 1's
+profiling flagged, on 21 reps after 3 warm-up calls. Build/run
+instructions are in the file's header comment.
+
+**Correctness first** (t=0.35, a representative mid-range branch
+length, against the current LAPACK-based result, well inside Q3's
+3-decimal-place/5e-4 working tolerance):
+- Eigen `double`: max abs diff 4.99e-16 (machine precision - as
+  expected, both are legitimate double-precision eigendecompositions
+  of the same matrix).
+- Eigen `float`: max abs diff 1.69e-7 - **three orders of magnitude
+  inside the tolerance bar**, not just barely passing. Directly
+  answers Q1's "does float actually stay accurate enough" caution:
+  for this operation, on this matrix, yes, with a lot of headroom.
+
+**Timing** (median µs, 3 consistent runs):
+
+| operation | current (dgemm_) | naive loop | Eigen `double` | Eigen `float` |
+|---|---|---|---|---|
+| 20x20 dense multiply alone | 0.67-0.75 | 6.0-6.9 (**~9x slower**) | 0.63-0.71 (~parity) | 0.33-0.38 (~1.8-2x) |
+| full `MatrixExpm::at(t)` (scale + multiply) | 1.21-1.33 | - | 0.71-0.83 (**~1.6-1.7x**) | 0.33-0.42 (**~3.2-3.6x**) |
+
+Three findings, each changing part of Q1's framing:
+1. **A naive hand-rolled triple loop is a trap, not a fix** - ~9x
+   *slower* than the current `dgemm_` call. Accelerate's BLAS, once
+   warmed, is not naively slow at 20x20; a hand-rolled loop with no
+   vectorization and a cache-unfriendly access pattern (this
+   implementation walks `a`'s rows across `k`, a stride access against
+   `Matrix`'s column-major storage) loses badly. Don't reach for "just
+   write the loop by hand" as a shortcut past this axis.
+2. **In isolation, `double`-precision multiply alone is roughly at
+   parity with the current `dgemm_` call** (1.0-1.07x) - the earlier
+   hypothesis that BLAS *dispatch* overhead alone dominates a 20x20
+   multiply doesn't fully hold once the call is warm; Accelerate's
+   `dgemm_` is competitive with Eigen's own double-precision multiply
+   for raw throughput at this size.
+3. **The gap shows up in the *full* operation, not the isolated
+   multiply** - `double`-Eigen's advantage jumps to 1.6-1.7x once the
+   column-scale step is included, because Eigen's expression templates
+   (`eigenvectors * scale.asDiagonal()`, fixed-size, stack-allocated)
+   fuse scale-then-multiply into one pass with no heap allocation,
+   where the current code allocates a fresh `left` `Matrix` for the
+   scaled result before calling `Matrix::mult()` (which itself
+   allocates the result `Matrix`). This is the allocation-layer cost
+   Q1 originally hypothesized - real, just smaller in isolation than
+   the `dgemm_`-call cost Phase 1's profiling surfaced, and only fully
+   visible once the whole operation, not just the multiply, is
+   compared apples-to-apples.
+   `float` compounds both effects (no allocation + half the SIMD
+   width) for the largest win measured, 3.2-3.6x.
+
+**Rough end-to-end estimate** (Amdahl's law off Phase 1's flat 45.1%
+`libBLAS.dylib` figure, using the full-operation speedups since
+adopting Eigen here means rewriting `MatrixExpm::at()` as a whole, not
+swapping just the multiply call): roughly **1.2-1.3x** end-to-end from
+`double`-Eigen, **1.4-1.5x** from `float`-Eigen, *before* also
+addressing `likelihood_deriv()`'s own remaining allocations (the
+"fastprot's own code" 36.1% bucket, only partly reduced by
+`speed2026a`'s "part 2" round). **Explicitly a rough estimate, not a
+verified result** - it reuses Phase 1's profile fractions from before
+this change existed, which is exactly the kind of extrapolation
+`phase0_audit.md`'s output-writing round found could be misleading;
+re-profiling after actually wiring `MatrixExpm`/`Matrix` (or the parts
+of it this touches) over to Eigen is the real check, not this number.
+
+**MKL: not tested, deliberately.** Reasoning: Phase 1 and this
+microbenchmark both point at the same mechanism - a general-purpose
+BLAS's internal dispatch/blocking machinery, sized for large matrices,
+costing more than the actual 8,000-multiply-add's worth of work for a
+20x20 case. That mechanism isn't specific to Accelerate; MKL would
+predictably hit the same category of fixed overhead at this size, so
+it's unlikely to change the qualitative conclusion (Eigen's fixed-size
+types avoid a BLAS call entirely, which is the actual point, not which
+vendor's BLAS is faster). Provisioning MKL in this (macOS/arm64)
+environment is a real, non-trivial dependency to add just to confirm
+a prediction the mechanism already explains - cheap to revisit
+specifically if this conclusion is later disputed, not worth blocking
+on now.
+
+**Recommendation for Phase 5's synthesis**: Eigen (`double` first,
+`float` as a further, separately-decidable step given both clear the
+correctness bar with large margin) over both the current hand-rolled
+`Matrix`/BLAS approach and a naive hand-rolled loop; MKL not adopted.
+Scope for an actual implementation: `MatrixExpm`/the parts of `Matrix`
+it uses in `likelihood_deriv()`'s hot path, not a wholesale `Matrix`
+class replacement across the codebase (`Matrix` has other, non-hot-
+path callers - `ExpectedDistance.cpp`, out of scope per this plan -
+that don't need this).
+
 ### Q2 - Further reducing spectral-decomposition work
 
 Already once-per-run, not once-per-pair or once-per-iteration (see
@@ -515,7 +613,13 @@ codebase's actual numbers are what settles it, per this plan's own
    if so does it add a meaningful further win on top of the backend
    choice, or is the allocation-layer fix where all the gain already
    was? If the BLAS vendor turns out to matter more than expected,
-   revisit.
+   revisit. **Done** - see "Q1 results" above; Eigen wins clearly
+   (`double` ~1.6-1.7x, `float` ~3.2-3.6x on the full `MatrixExpm::
+   at()` operation, both far inside the correctness tolerance), a
+   naive hand-rolled loop is actively worse, MKL not tested (reasoning
+   given inline - the mechanism found doesn't predict a different
+   vendor would help). Rough end-to-end estimate 1.2-1.5x, to be
+   confirmed by re-profiling once actually implemented.
 3. **Q3 - Brent's-method experiment** (also high expected impact, same
    reason as Q1 - scales with pairs × iterations). Independent of
    Phase 2 (touches the solver, not the matrix layer) - could run in
