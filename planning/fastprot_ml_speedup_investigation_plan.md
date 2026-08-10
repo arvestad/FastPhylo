@@ -15,6 +15,16 @@ below gets settled by measurement against this codebase's actual data
 and actual code, not by general reasoning about which library "should"
 be faster.
 
+**Updated 2026-08-10** with direct follow-up feedback: which dataset
+size is actually the hard case (reprioritizes the four questions - see
+"Scope decisions" below), a `float`-vs-`double` question folded into
+Q1, a concrete numerical tolerance for Q1/Q3's non-byte-identical
+comparisons, and four related-but-distinct scope items (removing the
+`ARVE` model, sourcing more models from IQ-TREE2's catalog, reading
+`modelestimator` output as a custom model, and making `fastphylo-py`
+benefit from this work) that inform Q2/Q4 without being performance
+questions themselves.
+
 ## Current state (verified before writing this plan, not assumed)
 
 The `speed2026a` branch (merged into `master` as part of 2.0.0-beta.1)
@@ -82,6 +92,69 @@ done so this investigation doesn't re-discover it:
   is scoped to the main library copy
   (`src/fastphylo/protein/`) only.
 
+## Scope decisions from direct feedback (2026-08-10), before the four questions
+
+- **The hard case is large `N` - hundreds to thousands of sequences,
+  not a handful.** This directly reprioritizes the four questions:
+  anything that costs *per pair* or *per Newton-Raphson iteration*
+  (Q1's allocation/bounds-check overhead, Q3's solver choice) scales
+  with `N²`-ish and dominates at this size; anything that's a fixed
+  *per-run* cost (Q2's one-time spectral decomposition) gets amortized
+  across the ~`N²/2` pairs in a large run almost regardless of how
+  expensive it is. **Q1 and Q3 are now the primary levers for the
+  stated hard case; Q2 is very likely a secondary win** (real, and
+  still worth doing per the feedback below, but shouldn't be expected
+  to move the needle on large-`N` runs the way Q1/Q3 could). Profiling
+  (Phase 1) should prioritize realistic large-`N` datasets accordingly,
+  not just extend the size range for its own sake.
+- **Remove the `ARVE` model** ("non-standard"). Shrinks the named-model
+  set this plan's Q2/Q4 precomputation ideas apply to from 6 to 5
+  (`JTT`/`DAY`/`MVR`/`WAG`/`LG`). This is a small, independent
+  housekeeping change (`ModelMatrix.cpp`'s `get_arvestad()`, the
+  `arve` enum case, whatever CLI/docs surface it) - worth doing on its
+  own, doesn't need to wait for the rest of this investigation.
+- **Add more matrices, using IQ-TREE2's model catalog as the
+  reference.** A real, separate sourcing task - IQ-TREE2 supports
+  many more protein models (e.g. Dayhoff-DCMut, VT, PMB, Blosum62, the
+  mtREV/mtMAM/mtART family, HIVb/HIVw, FLU, rtREV, cpREV, the
+  Q.pfam/Q.bird/Q.insect/... family, LG4M/LG4X, and more) - and this
+  plan deliberately does not attempt to enumerate or transcribe exact
+  published rate values here from memory; that needs to be sourced
+  carefully (IQ-TREE2's own documentation/source, or the original
+  papers) and verified the same way this engagement has verified
+  everything else, not guessed. Directly relevant to Q2/Q4: more named
+  models means a bigger, more valuable precomputed-decomposition table
+  if that direction pans out - but the sourcing work itself is outside
+  this document's scope and deserves its own plan when picked up.
+- **Support reading `modelestimator` output as a custom (user-supplied)
+  model.** A real feature request, and it sharpens Q2/Q4's scope: a
+  user-supplied rate matrix is inherently data-dependent (read from a
+  file at runtime, potentially different on every invocation) and can
+  **never** be a precomputation candidate the way the fixed named
+  models are - it still benefits from every other speedup this
+  investigation finds (Q1's allocation work, Q3's solver, the
+  already-done once-per-run decomposition caching), just not from
+  Q2/Q4's "skip the decomposition entirely" idea. Worth keeping this
+  distinction explicit wherever Q2/Q4 gets implemented, so "precompute
+  for known models" code doesn't accidentally get asked to handle an
+  arbitrary custom matrix too.
+- **`fastphylo-py` should benefit from this work, and currently
+  doesn't use this C++ library at all.** This is a real unknown this
+  plan can't resolve yet - `fastphylo-py`'s source, current
+  architecture, and relationship (if any) to this repository haven't
+  been investigated. Before design decisions in Q1 (e.g. how `Matrix`/
+  Eigen gets exposed) get finalized, find out: where `fastphylo-py`
+  lives, whether it currently reimplements ML distance computation
+  independently or wraps something else, and what it would take for it
+  to consume `libfastphylo` directly (Python bindings via `pybind11`/
+  similar, or some other mechanism). This could matter for Q1's
+  design - a library API that's easy to bind to Python is a real
+  constraint alongside raw speed, worth knowing about before, not
+  after, committing to a specific `Matrix`/Eigen shape. Scoped here as
+  "investigate and report back," not as a commitment to build Python
+  bindings within this plan - that's likely substantial enough to
+  deserve its own plan once more is known.
+
 ## The four questions, made concrete and measurable
 
 ### Q1 - Matrix backend: hand-rolled `Matrix` vs. Eigen vs. MKL
@@ -124,36 +197,86 @@ these rate matrices aren't symmetric - produces results compatible
 with LAPACK's `dgeev_`, byte-identical or within a documented and
 justified tolerance).
 
+**Third axis, direct question raised in feedback: does `float` instead
+of `double` help?** Plausible, worth testing, folded into this same
+experiment rather than treated separately - it's really "what scalar
+type does the matrix backend use," the same shape of question as (a)
+vs. (b) above. The case for it:
+
+- The tolerance guidance from Q3 below (agreement to 3 decimal places
+  is already more precision than the data can justify) applies just as
+  well here - `double`'s ~15-16 significant digits is far beyond what
+  3 decimal places of a distance value need, so `float`'s ~7
+  significant digits has a lot of headroom before it could plausibly
+  matter, *if* error doesn't get amplified somewhere in the pipeline.
+- `float` halves memory per `Matrix` (20x20: 1600 bytes vs. 3200) and
+  doubles the number of lanes available per SIMD register, which could
+  matter for `likelihood_deriv()`'s per-element arithmetic loop if it
+  vectorizes (auto-vectorized or via Eigen, which vectorizes chained
+  expressions by default) - though at 20x20 both sizes fit comfortably
+  in L1 cache, so cache-footprint effects specifically are likely
+  negligible; the SIMD-width effect is the more plausible win.
+
+The case for caution, and why this needs measurement rather than
+assumption:
+
+- LAPACK's `dgeev_` is double-only; there's a separate single-precision
+  routine (`sgeev_`), meaning a `float` path either needs that separate
+  routine (a real, if small, extra branch to verify) or needs the
+  decomposition to go through Eigen's own `EigenSolver` instead of
+  LAPACK at all - tying this axis to the Eigen decision in (a)/(b)
+  above rather than making it fully independent.
+- Eigendecomposition of a matrix that then feeds a matrix *exponential*
+  is exactly the kind of numerically-sensitive operation where small
+  input errors don't necessarily propagate linearly - "3 decimal places
+  is enough for the final answer" doesn't automatically mean "any
+  precision loss mid-pipeline is fine," and needs checking empirically
+  against real `Q` matrices and real `t` ranges, not assumed from the
+  end-to-end tolerance alone.
+
+Concretely: once Eigen is in the microbenchmark for (a)/(b), templating
+the same benchmark on `float` as well as `double` is close to free
+(Eigen matrices are templated on scalar type already) - do both, and
+report accuracy-vs-speed for `float` the same way (a)/(b)/(c) get
+reported, using the 3-decimal-place tolerance from Q3 as the
+correctness bar.
+
 ### Q2 - Further reducing spectral-decomposition work
 
 Already once-per-run, not once-per-pair or once-per-iteration (see
 above) - the open question is whether "once per run" is still more
-than necessary. Two sub-questions, both answerable by measurement
-rather than argument:
+than necessary. **Given the hard case is large `N` (see "Scope
+decisions" above), expect this question's answer to be "already
+negligible" more often than not** - one `dgeev_` call amortized across
+the ~`N²/2` pairs a large run does is unlikely to be where the time
+goes. Still worth answering with real numbers rather than skipping
+(explicitly requested: "an interesting opportunity for speedup"), and
+it directly helps the *small*-`N` case even if large-`N` turns out
+unaffected. Two sub-questions, both answerable by measurement rather
+than argument:
 
 1. **How much does that one decomposition actually cost relative to a
-   typical run?** If `fastprot` is normally run on datasets large
-   enough that the per-pair Newton-Raphson work dominates total time,
-   amortizing one `dgeev_` call across thousands of pairs already makes
-   it negligible - not worth further engineering. If `fastprot` is
-   commonly run on small inputs (a handful of sequences), the one-time
-   decomposition could still be a meaningful fraction of total wall
-   time. Needs profiling across a realistic *range* of dataset sizes,
-   not just the large benchmark datasets `speed2026a` used (small-input
-   latency and large-input throughput are different questions).
-2. **Could the decomposition be skipped entirely for the 6 named
-   models** (WAG/JTT/DAY/ARVE/MVR/LG - each a fixed, published rate
-   matrix, never data-dependent) **by embedding precomputed
-   eigenvalues/eigenvectors as literal constants**, the same way `Q`
-   itself is already embedded as literal doubles in `ModelMatrix.cpp`?
-   This is the cleanest instance of "precompute regardless of input
-   data" (question 4) - concrete, scoped to exactly 6 known matrices,
-   and testable by literally computing and checking in the 6 constants,
-   then comparing output byte-for-byte against the current
-   runtime-`dgeev_` path before deciding whether the added source
-   verbosity (6 sets of 20 eigenvalues + 400-entry eigenvector
-   matrices) is worth however much time sub-question 1 finds this
-   actually saves.
+   typical run, across the realistic size range** - specifically
+   including the small end, since that's where this sub-question's
+   answer is most likely to actually matter, per the reprioritization
+   above.
+2. **Could the decomposition be skipped entirely for the named models**
+   (5 after `ARVE`'s removal - `JTT`/`DAY`/`MVR`/`WAG`/`LG`, more if
+   the IQ-TREE2 catalog-expansion work lands first - each a fixed,
+   published rate matrix, never data-dependent) **by embedding
+   precomputed eigenvalues/eigenvectors as literal constants**, the
+   same way `Q` itself is already embedded as literal doubles in
+   `ModelMatrix.cpp`? This is the cleanest instance of "precompute
+   regardless of input data" (question 4) - concrete, scoped to
+   exactly the known named matrices, and testable by literally
+   computing and checking in the constants, then comparing output
+   byte-for-byte against the current runtime-`dgeev_` path before
+   deciding whether the added source verbosity is worth however much
+   time sub-question 1 finds this actually saves. **Only applies to the
+   fixed named models** - a `modelestimator`-supplied custom matrix
+   (see "Scope decisions" above) is inherently data-dependent and must
+   always be decomposed at runtime; keep that distinction explicit in
+   whatever code implements this.
 
 ### Q3 - Newton-Raphson vs. a derivative-free solver (Brent's method)
 
@@ -182,6 +305,16 @@ problem (`likelihood_deriv(t) = 0`):
   and document an explicit acceptable-difference tolerance *before*
   running the comparison, and report actual observed differences
   against it - don't discover the tolerance question after the fact.
+  **Working tolerance, per direct guidance**: agreement to 3 decimal
+  places is already more precision than the underlying data justifies
+  - "even three decimals is a bit fishy" given real biological data's
+  own noise floor. Treat two computed distances as equivalent if they
+  round to the same value at 3 decimal places (pin down the exact
+  comparison - absolute vs. relative difference, how ties/rounding
+  edge cases are handled - when the actual experiment is set up, this
+  is the guiding principle, not a fully-specified epsilon yet). This is
+  also the working tolerance for Q1's `float`-vs-`double` experiment
+  above - same underlying justification, same bar.
 
 ### Q4 - Other input-independent precomputation
 
@@ -215,38 +348,60 @@ from guessing ahead of time.
   from `speed2026a`'s work - extend rather than replace.
 - **Verify correctness at whatever tolerance is appropriate per
   change**: byte-identical for pure refactors/allocation changes (Q1's
-  Matrix-layer swap, Q2's decomposition-caching extensions), an
-  explicitly documented and justified numerical tolerance for anything
-  that changes the actual computation path (Q3's solver swap, Q2's
-  embedded-constants approach if the embedded values are computed by a
-  different code path than the current runtime one).
+  `Matrix`-layer swap *at `double` precision*, Q2's decomposition-
+  caching extensions), the 3-decimal-place working tolerance from Q3
+  for anything that changes the actual computation path (Q3's solver
+  swap, Q1's `float`-precision variant, Q2's embedded-constants
+  approach if the embedded values are computed by a different code
+  path than the current runtime one).
 - Interleave old/new binary runs when measuring wall time (established
   practice from `phase0_audit.md`, given thermal-throttling drift was
   observed there) rather than trusting a single before/after pair.
 
 ## Phases (draft - refine once this work actually starts)
 
+0. **Scope-settling prerequisites**, independent of profiling: remove
+   `ARVE` (small, self-contained); start the `fastphylo-py`
+   investigation (where it lives, current architecture, what
+   consuming `libfastphylo` would take) early enough to inform Q1's
+   design, even if the full answer isn't ready before profiling starts.
+   The IQ-TREE2 model-catalog expansion is *not* included here - real
+   sourcing work, its own plan when picked up, not a prerequisite for
+   the performance questions.
 1. **Fresh profiling baseline** on current (2.0.0-beta.1) code, across
-   a range of dataset sizes. Confirms or corrects the "current state"
-   section above; produces the actual numbers Q1-Q4 get measured
-   against.
-2. **Q1 - matrix backend microbenchmark**: current `Matrix` vs. Eigen
-   vs. (if the microbenchmark's own results justify spending the setup
-   effort) MKL, on the actual 20x20 operations involved. Decision point:
-   is the allocation/bounds-check-layer hypothesis confirmed? If yes,
-   Eigen is the likely direction (cheaper dependency than MKL, matches
-   the pre-existing memory finding); if the BLAS vendor turns out to
-   matter more than expected, revisit.
-3. **Q2 - decomposition-cost-vs-dataset-size sweep**, then (if
-   justified by that data) the embedded-constants experiment for the 6
-   named models.
-4. **Q3 - Brent's-method experiment**, run independently of Phases 2/3
-   (touches the solver, not the matrix layer - low interference risk,
-   could happen in parallel).
+   a range of dataset sizes **weighted toward the stated hard case**
+   (hundreds to thousands of sequences), not evenly spread. Confirms or
+   corrects the "current state" section above; produces the actual
+   numbers Q1-Q4 get measured against.
+2. **Q1 - matrix backend microbenchmark** (highest expected impact,
+   given the hard case is large `N`): current `Matrix` vs. Eigen vs.
+   (if the microbenchmark's own results justify spending the setup
+   effort) MKL, each at both `double` and `float`, on the actual 20x20
+   operations involved. Decision point: is the allocation/bounds-check-
+   layer hypothesis confirmed? If yes, Eigen is the likely direction
+   (cheaper dependency than MKL, matches the pre-existing memory
+   finding); does `float` clear the 3-decimal-place tolerance bar, and
+   if so does it add a meaningful further win on top of the backend
+   choice, or is the allocation-layer fix where all the gain already
+   was? If the BLAS vendor turns out to matter more than expected,
+   revisit.
+3. **Q3 - Brent's-method experiment** (also high expected impact, same
+   reason as Q1 - scales with pairs × iterations). Independent of
+   Phase 2 (touches the solver, not the matrix layer) - could run in
+   parallel with it.
+4. **Q2 - decomposition-cost-vs-dataset-size sweep**, then (if
+   justified by that data) the embedded-constants experiment for the
+   named models. Lower expected impact at the stated hard case than
+   Phases 2-3 (see "Scope decisions" above) but cheap to answer and
+   worth having the real numbers for, plus it directly helps the small-
+   `N` case.
 5. **Synthesis**: given Phases 1-4's actual measurements, write the
    real implementation plan (which changes are worth making, in what
    order, what each one's expected impact is) - this document is the
-   investigation procedure, not that plan.
+   investigation procedure, not that plan. Also the point to revisit
+   `fastphylo-py`'s findings from Phase 0 in light of whatever Q1
+   concluded, if bindings turn out to be relevant to how any of this
+   actually ships.
 
 ## Explicitly out of scope
 
@@ -263,3 +418,10 @@ from guessing ahead of time.
   profiled as a small fraction of total ML time in the current
   pipeline; not expected to be where further gains live, per the
   "current state" section above.
+- Actually sourcing the IQ-TREE2 model catalog, and actually
+  implementing `modelestimator`-output parsing - both real, scoped as
+  their own future work in "Scope decisions" above, not detailed here.
+- Building `fastphylo-py` Python bindings, or any other concrete
+  integration work - Phase 0 only investigates and reports; committing
+  to a specific integration approach is a decision for after that
+  investigation, not part of this plan.
