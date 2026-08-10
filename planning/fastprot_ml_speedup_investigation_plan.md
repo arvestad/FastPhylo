@@ -433,7 +433,75 @@ than argument:
    always be decomposed at runtime; keep that distinction explicit in
    whatever code implements this.
 
-### Q3 - Newton-Raphson vs. a derivative-free solver (Brent's method)
+#### Q2 results (2026-08-10): negligible everywhere, don't build sub-question 2
+
+`benchmarks/bench_decomposition_cost.cpp` (standalone, exploratory,
+not wired into CMake) times `MatrixExpm(Q)`'s constructor in isolation
+(51 reps after 3 warm-up, all 5 named models):
+
+| model | median decomposition cost |
+|---|---|
+| WAG | 63.4us |
+| JTT | 68.5us |
+| Dayhoff | 75.8us |
+| MVR | 101.5us |
+| LG | 92.5us |
+
+Wall-clock scaling (`fastprot -D WAG -m`, post-solver-fix binary,
+median of 3 reps, small-`N`-weighted per Q2's own request):
+
+| N | pairs | median wall time |
+|---|---|---|
+| 2 | 1 | 34.7ms |
+| 5 | 10 | 33.5ms |
+| 10 | 45 | 33.3ms |
+| 20 | 190 | 36.9ms |
+| 50 | 1,225 | 52.2ms |
+| 100 | 4,950 | 111.5ms |
+| 300 | 44,850 | 686.5ms |
+| 600 | 179,700 | 2822.9ms |
+
+Two things fall out of this, and they point the same direction from
+different angles:
+
+1. **The pairwise ML work itself has a marginal cost of ~15.6us/pair**
+   (from the 300→600 slope: 2.105s over 134,850 more pairs) - so
+   decomposition's ~63-102us is worth roughly 4-7 pairs' worth of
+   work. Even at `N=2` (1 pair), decomposition is not "the bottleneck"
+   in any actionable sense - there's nothing to amortize it against
+   yet.
+2. **Process startup dominates everything at small `N` anyway.**
+   Wall time is flat at ~33-37ms from `N=2` through `N=20` (1 to 190
+   pairs) - the *entire* pairwise ML computation, decomposition
+   included, is submerged under fixed argument-parsing/sequence-
+   loading overhead that's 300-500x larger than the decomposition
+   itself. This wasn't what Q2 asked about (Q2 is specifically about
+   decomposition vs. the rest of the *ML computation*, not vs.
+   unrelated process startup), but it's necessary context: even in the
+   theoretical best case for this optimization (the very smallest
+   `N`), decomposition is invisible against the process's actual fixed
+   costs.
+
+**Sub-question 1's answer**: decomposition's cost is real (63-102us,
+model-dependent) but is dominated by *something* at every `N` tested -
+process startup at small `N`, accumulated per-pair cost at large `N` -
+and never rises above roughly 0.3% of total wall time even at the
+most favorable `N=2` case (65us of 34,700us).
+
+**Sub-question 2, therefore: not worth building.** The embedded-
+constants prototype (precomputing and literal-embedding each named
+model's eigendecomposition) was scoped as "testable... before deciding
+whether the added source verbosity is worth however much time sub-
+question 1 finds this actually saves" - sub-question 1 finds at most
+~100us out of even the smallest realistic run, which is smaller than
+run-to-run timing noise in these very measurements (compare the `N=2`
+median of 34.7ms against `N=10`'s 33.3ms - not a real difference,
+just noise of the same rough magnitude as the entire quantity sub-
+question 2 would be trying to save). Not building it - the added
+source verbosity (5 more sets of embedded 20x20 constants) and the
+new maintenance burden (verifying/re-deriving them if a model's
+published values ever get corrected) aren't worth a sub-0.3%,
+noise-level win. This closes Q2 without further work.
 
 Given the current solver is already a one-evaluation-per-iteration
 finite-difference method (see above), the fair experiment is not
@@ -771,7 +839,13 @@ codebase's actual numbers are what settles it, per this plan's own
    named models. Lower expected impact at the stated hard case than
    Phases 2-3 (see "Scope decisions" above) but cheap to answer and
    worth having the real numbers for, plus it directly helps the small-
-   `N` case.
+   `N` case. **Done** - see "Q2 results" above. Decomposition costs
+   63-102us depending on model, never more than ~0.3% of total wall
+   time even at `N=2` (dominated by ~33-37ms of fixed process startup
+   at small `N`, and by ~15.6us/pair of accumulated pairwise cost at
+   large `N`). The embedded-constants sub-question is answered "no" -
+   the win would be smaller than run-to-run timing noise, not worth
+   the added source verbosity/maintenance burden.
 5. **Synthesis**: given Phases 1-4's actual measurements, write the
    real implementation plan (which changes are worth making, in what
    order, what each one's expected impact is) - this document is the
