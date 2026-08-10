@@ -1,0 +1,11 @@
+# Force LF line endings on checkout regardless of a checkout machine's
+# core.autocrlf setting - github_actions_release_builds_plan.md's
+# Windows CI leg would otherwise risk checking examples/expected_output/
+# text fixtures out with CRLF, making a byte-exact `diff -q` against
+# freshly generated output spuriously fail on line endings alone, not
+# a real correctness bug. text=auto still lets git auto-detect genuinely
+# binary files (skipping conversion for them); the explicit line below
+# is belt-and-suspenders for the one fixture that's binary for real
+# (a raw distance-matrix byte dump, not text that merely looks binary).
+* text=auto eol=lf
+examples/expected_output/ex16.out binary

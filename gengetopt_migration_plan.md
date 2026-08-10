@@ -1,0 +1,421 @@
+# Plan: migrate off gengetopt
+
+## Goal
+
+Replace gengetopt (the `.ggo` DSL, its generated C parser, and the
+FTP-fetch-and-self-build fallback that provisions it when no system
+`gengetopt` is on `PATH`) with a modern, header-only C++ CLI library.
+Two explicit constraints from direct discussion:
+
+1. **Preserve the current CLI interfaces as closely as possible** -
+   same flags (long and short forms), same types, same defaults, same
+   enum choice strings, same positional-`FILE` behavior, same
+   early-exit flags (`--print-relaxng-*`). Existing scripts and
+   muscle memory shouldn't break.
+2. **Make adding/changing options easier going forward** - Lasse is a
+   fan of Python's `argparse`; the replacement should let a new option
+   be added with one fluent call at the point of use, not a separate
+   DSL file plus a build-time code-generation step.
+
+This is a sibling effort to [[project_lint_cleanup]] (which
+deliberately left gengetopt alone - "Migrating off `gengetopt`...
+orthogonal to linting, not bundled here") and directly de-risks one of
+[[project_github_actions_release_builds]]'s open questions: that plan
+flags Windows as needing `gengetopt` provisioned via `vcpkg` (no
+system package exists there); a header-only replacement needs no
+provisioning on any platform, so this migration should land *before*
+that plan's Phase D (Windows).
+
+## Current state, verified directly (not assumed)
+
+Four apps use gengetopt, each via its own `apps/<name>/gengetopt/cmdline.ggo`:
+
+| App | Options | Notes |
+|---|---|---|
+| `fastdist` | 18 | most enums, most `_given` checks (tstvratio/pyrtvratio/fixfactor/seed all optional-with-fallback) |
+| `fastprot` | 14 | shares most of its option set with `fastprot_mpi` |
+| `fnj` | 10 | smallest surface, good first-migration candidate |
+| `fastprot_mpi` | 13 | near-duplicate of `fastprot`'s `.ggo` (already flagged as a duplicate elsewhere - see `project_layout_plan.md`); **out of scope for every phase so far**, same as the rest of this engagement |
+
+Confirmed via grep: every reference to `args_info`/`cmdline_parser`/
+`gengetopt_args_info` is confined to each app's own `main.cpp` - no
+other `.cpp`/`.hpp` in the tree touches the generated struct directly.
+That's a direct result of the lint-cleanup pass's cognitive-complexity
+refactors (`lint_phase5_refactors.md`), which already extracted each
+app's option-consuming logic into small helper functions:
+`handleEarlyExitFlags`, `buildTranslationModel`/`buildInputStream`/
+`buildOutputStream`/`seedRandom` (fastdist), `resolveMethods`/
+`buildInputStream`/`buildOutputStream` (fnj), equivalents in
+`fastprot`. Those helpers already take `args_info`-shaped state by
+parameter and contain no parsing logic themselves - only the
+option-parsing block and the specific `.foo_arg`/`.foo_given` field
+reads need to change; control flow does not. This makes the migration
+meaningfully lower-risk than it would have been before that refactor.
+
+Confirmed live (`fastprot --help`/`--version`/a bad enum value), so the
+"preserve interfaces" goal has a concrete baseline to check against:
+
+```
+$ fastprot --help
+Usage: fastprot [OPTION]... [FILE]...
+  -h, --help                    Print help and exit
+      --detailed-help           Print help, including all details...
+  -V, --version                 Print version and exit
+  -o, --outfile=filename        output filename...
+  -D, --distance-function=ENUM  Distance function  (possible values="ID",
+                                  "JC", ... default=`WAG')
+  ...
+
+$ fastprot --version
+fastprot 1.0.10
+
+$ fastprot -D BOGUS
+fastprot: invalid argument, "BOGUS", for option `--distance-function' (`-D')
+$ echo $?
+1
+```
+
+Every enumerated option (`input-format`, `output-format`,
+`distance-function`, `ambiguity-frequency-model`, `method`, `speed`)
+compiles to gengetopt's own generated C enum (e.g.
+`distance_function_arg_JC`), switched on throughout each app's
+`main.cpp`. The positional `FILE` argument is optional, single-valued
+in every `.ggo` (`args_info.inputs_num`/`args_info.inputs[0]`) - no app
+currently accepts more than one positional file, confirmed by reading
+all four `.ggo` files in full, not assumed.
+
+`RunExamples.sh` exercises real invocations (`fastdist -I phylip
+seq.phylip`, `fnj -r 2 -I phylip dm.phylip`, `fastprot ... -D JCK -O
+binary`, etc.) - short options, `-X value` spacing, enum values, and
+flags are all covered by the regression suite. **`--help`, `--version`,
+and error paths (bad enum, unknown flag, `--print-relaxng-*`) are
+not** - those need manual verification during migration, not just a
+green `RunExamples.sh`.
+
+## Chosen library: CLI11
+
+[CLI11](https://github.com/CLIUtils/CLI11) - header-only C++11,
+BSD-3-Clause, explicitly designed around a fluent
+`app.add_option(...)`/`app.add_flag(...)` call-per-option API that is
+the closest C++ analog to `argparse.add_argument()` available today.
+Recommended over the alternatives:
+
+- **cxxopts**: also header-only, but modeled more on
+  `boost::program_options`'s builder-chain style than argparse's
+  imperative one - a real option, but less of a match for the stated
+  preference.
+- **Boost.Program_options**: adds a full Boost dependency this project
+  doesn't otherwise have, for a capability a single header already
+  covers - unjustified weight.
+- **Hand-rolled parser**: rejected outright - defeats "make adding
+  options easier," and this project already has a hand-rolled-parser
+  cautionary tale in `arg_utils_ext.cpp`'s own ad hoc flag handling
+  found during the lint pass.
+
+CLI11 covers every feature the current `.ggo` files use: typed
+options (`string`/`int`/`float`), enumerated choices via
+`CLI::CheckedTransformer` or `CLI::IsMember` (validates *and* converts
+in one step - a direct fit for converting a `--distance-function`
+string straight into a project-defined `enum class`), flags, default
+values (auto-shown in `--help`), an optional single positional
+argument, and both `-o value`/`-o=value`/`--long=value` syntaxes.
+`.count("opt") > 0` is the direct equivalent of gengetopt's
+`..._given` fields used throughout (e.g. `seed_given`,
+`fixfactor_given`, `analyze_run_number_given`).
+
+**Vendoring**: recommend vendoring a single pinned CLI11 header
+in-tree (`third_party/CLI11.hpp` or similar), matching this project's
+existing pattern for `simde` - avoids adding a network dependency
+(FetchContent) or a package-manager dependency (vcpkg/apt/brew) to a
+clean build, and sidesteps exactly the kind of provisioning gap that
+motivated this migration in the first place. Specific version to pin
+is a Phase A decision (pick a recent stable release at implementation
+time, not decided here).
+
+## What this removes
+
+Once all in-scope apps are migrated: every `.ggo` file, the
+generated-code `add_custom_command`s and their `MAKE_DIRECTORY` calls,
+`find_program(GENGETOPT gengetopt)` and its FTP-fetch-and-build
+fallback (`build_gengetopt.sh`, the `ftp://ftp.gnu.org/...
+gengetopt-2.22.2.tar.gz` download, `GENGETOPT_VERSION`) - all deleted
+outright, not left as a NOLINT'd fallback "just in case" (same
+convention as `STATIC`'s removal - see
+[[feedback_modernize_dont_keep_legacy_stopgaps]]). This is the last
+piece of 2009-2011-era vendored-toolchain machinery in the build.
+
+## Decisions / constraints to hold to
+
+- **Flag names, short letters, types, defaults, and enum choice
+  strings are preserved exactly** for every option in scope. This is
+  a hard constraint, not a "close enough."
+- **Positional `FILE` argument stays optional and single-valued**,
+  falling back to stdin when absent - matches every app's current
+  behavior, verified above.
+- **`--print-relaxng-input`/`--print-relaxng-output`'s early-exit
+  behavior is preserved** - these must fire (and conflict-check
+  against each other) before any other required-option validation,
+  same as today's `handleEarlyExitFlags` helpers already isolate.
+- **`--help`/`--version` text is explicitly allowed to look
+  different.** CLI11's autogenerated help formatting differs
+  structurally from gengetopt's; byte-matching it isn't the goal or a
+  reasonable ask. What must be preserved is *content*: every option,
+  its short/long name, and a description at least as clear as today's.
+  Show a before/after side-by-side for the first migrated app (`fnj`)
+  and get explicit sign-off before repeating the pattern on the rest,
+  rather than assuming the same judgment call three more times.
+- **Exit codes and stderr behavior on bad input should match**
+  (gengetopt exits `1` with a one-line stderr message on an invalid
+  enum value or unknown flag, confirmed above) - CLI11 does the same
+  via its default `CLI11_PARSE` error handling; verify per app rather
+  than assume.
+- **No new CLI functionality added as part of this migration** -
+  subcommands, config-file loading, shell completion, etc. are all
+  things CLI11 *can* do and gengetopt couldn't, but adding them now
+  would conflate "migrate" with "extend." The ease-of-adding-options
+  win is about *future* work, not licence to expand scope here.
+
+## Open questions - settled 2026-08-04
+
+- **`fastprot_mpi` scope**: **in.** Leaving one straggler app on
+  gengetopt would mean the old FTP-fallback machinery could never be
+  fully deleted - direct instruction to include it.
+- **Vendoring mechanism**: **vendored header**, confirmed - a single
+  pinned `CLI11.hpp` in `third_party/`, not `FetchContent`/vcpkg/a
+  system package. (Note: this project's one existing header-only
+  dependency, `simde`, actually uses `find_path()` against a
+  system/brew install, *not* in-tree vendoring - an earlier draft of
+  this plan claimed otherwise. CLI11 is this project's first
+  genuinely vendored-in-tree dependency, not a repeat of an existing
+  pattern.)
+- **Automated CLI-level tests**: **add a small script.**
+  `examples/RunCliChecks.sh` (added in Phase B) checks, per migrated
+  app: `--version` exit code and exact output, `--help` exit code and
+  presence of every long option name, and that an invalid enum value
+  and an unrecognized flag both exit nonzero. Wired into
+  `.github/workflows/build-and-test.yml` right after
+  `RunExamples.sh`. Extend it with one more `check_app` call per app
+  as Phases C/D land.
+
+## Phases
+
+### Phase A - Settle the open questions above (done)
+
+See "Open questions - settled 2026-08-04" above.
+
+### Phase B - Vendor CLI11, prove the pattern on `fnj` (done)
+
+Vendored `third_party/CLI11.hpp` (v2.7.2, the latest release at the
+time, confirmed via the GitHub releases API - not guessed). Wired into
+`src/c++/CMakeLists.txt` as a plain include path on `fnj`'s target
+only (`target_include_directories(fnj PRIVATE ... third_party)`) -
+`fastdist`/`fastprot`/`fastprot_mpi` are untouched and still build via
+gengetopt, confirmed by a full build succeeding with both toolchains
+present simultaneously.
+
+Migrated `fnj/main.cpp`: `gengetopt_args_info` replaced by a plain
+`FnjOptions` struct (values plus `_given` bools for the options whose
+*presence* matters, matching gengetopt's `..._given` fields exactly);
+`input-format`/`output-format` got their own scoped enums,
+`--method` binds directly to `NeighborJoining.hpp`'s existing
+`NJ_method` domain enum via `CLI::CheckedTransformer` (eliminating the
+old `resolveMethods()` translation function entirely - CLI11 doing the
+validation *is* the translation). `--dm-per-run` is accepted but still
+unused, matching pre-migration behavior exactly (confirmed via grep
+before touching it - nothing in `fnj` ever read
+`args_info.dm_per_run_arg` either). Deleted `apps/fnj/gengetopt/`
+(the `.ggo` and its directory) and every fnj-specific line in
+`src/c++/CMakeLists.txt`'s generated-code plumbing.
+
+Two real gaps found and fixed by diffing against the captured
+baseline, not assumed away:
+- **`--help` text leaked CLI11's internal validator repr** -
+  `CheckedTransformer`'s default behavior appends `value in {a->0,
+  b->1,...} OR {0,1,...}` to every enum option's description, which is
+  strictly worse than gengetopt's clean `(possible values=...)`.
+  Fixed with `.description("")` on each `CheckedTransformer`, since
+  the possible-values/default text is already written by hand in each
+  option's own description.
+- **Exit codes didn't match.** gengetopt exits `1` uniformly on any
+  parse problem (confirmed live: bad enum value, unrecognized flag -
+  both `1`). CLI11 assigns distinct codes per error subtype (105 for
+  a failed validator, 109 for an unexpected argument, etc.) and only
+  `0` for `--help`/`--version`. Fixed by catching `CLI::ParseError`,
+  calling `app.exit(e)` for its printed message, then explicitly
+  `std::exit`-ing `0` if the error is a `CLI::Success` (help/version)
+  or `1` otherwise - this is exactly the kind of gap the plan's own
+  "verify per app, don't assume" note about error paths was for.
+
+Verified: full clean rebuild (all four apps, two toolchains
+coexisting) + `ctest` (2/2) + `RunExamples.sh` (byte-identical,
+including fnj-exercising examples 8/9) + the new
+`RunCliChecks.sh` (all checks pass) + a manual side-by-side of
+`fnj --help`/`--version`/a bad enum value/an unknown flag against the
+baseline captured pre-migration.
+
+**`--help` formatting sign-off: done, with three tweaks.** Reviewed
+side-by-side with Lasse; three changes requested and applied:
+1. A "Usage: " prefix before the usage line - CLI11's default
+   `Formatter::make_usage()` drops that label whenever a program name
+   is available (always true here), just printing `fnj [OPTIONS]
+   [FILE]` bare. Fixed with a small `FastphyloHelpFormatter :
+   CLI::Formatter` override of `make_usage()` that prepends `"Usage:
+   "` to the name before delegating to the base implementation - named
+   generically (not `Fnj...`) since it's meant to be reused verbatim
+   by every later-migrated app, not fnj-specific.
+2. Blank lines around the `Usage:`/`POSITIONALS:` sections - already
+   present in CLI11's default output (confirmed by inspection, not
+   assumed), no change needed.
+3. The app description's first word capitalized (`"builds
+   phylogenetic trees"` -> `"Builds phylogenetic trees"`) - a
+   one-word string literal change.
+
+All three carry forward unchanged to Phase C/D: the
+`FastphyloHelpFormatter` class, once a second app needs it, should
+move to a small shared header rather than being copy-pasted a second
+time (a call to make when Phase C actually starts, not decided here).
+
+### Phase C - Migrate `fastdist` (done)
+
+Migrated onto the same `FastdistOptions`-struct pattern as `fnj`.
+`--distance-function` binds directly to
+`dna_pairwise_sequence_likelihood.hpp`'s existing `sequence_model`
+domain enum (the same trick as `fnj`'s `--method`/`NJ_method`) - no
+new enum needed there, only for `input-format`/`output-format`
+(different value sets than `fnj`'s, so not shared) and
+`ambiguity-frequency-model` (no existing domain enum for `UNI`/`BASE`,
+so a small scoped enum was added). `fixfactor`/`seed`/`number-of-runs`
+all needed `_given` tracking, same as before - `fixfactor` is the
+interesting one: it has a default of `1.0` either way, but
+`useFixFactor` only applies it when `--fixfactor` was actually passed
+on the command line, so the struct field and the `_given` bool are
+genuinely both needed.
+
+`FastphyloHelpFormatter` (Phase B's `--help`-formatting fix) moved out
+of `fnj/main.cpp` into a new shared `apps/CliHelpFormatter.hpp`, now
+that a second app needs it - both `fnj` and `fastdist` targets gained
+`${CMAKE_CURRENT_SOURCE_DIR}/apps` on their include path for it.
+`fastdist`'s `.ggo`, its generated-code custom command, and every
+fastdist-specific line in `src/c++/CMakeLists.txt`'s gengetopt
+plumbing were removed the same way as `fnj`'s in Phase B;
+`fastprot`/`fastprot_mpi` are untouched and still build via gengetopt.
+
+Verified: full clean rebuild (three toolchains' worth of
+targets - CLI11 for fnj/fastdist, gengetopt still for fastprot -
+coexisting) + `ctest` (2/2) + `RunExamples.sh` (byte-identical,
+including fastdist's examples 1-3) + `RunCliChecks.sh` (extended with
+a `fastdist` `check_app` call, all pass) + a manual
+`--help`/`--version`/bad-enum-value/unknown-flag check against a
+captured pre-migration baseline (content and exit codes match,
+`--help` formatting matches the pattern signed off in Phase B) + the
+DNA-distance-model sanity check from `lint_plan.md`'s Phase 7 repeated
+here (`JC`/`K2P`/`TN93`/`HAMMING`, all fast and consistent) + a
+`--seed`-reproducibility check and a `--number-of-runs`+`xml`
+conflict check (both matched expected behavior exactly).
+
+### Phase D - Migrate `fastprot` and `fastprot_mpi` together (done)
+
+`fastprot` (14 options, the largest single enum -
+`distance-function`×10, bound directly to `ModelMatrix.hpp`'s existing
+`model_type` domain enum) and `fastprot_mpi` (13 options, a
+near-duplicate `.ggo` minus `--sd` and with a smaller
+`distance-function` choice set - WAG/JTT/DAY/ARVE/MVR/LG only)
+migrated together, per Phase A's decision to include `fastprot_mpi`.
+
+**`fastprot_mpi` caveat, called out explicitly rather than hidden**:
+this file cannot be built or run in the environment this migration was
+done in (`BUILD_WITH_MPI` defaults `OFF`, no MPI installation
+available - it was never build-tested even before this change, per
+`project_layout_plan.md`'s own note). It also uses the legacy `MPI::`
+C++ bindings, deprecated since MPI-3 and removed outright from modern
+MPI implementations (OpenMPI 5+, recent MPICH) - a separate,
+likely-fatal, pre-existing problem this migration does not attempt to
+fix. The CLI-parsing swap itself mirrors `fastprot`'s pattern exactly
+(same struct shape, same domain-enum reuse trick), reviewed carefully
+by hand since it can't be compiler-verified. One incidental behavior
+change, flagged rather than silently carried: the pre-existing code
+read `args_info.input_format_arg` one line *before* `cmdline_parser()`
+populated it (an uninitialized-memory read, harmless in practice only
+because `WITH_LIBXML` defaults `ON`) - `FastprotMpiOptions::parseArgs()`
+always fully parses before returning, so that field is now a
+well-defined default rather than uninitialized memory if that
+`#ifndef` block ever does compile in. A strict improvement, not
+something this migration tried to preserve bit-for-bit.
+
+`RunExamples.sh` covers `fastprot` extensively (examples 6/7/11-18,
+including the ML path and binary-output path) - all still
+byte-identical. `fastprot_mpi` has no example coverage (confirmed
+absent, and can't be added without an MPI installation) - left as a
+gap for whoever eventually picks up its separate MPI-bindings
+modernization, not this migration's to solve.
+
+Verified (for `fastprot`; `fastprot_mpi` per the caveat above):
+full clean rebuild + `ctest` (2/2) + `RunExamples.sh`
+(byte-identical) + `RunCliChecks.sh` (extended with a `fastprot`
+`check_app` entry, all pass) + a manual `--help`/`--version`/
+bad-value/unknown-flag check against a captured pre-migration baseline
++ the protein maximum-likelihood hot-path sanity check from
+`lint_plan.md`'s Phase 7 (`fastprot -D WAG -m`), repeated here since
+`fastprot` sits directly on that path.
+
+### Phase E - Remove all now-dead gengetopt infrastructure (done)
+
+Once every in-scope app was migrated (`fastprot`/`fastprot_mpi` being
+the last two), the entire gengetopt toolchain had nothing left
+depending on it - folded into the same pass as Phase D rather than a
+separate one, since it was now pure deletion with no remaining
+consumer to break. Removed: `find_program(GENGETOPT)`, the
+FTP-fetch `add_custom_command`s, `build_gengetopt.sh`,
+`GENGETOPT_VERSION`, every remaining `.ggo` file
+(`fastprot`/`fastprot_mpi`'s - `fnj`/`fastdist`'s were already gone
+from Phases B/C), and every `MAKE_DIRECTORY`/generated-file/
+`set_source_files_properties` line tied to them in
+`src/c++/CMakeLists.txt` - full removal, matching the `STATIC`
+precedent, not a kept-around fallback. Also updated two now-stale
+mentions of `gengetopt` as a required system package in
+`docs/index.xml.cmake`'s RPM/deb build instructions (forward-looking
+install instructions, not the page's separate historical build-log
+transcript, which was left alone - already stale in other ways
+predating this change and not this migration's to fix), and updated
+`github_actions_release_builds_plan.md` to mark its
+gengetopt-provisioning open question and Phase B (add
+`apt-get install gengetopt`) both moot, since there's nothing left to
+provision on any platform now.
+
+### Phase F - Final verification and sign-off (done)
+
+Full clean rebuild (fresh `build/`, all default targets): zero errors,
+zero warnings beyond the pre-existing known ones
+(`Simulator.cpp`'s `sprintf` deprecation, the ARM `-fno-branch-count-reg`
+ignored-flag notice) - no gengetopt-related build output left at all.
+`ctest`: 2/2 passed. `RunExamples.sh`: all fixtures byte-identical
+against `expected_output/`. `RunCliChecks.sh` (now covering `fnj`,
+`fastdist`, `fastprot`): 61/61 checks passed, 0 failures.
+
+`fastprot_mpi` remains the one unverified piece, per its own caveat in
+Phase D - `BUILD_WITH_MPI` defaults `OFF` and no MPI installation
+exists in any environment this migration was done in, unchanged from
+before this migration.
+
+**gengetopt is now fully gone from this project**: no `.ggo` files, no
+generated C parser, no FTP self-build fallback, no `gengetopt`
+mentions anywhere in the build system except historical/explanatory
+comments. All four apps (`fnj`, `fastdist`, `fastprot`, `fastprot_mpi`)
+parse their CLI via CLI11, a single vendored header
+(`third_party/CLI11.hpp`). Adding a new option to any app is now one
+`app.add_option(...)`/`app.add_flag(...)` call at the point of use, no
+separate DSL file or build-time code generation step - the original
+ask ("make implementing command-line options easier... I am a fan of
+argparse").
+
+## What's explicitly out of scope
+
+- Any new CLI functionality (subcommands, config files, completion)
+  beyond what gengetopt already provided.
+- Fixing `fastprot_mpi`'s deprecated `MPI::` C++ bindings or its
+  broader untested/unbuildable state - Phase D migrated its CLI
+  parsing (per Phase A's decision to include it) but explicitly did
+  not attempt to fix or verify the rest of the file.
+- Re-litigating option names/behavior "while we're in there" - this is
+  a mechanical migration, not a UX redesign. Any option Lasse actually
+  wants changed should be its own follow-up, after this lands.

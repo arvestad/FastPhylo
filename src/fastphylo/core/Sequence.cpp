@@ -1,0 +1,371 @@
+//--------------------------------------------------
+//
+// File: Sequence.cpp
+//
+// Author: Isaac Elias, Mehmood Alam Khan
+// e-mail: isaac@nada.kth.se, malagori@kth.se
+//
+//--------------------------------------------------
+
+#include "fastphylo/core/Sequence.hpp"
+#include "fastphylo/core/Exception.hpp"
+#include "fastphylo/core/phylip_interleaved_reader.hpp"
+#include <array>
+#include <iomanip>
+#include <string>
+#include "fastphylo/core/log_utils.hpp"
+#include <fstream>
+#include "fastphylo/core/nucleotide.hpp"
+#include "fastphylo/core/stl_utils.hpp"
+
+using namespace std;
+
+Sequence::Sequence()
+{
+    name = "";
+    seq = "";
+}
+Sequence::Sequence(std::string n, std::string s)
+{
+    name = n;
+    seq = s;
+}
+Sequence::Sequence(const Sequence &s)
+{
+    name = s.name;
+    seq = s.seq;
+}
+
+Sequence &Sequence::operator=(const Sequence &s)
+{
+    name = s.name;
+    seq = s.seq;
+    return *this;
+}
+
+std::ostream &operator<<(std::ostream &os, const Sequence &s)
+{
+    if (s.name.empty() && s.seq.empty())
+    {
+        return os;
+    }
+    if (s.name.length() < 10)
+    {
+        os << std::setw(10) << std::left;
+        os << s.name;
+    }
+    else
+    {
+        os << s.name << " ";
+    }
+    os << s.seq;
+    return os;
+}
+
+std::ostream &Sequence::printShort(std::ostream &os) const
+{
+    os << name;
+    return os;
+}
+
+void Sequence::printWithoutGaps(std::ostream &os) const
+{
+    if (name.empty() && seq.empty())
+    {
+        return;
+    }
+    if (name.length() < 10)
+    {
+        os << std::setw(10) << std::left;
+        os << name;
+    }
+    else
+    {
+        {
+            os << name << " ";
+        }
+    }
+
+    for (size_t i = 0; i < seq.length(); i++)
+    {
+        if (seq[i] != ' ')
+        {
+            os << seq[i];
+        }
+    }
+}
+
+bool Sequence::onlyContains(std::string &chars)
+{
+    for (char i : seq)
+    {
+        if (chars.find(i) != std::string::npos)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// //-----------------------------------------------
+// void
+// Sequence::readSequences(std::vector<Sequence> &seqs, ifstream &fin){
+//   int numSequences;
+//   unsigned int seqlen;
+//   char tmp[100];
+//   fin.getline(tmp,100);
+//   sscanf(tmp,"%d %d",&numSequences,&seqlen);
+
+//   const size_t startindex = seqs.size();
+//   seqs.resize(seqs.size()+numSequences);
+
+//   //read the names and map the sequences onto the tree
+//   for ( int i = 0 ; i < numSequences ; i++ ){
+//     Sequence &s = seqs[startindex + i];
+//     fin >> s.name;
+//     s.seq.clear();
+//     s.seq.reserve(seqlen+5);
+
+//     while (1){
+//       char c = fin.get();
+//       nucleotide n = char2nucleotide(c);
+//       if ( DNA_NOT_ALLOWED == n ){
+//         if ( !isspace(c) ){
+//           USER_ERROR("Bad character \'" << c << "\'");
+//         }
+//         else if ( c != '\n' )
+//           continue;
+//         //if '\n'
+//         break;
+//       }
+
+//       s.seq.push_back(nucleotide2char(n));
+//     }
+//   }
+//   //read remaining sequences
+
+//   //The sequences aren't neccesarily on one line but my be spread out interleaving
+//   //over several lines. Therefore we read until seqlen chars have been read.
+//   while ( seqs[0].seq.length() < seqlen ){
+//     for ( int i = 0 ; i < numSequences ; i++ ){
+//       char c = fin.peek();
+//       if ( !isspace(c) ){
+//         //skip first 10 chars
+//         for ( int j = 10 ; j != 0 ; j-- )
+//           fin.get();
+//       }
+//       while ( c == '\n' )
+//         c = fin.get();
+
+//       Sequence &s = seqs[startindex+i];
+//       while (1){
+//         c = fin.get();
+//         nucleotide n = char2nucleotide(c);
+//         if ( DNA_NOT_ALLOWED == n ){
+//           if ( !isspace(c) ){
+//             USER_ERROR("Bad character \'" << c << "\'");
+//           }
+//           else if ( c != '\n' )//skip space
+//             continue;
+//           //if '\n'
+//           break;
+//         }
+
+//         s.seq.append(1,nucleotide2char(n));
+//       }
+//     }
+//   }
+
+//   // CHECK THAT ALL STRINGS HAVE THE SAME LENGTH
+//   for ( int i = 0 ; i < numSequences ; i++ )
+//     if ( seqs[startindex+i].seq.length() != seqlen ){
+//       USER_ERROR("Sequence not of correct length: " << seqs[i].name << "    length is " << seqs[i].seq.length());
+//     }
+// }
+
+void Sequence::readSequences(std::vector<Sequence> &seqs, istream &fin)
+{
+    int numSequences;
+    unsigned int seqlen;
+    const int MAXLINE = 16384;
+    std::array<char, MAXLINE> line{};
+    do
+    { // skip lines which does not contain two numbers.
+        fin.getline(line.data(), MAXLINE);
+        // NOLINTNEXTLINE(bugprone-unchecked-string-to-number-conversion) - the while condition below is exactly that
+        // check.
+    } while (sscanf(line.data(), "%d %d", &numSequences, &seqlen) != 2);
+
+    seqs.resize(numSequences);
+
+    // read the names and sequences
+    std::array<char, 11> tmpName{};
+    for (int i = 0; i < numSequences; i++)
+    {
+        Sequence &s = seqs[i];
+        s.seq.clear();
+        s.seq.reserve(seqlen + 1);
+
+        fin.getline(tmpName.data(), 11); // reads atmost 10 chars
+        // skip lines without 10 chars per line
+        if (!fin.fail())
+        {
+            if (fin.eof())
+                THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
+            i--;
+            continue;
+        }
+        s.name.clear();
+        appendUntil(s.name, tmpName.data(), fin.gcount(), ' ');
+
+        fin.clear();
+        fin.getline(line.data(), MAXLINE);
+
+        while (fin.fail() && fin.gcount() == MAXLINE - 1)
+        { // didn't read all the line
+            appendAllNonChars(s.seq, line.data(), fin.gcount(), ' ');
+            fin.clear();
+            fin.getline(line.data(), MAXLINE);
+        }
+        if (!fin.fail())
+        { // we read it all including the newline char unless it ended with eof
+            appendAllNonChars(s.seq, line.data(), fin.gcount() - (fin.eof() ? 0 : 1), ' ');
+        }
+        else // fail
+            THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
+        //    PRINT_V(s.seq);
+    } // end for loop
+
+    // Mehmood's Changes here'
+    // The sequences aren't neccesarily on one line but my be spread out interleaving
+    // over several lines. Therefore we read until seqlen chars have been read.
+    phylipReadInterleavedContinuation(
+        fin, numSequences, static_cast<size_t>(seqlen), [&seqs](int i) { return seqs[i].seq.length(); },
+        [&](istream &in, int i) {
+            Sequence &s = seqs[i];
+            while (true)
+            {
+                in.getline(line.data(), MAXLINE);
+                std::string myStr = line.data();
+                if (myStr.empty())
+                {
+                    if (in.eof())
+                    {
+                        THROW_EXCEPTION("Sequence not of correct length: " << seqs[i].name << "    length is "
+                                                                           << seqs[i].seq.length());
+                    }
+                    continue;
+                }
+                if (!in.fail() || in.gcount() != MAXLINE - 1)
+                {
+                    appendAllNonChars(s.seq, line.data(), in.gcount() - (in.eof() ? 0 : 1), ' ');
+                }
+                break;
+            }
+        });
+
+    // Mehmood's changes end here
+
+    //	//The sequences aren't neccesarily on one line but my be spread out interleaving
+    //	//over several lines. Therefore we read until seqlen chars have been read.
+    //	while ( seqs[0].seq.length() < seqlen ){
+    //		for ( int i = 0 ; i < numSequences ; i++ ){
+    //			//      PRINT_V(i);
+    //			Sequence &s = seqs[i];
+    //			// mehmood's changes
+    //			//      fin.getline(tmpName,11);//reads atmost 10 chars
+    //			//      //skip lines without 10 chars per line
+    //			//      if( !fin.fail() ){
+    //			//	if( fin.eof() ) THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
+    //			//	i--;
+    //			//	continue;
+    //			//      }
+    //			//// mehmood's changes
+    //			fin.clear();
+    //			fin.getline(line,MAXLINE);
+    //			//PRINT_V(line);
+    //			while( fin.fail() && fin.gcount()==MAXLINE-1 ){//didn't read all the line
+    //				appendAllNonChars(s.seq,line,fin.gcount(), ' ');
+    //				fin.clear();
+    //				fin.getline(line,MAXLINE);
+    //				//PRINT_V(line);
+    //			}
+    //			if( !fin.fail()) {//we read it all including the newline char unless it ended with eof
+    //				appendAllNonChars(s.seq,line,fin.gcount() - (fin.eof()? 0: 1), ' ');
+    //			}
+    //			else //fail
+    //				THROW_EXCEPTION("Unexpected reading format fin.eof() == " << fin.eof());
+    //			//PRINT_V(s.seq);
+    //		}//end for loop
+    //	}
+
+    // CHECK THAT ALL STRINGS HAVE THE SAME LENGTH
+    for (int i = 0; i < numSequences; i++)
+    {
+        if (seqs[i].seq.length() != seqlen)
+        {
+            THROW_EXCEPTION("Sequence not of correct length: " << seqs[i].name << "    length is "
+                                                               << seqs[i].seq.length());
+        }
+    }
+}
+
+void Sequence::printSequences(std::vector<Sequence> &seqs, std::ofstream &out)
+{
+    out << seqs.size() << "\t " << seqs[0].seq.length() << endl;
+    for (const auto &seq : seqs)
+    {
+        out << seq << endl;
+    }
+}
+
+void Sequence::bootstrapSequences(std::vector<Sequence> &seqs, std::vector<Sequence> &boot)
+{
+
+    // ensure capacity in bootsequences
+    boot.resize(seqs.size());
+
+    const size_t seqlen = seqs[0].seq.length();
+    for (size_t i = 0; i < seqs.size(); i++)
+    {
+        boot[i].name = seqs[i].name;
+        if (boot[i].seq.length() < seqlen)
+        {
+            boot[i].seq.assign(seqlen, ' ');
+        }
+        else if (boot[i].seq.length() > seqlen)
+        {
+            boot[i].seq.erase(seqlen);
+        }
+
+        assert(boot[i].seq.length() == seqlen);
+    }
+
+    // Do the bootstrapping
+    size_t pos = 0;
+    vector<int> samplePositions(seqlen);
+
+    // Was two near-identical branches keyed on `32 < seqlen`, each
+    // doing this same fill (and, below, the same sampled-copy step) in
+    // stride-32 chunks vs a plain loop - an apparent unrolling attempt
+    // that changed nothing observable (rand() is a serial call, and
+    // plain array indexing has no dependency on iteration order
+    // either), verified and unified into one path - same finding as
+    // Sequences2DistanceMatrix.cpp's bootstrapSequences() (see that
+    // file's before/after for the fuller explanation).
+    for (pos = 0; pos < seqlen; pos++)
+    {
+        samplePositions[pos] = static_cast<int>(seqlen * 1.0 * rand() / (RAND_MAX + 1.0));
+    }
+
+    for (size_t seq = 0; seq < seqs.size(); seq++)
+    {
+        string &b = boot[seq].seq;
+        const string &s = seqs[seq].seq;
+        for (pos = 0; pos < seqlen; pos++)
+        {
+            b[pos] = s[samplePositions[pos]];
+        }
+    }
+}

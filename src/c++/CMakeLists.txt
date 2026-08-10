@@ -1,366 +1,381 @@
-FIND_PROGRAM(GENGETOPT gengetopt)
-IF(NOT GENGETOPT)
- SET(GENGETOPTDEP "${CMAKE_CURRENT_BINARY_DIR}/external/install/bin/gengetopt"  )
-IF(WIN32)
- SET(GENGETOPTDEP "${GENGETOPTDEP}.exe"  )
-ENDIF(WIN32)
- SET(GENGETOPT "${GENGETOPTDEP}" )
-ENDIF(NOT GENGETOPT)
-
-IF(BUILD_WITH_MPI)
-	# OpenMPI support
-  FIND_PACKAGE(MPI REQUIRED)
-  INCLUDE(CMakeForceCompiler)
-  #mehmood's changes here. This should not be necessary!
-  IF(CMAKE_HOST_APPLE)
-	CMAKE_FORCE_CXX_COMPILER(mpic++ "MPI C++ Compiler for Apple")
-  ELSEIF(CMAKE_HOST_UNIX)
-	CMAKE_FORCE_CXX_COMPILER(mpiCC "MPI C++ Compiler for Linux")
-  ENDIF()
-ENDIF()
+# Modernization Phase 5 (modernization_plan.md): was CMakeForceCompiler's
+# CMAKE_FORCE_CXX_COMPILER(mpic++/mpiCC ...), a deprecated (CMake docs:
+# "once intended for... cross-compiling toolchain files", superseded
+# long ago) way to fake CMake's compiler identification. find_package's
+# own MPI::MPI_CXX imported target is the standard modern replacement -
+# it carries the right compile flags/include dirs/link flags without
+# needing to lie to CMake about which compiler is in use. Unverified
+# end-to-end (no MPI installation in this environment, and
+# BUILD_WITH_MPI defaults OFF), but this is the documented CMake-
+# upstream-recommended pattern.
+if(BUILD_WITH_MPI)
+  find_package(MPI REQUIRED)
+endif()
 
 
+set(ARCH_FLAGS "-msse2")
+
+  add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/fastphylo-${PACKAGE_VERSION}-win32.exe" COMMAND makensis "${CMAKE_CURRENT_BINARY_DIR}/script.nsi" DEPENDS fastdist fnj fastprot fastprot_mpi)
+
+  add_custom_target(win32installer DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/fastphylo-${PACKAGE_VERSION}-win32.exe")
+
+# gengetopt_migration_plan.md, Phase E: fastprot/fastprot_mpi (Phase D)
+# were the last two apps still using gengetopt - every self-built
+# gengetopt/FTP-fallback/generated-code machinery that used to live
+# here is now fully removed, not just unreferenced.
+
+# XML is an optional feature, auto-detected: if libxml2 isn't found,
+# build without XML support (a warning, not a configure/build failure)
+# rather than the previous behavior, where WITH_LIBXML=ON (the default)
+# unconditionally compiled the Xml*.cpp files regardless of whether
+# find_package(LibXml2) actually found anything - a missing libxml2
+# used to surface as a confusing build-time "header not found" error
+# deep in XmlInputStream.cpp, not a clear configure-time message.
+# Overwriting the WITH_LIBXML variable itself (not a separate derived
+# one) when it's not found means every later `if(WITH_LIBXML)` source-
+# list guard in this file, and the `#cmakedefine WITH_LIBXML` in
+# config.h.cmake (so every `#ifdef WITH_LIBXML` in the apps' own
+# main.cpp files too), automatically reflect real availability with no
+# further changes needed anywhere else.
+if(WITH_LIBXML)
+  find_package(LibXml2)
+  if(TARGET LibXml2::LibXml2)
+    set(FASTPHYLO_XML_LIBS LibXml2::LibXml2)
+  else()
+    message(WARNING "libxml2 not found - building without XML input/output "
+      "support (fastprot/fastdist/fnj -I/-O xml will not be available). "
+      "Install libxml2 development headers (e.g. 'apt install libxml2-dev') "
+      "to enable it, or pass -DWITH_LIBXML=OFF to build without it "
+      "intentionally and silence this warning.")
+    set(WITH_LIBXML OFF)
+  endif()
+endif()
 
 
-IF(STATIC)
- SET(LIBXML2_INCLUDE_DIR  "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2" )
- SET(LIBXML2_LIBRARIES  "${CMAKE_CURRENT_BINARY_DIR}/external/install/lib/libxml2.a" )
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
-# The next line seems to be need for macosx
- SET(ZLIB_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/external/install/lib/libz.a" )
-ENDIF(STATIC)
-
-#message(  FATAL_ERROR  "OU ${GENGETOPT} aa ${CMAKE_CURRENT_BINARY_DIR} bb" )
-
-SET(GENGETOPT_VERSION 2.22.2 )
-SET(LIBXML2_VERSION 2.7.2 )
-SET(ZLIB_VERSION 1.2.3 )
-
-SET(DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/external/downloads" INTERNAL )
-SET(BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/build INTERNAL )
-SET(INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/install INTERNAL )
-
-
-file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/download )
-file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/build )
-file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/install )
-file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt )
-file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt )
-file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt )
-IF(BUILD_WITH_MPI)
-  file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt )
-ENDIF()
-
-#mehmood changes here
-#SET(ARCH_FLAGS "" )
-#SET(ARCH_FLAGS "-march=pentium4 -msse2" )
-SET(ARCH_FLAGS "-msse2" )
-
-# changes ends here
-
-  ADD_CUSTOM_COMMAND( OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/fastphylo-${PACKAGE_VERSION}-win32.exe" COMMAND makensis "${CMAKE_CURRENT_BINARY_DIR}/script.nsi" DEPENDS fastdist fnj fastprot fastprot_mpi )
-
-  ADD_CUSTOM_TARGET( win32installer DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/fastphylo-${PACKAGE_VERSION}-win32.exe" )
-
-  ADD_CUSTOM_COMMAND( OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/external/download/gengetopt-${GENGETOPT_VERSION}.tar.gz" COMMAND  wget --directory-prefix=external/download "ftp://ftp.gnu.org/gnu/gengetopt/gengetopt-${GENGETOPT_VERSION}.tar.gz" )
-
-  ADD_CUSTOM_COMMAND( OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/external/download/libxml2-${LIBXML2_VERSION}.tar.gz" COMMAND  wget --directory-prefix=external/download  "ftp://xmlsoft.org/libxml2/libxml2-${LIBXML2_VERSION}.tar.gz" )
-
-  ADD_CUSTOM_COMMAND( OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/external/download/zlib-${ZLIB_VERSION}.tar.gz" COMMAND  wget --directory-prefix=external/download  "http://www.gzip.org/zlib/zlib-${ZLIB_VERSION}.tar.gz" )
-
-  ADD_CUSTOM_COMMAND( OUTPUT "${GENGETOPTDEP}" COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/build_gengetopt.sh" ${GENGETOPT_VERSION} "${CMAKE_CURRENT_BINARY_DIR}/external/install"  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/external/download/gengetopt-${GENGETOPT_VERSION}.tar.gz" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/external/build" )
-
-  ADD_CUSTOM_COMMAND( OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/external/install/lib/libxml2.a" "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h" COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/build_libxml2.sh" ${LIBXML2_VERSION} "${CMAKE_CURRENT_BINARY_DIR}/external/install"  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/external/download/libxml2-${LIBXML2_VERSION}.tar.gz" "${CMAKE_CURRENT_BINARY_DIR}/external/install/lib/libz.a"  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/external/build" )
-
-  ADD_CUSTOM_COMMAND( OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/external/install/lib/libz.a" COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/build_zlib.sh" ${ZLIB_VERSION} "${CMAKE_CURRENT_BINARY_DIR}/external/install"  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/external/download/zlib-${ZLIB_VERSION}.tar.gz"  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/external/build" )
-
-
-add_custom_command(OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.c   ${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.h
-                     COMMAND ${GENGETOPT} -i  ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastdist/gengetopt/cmdline.ggo  --output-dir=${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt
-                     DEPENDS   ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastdist/gengetopt/cmdline.ggo  ${GENGETOPTDEP}
-                     VERBATIM)
-
-
-add_custom_command(OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.c   ${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.h
-                     COMMAND ${GENGETOPT} -i  ${CMAKE_CURRENT_SOURCE_DIR}/programs/fnj/gengetopt/cmdline.ggo  --output-dir=${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt
-                     DEPENDS   ${CMAKE_CURRENT_SOURCE_DIR}/programs/fnj/gengetopt/cmdline.ggo  ${GENGETOPTDEP}
-                     VERBATIM)
-
-add_custom_command(OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.c   ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.h
-                     COMMAND ${GENGETOPT} -i  ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot/gengetopt/cmdline.ggo  --output-dir=${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt
-                     DEPENDS   ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot/gengetopt/cmdline.ggo  ${GENGETOPTDEP}
-                     VERBATIM)
-
-IF(BUILD_WITH_MPI)
-  add_custom_command(OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c   ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.h
-                     COMMAND ${GENGETOPT} -i  ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot_mpi/gengetopt/cmdline.ggo  --output-dir=${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt
-                     DEPENDS   ${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot_mpi/gengetopt/cmdline.ggo  ${GENGETOPTDEP}
-                     VERBATIM)
-ENDIF()
-
-#INCLUDE (CMakeDetermineCXXCompiler)
-#IF(NOT CMAKE_COMPILER_IS_GNUCXX)
-#      MESSAGE(SEND_ERROR "Could not find gcc")
-#ENDIF(NOT CMAKE_COMPILER_IS_GNUCXX)
-
-
-IF(WITH_LIBXML)
-  FIND_PACKAGE(LibXml2)
-ENDIF(WITH_LIBXML)
-
-
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/script.nsi.cmake ${CMAKE_CURRENT_BINARY_DIR}/script.nsi)
-
-INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
-#LINK_DIRECTORIES(${LIBXML2_LIBRARIES})
-# Do we need this? It seems to put '-L /usr/lib/libxml2.dynlib' in the linking commands, which is wrong.
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/script.nsi.cmake ${CMAKE_CURRENT_BINARY_DIR}/script.nsi)
 
 # DNA_b128/sse2_wrapper.h uses x86 SSE2 intrinsics directly. On non-x86
 # platforms (e.g. Apple Silicon / other ARM), it falls back to simde
 # (https://github.com/simd-everywhere/simde), a header-only library that
 # translates the same _mm_* calls onto NEON. Not needed, and not searched
 # for, on real x86 hardware.
-IF(NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|i.86|AMD64)$"))
-  FIND_PATH(SIMDE_INCLUDE_DIR simde/x86/sse2.h
+set(FASTPHYLO_EXTRA_INCLUDE_DIRS "")
+if(NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|i.86|AMD64)$"))
+  find_path(SIMDE_INCLUDE_DIR simde/x86/sse2.h
     HINTS /opt/homebrew/include /usr/local/include)
-  IF(SIMDE_INCLUDE_DIR)
-    INCLUDE_DIRECTORIES(${SIMDE_INCLUDE_DIR})
-  ELSE()
-    MESSAGE(WARNING "simde not found (needed for SSE2-via-NEON on ${CMAKE_SYSTEM_PROCESSOR}); "
+  if(SIMDE_INCLUDE_DIR)
+    list(APPEND FASTPHYLO_EXTRA_INCLUDE_DIRS ${SIMDE_INCLUDE_DIR})
+  else()
+    message(WARNING "simde not found (needed for SSE2-via-NEON on ${CMAKE_SYSTEM_PROCESSOR}); "
       "install it (e.g. 'brew install simde') or DNA_b128/sse2_wrapper.h will fail to compile.")
-  ENDIF()
-ENDIF()
+  endif()
+endif()
 
+# Modernization Phase B (project_layout_plan.md): sources now live under
+# src/fastphylo/{core,dna}/, mirroring the public headers under
+# include/fastphylo/{core,dna}/ - see that plan doc for the rationale
+# (a discoverable public API, and a step toward de-duplicating the I/O
+# stream classes still living per-program under apps/).
+set(FASTPHYLO_CORE_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/core)
+set(FASTPHYLO_DNA_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/dna)
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/distance_methods)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/DNA_b128)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/programs)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/programs/fastdist)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/programs/fnj)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/sequence_likelihood)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt)
-#INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/aml)
-IF(BUILD_WITH_MPI)
-  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/programs/fastprot_mpi)
-  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt)
-ENDIF()
-
-SET(FASTPHYLO_SRCS BitVector.cpp 
-Exception.cpp
-InitAndPrintOn_utils.cpp
-Object.cpp
-Sequence.cpp
-SequenceTree.cpp
-SequenceTree_MostParsimonious.cpp
-Simulator.cpp
-arg_utils_ext.cpp
-file_utils.cpp
-stl_utils.cpp
-DNA_b128/DNA_b128_String.cpp
-DNA_b128/Sequences2DistanceMatrix.cpp
-#aml/AML_LeafLifting.cpp
-#aml/AML_given_edge_probabilities.cpp
-#aml/AML_local_improve.cpp
-#aml/AML_star.cpp
-#aml/Big_AML.cpp
-distance_methods/LeastSquaresFit.cpp
-distance_methods/NeighborJoining.cpp
-sequence_likelihood/Kimura2parameter.cpp
-sequence_likelihood/TamuraNei.cpp
-sequence_likelihood/ambiguity_nucleotide.cpp
-sequence_likelihood/dna_pairwise_sequence_likelihood.cpp
-sequence_likelihood/string_compare.cpp 
-DistanceMatrix.cpp
-FloatDistanceMatrix.cpp
-DistanceRow.cpp
-arg_utils.c
-std_c_utils.c
-xml_output_global.cpp
+set(FASTPHYLO_SRCS
+${FASTPHYLO_CORE_DIR}/BitVector.cpp
+${FASTPHYLO_CORE_DIR}/InitAndPrintOn_utils.cpp
+${FASTPHYLO_CORE_DIR}/Sequence.cpp
+${FASTPHYLO_CORE_DIR}/SequenceTree.cpp
+${FASTPHYLO_CORE_DIR}/file_utils.cpp
+${FASTPHYLO_DNA_DIR}/DNA_b128_String.cpp
+${FASTPHYLO_DNA_DIR}/Sequences2DistanceMatrix.cpp
+${FASTPHYLO_DNA_DIR}/NeighborJoining.cpp
+${FASTPHYLO_DNA_DIR}/Kimura2parameter.cpp
+${FASTPHYLO_DNA_DIR}/TamuraNei.cpp
+${FASTPHYLO_DNA_DIR}/ambiguity_nucleotide.cpp
+${FASTPHYLO_DNA_DIR}/dna_pairwise_sequence_likelihood.cpp
+${FASTPHYLO_DNA_DIR}/string_compare.cpp
+${FASTPHYLO_CORE_DIR}/DistanceMatrix.cpp
+${FASTPHYLO_CORE_DIR}/DistanceRow.cpp
+${FASTPHYLO_CORE_DIR}/xml_output_global.cpp
 )
 
-IF (CMAKE_COMPILER_IS_GNUCXX)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
-ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+# C++ standard is now set project-wide via CMAKE_CXX_STANDARD in the
+# root CMakeLists.txt (modernization_plan.md, Phase 0) - portable across
+# compilers, unlike the hand-appended "--std=c++11" GCC/Clang-only flag
+# string this used to be (which also silently never applied on Clang at
+# all until a fix earlier on this branch's parent, speed2026a - see that
+# branch's "Fix silent C++98 build on Clang" commit).
 
-SET(FASTPHYLO_SPECIAL_SRCS DNA_b128/sse2_wrapper.c 
-                          DNA_b128/computeTAMURANEIDistance_DNA_b128_String.cpp 
-                          DNA_b128/computeDistance_DNA_b128_String.cpp) 
+set(FASTPHYLO_SPECIAL_SRCS
+${FASTPHYLO_DNA_DIR}/sse2_wrapper.c
+${FASTPHYLO_DNA_DIR}/computeTAMURANEIDistance_DNA_b128_String.cpp
+${FASTPHYLO_DNA_DIR}/computeDistance_DNA_b128_String.cpp)
 
-# Erik Sjolund removed -fforce-mem from COMMON_FLAGS because of the g++ warning
-# cc1plus: warning: -f[no-]force-mem is nop and option will be removed in 4.2
-
-IF(STATIC AND WITH_LIBXML)
- set( LIBXML_EXTRA_COMPILE_FLAGS " -DLIBXML_STATIC " )
-ENDIF(STATIC AND WITH_LIBXML)
-
-#mehmood's changes here
-#SET(COMMON_FLAGS  " ${ARCH_FLAGS} -falign-functions -falign-jumps -falign-labels -falign-loops -fcse-follow-jumps -fcse-skip-blocks -fdelete-null-pointer-checks -fexpensive-optimizations -fgcse -fgcse-lm -fgcse-sm -finline-functions -foptimize-sibling-calls -fpeephole2 -fregmove -frename-registers -freorder-blocks -freorder-functions -frerun-cse-after-loop -frerun-loop-opt -fstrength-reduce -fstrict-aliasing ${LIBXML_EXTRA_COMPILE_FLAGS} -O1 -fopenmp " )
-
-SET(FASTDIST_SRCS programs/fastdist/main.cpp
-programs/fastdist/PhylipMaInputStream.cpp
-programs/fastdist/FastaInputStream.cpp
-programs/fastdist/DataOutputStream.cpp
-programs/fastdist/XmlOutputStream.cpp
-programs/fastdist/PhylipDmOutputStream.cpp
-programs/fastdist/BinaryDmOutputStream.cpp
-${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.c 
+# Layout Phase C (project_layout_plan.md): shared output-stream classes,
+# consolidated out of fastdist's and fastprot's independently-diverged
+# per-program copies (see that plan doc for the audit - some, like
+# Extrainfos, were near-identical; PhylipDmOutputStream/XmlOutputStream/
+# DataOutputStream were genuinely different, with fastdist still on the
+# pre-speed2026a unbatched write path, now ported to fastprot's faster
+# one). fnj's own DataOutputStream/XmlOutputStream stay local to
+# apps/fnj/ - fnj writes trees built from a distance matrix, not a
+# distance matrix itself, a genuinely different shape, not just naming
+# drift.
+set(FASTPHYLO_IO_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/io)
+set(FASTPHYLO_IO_SRCS
+${FASTPHYLO_IO_DIR}/DataOutputStream.cpp
+${FASTPHYLO_IO_DIR}/PhylipDmOutputStream.cpp
+${FASTPHYLO_IO_DIR}/XmlOutputStream.cpp
+${FASTPHYLO_IO_DIR}/BinaryDmOutputStream.cpp
+${FASTPHYLO_IO_DIR}/FastaInputStream.cpp
+${FASTPHYLO_IO_DIR}/PhylipMaInputStream.cpp
 )
 
-IF(WITH_LIBXML)
- IF(STATIC)
-  SET(FASTDIST_XML_SRCS programs/fastdist/XmlInputStream.cpp  "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h" )
- ELSE(STATIC)
-  SET(FASTDIST_XML_SRCS programs/fastdist/XmlInputStream.cpp )
- ENDIF(STATIC)
-ENDIF(WITH_LIBXML)
+# XmlInputStream.cpp (input side) uses real libxml2 xmlTextReader APIs,
+# unlike XmlOutputStream.cpp above (hand-rolled fprintf, no libxml2
+# dependency) - needs its own WITH_LIBXML guard so -DWITH_LIBXML=OFF
+# builds (verified working in Phase 5) don't try to compile it.
+if(WITH_LIBXML)
+  set(FASTPHYLO_IO_XML_SRCS ${FASTPHYLO_IO_DIR}/XmlInputStream.cpp)
+endif()
 
-
-SET(FNJ_SRCS programs/fnj/main.cpp
-programs/fnj/DataInputStream.cpp
-programs/fnj/DataOutputStream.cpp
-programs/fnj/TreeTextOutputStream.cpp
-programs/fnj/XmlOutputStream.cpp
-programs/fnj/PhylipDmInputStream.cpp
-programs/fnj/BinaryInputStream.cpp
-${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.c 
+# fastdist is the second app migrated off gengetopt onto CLI11
+# (gengetopt_migration_plan.md, Phase C) - no generated cmdline.c to
+# list here anymore.
+set(FASTDIST_SRCS apps/fastdist/main.cpp
+apps/fastdist/PhylipMaInputStream.cpp
+apps/fastdist/FastaInputStream.cpp
 )
 
-IF(WITH_LIBXML)
- IF(STATIC)
-  SET(FNJ_XML_SRCS programs/fnj/XmlInputStream.cpp  "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h" )
- ELSE(STATIC)
-  SET(FNJ_XML_SRCS programs/fnj/XmlInputStream.cpp )
- ENDIF(STATIC)
-ENDIF(WITH_LIBXML)
-
-SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.c  PROPERTIES GENERATED true)
-SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fnj/gengetopt/fnj_gengetopt.h  PROPERTIES GENERATED true)
-SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.c  PROPERTIES GENERATED true)
-SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastdist/gengetopt/fastdist_gengetopt.h  PROPERTIES GENERATED true)
-SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.c  PROPERTIES GENERATED true)
-SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.h  PROPERTIES GENERATED true)
-IF(BUILD_WITH_MPI)
-  SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c  PROPERTIES GENERATED true)
-  SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.h  PROPERTIES GENERATED true)
-ENDIF()
+if(WITH_LIBXML)
+ set(FASTDIST_XML_SRCS apps/fastdist/XmlInputStream.cpp)
+endif(WITH_LIBXML)
 
 
-SET(FASTPROT_SRCS programs/fastprot/main.cpp
-programs/fastprot/FastaInputStream.cpp
-programs/fastprot/DataOutputStream.cpp
-programs/fastprot/XmlOutputStream.cpp
-programs/fastprot/PhylipMaInputStream.cpp
-programs/fastprot/PhylipDmOutputStream.cpp
-programs/fastprot/ProtDistCalc.cpp
-programs/fastprot/ModelMatrix.cpp
-programs/fastprot/ExpectedDistance.cpp
-programs/fastprot/Matrix.cpp
-programs/fastprot/MaximumLikelihood.cpp
-programs/fastprot/ProtSeqUtils.cpp
-programs/fastprot/BinaryDmOutputStream.cpp
-${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot/gengetopt/fastprot_gengetopt.c
+# fnj was the first app migrated off gengetopt onto CLI11
+# (gengetopt_migration_plan.md, Phase B) - no generated cmdline.c to
+# list here anymore.
+set(FNJ_SRCS apps/fnj/main.cpp
+apps/fnj/DataInputStream.cpp
+apps/fnj/DataOutputStream.cpp
+apps/fnj/TreeTextOutputStream.cpp
+apps/fnj/XmlOutputStream.cpp
+apps/fnj/PhylipDmInputStream.cpp
+apps/fnj/BinaryInputStream.cpp
 )
 
-IF(WITH_LIBXML)
- IF(STATIC)
-  SET(FASTPROT_XML_SRCS programs/fastprot/XmlInputStream.cpp  "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h" )
- ELSE(STATIC)
-  SET(FASTPROT_XML_SRCS programs/fastprot/XmlInputStream.cpp )
- ENDIF(STATIC)
-ENDIF(WITH_LIBXML)
+if(WITH_LIBXML)
+ set(FNJ_XML_SRCS apps/fnj/XmlInputStream.cpp)
+endif(WITH_LIBXML)
 
-IF(BUILD_WITH_MPI)
-  SET(FASTPROT_MPI_SRCS programs/fastprot_mpi/main.cpp
-  programs/fastprot_mpi/FastaInputStream.cpp
-  programs/fastprot_mpi/DataOutputStream.cpp
-  programs/fastprot_mpi/XmlOutputStream.cpp
-  programs/fastprot_mpi/PhylipMaInputStream.cpp
-  programs/fastprot_mpi/ProtDistCalc.cpp
-  programs/fastprot_mpi/ModelMatrix.cpp
-  programs/fastprot_mpi/ExpectedDistance.cpp
-  programs/fastprot_mpi/Matrix.cpp
-  programs/fastprot_mpi/MaximumLikelihood.cpp
-  programs/fastprot_mpi/ProtSeqUtils.cpp
-  programs/fastprot/PhylipDmOutputStream.cpp
-  programs/fastprot/BinaryDmOutputStream.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/programs/fastprot_mpi/gengetopt/fastprot_mpi_gengetopt.c
+# Layout Phase C2 (project_layout_plan.md): fastprot's protein-specific
+# "library" pieces, moved into the shared fastphylo library (same
+# treatment as dna/ - domain-specific code that still belongs in the
+# central library, not duplicated per-program). fastprot_mpi has its own
+# separate, untouched copies of these files (out of this plan's scope,
+# deferred - see that plan doc's "Deferred: fastprot_mpi" section).
+set(FASTPHYLO_PROTEIN_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/protein)
+set(FASTPHYLO_PROTEIN_SRCS
+${FASTPHYLO_PROTEIN_DIR}/ProtDistCalc.cpp
+${FASTPHYLO_PROTEIN_DIR}/ModelMatrix.cpp
+${FASTPHYLO_PROTEIN_DIR}/ExpectedDistance.cpp
+${FASTPHYLO_PROTEIN_DIR}/Matrix.cpp
+${FASTPHYLO_PROTEIN_DIR}/MaximumLikelihood.cpp
+${FASTPHYLO_PROTEIN_DIR}/ProtSeqUtils.cpp
+${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp
+${FASTPHYLO_PROTEIN_DIR}/ProtSeqCompare.cpp
+)
+
+# fastprot is the third app migrated off gengetopt onto CLI11
+# (gengetopt_migration_plan.md, Phase D) - no generated cmdline.c to
+# list here anymore.
+set(FASTPROT_SRCS apps/fastprot/main.cpp
+apps/fastprot/FastaInputStream.cpp
+apps/fastprot/PhylipMaInputStream.cpp
+)
+
+if(WITH_LIBXML)
+ set(FASTPROT_XML_SRCS apps/fastprot/XmlInputStream.cpp)
+endif(WITH_LIBXML)
+
+if(BUILD_WITH_MPI)
+  # fastprot_mpi is the fourth app migrated off gengetopt onto CLI11
+  # (gengetopt_migration_plan.md, Phase D) - no generated cmdline.c to
+  # list here anymore.
+  set(FASTPROT_MPI_SRCS apps/fastprot_mpi/main.cpp
+  apps/fastprot_mpi/FastaInputStream.cpp
+  apps/fastprot_mpi/DataOutputStream.cpp
+  apps/fastprot_mpi/XmlOutputStream.cpp
+  apps/fastprot_mpi/PhylipMaInputStream.cpp
+  apps/fastprot_mpi/ProtDistCalc.cpp
+  apps/fastprot_mpi/ModelMatrix.cpp
+  apps/fastprot_mpi/ExpectedDistance.cpp
+  apps/fastprot_mpi/Matrix.cpp
+  apps/fastprot_mpi/MaximumLikelihood.cpp
+  apps/fastprot_mpi/ProtSeqUtils.cpp
   )
-  IF(WITH_LIBXML)
-    IF(STATIC)
-      SET(FASTPROT_MPI_XML_SRCS programs/fastprot_mpi/XmlInputStream.cpp  "${CMAKE_CURRENT_BINARY_DIR}/external/install/include/libxml2/libxml/xmlreader.h" )
-    ELSE(STATIC)
-      SET(FASTPROT_MPI_XML_SRCS programs/fastprot_mpi/XmlInputStream.cpp )
-    ENDIF(STATIC)
-  ENDIF(WITH_LIBXML)
-ENDIF(BUILD_WITH_MPI)
+  # fastprot_mpi is out of this plan's scope (project_layout_plan.md:
+  # deferred, to be folded into fastprot on a future request) and was
+  # never build-tested here (no MPI in this environment - configuring
+  # with -DBUILD_WITH_MPI=ON already fails before reaching this point).
+  # It used to reuse apps/fastprot/PhylipDmOutputStream.cpp and
+  # BinaryDmOutputStream.cpp directly in this source list; both moved
+  # into the shared fastphylo library as part of Phase C's io/
+  # consolidation, so those two lines were removed above rather than
+  # left pointing at deleted files. fastprot_mpi links fastphylo (below)
+  # and so gets io::PhylipDmOutputStream/BinaryDmOutputStream from
+  # there now - unverified whether fastprot_mpi's own (separate,
+  # unmerged) DataOutputStream.hpp is still compatible with them; needs
+  # checking when fastprot_mpi work is actually picked up.
+  if(WITH_LIBXML)
+    set(FASTPROT_MPI_XML_SRCS apps/fastprot_mpi/XmlInputStream.cpp)
+  endif(WITH_LIBXML)
+endif(BUILD_WITH_MPI)
 
 
-FOREACH(i ${FASTPHYLO_SPECIAL_SRCS})
-  SET_SOURCE_FILES_PROPERTIES(${i} PROPERTIES COMPILE_FLAGS "${COMMON_FLAGS} -DNDEBUG  -fforce-addr  -fno-branch-count-reg  -fomit-frame-pointer ")
-ENDFOREACH(i)
+foreach(i ${FASTPHYLO_SPECIAL_SRCS})
+  set_source_files_properties(${i} PROPERTIES COMPILE_FLAGS "-DNDEBUG -fno-branch-count-reg -fomit-frame-pointer")
+endforeach(i)
+
+# Modernization Phase 5 (modernization_plan.md): target_include_directories
+# replaces the old global include_directories() calls (every translation
+# unit in the project used to get every directory below, regardless of
+# whether it needed it). fastphylo's own directories are PUBLIC because
+# fastdist/fnj/fastprot/fastprot_mpi #include core-library headers by
+# bare filename (e.g. "SequenceTree.hpp", "NeighborJoining.hpp") -
+# confirmed by grep before this rewrite, not assumed - so consumers
+# linking fastphylo need these on their include path too, which PUBLIC
+# gives them transitively. (DNA_b128/ and sequence_likelihood/ - once
+# also part of this bare-filename include path - are gone: their
+# surviving content moved into include/fastphylo/dna/ in
+# project_layout_plan.md, and the rest was confirmed-dead and deleted
+# in lint_plan.md's Phase 0.)
+add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS} ${FASTPHYLO_IO_SRCS} ${FASTPHYLO_IO_XML_SRCS} ${FASTPHYLO_PROTEIN_SRCS})
+# Modernization Phase B (project_layout_plan.md): the public API lives
+# under include/fastphylo/{core,dna,io,protein}/ now, consumed as
+# #include "fastphylo/<bucket>/X.hpp" - this is the one include root
+# that needs to be on the path for that, replacing the four
+# scattered src/c++-relative directories this used to list.
+target_include_directories(fastphylo PUBLIC
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_SOURCE_DIR}/include
+  ${FASTPHYLO_EXTRA_INCLUDE_DIRS}
+)
+# fastphylo's own XmlInputStream.cpp (when WITH_LIBXML) needs libxml2's
+# headers to compile; PUBLIC so consumers linking fastphylo (which
+# already separately link ${FASTPHYLO_XML_LIBS} themselves) get it
+# transitively too rather than needing to know to add it twice.
+target_link_libraries(fastphylo PUBLIC ${FASTPHYLO_XML_LIBS})
+
+find_package(Threads REQUIRED)
+
+# libm is a separate library needing explicit linking on Unix (sin/cos/
+# sqrt/etc historically lived outside libc there); on Windows every
+# math function is already part of the standard CRT and there is no
+# "m.lib" to link against at all - target_link_libraries(... m ...)
+# there fails at link time with "cannot open input file 'm.lib'".
+if(UNIX)
+  set(FASTPHYLO_MATH_LIB m)
+endif()
+
+add_executable(fastdist ${FASTDIST_SRCS} ${FASTDIST_XML_SRCS})
+target_include_directories(fastdist PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastdist
+  ${CMAKE_CURRENT_SOURCE_DIR}/apps
+  ${CMAKE_SOURCE_DIR}/third_party
+)
+target_link_libraries(fastdist PRIVATE fastphylo ${FASTPHYLO_MATH_LIB} ${FASTPHYLO_XML_LIBS})
+
+add_executable(fnj ${FNJ_SRCS} ${FNJ_XML_SRCS})
+target_include_directories(fnj PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/apps/fnj
+  ${CMAKE_CURRENT_SOURCE_DIR}/apps
+  ${CMAKE_SOURCE_DIR}/third_party
+)
+target_link_libraries(fnj PRIVATE fastphylo ${FASTPHYLO_MATH_LIB} ${FASTPHYLO_XML_LIBS})
 
 
-FOREACH(i ${FASTPHYLO_SRCS} ${FASTDIST_SRCS} ${FNJ_SRCS} ${FASTPROT_SRCS}  ${FASTDIST_XML_SRCS} ${FNJ_XML_SRCS} ${FASTPROT_XML_SRCS} ${FASTPROT_MPI_SRCS} ${FASTPROT_MPI_XML_SRCS} )
-#  SET_SOURCE_FILES_PROPERTIES(${i} PROPERTIES COMPILE_FLAGS "${COMMON_FLAGS}  -fcaller-saves  -ffast-math  -fno-default-inline  -fprefetch-loop-arrays  -fsched-interblock  -fsched-spec  -fschedule-insns  -fschedule-insns2  -ftracer  -funroll-loops ")
-ENDFOREACH(i)
-
-ADD_LIBRARY(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS})
-
-ADD_EXECUTABLE(fastdist ${FASTDIST_SRCS}  ${FASTDIST_XML_SRCS} )
-TARGET_LINK_LIBRARIES(fastdist m ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARY} fastphylo )
-
-IF(STATIC)
- set_property(TARGET fastdist PROPERTY LINK_SEARCH_END_STATIC ON )
-ENDIF(STATIC)
-
-ADD_EXECUTABLE(fnj ${FNJ_SRCS} ${FNJ_XML_SRCS} ) 
-TARGET_LINK_LIBRARIES(fnj m  ${LIBXML2_LIBRARIES}  ${ZLIB_LIBRARY} fastphylo )
-
-IF(STATIC)
- set_property(TARGET fnj PROPERTY LINK_SEARCH_END_STATIC ON )
-ENDIF(STATIC)
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
+add_executable(fastprot ${FASTPROT_SRCS} ${FASTPROT_XML_SRCS})
+target_include_directories(fastprot PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot
+  ${CMAKE_CURRENT_SOURCE_DIR}/apps
+  ${CMAKE_SOURCE_DIR}/third_party
+)
+target_link_libraries(fastprot PRIVATE fastphylo ${FASTPHYLO_MATH_LIB} ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK Threads::Threads)
 
 
-#enable_language(Fortran)
-FIND_PACKAGE(BLAS REQUIRED)
-FIND_PACKAGE(LAPACK REQUIRED)
-#message(FATAL_ERROR "mmm ${LAPACK_LIBRARIES} uuuu ${BLAS_LIBRARIES} yyyy${LIBXML2_LIBRARIES}")
-#link_libraries(fastprot  ${LAPACK_LIBRARIES} )
-# Link libraries -lmkl* or -llapack depending on what is available
-ADD_EXECUTABLE(fastprot ${FASTPROT_SRCS} ${FASTPROT_XML_SRCS} ) 
-TARGET_LINK_LIBRARIES(fastprot m  ${LIBXML2_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${ZLIB_LIBRARY} -lpthread fastphylo)
-#TARGET_LINK_LIBRARIES(fastprot m  ${LIBXML2_LIBRARIES}  ${ZLIB_LIBRARY} -L/pdc/vol/i-compilers/11.1/icc/mkl/lib/em64t -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread fastphylo )
-
-IF(STATIC)
- set_property(TARGET fastprot PROPERTY LINK_SEARCH_END_STATIC ON )
-ENDIF(STATIC)
+if(BUILD_WITH_MPI)
+  add_executable(fastprot_mpi ${FASTPROT_MPI_SRCS} ${FASTPROT_MPI_XML_SRCS})
+  target_include_directories(fastprot_mpi PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot_mpi
+    ${CMAKE_CURRENT_SOURCE_DIR}/apps
+    ${CMAKE_SOURCE_DIR}/third_party
+  )
+  target_link_libraries(fastprot_mpi PRIVATE fastphylo ${FASTPHYLO_MATH_LIB} ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK Threads::Threads MPI::MPI_CXX)
+endif(BUILD_WITH_MPI)
 
 
-IF(BUILD_WITH_MPI)
-  ADD_EXECUTABLE(fastprot_mpi ${FASTPROT_MPI_SRCS} ${FASTPROT_MPI_XML_SRCS} ) 
-  TARGET_LINK_LIBRARIES(fastprot_mpi m  ${LIBXML2_LIBRARIES} ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${ZLIB_LIBRARY} -lpthread fastphylo)
+install(TARGETS fastdist DESTINATION bin)
+install(TARGETS fnj DESTINATION bin)
+install(TARGETS fastprot DESTINATION bin)
+if(BUILD_WITH_MPI)
+  install(TARGETS fastprot_mpi DESTINATION bin)
+endif(BUILD_WITH_MPI)
 
-#TARGET_LINK_LIBRARIES(fastprot_mpi m  ${LIBXML2_LIBRARIES}  ${ZLIB_LIBRARY} -L/pdc/vol/i-compilers/11.1/icc/mkl/lib/em64t -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread fastphylo )
+# Correctness tests for the speed2026a protein-code speedup (plan.md).
+# tests/ (top-level, Layout Phase E - was src/c++/code_tests/) as a
+# whole isn't wired into this build (see phase0_audit.md); these two
+# are new and specific to this project, so they're wired in directly
+# rather than expanding scope to the rest of tests/.
+enable_testing()
 
-  IF(STATIC)
-    set_property(TARGET fastprot_mpi PROPERTY LINK_SEARCH_END_STATIC ON )
-  ENDIF(STATIC)
-ENDIF(BUILD_WITH_MPI)
+set(FASTPHYLO_TESTS_DIR ${CMAKE_SOURCE_DIR}/tests)
 
+# ProtSeqCompare.cpp needs FASTPHYLO_EXTRA_INCLUDE_DIRS (simde) directly:
+# these three targets compile it as a plain extra source rather than
+# linking the fastphylo library target, so they don't inherit it via
+# fastphylo's PUBLIC target_include_directories. Likewise need
+# ${CMAKE_SOURCE_DIR}/include directly (Layout Phase C2) now that
+# ProtSeqCode.hpp/ProtSeqCompare.hpp live under include/fastphylo/protein/.
+add_executable(ProtSeqCode_test ${FASTPHYLO_TESTS_DIR}/ProtSeqCode_test.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp)
+target_include_directories(ProtSeqCode_test PRIVATE ${CMAKE_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
+add_test(NAME ProtSeqCode_test COMMAND ProtSeqCode_test)
 
-INSTALL(TARGETS fastdist DESTINATION bin)
-INSTALL(TARGETS fnj DESTINATION bin)
-INSTALL(TARGETS fastprot DESTINATION bin)
-IF(BUILD_WITH_MPI)
-  INSTALL(TARGETS fastprot_mpi DESTINATION bin)
-ENDIF(BUILD_WITH_MPI)
+add_executable(ProtSeqCompare_test ${FASTPHYLO_TESTS_DIR}/ProtSeqCompare_test.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCompare.cpp)
+target_include_directories(ProtSeqCompare_test PRIVATE ${CMAKE_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
+add_test(NAME ProtSeqCompare_test COMMAND ProtSeqCompare_test)
 
+# phylip_reader_consolidation_plan.md, Phase C: SequenceTree::
+# mapSequencesOntoTree(istream&) has no live caller anywhere in the
+# codebase - its only two callers (Simulator.cpp and
+# generating_block_transfer_data/Generate_sequence_data.cpp) were
+# themselves unbuilt, hardcoded-external-tool wrapper code and were
+# deleted outright, so this is the only way to verify this code path
+# at all. Links the real fastphylo library target directly (unlike
+# ProtSeqCode_test/ProtSeqCompare_test's narrow hand-picked source
+# lists above) since SequenceTree.cpp pulls in most of the core
+# library.
+add_executable(SequenceTree_PhylipReader_test ${FASTPHYLO_TESTS_DIR}/SequenceTree_PhylipReader_test.cpp)
+target_link_libraries(SequenceTree_PhylipReader_test PRIVATE fastphylo)
+add_test(NAME SequenceTree_PhylipReader_test COMMAND SequenceTree_PhylipReader_test)
 
-SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/${LIBXML2_INCLUDE_DIR}/libxml/xmlreader.h PROPERTIES GENERATED TRUE HEADER_FILE_ONLY TRUE )
+# fnj_binary_input_gap: BinaryInputStream::readDM(StrDblMatrix&, ...) was
+# an unimplemented stub. BinaryInputStream.cpp/.hpp live under
+# apps/fnj/ (not the shared fastphylo library, same as
+# PhylipDmInputStream/XmlInputStream), so this test compiles that one
+# source file directly - same pattern as ProtSeqCode_test/
+# ProtSeqCompare_test above - alongside linking fastphylo for
+# StrDblMatrix/BinaryDmOutputStream.
+add_executable(BinaryDmIO_test ${FASTPHYLO_TESTS_DIR}/BinaryDmIO_test.cpp apps/fnj/BinaryInputStream.cpp)
+target_include_directories(BinaryDmIO_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/apps/fnj)
+target_link_libraries(BinaryDmIO_test PRIVATE fastphylo)
+add_test(NAME BinaryDmIO_test COMMAND BinaryDmIO_test)
+
+# Phase 5 performance benchmark (plan.md). Not an add_test() - it prints
+# timing data, not a pass/fail result; see benchmarks/run_benchmarks.sh
+# for the reproducible one-command entry point.
+add_executable(bench_primitives ../../benchmarks/bench_primitives.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCompare.cpp)
+target_include_directories(bench_primitives PRIVATE ${CMAKE_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})

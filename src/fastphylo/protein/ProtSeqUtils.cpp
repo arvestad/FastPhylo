@@ -1,0 +1,95 @@
+#include "fastphylo/protein/ProtSeqUtils.hpp"
+#include <string>
+#include <set>
+#include "fastphylo/core/Sequence.hpp"
+
+/*
+ * Saves the positions for all indels in the given sequences and
+ * then erases all of them from every sequence.
+ * @param sv A vector with sequences
+ */
+void remove_gaps(std::vector<Sequence> &sv)
+{
+    std::set<int> positions;
+
+    // Find all the gaps
+    for (Sequence &s : sv)
+    {
+        std::size_t found = s.seq.find_first_of('-');
+        while (found != std::string::npos)
+        {
+            positions.insert(found);
+            found = s.seq.find_first_of('-', found + 1);
+        }
+    }
+
+    // Remove all the gaps
+    for (Sequence &s : sv)
+    {
+        for (auto rit = positions.rbegin(); rit != positions.rend(); ++rit)
+        {
+            s.seq.erase(*rit, 1);
+        }
+    }
+}
+// getAAInd()/count_id_dist()/count_replacements() used to live here;
+// replaced by ProtSeqCode::count_id_fraction()/count_replacement_tally()
+// (ProtSeqCode.hpp/ProtSeqCompare.hpp) as of speed2026a Phase 6 (id) and
+// the count_replacements wiring round (replacements) - see
+// phase0_audit.md/phase1_design.md.
+
+/*
+ * Code adapted from Sequences2DistanceMatrix.cpp - bootstrapSequences()
+ * @param seq Original vector with sequences
+ * @param bseq Vector with new bootstrapped sequences
+ */
+void bootstrap_sequences(const std::vector<Sequence> &seqs, std::vector<Sequence> &bseqs)
+{
+    // ensure capacity in bootsequences
+    bseqs.resize(seqs.size());
+
+    const size_t seqlen = seqs[0].seq.length();
+    for (size_t i = 0; i < seqs.size(); i++)
+    {
+        bseqs[i].seq.reserve(seqlen);
+    }
+
+    // Do the bootstrapping
+    size_t pos = 0;
+    std::vector<int> samplePositions(seqlen);
+    const size_t BUFFSIZE = (16383 > seqlen ? seqlen : 16383); // 2^14=16384
+    std::vector<char> buff(BUFFSIZE + 1);
+    buff[BUFFSIZE] = '\0';
+
+    // Was two near-identical branches keyed on `32 < seqlen` - same
+    // no-op stride-chunking-vs-plain-loop split already found and
+    // removed in Sequences2DistanceMatrix.cpp's bootstrapSequences()
+    // (this function's own doc comment above says it was adapted from
+    // there) - verified equivalent there and unified into one path here
+    // too.
+    for (pos = 0; pos < seqlen; pos++)
+    {
+        samplePositions[pos] = static_cast<int>(seqlen * 1.0 * rand() / (RAND_MAX + 1.0));
+    }
+
+    for (size_t seq = 0; seq < seqs.size(); seq++)
+    {
+        const std::string &s = seqs[seq].seq;
+        pos = 0;
+        for (; pos < seqlen - BUFFSIZE; pos += BUFFSIZE)
+        {
+            for (size_t i = 0; i < BUFFSIZE; i++)
+            {
+                buff[i] = s[samplePositions[pos + i]];
+            }
+            bseqs[seq].seq.append(buff.data());
+        }
+        size_t i;
+        for (i = 0; pos < seqlen; i++, pos++)
+        {
+            buff[i] = s[samplePositions[pos]];
+        }
+        buff[i] = '\0';
+        bseqs[seq].seq.append(buff.data());
+    }
+}

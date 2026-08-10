@@ -1,0 +1,29 @@
+#pragma once
+
+#include "fastphylo/core/Exception.hpp"
+#include "fastphylo/core/SequenceTree.hpp"
+#include "fastphylo/io/Extrainfos.hpp"
+
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+class DataOutputStream
+{
+  public:
+    DataOutputStream(char *filename);
+    virtual ~DataOutputStream()
+    {
+    }
+    virtual void print(tree2int_map &tree2count, bool printCounts, string &runId, vector<string> &names,
+                       Extrainfos &extrainfos)
+    {
+    }
+
+  protected:
+    ostream *fp;
+    ofstream fout;
+    bool file_was_opened;
+};

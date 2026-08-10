@@ -1,0 +1,7 @@
+primitive,length,old_median_us,old_q1_us,old_q3_us,new_median_us,new_q1_us,new_q3_us,speedup
+count_id_dist,50,2,1.958,2,0.375,0.375,0.417,5.33333
+count_replacements,50,8.584,8.541,8.625,6.167,6.167,6.25,1.39192
+count_id_dist,300,11.541,11.5,11.583,1.625,1.584,1.625,7.10215
+count_replacements,300,22.458,22.416,22.5,7.833,7.792,7.875,2.8671
+count_id_dist,2000,74.125,74,74.5,12,11.917,12.042,6.17708
+count_replacements,2000,127.834,127.75,128.291,21,20.959,21.041,6.08733

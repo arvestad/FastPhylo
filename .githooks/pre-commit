@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Blocks a commit if any staged C/C++ file doesn't match .clang-format.
+# Not installed by default - opt in once per clone with:
+#   git config core.hooksPath .githooks
+set -u
+
+CLANG_FORMAT="${CLANG_FORMAT:-clang-format}"
+if ! command -v "$CLANG_FORMAT" >/dev/null 2>&1; then
+    echo "pre-commit: $CLANG_FORMAT not found on PATH - skipping format check." >&2
+    echo "  (install clang-format, or set CLANG_FORMAT=/path/to/clang-format)" >&2
+    exit 0
+fi
+
+# NUL-delimited + a portable read loop, not `mapfile` - macOS still
+# ships bash 3.2 by default (no mapfile builtin), and this hook needs
+# to work out of the box on any contributor's machine.
+failed=()
+while IFS= read -r -d '' f; do
+    [ -f "$f" ] || continue # skip files deleted after staging
+    if ! "$CLANG_FORMAT" --dry-run --Werror --style=file "$f" >/dev/null 2>&1; then
+        failed+=("$f")
+    fi
+done < <(git diff --cached --name-only --diff-filter=ACM -z -- \
+    '*.c' '*.cpp' '*.h' '*.hpp' ':!third_party')
+
+if [ "${#failed[@]}" -eq 0 ]; then
+    exit 0
+fi
+
+echo "pre-commit: these staged files don't match .clang-format:" >&2
+for f in "${failed[@]}"; do
+    echo "  $f" >&2
+done
+echo >&2
+echo "Fix with:" >&2
+echo "  $CLANG_FORMAT -i ${failed[*]}" >&2
+echo "or format only your changed lines with 'git clang-format'." >&2
+exit 1

@@ -1,0 +1,20 @@
+# Modernization Phase 0 (modernization_plan.md) picked LLVM-based style
+# with several overrides; superseded on Lasse's direct request for a
+# uniform 4-space/Allman-brace style repo-wide - Microsoft's preset
+# provides both natively (verified via `clang-format --style=Microsoft
+# --dump-config`), so this now inherits it directly rather than
+# re-tuning LLVM to match.
+BasedOnStyle: Microsoft
+Language: Cpp
+Standard: c++17
+
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# Kept from the prior config, not a Microsoft-style default: some
+# includes in this codebase have deliberate, order-dependent placement
+# (Windows portability headers, WITH_LIBXML-conditional includes) -
+# Microsoft style's own default (SortIncludes.Enabled: true) would
+# silently reorder those.
+SortIncludes: Never

@@ -1,0 +1,137 @@
+//--------------------------------------------------
+//
+// File: DistanceMatrix.hpp
+//
+// Author: Isaac Elias
+// e-mail: isaac@nada.kth.se
+//
+//--------------------------------------------------
+#pragma once
+
+#include <vector>
+#include <string>
+#include "fastphylo/core/InitAndPrintOn_utils.hpp"
+
+//
+// A symetric distance matrix. There is one template parameter
+// describing the data in the elements of the matrix and one template
+// parameter describing the data used as identifier for each
+// row/column. In addition, these types have two be provided with
+// function objects for initiating and printing the data types to a
+// stream.
+// Ex. DistanceMatrix<std::string, double,
+//                   Data_init<std::string>, Data_printOn<std::string>,
+//                   Data_init<double>, Data_printOn<double> >
+//
+//
+#define DISTANCEMATRIX DistanceMatrix<Identifier, DistanceType, IdentInit, IdentPrintOn, DistInit, DistPrintOn>
+#define DM_TEMPLATE                                                                                                    \
+    template <class Identifier, class DistanceType, class IdentInit, class IdentPrintOn, class DistInit,               \
+              class DistPrintOn>
+
+#define DISTVEC std::vector<DistanceType>
+
+// A SYMMETRIC DISTANCE MATRIX
+
+DM_TEMPLATE
+class DistanceMatrix
+{
+  public:
+    // CONSTRUCTORS
+    DistanceMatrix(size_t size = 0);
+    DistanceMatrix(const DistanceMatrix &dm);
+    DistanceMatrix &operator=(const DistanceMatrix &dm);
+
+    // DIMENSIONS
+    size_t getSize() const
+    {
+        return size;
+    }
+    void resize(size_t newsize)
+    {
+        if (size != newsize)
+        {
+            size = newsize;
+            assureSize();
+        }
+    }
+
+    // set all the matrix elements and identifiers to the supplied values.
+    void setDefaultValues(DistanceType &defval, Identifier &defid);
+
+    //---------------------------------
+    // GET AND SET DISTANCE
+    DistanceType getDistance(size_t i, size_t j) const
+    {
+        // only the upper right triangle
+        if (i <= j)
+            return D[i][j];
+        else
+            return D[j][i];
+    };
+
+    void setDistance(size_t i, size_t j, DistanceType d)
+    {
+        if (i <= j)
+            D[i][j] = d;
+        else
+            D[j][i] = d;
+    };
+
+    //---------------------
+    void setIdentifiers(std::vector<Identifier> ids)
+    {
+        for (size_t i = 0; i < ids.size(); i++)
+            identifiers[i] = ids[i];
+    }
+    void setIdentifier(size_t i, Identifier id)
+    {
+        identifiers[i] = id;
+    }
+    Identifier &getIdentifier(size_t i)
+    {
+        return identifiers[i];
+    }
+    const Identifier &getIdentifier(size_t i) const
+    {
+        return identifiers[i];
+    }
+
+    // SWAP AND REMOVE LAST ROW
+    void swapRowToLast(size_t row);
+    void removeLastRow();
+
+    // The free operator<< below needs friendship here since it reads
+    // the private size/identifiers/D/idPrintOn/distPrintOn members
+    // directly.
+    template <class I, class DT, class II, class IP, class DI, class DP>
+    friend std::ostream &operator<<(std::ostream &os, const DistanceMatrix<I, DT, II, IP, DI, DP> &dm);
+
+    //------------------- PRIVATE ------------------------
+  private:
+    DistPrintOn distPrintOn;
+    IdentPrintOn idPrintOn;
+
+    size_t size;
+    std::vector<Identifier> identifiers;
+    std::vector<std::vector<DistanceType>> D;
+
+    // makes sure that the vectors are of the right size.
+    void assureSize();
+};
+
+// Found via ADL.
+DM_TEMPLATE std::ostream &operator<<(std::ostream &os, const DISTANCEMATRIX &dm);
+
+//--------------------------
+// Include the implementation
+#include "fastphylo/core/DistanceMatrix_impl.hpp"
+
+//-------------------------
+// A regular distance matrix with strings as identifier and doubles as distance type.
+using StrDblMatrix = DistanceMatrix<std::string, double, Data_init<std::string>, Data_printOn<std::string>,
+                                    Data_init<double>, Data_printOn<double>>;
+
+// Distance for over saturated data ( !isfinite(d) || d<0 ) is set to <int>*maxRealDistance.\n"
+// returns true if some element was changed.
+bool applyFixFactor(StrDblMatrix &dm, double fixFactor);

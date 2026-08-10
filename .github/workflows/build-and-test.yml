@@ -1,0 +1,186 @@
+name: Build and test
+
+on:
+  push:
+    branches: [ master, modernize-cpp17, speed2026a ]
+  pull_request:
+
+jobs:
+  # Independent of the build matrix below - doesn't need to compile
+  # anything, just checks every tracked C/C++ file against
+  # .clang-format. Mirrors the local pre-commit hook (.githooks/
+  # pre-commit) so a contributor who skipped opting into that still
+  # gets caught here before merge.
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+
+      - name: Check formatting
+        run: |
+          failed=0
+          while IFS= read -r -d '' f; do
+            if ! clang-format --dry-run --Werror --style=file "$f"; then
+              failed=1
+            fi
+          done < <(git ls-files -z '*.c' '*.cpp' '*.h' '*.hpp' -- ':!third_party')
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::One or more files don't match .clang-format - run 'clang-format -i <file>' (or 'git clang-format') locally and push again."
+            exit 1
+          fi
+
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cmake_extra_args: ""
+          - os: macos-latest
+            cmake_extra_args: ""
+          - os: windows-latest
+            # lapack-reference (vcpkg.json manifest) supplies BLAS/LAPACK
+            # via CMake's own FindBLAS/FindLAPACK - no libxml2 here (see
+            # github_actions_release_builds_plan.md's Phase A: it's an
+            # auto-detected optional feature everywhere now, and no
+            # longer needed for phylip, the default matrix format).
+            # Ninja (a single-config generator) instead of the default
+            # Visual Studio generator so binaries land directly in
+            # build/src/c++/, matching Linux/macOS - the default VS
+            # generator's per-config output subdirectory
+            # (build/src/c++/Release/) would otherwise need its own
+            # FASTPHYLOPATH handling.
+            #
+            # Toolchain file path is relative, not ${{ github.workspace }}
+            # - that context variable isn't reliably available inside
+            # strategy.matrix (evaluated before a job's own runtime
+            # context is fully populated) and silently resolved to
+            # empty here on the first attempt, producing a bare
+            # "/vcpkg/..." argument that Git Bash's automatic POSIX-to-
+            # Windows path conversion then mangled into Git's own
+            # install root instead of the repo. A relative path works
+            # because the vcpkg clone (below) and this cmake invocation
+            # both run from the same default working directory.
+            cmake_extra_args: >-
+              -G Ninja
+              -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
+              -DVCPKG_TARGET_TRIPLET=x64-windows
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        # Uniform across all three OSes (Windows GitHub-hosted runners
+        # ship Git Bash) rather than juggling bash/pwsh syntax
+        # differences per step.
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libxml2-dev liblapack-dev libblas-dev
+
+      # BLAS/LAPACK (Accelerate) and libxml2 are both part of the OS on
+      # macOS already - no install needed for either (see
+      # github_actions_release_builds_plan.md's dependency-gap
+      # analysis). simde is the one real gap: GitHub's macos-latest
+      # runner has been Apple Silicon (arm64) since the macos-14
+      # default switch, and DNA_b128/sse2_wrapper.h needs it on any
+      # non-x86 CPU.
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmake simde
+
+      # Ninja for the single-config generator (see cmake_extra_args
+      # above); the MSVC dev-environment action puts cl.exe/link.exe on
+      # PATH, needed since Ninja itself doesn't set up a compiler
+      # environment the way the VS generator does automatically.
+      - name: Set up MSVC dev environment (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Ninja (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ninja -y
+
+      # vcpkg itself: GitHub's windows-latest image includes a
+      # pre-installed instance (some past images exposed it via
+      # $VCPKG_INSTALLATION_ROOT), but that has moved around across
+      # image versions - cloning our own pinned copy next to the repo
+      # is more predictable than relying on whatever the runner image
+      # happens to ship this month. vcpkg.json (manifest mode) drives
+      # what actually gets installed (lapack-reference) automatically
+      # during the Configure step below, via the toolchain file.
+      - name: Set up vcpkg (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          ./vcpkg/bootstrap-vcpkg.sh
+
+      # lapack-reference is a real from-source Fortran build (~15
+      # minutes cold) - vcpkg's own GitHub Actions binary cache means
+      # only the first run (or any run after vcpkg.json changes) pays
+      # that cost; every other run downloads the already-built package
+      # instead. The two ACTIONS_* variables are how vcpkg's "x-gha"
+      # binary source authenticates to the cache service - not reliably
+      # present in a plain shell's environment without this explicit
+      # export (the documented vcpkg + GitHub Actions caching pattern).
+      - name: Export GitHub Actions cache credentials (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Enable vcpkg binary caching (Windows)
+        if: runner.os == 'Windows'
+        run: echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> "$GITHUB_ENV"
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmake_extra_args }}
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run unit tests (ctest)
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Run example regression suite
+        working-directory: examples
+        # SKIP_EXAMPLES excludes the three examples with expected,
+        # inherent platform differences on Windows, and only there:
+        # ex3/ex9 need real XML support, which this Windows build has
+        # none of at all (Phase A: libxml2 is optional everywhere,
+        # deliberately not provisioned via vcpkg on Windows) - they
+        # produce the graceful "WITH_LIBXML=OFF" message instead of
+        # real XML, which of course will not byte-match a real-XML
+        # fixture. ex16 is a raw binary float dump (fastprot -O
+        # binary): text output (Phylip) rounds floats to a fixed
+        # number of decimal digits, masking last-bit differences, but
+        # this exposes every bit - transcendental functions (log/exp,
+        # used by Kimura-style distance corrections) are not required
+        # by IEEE 754 to be bit-identical across math library
+        # implementations (only basic arithmetic and sqrt are), so
+        # MSVC's UCRT can legitimately produce a different last bit
+        # than Linux/macOS's libm for the exact same input. Neither is
+        # a bug - verification stays full-strength (all 20 examples)
+        # on Linux/macOS, where SKIP_EXAMPLES is empty.
+        # RunExamples.sh already does its own byte-exact diff pass
+        # internally (see its own comment on SKIP_EXAMPLES) - no
+        # separate diff loop needed here, that would just be redundant
+        # (and, before this fix, silently never even reached: this
+        # script's own internal diff failing first made the whole step
+        # exit before a second, later loop could run at all).
+        run: |
+          FASTPHYLOPATH="${{ github.workspace }}/build/src/c++" \
+          SKIP_EXAMPLES="${{ runner.os == 'Windows' && 'ex3.out ex9.out ex16.out' || '' }}" \
+          bash RunExamples.sh
+
+      - name: Run CLI regression checks (--help/--version/error paths)
+        working-directory: examples
+        run: FASTPHYLOPATH="${{ github.workspace }}/build/src/c++" bash RunCliChecks.sh
