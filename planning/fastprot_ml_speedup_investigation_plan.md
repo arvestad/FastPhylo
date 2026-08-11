@@ -852,7 +852,20 @@ codebase's actual numbers are what settles it, per this plan's own
    investigation procedure, not that plan. Also the point to revisit
    `fastphylo-py`'s findings from Phase 0 in light of whatever Q1
    concluded, if bindings turn out to be relevant to how any of this
-   actually ships.
+   actually ships. **Done** - see
+   `planning/fastprot_ml_speedup_implementation_plan.md`. One
+   recommended change (Eigen for `MatrixExpm`/`likelihood_slope_curv()`'s
+   hot-path matrix operations, `double` first); everything else Q1-Q4
+   surfaced (MKL, embedded constants, a wholesale `Matrix` rewrite) is
+   explicitly not worth doing, with the measurements backing each call.
+   Q3's finding already shipped separately (PR #2, merged) since it
+   turned out to be a correctness bug, not a performance question -
+   the implementation plan accounts for how that changed the hot
+   path's shape before extrapolating Q1's numbers onto it.
+
+**All 6 phases (0-5) are now done. This investigation is complete -
+see `planning/fastprot_ml_speedup_implementation_plan.md` for what
+happens next.**
 
 ## Explicitly out of scope
 
