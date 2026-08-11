@@ -14,6 +14,7 @@
 #include "fastphylo/protein/ProtSeqUtils.hpp"
 #include "fastphylo/core/DistanceMatrix.hpp"
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 #include <map>
@@ -347,14 +348,27 @@ static std::unique_ptr<DataOutputStream> buildOutputStream(const FastprotOptions
 }
 
 // Shared by processRuns()'s original-data and bootstrap-replicate
-// cases below: pick sd/non-sd calculate_distances(), then stamp
+// cases below: pick ml/sd/non-sd calculate_distances(), then stamp
 // identifiers - everything else around it (whether printStartRun()/
 // printHeader() run first) differs between the two call sites, so
 // only this common part is factored out.
+//
+// ml_decomp is built once, outside processRuns()'s dataset/bootstrap
+// loop (see main() below) - the ML branch here calls
+// calculate_ml_dists() directly with it rather than routing through
+// calculate_distances(), which would rebuild the (now much more
+// expensive to skip) decomposition on every single bootstrap
+// replicate - see build_ml_decomposition()'s doc comment
+// (ProtDistCalc.hpp) for why that matters. Non-null iff
+// trans_model.ml is true (main() guarantees this).
 static void calculateDistances(prot_sequence_translation_model &trans_model, vector<Sequence> &seqs, StrDblMatrix &dm,
-                               StrDblMatrix &sdm, vector<string> &names)
+                               StrDblMatrix &sdm, vector<string> &names, const MatrixExpm *ml_decomp)
 {
-    if (trans_model.sd)
+    if (trans_model.ml)
+    {
+        calculate_ml_dists(seqs, dm, *ml_decomp);
+    }
+    else if (trans_model.sd)
     {
         calculate_distances(seqs, dm, trans_model, sdm);
     }
@@ -377,9 +391,11 @@ static void printDistances(DataOutputStream &ostream, prot_sequence_translation_
 
 // The dataset/bootstrap run loop - reads each dataset, computes and
 // prints its distance matrix, then numboot bootstrap replicates of it.
+// ml_decomp: see calculateDistances()'s doc comment above.
 static void processRuns(DataInputStream &istream, DataOutputStream &ostream,
                         prot_sequence_translation_model &trans_model, int ndatasets, int numboot, bool no_incl_orig,
-                        bool remove_indels, bool binary_format_type, InputFormat input_format)
+                        bool remove_indels, bool binary_format_type, InputFormat input_format,
+                        const MatrixExpm *ml_decomp)
 {
     StrDblMatrix dm;
     StrDblMatrix sdm;
@@ -400,7 +416,7 @@ static void processRuns(DataInputStream &istream, DataOutputStream &ostream,
         }
         if (!no_incl_orig)
         {
-            calculateDistances(trans_model, seqs, dm, sdm, names);
+            calculateDistances(trans_model, seqs, dm, sdm, names, ml_decomp);
             ostream.printStartRun(names, runId, extrainfos);
             ostream.printHeader(seqs.size());
             printDistances(ostream, trans_model, dm, sdm, binary_format_type);
@@ -410,7 +426,7 @@ static void processRuns(DataInputStream &istream, DataOutputStream &ostream,
         {
             vector<Sequence> bseqs;
             bootstrap_sequences(seqs, bseqs);
-            calculateDistances(trans_model, bseqs, dm, sdm, names);
+            calculateDistances(trans_model, bseqs, dm, sdm, names, ml_decomp);
             printDistances(ostream, trans_model, dm, sdm, binary_format_type);
         }
         if (!binary_format_type)
@@ -459,8 +475,20 @@ int main(int argc, char **argv)
         std::unique_ptr<DataOutputStream> ostream = buildOutputStream(opts);
         bool binary_format_type = opts.memory_efficient || (opts.output_format == OutputFormat::Binary);
 
+        // Built once, before any dataset/bootstrap replicate is
+        // processed - trans_model.model never changes over the course
+        // of a run, so this is the one point that's genuinely "before
+        // any distance estimation happens" for the whole program, not
+        // just for one dataset - see calculateDistances()'s doc
+        // comment above for why this matters.
+        std::optional<MatrixExpm> ml_decomp;
+        if (trans_model.ml)
+        {
+            ml_decomp = build_ml_decomposition(trans_model.model);
+        }
+
         processRuns(*istream, *ostream, trans_model, ndatasets, numboot, no_incl_orig, remove_indels,
-                    binary_format_type, opts.input_format);
+                    binary_format_type, opts.input_format, ml_decomp ? &*ml_decomp : nullptr);
     }
     catch (const std::exception &e)
     {

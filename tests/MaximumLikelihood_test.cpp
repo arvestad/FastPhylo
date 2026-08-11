@@ -29,6 +29,7 @@
 #include "fastphylo/protein/MaximumLikelihood.hpp"
 #include "fastphylo/protein/Matrix.hpp"
 #include "fastphylo/protein/ModelMatrix.hpp"
+#include "fastphylo/protein/ProtDistCalc.hpp"
 #include "fastphylo/protein/ProtSeqCode.hpp"
 #include "fastphylo/protein/ProtSeqCompare.hpp"
 
@@ -153,8 +154,7 @@ void test_globin_family_all_models()
 
     for (auto &m : models)
     {
-        Matrix Q = get_model_matrix(m.type);
-        MatrixExpm Qdecomp(Q, 1.0 / mean_substitution_rate(Q, get_model_vec(m.type)));
+        MatrixExpm Qdecomp = build_ml_decomposition(m.type);
         std::size_t checked = 0;
         for (std::size_t i = 0; i < seqs.size(); i++)
         {
@@ -174,8 +174,7 @@ void test_globin_family_all_models()
 // identical-sequence short-circuit, independent of fixture data.
 void test_identical_sequences_give_zero_distance()
 {
-    Matrix Q = get_model_matrix(wag);
-    MatrixExpm Qdecomp(Q, 1.0 / mean_substitution_rate(Q, get_model_vec(wag)));
+    MatrixExpm Qdecomp = build_ml_decomposition(wag);
     Eigen::Matrix<float, 20, 20> N = Eigen::Matrix<float, 20, 20>::Zero();
     for (std::size_t a = 0; a < ProtSeqCode::NUM_CANONICAL_AA; a++)
     {

@@ -113,7 +113,13 @@ void calculate_distances(const SeqVec &sv, StrDblMatrix &dm, prot_sequence_trans
     case lg:
         if (t_model.ml)
         {
-            calculate_ml_dists(sv, dm, t_model.model);
+            // One-shot convenience path: builds and discards its own
+            // decomposition. Callers computing ML distances more than
+            // once for the same model (bootstrap replicates, etc.)
+            // should call build_ml_decomposition() once themselves and
+            // use calculate_ml_dists(sv, dm, Qdecomp) directly instead
+            // - see both functions' doc comments (ProtDistCalc.hpp).
+            calculate_ml_dists(sv, dm, build_ml_decomposition(t_model.model));
         }
         else
         {
@@ -152,7 +158,13 @@ void calculate_distances(const SeqVec &sv, StrDblMatrix &dm, prot_sequence_trans
     case mvr:
         if (t_model.ml)
         {
-            calculate_ml_dists(sv, dm, t_model.model);
+            // One-shot convenience path: builds and discards its own
+            // decomposition. Callers computing ML distances more than
+            // once for the same model (bootstrap replicates, etc.)
+            // should call build_ml_decomposition() once themselves and
+            // use calculate_ml_dists(sv, dm, Qdecomp) directly instead
+            // - see both functions' doc comments (ProtDistCalc.hpp).
+            calculate_ml_dists(sv, dm, build_ml_decomposition(t_model.model));
         }
         else
         {
@@ -236,15 +248,12 @@ void calculate_ed_dists_with_sd(const SeqVec &sv, StrDblMatrix &dm, StrDblMatrix
     }
 }
 /*
- * Calculates the maximum likelihood distance.
- *
- * Notice the rescaling with a factor 100. The Q matrices have a funny scaling due a bad decision years ago!
- *
- * @param sv Vector with protein sequences
- * @param dm Distance matrix where the results is saved
- * @param mt Specifies which model to use for the calculations
+ * Builds the one-time decomposition calculate_ml_dists() needs - see
+ * its own doc comment (ProtDistCalc.hpp) for why this is a separate,
+ * explicitly-called function rather than something calculate_ml_dists()
+ * does for itself.
  */
-void calculate_ml_dists(const SeqVec &sv, StrDblMatrix &dm, model_type mt)
+MatrixExpm build_ml_decomposition(model_type mt)
 {
     Matrix Q = get_model_matrix(mt);
     // Rate matrices from different sources aren't published at a
@@ -262,13 +271,29 @@ void calculate_ml_dists(const SeqVec &sv, StrDblMatrix &dm, model_type mt)
     // be published in, including any added later.
     DblVec eq = get_model_vec(mt);
     double time_unit_scale = 1.0 / mean_substitution_rate(Q, eq);
-    // Q is the same rate matrix for every pair below; decomposing it is
-    // the expensive part of evaluating exp(Q*t), so do it once here
-    // instead of once per Newton-Raphson iteration per pair inside
+    // Q is the same rate matrix for every pair calculate_ml_dists()
+    // processes; decomposing it is the expensive part of evaluating
+    // exp(Q*t), so it happens here, once, rather than once per
+    // Newton-Raphson iteration per pair inside
     // likelihood_calc()/likelihood_slope_curv() - see Matrix.hpp's
     // MatrixExpm and phase0_audit.md's "ML speedup round" for the
-    // profiling behind this.
-    MatrixExpm Qdecomp(Q, time_unit_scale);
+    // profiling behind this, and this function's own doc comment for
+    // why it's also called only once per model even across many
+    // calculate_ml_dists() calls (bootstrap replicates, or repeated
+    // calls from a long-lived caller like fastphylo-py bindings), not
+    // once per call.
+    return MatrixExpm(Q, eq, time_unit_scale);
+}
+
+/*
+ * Calculates the maximum likelihood distance for every pair in sv.
+ * @param sv Vector with protein sequences
+ * @param dm Distance matrix where the results is saved
+ * @param Qdecomp The model's decomposition - build once via
+ * build_ml_decomposition() and reuse across calls for the same model.
+ */
+void calculate_ml_dists(const SeqVec &sv, StrDblMatrix &dm, const MatrixExpm &Qdecomp)
+{
     dm.resize(sv.size());
     std::vector<std::vector<std::uint8_t>> encoded = encode_all(sv);
 

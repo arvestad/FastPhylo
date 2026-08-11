@@ -29,15 +29,15 @@ double kimura_distance(double n_sum, double n_sum_diag);
 //! form likelihood_slope_curv() needs - callers build it directly in
 //! this form (see ProtDistCalc.cpp's tally_to_eigen()) rather than
 //! via the general Matrix class, which N never otherwise needs.
-//! Qdecomp must be MatrixExpm(Q) - passed in rather than recomputed
-//! here because Q is the same rate matrix for every pair in a
-//! calculate_ml_dists() run, and decomposing it is the expensive part
-//! (see Matrix.hpp). The returned distance is in whatever time unit
+//! Qdecomp is passed in rather than recomputed here - it's the same
+//! rate matrix for every pair in a calculate_ml_dists() run, and
+//! decomposing it is the expensive part (see Matrix.hpp; build it via
+//! build_ml_decomposition(), ProtDistCalc.hpp, once per model - not
+//! once per call). The returned distance is in whatever time unit
 //! Qdecomp was built with (MatrixExpm's time_unit_scale) -
-//! calculate_ml_dists() (ProtDistCalc.cpp) uses
-//! PAM_TO_SUBSTITUTIONS_PER_SITE, so the result is directly in
-//! substitutions/site, matching fastprot's actual output with no
-//! further rescaling needed.
+//! build_ml_decomposition() uses 1.0/mean_substitution_rate(Q, eq),
+//! so the result is directly in substitutions/site, matching
+//! fastprot's actual output with no further rescaling needed.
 double likelihood_calc(const Eigen::Matrix<float, 20, 20> &N, const MatrixExpm &Qdecomp);
 //! Analytic first and second derivatives of the log-likelihood at t,
 //! computed from the cached decomposition's float-precision copy (see

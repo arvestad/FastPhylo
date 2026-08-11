@@ -599,6 +599,91 @@ clean; direct re-check against PHYLIP's `protdist` confirmed JTT
 unchanged (`2.008679`, exact match - JTT's true rate was already
 ~100.6, close enough that this fix barely moves it).
 
+## Symmetrized decomposition + a build-once API (2026-08-11)
+
+Asked whether there was more single-threaded speedup available (not
+multithreading - deliberately deferred, see below), the answer was
+`MatrixExpm`'s one-time decomposition itself: re-measured against the
+*current* (post all prior optimizations) per-pair loop, since Q2's old
+"≤0.3% of wall time, negligible" finding was measured against the much
+slower pre-Eigen loop and never re-checked after the loop got 2-3x
+faster. `benchmarks/bench_decomp_share.cpp`: decomposition is **92-95%
+of total time at N=2 (1 pair), 55-63% at N=5, 21-26% at N=10, 6-7% at
+N=25, 0.03% at N=300** - real and dominant for small datasets, still
+genuinely negligible for large ones.
+
+**Symmetrization**: every rate matrix `MatrixExpm` decomposes is
+time-reversible (`eq[i]*Q(i,j) == eq[j]*Q(j,i)` by construction, true
+for all 5 named models), so `Q` is similar to the symmetric matrix
+`S = D^0.5*Q*D^-0.5` (`D = diag(eq)`) - decomposing `S` via
+`Eigen::SelfAdjointEigenSolver` instead of the general (possibly
+complex-eigenvalue) `EigenSolver` directly on `Q`, with `Q`'s own
+eigenvectors/inverse recovered as `V = D^-0.5*U`, `V^-1 = U^T*D^0.5`
+(no explicit matrix inverse needed - `U` is orthogonal), measured
+**3.15-3.8x faster** (`benchmarks/bench_symmetric_decomp.cpp`), exact
+to machine precision for the 4 exactly-reversible models
+(WAG/JTT/Dayhoff/LG) and to 6.2e-5 (well inside this project's 5e-4
+tolerance) for MVR - which turns out to have a small, genuine (~1.2%
+relative) detailed-balance violation in its own published data, found
+while verifying this change, not introduced by it. `MatrixExpm` kept
+its old general-`EigenSolver` constructor too (unchanged), since
+`Matrix::expm()` (the ED path, `ExpectedDistance.cpp`) calls it with
+no equilibrium distribution available and wasn't in scope to touch;
+the new, faster constructor takes `eq` and is what the ML path uses.
+
+**Build-once API**: symmetrization alone wasn't the full ask - the
+request was an API where decomposition is "at worst a start-up cost,"
+true "regardless of whether distance estimation is done once or many
+times." This wasn't hypothetical: `fastprot -b N` bootstrapping
+(`fastprot/main.cpp`) calls `calculate_ml_dists()` once for the
+original data plus once per replicate, and before this change *every*
+call rebuilt `MatrixExpm` from scratch even though the model - and
+therefore the decomposition - never changes across replicates. A
+second, unbounded-call-count case was also raised directly: a future
+`fastphylo-py` binding that won't know in advance how many distance
+estimations will be requested, where the same guarantee still has to
+hold.
+
+Fix: `calculate_ml_dists()`'s signature changed from taking a
+`model_type` (and building its own `MatrixExpm` internally, every
+call) to taking an already-built `const MatrixExpm&` - it no longer
+has the information needed to redo the expensive step even if a
+caller wanted it to. A new `build_ml_decomposition(model_type)`
+factory (`ProtDistCalc.hpp/.cpp`) does what `calculate_ml_dists()`
+used to do internally, as the one explicit "start-up cost" call every
+caller (CLI, tests, future bindings) makes once and reuses.
+`fastprot/main.cpp`'s bootstrap loop now builds it once in `main()`,
+before `processRuns()`'s dataset/bootstrap loop even starts, and
+threads a `const MatrixExpm *` through to the ML branch;
+`calculate_distances()`'s two dispatcher overloads (the existing
+one-shot convenience path, unaffected in contract) now call
+`build_ml_decomposition()` internally, immediately followed by
+`calculate_ml_dists()`, preserving their exact existing "compute once"
+behavior for any other caller.
+
+**Measured end-to-end** (interleaved, `--seed` fixed for identical
+resampling): on the 25-sequence globin family with `-b 300` (300 pairs/
+replicate, per-pair work dominates regardless), the improvement is
+small, as expected. On a 5-sequence dataset with `-b 2000` (10 pairs/
+replicate - decomposition dominated before this fix): **~1.9x faster**
+(0.22-0.23s -> 0.11-0.12s). On a 2-sequence dataset with `-b 5000` (1
+pair/replicate, the extreme case): **~7.75x faster** (0.31s -> 0.04s).
+Correctness: full rebuild + `ctest` 6/6 on Clang Release and real GCC
+14; `RunExamples.sh` clean after regenerating `ex18.out` (WAG shifted
+~1e-6, the same float-reordering-noise magnitude as prior `float`-path
+disclosures); `RunCliChecks.sh` clean; direct byte-level comparison of
+all 5 models' full 25x25 distance matrices against the pre-change
+build confirmed WAG/JTT/Dayhoff/LG agree to max 1e-6 absolute (noise)
+and MVR to max 6.5e-3 absolute / ~0.5% relative (the disclosed,
+pre-existing detailed-balance-violation tradeoff above, propagated
+through the Newton solver into the final distance - small, real, and
+was flagged before implementing, not discovered after).
+
+Deliberately not pursued in this round (asked about, explicitly
+deferred): multithreading the pairwise loop - real, but a different
+kind of change (thread-safety, opt-in flag design) the user wanted to
+set aside in favor of single-threaded cleverness first.
+
 ## Explicitly out of scope (carried over from the investigation plan)
 
 - `fastprot_mpi`'s separate, unsynced `Matrix`/`MaximumLikelihood`/

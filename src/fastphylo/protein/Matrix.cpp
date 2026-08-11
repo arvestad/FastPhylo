@@ -230,13 +230,10 @@ Eigen::Matrix<double, 20, 20> to_eigen20(const Matrix &m)
 }
 } // namespace
 
-/*!
- *  Decomposes Q*time_unit_scale = T*diag(eigenvalues)*T^-1 once (the
- *  expensive part of expm()), so at()/at_eigen() can evaluate
- *  exp(Q*time_unit_scale*t) for many t values cheaply. See the class
- *  comment in Matrix.hpp.
- */
-MatrixExpm::MatrixExpm(const Matrix &Q, double time_unit_scale)
+namespace
+{
+// Shared by both constructors below.
+void check_20x20(const Matrix &Q)
 {
     if (Q.get_rows() != Q.get_cols())
     {
@@ -252,6 +249,19 @@ MatrixExpm::MatrixExpm(const Matrix &Q, double time_unit_scale)
         throw std::out_of_range("MatrixExpm only supports 20x20 matrices (the protein rate matrices it was built "
                                  "for)");
     }
+}
+} // namespace
+
+/*!
+ *  Decomposes Q*time_unit_scale = T*diag(eigenvalues)*T^-1 once, via
+ *  the general EigenSolver - kept only for Matrix::expm() (the ED
+ *  path), which has no equilibrium distribution to offer the faster,
+ *  symmetrized constructor below. See both constructors' doc comments
+ *  in Matrix.hpp.
+ */
+MatrixExpm::MatrixExpm(const Matrix &Q, double time_unit_scale)
+{
+    check_20x20(Q);
 
     // Scaling Q here, before anything else, means every downstream
     // value (the decomposition, the float copies, Q2) is automatically
@@ -262,6 +272,62 @@ MatrixExpm::MatrixExpm(const Matrix &Q, double time_unit_scale)
     m_eigenvectors = solver.eigenvectors().real();
     m_eigenvectors_inv = m_eigenvectors.inverse();
     m_eigenvalues_real = solver.eigenvalues().real();
+
+    // float copy for likelihood_slope_curv()'s per-iteration hot path
+    // - the decomposition itself stays double-only above (a one-time
+    // cost, and the more numerically sensitive step); Q*Q is computed
+    // here in double for accuracy before casting down, though it's a
+    // one-time cost either way. See the class comment in Matrix.hpp.
+    m_eigenvectors_f = m_eigenvectors.cast<float>();
+    m_eigenvectors_inv_f = m_eigenvectors_inv.cast<float>();
+    m_eigenvalues_real_f = m_eigenvalues_real.cast<float>();
+    m_Q_f = m_Q.cast<float>();
+    m_Q2_f = (m_Q * m_Q).cast<float>();
+}
+
+/*!
+ *  Decomposes Q*time_unit_scale = T*diag(eigenvalues)*T^-1 once (the
+ *  expensive part of expm()), so at()/at_eigen() can evaluate
+ *  exp(Q*time_unit_scale*t) for many t values cheaply. See the class
+ *  comment in Matrix.hpp.
+ */
+MatrixExpm::MatrixExpm(const Matrix &Q, const DblVec &eq, double time_unit_scale)
+{
+    check_20x20(Q);
+    if (eq.size() != 20)
+    {
+        throw std::out_of_range("MatrixExpm needs a 20-entry equilibrium distribution");
+    }
+
+    // Scaling Q here, before anything else, means every downstream
+    // value (the decomposition, the float copies, Q2) is automatically
+    // correct for the rescaled time unit with no further special-
+    // casing needed anywhere else in this constructor.
+    m_Q = to_eigen20(Q) * time_unit_scale;
+
+    // Symmetrize via S = D^0.5 * Q * D^-0.5 (D = diag(eq)) and use
+    // SelfAdjointEigenSolver instead of the general EigenSolver - see
+    // the class comment for why this is valid (Q's time-reversibility)
+    // and how much faster it is. Scaling Q above doesn't affect
+    // reversibility (a positive scalar factors out of the detailed-
+    // balance equation), so symmetrizing the already-scaled m_Q here
+    // is equivalent to symmetrizing Q first and scaling the resulting
+    // eigenvalues afterward, without needing a separate code path.
+    Eigen::Matrix<double, 20, 1> sqrt_eq;
+    for (int i = 0; i < 20; i++)
+    {
+        sqrt_eq(i) = std::sqrt(eq[static_cast<std::size_t>(i)]);
+    }
+    Eigen::Matrix<double, 20, 20> D_half = sqrt_eq.asDiagonal();
+    Eigen::Matrix<double, 20, 20> D_half_inv = sqrt_eq.array().inverse().matrix().asDiagonal();
+    Eigen::Matrix<double, 20, 20> S = D_half * m_Q * D_half_inv;
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, 20, 20>> solver(S);
+    // Q = D^-0.5*S*D^0.5 = D^-0.5*(U*L*U^T)*D^0.5 = (D^-0.5*U)*L*(U^T*D^0.5),
+    // i.e. V = D^-0.5*U, V^-1 = U^T*D^0.5 (U orthogonal, so U^-1 = U^T -
+    // no explicit matrix inverse needed anywhere in this constructor).
+    m_eigenvectors = D_half_inv * solver.eigenvectors();
+    m_eigenvectors_inv = solver.eigenvectors().transpose() * D_half;
+    m_eigenvalues_real = solver.eigenvalues();
 
     // float copy for likelihood_slope_curv()'s per-iteration hot path
     // - the decomposition itself stays double-only above (a one-time

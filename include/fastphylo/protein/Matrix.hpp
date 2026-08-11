@@ -82,8 +82,39 @@ class Matrix
  * evaluated for many different t values without re-decomposing Q each
  * time: Q = T*diag(eigenvalues)*T^-1, so exp(Q*t) =
  * T*diag(exp(eigenvalues*t))*T^-1 - only this last, cheap step depends
- * on t. The decomposition itself (Eigen's EigenSolver) is done once,
- * in the constructor.
+ * on t. The decomposition itself is done once, in the constructor -
+ * callers that need to evaluate exp(Q*t) more than once (any number of
+ * times: a handful of Newton iterations, hundreds of bootstrap
+ * replicates, or an unbounded number of calls from a long-lived
+ * caller like fastphylo-py bindings) construct exactly one MatrixExpm
+ * per model and reuse it - see calculate_ml_dists()'s doc comment
+ * (ProtDistCalc.hpp) for why this is a hard requirement, not just an
+ * optimization: nothing in this class's public API lets a caller
+ * accidentally redo the decomposition per call the way a "build me
+ * a fresh one from model_type" convenience function would invite.
+ *
+ * Two constructors, matching two different situations: the
+ * Matrix+equilibrium-distribution one uses
+ * Eigen::SelfAdjointEigenSolver on the symmetric similarity transform
+ * S = D^0.5 * Q * D^-0.5 (D = diag(eq)), not the general (possibly
+ * complex-eigenvalue) EigenSolver directly on Q - valid because every
+ * rate matrix this constructor is meant for is time-reversible
+ * (eq[i]*Q(i,j) == eq[j]*Q(j,i) by construction - true for all 5 named
+ * protein models, see ModelMatrix.cpp; -F/--model-file custom matrices
+ * aren't implemented yet, so this can't be violated by a real caller
+ * today, but whoever wires up -F should validate the property then,
+ * not assume it silently holds for arbitrary user input). Q's own
+ * eigenvectors/inverse are recovered from S's orthogonal eigenvectors
+ * U as V = D^-0.5*U, V^-1 = U^T*D^0.5 - no explicit matrix inverse
+ * needed. Measured 3.15-3.8x faster than the general EigenSolver +
+ * explicit .inverse() the other constructor still uses
+ * (benchmarks/bench_symmetric_decomp.cpp), exact to machine precision
+ * for the 4 exactly-reversible models (WAG/JTT/Dayhoff/LG) and to
+ * 6.2e-5 for MVR (which has a small, ~1.2% relative, genuine detailed-
+ * balance violation in its published data at one cell pair - well
+ * inside this project's established 5e-4 correctness tolerance). The
+ * Matrix-only constructor (no eq) keeps the general EigenSolver path -
+ * see its own doc comment for why it still exists.
  *
  * Internally uses Eigen::Matrix<double,20,20> (fixed-size, stack-
  * allocated, no external BLAS dispatch) rather than the general
@@ -130,19 +161,35 @@ class Matrix
 class MatrixExpm
 {
   public:
-    //! Decomposes Q*time_unit_scale. Imaginary parts of Q's
-    //! eigenvalues are discarded, matching expm()'s existing behavior
-    //! (valid for the real, diagonalizable rate matrices this is used
-    //! for). Q must be 20x20 (see class comment). time_unit_scale
-    //! rescales Q before decomposing (default 1, i.e. no rescaling) -
-    //! lets a caller change what one unit of the `t` it later passes
-    //! to at()/at_eigen()/at_eigen_f() means, without needing a
-    //! separate rescaling step at every call site that uses the
-    //! result (see MaximumLikelihood.cpp's calculate_ml_dists() call
-    //! site for why: the published rate matrices are calibrated in
-    //! "PAM" units, not the substitutions-per-site units fastprot's
-    //! output uses).
+    //! General-purpose decomposition (Eigen's general EigenSolver,
+    //! discarding any imaginary part - matching this constructor's
+    //! pre-2026-08-11 behavior exactly) - kept only for Matrix::expm()
+    //! (the ED path, ExpectedDistance.cpp), which calls it on a Matrix
+    //! with no equilibrium distribution available at that call site
+    //! and isn't performance-critical (see
+    //! planning/fastprot_ml_speedup_investigation_plan.md's scope
+    //! notes). New callers that have eq available - which today means
+    //! every named protein model - should use the constructor below
+    //! instead: it's 3.15-3.8x faster and this one will silently give
+    //! a wrong answer for a non-reversible Q where that one would
+    //! correctly reject it (moot today since nothing not already known
+    //! to be reversible reaches either constructor - see the class
+    //! comment).
     explicit MatrixExpm(const Matrix &Q, double time_unit_scale = 1.0);
+    //! Decomposes Q*time_unit_scale via the symmetrized approach
+    //! described in the class comment - eq is Q's equilibrium
+    //! distribution (needed for the D=diag(eq) similarity transform,
+    //! not just a convenience). Q must be 20x20, eq must have 20
+    //! entries (see class comment). time_unit_scale rescales Q before
+    //! decomposing (default 1, i.e. no rescaling) - lets a caller
+    //! change what one unit of the `t` it later passes to
+    //! at()/at_eigen()/at_eigen_f() means, without needing a separate
+    //! rescaling step at every call site that uses the result (see
+    //! ProtDistCalc.cpp's build_ml_decomposition() for why: the
+    //! published rate matrices are calibrated in a model-dependent
+    //! scale, not the substitutions-per-site units fastprot's output
+    //! uses).
+    explicit MatrixExpm(const Matrix &Q, const DblVec &eq, double time_unit_scale = 1.0);
     //! Evaluates exp(Q*t) using the cached decomposition, as a Matrix
     //! - used by Matrix::expm() (the ED path, not the ML hot path
     //! this class was optimized for and not performance-critical -
