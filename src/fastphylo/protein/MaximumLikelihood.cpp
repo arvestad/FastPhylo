@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cfloat>
 #include <iostream>
+#include <limits>
 #include "fastphylo/protein/Matrix.hpp"
 
 namespace
@@ -52,79 +53,71 @@ double kimura_distance(const Matrix &N)
  * log L(t) = sum_{i,j} N(i,j) log(P(t)(i,j)), where P(t) = e^{Qt}:
  *   P'(t)  = Q P(t)          (= P(t) Q - Q commutes with its own
  *                                matrix exponential)
- *   P''(t) = Q P'(t)
+ *   P''(t) = Q P'(t) = P(t) Q^2 (computed this way - directly from
+ *                                P(t), not chained through P'(t) - so
+ *                                P'(t)/P''(t) don't depend on each
+ *                                other and can be evaluated
+ *                                independently; Q^2 is precomputed
+ *                                once per run, see Matrix.hpp)
  *   slope  = d/dt   log L(t) = sum N .* P'(t)  ./ P(t)
  *   curv   = d^2/dt^2 log L(t) = sum N .* (P''(t) ./ P(t) - (P'(t) ./ P(t))^2)
  * Both derivatives are obtained from the same cached decomposition
- * (Qdecomp.at_eigen(t)) with no finite differencing - P''(t) costs one
- * more matrix multiply reusing P'(t), which slope alone already
- * computed. This replaces a version that only returned slope,
- * requiring likelihood_calc() to approximate curv by finite-
- * differencing slope at a fixed, tiny step - noise-dominated wherever
- * the true derivative is locally flat, which real diverged sequence
- * pairs commonly are. See planning/fastprot_ml_speedup_investigation_
- * plan.md's "Q3 results" for the real-data cases this was found on,
- * and PHYLIP's protdist.c (makedists()) for the reference approach
- * this follows.
+ * with no finite differencing. This replaces a version that only
+ * returned slope, requiring likelihood_calc() to approximate curv by
+ * finite-differencing slope at a fixed, tiny step - noise-dominated
+ * wherever the true derivative is locally flat, which real diverged
+ * sequence pairs commonly are. See planning/fastprot_ml_speedup_
+ * investigation_plan.md's "Q3 results" for the real-data cases this
+ * was found on, and PHYLIP's protdist.c (makedists()) for the
+ * reference approach this follows.
  *
- * Computed via Eigen::Matrix<double,20,20> (Qdecomp.at_eigen()/
- * Q_eigen()), not the general Matrix/LAPACK-dgemm_ path - a 20x20
- * dense multiply through a general-purpose BLAS was found to be the
- * single largest cost in this function (planning/
- * fastprot_ml_speedup_investigation_plan.md's Phase 1 profiling), and
- * this is called every Newton-Raphson iteration, for every pair, in
- * calculate_ml_dists(). See planning/fastprot_ml_speedup_
- * implementation_plan.md for the measured win (benchmarks/
- * bench_ml_hotpath.cpp: ~1.2x, all 5 models, correctness within
- * machine precision of the previous LAPACK-based result).
- * @param N The replacement count matrix, N(i,j) contains the number of actual
- *            replacements from amino acid i to amino acid j
- * @param Q Rate matrix for replacements from one amino acid to another -
- *            unused directly (Qdecomp.Q_eigen() is the same matrix,
- *            already in the form this function needs); kept for
- *            signature stability, since likelihood_calc() and callers
- *            elsewhere already have Q at hand.
+ * Computed via Eigen::Matrix<float,20,20> (Qdecomp.at_eigen_f()/
+ * Q_eigen_f()/Q2_eigen_f()) - float, not double: a further ~2x
+ * measured on top of the double-Eigen path, error 3-5 orders of
+ * magnitude inside CONVERGENCE_TOL (planning/fastprot_ml_speedup_
+ * implementation_plan.md). The final reduction below still
+ * accumulates in double (cast before summing) - the per-element
+ * arithmetic is where float's speed comes from; summing 400 terms is
+ * cheap either way and double accumulation costs nothing extra while
+ * avoiding adding its own rounding error on top.
+ *
+ * N is a plain Eigen array here, not a Matrix - likelihood_calc()
+ * converts it once, before the Newton loop starts, since N doesn't
+ * change across iterations for a given pair and re-reading it via
+ * Matrix's bounds-checked accessor on every iteration was pure
+ * overhead.
+ * @param N The replacement count matrix (N(i,j) = number of observed
+ *            replacements from amino acid i to amino acid j),
+ *            pre-converted to float Eigen form by likelihood_calc()
  * @param Qdecomp Cached eigendecomposition of Q (see Matrix.hpp)
  * @param t The distance
  * @return The log-likelihood's slope and curvature at t
  */
-LikelihoodDerivatives likelihood_slope_curv(const Matrix &N, const Matrix & /*Q*/, const MatrixExpm &Qdecomp,
+LikelihoodDerivatives likelihood_slope_curv(const Eigen::Matrix<float, 20, 20> &N, const MatrixExpm &Qdecomp,
                                              double t)
 {
-    Eigen::Matrix<double, 20, 20> pt = Qdecomp.at_eigen(t);
-    Eigen::Matrix<double, 20, 20> p1t = pt * Qdecomp.Q_eigen();
-    Eigen::Matrix<double, 20, 20> p2t = p1t * Qdecomp.Q_eigen();
+    float tf = static_cast<float>(t);
+    Eigen::Matrix<float, 20, 20> pt = Qdecomp.at_eigen_f(tf);
+    Eigen::Matrix<float, 20, 20> p1t = pt * Qdecomp.Q_eigen_f();
+    Eigen::Matrix<float, 20, 20> p2t = pt * Qdecomp.Q2_eigen_f();
 
-    // Fused into one pass instead of elem_mult()/elem_div() (each
-    // allocating a full temporary Matrix just to be summed and
-    // discarded) - same per-element operation order as a direct
-    // transcription of the formulas above.
-    double slope = 0.0;
-    double curv = 0.0;
-    for (int row = 0; row < 20; row++)
-    {
-        for (int col = 0; col < 20; col++)
-        {
-            double n_k = N(row, col);
-            if (n_k == 0.0)
-            {
-                continue; // contributes 0 to both sums either way - skip the division
-            }
-            // P(t) is a transition-probability matrix for a rate
-            // matrix with strictly positive off-diagonal rates (every
-            // model this is used with), so p > 0 for all t > 0
-            // mathematically; floor it defensively against floating-
-            // point underflow at extreme t rather than letting a
-            // division produce inf/nan.
-            double p = std::max(pt(row, col), DBL_MIN);
-            double dp = p1t(row, col);
-            double d2p = p2t(row, col);
-            double ratio = dp / p;
-            slope += n_k * ratio;
-            curv += n_k * (d2p / p - (ratio * ratio));
-        }
-    }
-    return {slope, curv};
+    // P(t) is a transition-probability matrix for a rate matrix with
+    // strictly positive off-diagonal rates (every model this is used
+    // with), so p > 0 for all t > 0 mathematically; floor it
+    // defensively against floating-point underflow at extreme t
+    // rather than letting a division produce inf/nan. Array
+    // expressions (not a hand-written loop with a zero-skip branch,
+    // as this used to be) - every N(i,j)==0 cell contributes an exact
+    // 0 to the sums regardless (0 * anything), so skipping them saved
+    // a division at the cost of a branch; letting Eigen vectorize the
+    // whole 20x20 array uniformly is simpler and was measured to not
+    // need that branch to be fast.
+    Eigen::Array<float, 20, 20> p = pt.array().max(std::numeric_limits<float>::min());
+    Eigen::Array<float, 20, 20> ratio = p1t.array() / p;
+    Eigen::Array<double, 20, 20> slope_terms = (N.array() * ratio).cast<double>();
+    Eigen::Array<double, 20, 20> curv_terms = (N.array() * (p2t.array() / p - ratio.square())).cast<double>();
+
+    return {slope_terms.sum(), curv_terms.sum()};
 }
 
 /*!
@@ -154,14 +147,26 @@ LikelihoodDerivatives likelihood_slope_curv(const Matrix &N, const Matrix & /*Q*
  * exit.
  * @param N The replacement count matrix, N(i,j) contains the number of actual
  *            replacements from amino acid i to amino acid j
- * @param Q Rate matrix for replacements from one amino acid to another
  * @return The distance with the maximum likelihood
  */
-double likelihood_calc(const Matrix &N, const Matrix &Q, const MatrixExpm &Qdecomp)
+double likelihood_calc(const Matrix &N, const MatrixExpm &Qdecomp)
 {
     if (N.sum() - N.sum_diag() < DBL_EPSILON)
     {
         return 0;
+    }
+
+    // Converted once here, not inside likelihood_slope_curv() - N
+    // doesn't change across the Newton loop below, so re-reading it
+    // via Matrix's bounds-checked accessor on every iteration (as a
+    // previous version of this function did) was pure overhead.
+    Eigen::Matrix<float, 20, 20> N_eigen;
+    for (int row = 0; row < 20; row++)
+    {
+        for (int col = 0; col < 20; col++)
+        {
+            N_eigen(row, col) = static_cast<float>(N(row, col));
+        }
     }
 
     double t = kimura_distance(N);
@@ -173,7 +178,7 @@ double likelihood_calc(const Matrix &N, const Matrix &Q, const MatrixExpm &Qdeco
 
     for (int i = 0; i < MAX_ITERATIONS; i++)
     {
-        LikelihoodDerivatives d = likelihood_slope_curv(N, Q, Qdecomp, t);
+        LikelihoodDerivatives d = likelihood_slope_curv(N_eigen, Qdecomp, t);
 
         if (fabs(d.slope) < CONVERGENCE_TOL)
         {

@@ -103,6 +103,24 @@ class Matrix
  * Newton-Raphson iteration for P'(t)/P''(t) and shouldn't have to
  * re-convert it from Matrix each call.
  *
+ * A second, `float`-precision copy of the decomposition (eigenvectors/
+ * eigenvectors_inv/eigenvalues/Q) is cached alongside the `double` one
+ * - likelihood_slope_curv()'s per-iteration arithmetic runs in `float`
+ * (planning/fastprot_ml_speedup_implementation_plan.md: ~2x further
+ * win on top of `double`-Eigen, error 3-5 orders of magnitude inside
+ * the solver's convergence tolerance, measured on real data across
+ * all 5 models). The decomposition itself stays `double`-only - it's
+ * a one-time cost (not worth floating for speed) and the more
+ * numerically sensitive step (eigendecomposition feeding a matrix
+ * exponential); only the cheap, per-t evaluation is done in `float`.
+ *
+ * Also caches Q*Q (Q2_eigen_f(), `float` only - only the `float` hot
+ * path uses it), computed once here rather than derived as
+ * P''(t) = P'(t)*Q on every iteration: P'(t) and P''(t) can then both
+ * be computed directly from P(t) (P'(t)=P(t)*Q, P''(t)=P(t)*Q²)
+ * instead of P''(t) depending on P'(t) first - same total
+ * multiplication count, but no dependency chain between the two.
+ *
  * Added because likelihood_slope_curv() (MaximumLikelihood.cpp)
  * evaluates exp(Q*t) at a new t on every Newton-Raphson iteration, for
  * the same Q, for every pair in a run - see phase0_audit.md's "ML
@@ -124,9 +142,9 @@ class MatrixExpm
     //! notes on ExpectedDistance.cpp).
     Matrix at(double t) const;
     //! Evaluates exp(Q*t) using the cached decomposition, as a fixed-
-    //! size Eigen matrix directly - the fast path for
-    //! likelihood_slope_curv()'s per-Newton-iteration hot loop, no
-    //! Matrix round-trip.
+    //! size Eigen matrix directly - not used by the ML hot path itself
+    //! (see at_eigen_f()) but kept for the double-precision case in
+    //! general (at()'s implementation, tests).
     Eigen::Matrix<double, 20, 20> at_eigen(double t) const;
     //! Q, cached in the same Eigen form used internally - avoids
     //! likelihood_slope_curv() re-converting it from Matrix every call.
@@ -134,12 +152,32 @@ class MatrixExpm
     {
         return m_Q;
     }
+    //! Evaluates exp(Q*t) using the cached float-precision decomposition
+    //! - the fast path for likelihood_slope_curv()'s per-Newton-
+    //! iteration hot loop.
+    Eigen::Matrix<float, 20, 20> at_eigen_f(float t) const;
+    //! Q, cached in float form.
+    const Eigen::Matrix<float, 20, 20> &Q_eigen_f() const
+    {
+        return m_Q_f;
+    }
+    //! Q*Q, cached in float form - see class comment.
+    const Eigen::Matrix<float, 20, 20> &Q2_eigen_f() const
+    {
+        return m_Q2_f;
+    }
 
   private:
     Eigen::Matrix<double, 20, 20> m_eigenvectors;     // T
     Eigen::Matrix<double, 20, 20> m_eigenvectors_inv; // T^-1
     Eigen::Matrix<double, 20, 1> m_eigenvalues_real;  // real part of Q's eigenvalues
     Eigen::Matrix<double, 20, 20> m_Q;
+
+    Eigen::Matrix<float, 20, 20> m_eigenvectors_f;
+    Eigen::Matrix<float, 20, 20> m_eigenvectors_inv_f;
+    Eigen::Matrix<float, 20, 1> m_eigenvalues_real_f;
+    Eigen::Matrix<float, 20, 20> m_Q_f;
+    Eigen::Matrix<float, 20, 20> m_Q2_f;
 };
 
 // Non-member functions

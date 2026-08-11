@@ -232,11 +232,74 @@ naturally from work this plan is already doing for other reasons.
    compilers, all 5 models, real data), `-DWITH_LIBXML=OFF`,
    `RunExamples.sh` byte-identical on every fixture including the ML
    one, `RunCliChecks.sh` clean.
-4. Decide on `float` with real numbers in hand. **Not done yet** -
-   the `double` step alone already delivers a real, verified win;
-   `float` is a further, separately-decided step per the re-baseline
-   numbers above (a further ~2x on top of `double`), not bundled into
-   this round.
+4. Decide on `float` with real numbers in hand. **Done** (2026-08-11),
+   bundled with two further optimizations found while reviewing the
+   code together (Lasse's questions directly led to items b and c
+   below):
+   a. **`float` for the per-iteration hot path.** `MatrixExpm` now
+      caches a second, `float`-precision copy of the decomposition
+      (`at_eigen_f()`/`Q_eigen_f()`) alongside the `double` one - the
+      decomposition itself stays `double`-only (one-time cost, the
+      more numerically sensitive step); only the cheap per-`t`
+      evaluation runs in `float`.
+   b. **`Q²` precomputed once per run** (`Q2_eigen_f()`), so
+      `P'(t)=P(t)·Q` and `P''(t)=P(t)·Q²` are both computed directly
+      from `P(t)` instead of `P''(t)` depending on `P'(t)` first - same
+      multiply count, no dependency chain between the two.
+   c. **`N` converted to a fixed `Eigen::Matrix<float,20,20>` once per
+      pair**, before the Newton loop starts, instead of being re-read
+      via `Matrix`'s bounds-checked `operator()` on every iteration
+      (400 accessor calls/iteration, for a matrix that never changes
+      across iterations - a real, previously-missed overhead. caught
+      by Lasse asking "why is the hand-rolled Matrix class still used
+      at all"). `likelihood_slope_curv()`'s reduction loop is now
+      Eigen array expressions (`.array()`, `.cwiseMax`/`.max()`,
+      `.square()`, `.sum()`) instead of a hand-written branchy loop -
+      the branch (skip zero `N` cells) is gone; letting Eigen
+      vectorize the whole 20x20 array uniformly was measured to not
+      need it. The final reduction still accumulates in `double`
+      (`.cast<double>()` before `.sum()`) - per-element arithmetic is
+      where `float`'s speed comes from, summing 400 terms costs nothing
+      extra in `double` and avoids adding the reduction's own rounding
+      error on top of the already-comfortable margin below.
+
+   **Considered and dropped**: exploiting `N`'s sparsity to compute
+   only the `P'(t)`/`P''(t)` cells actually needed (skip full dense
+   rows for amino acids that never appear as a "from" state).
+   Skepticism from Lasse ("the non-zero elements can be just about
+   anywhere") turned out to be right - measured directly
+   (`benchmarks/measure_N_sparsity.cpp`) on both real
+   (`examples/globin_family.fasta`) and synthetic data: `rows(N)`
+   (distinct amino acids appearing as a "from" state) is essentially
+   always all 20 (median 20 on both datasets, minimum 18 even on the
+   smaller real one). Working through the FLOP count with that
+   constraint gives at best ~1.3x even before accounting for a
+   hand-rolled sparse loop losing to a vectorized dense kernel in
+   practice - not worth the complexity. Kept the measurement script
+   as a record of why, in case the same idea comes up again.
+
+   **Measured** (interleaved reps, byte-distinct binaries verified,
+   all 5 models, both 300 and 600-sequence datasets): **~2.0x-2.2x
+   faster than the original (pre-Eigen, PR #2 baseline) implementation,
+   ~1.5x-1.7x faster than the `double`-only Eigen step (item 2/3
+   above)** - consistent across every model, holding from 300 to 600
+   sequences. Correctness: `tests/MaximumLikelihood_test.cpp` (1500
+   real pairs, all 5 models) passes unchanged. `RunExamples.sh`'s
+   `ex18.out` shifted by ~1e-6 (regenerated, disclosed) - `float`'s own
+   precision limit, as expected. New, disclosed property: Clang/GCC
+   output is no longer guaranteed *byte*-identical with `float` in the
+   hot path (checked: WAG showed single-last-digit differences of
+   ~1e-6 between compilers on real data, JTT/DAY/MVR/LG were clean in
+   this run but aren't guaranteed to always be) - ordinary cross-
+   compiler floating-point codegen variance at `float`'s own precision
+   edge (`exp()`/FMA differences), not a correctness issue, and still
+   3+ orders of magnitude inside the solver's tolerance. This is a
+   real, if narrow, departure from the `double` path's guaranteed
+   bit-for-bit cross-compiler identity - worth knowing, not a defect.
+   Verified via full rebuild + `ctest` 5/5 on Clang Release and real
+   GCC 14, `-DWITH_LIBXML=OFF`, `RunExamples.sh`/`RunCliChecks.sh`
+   clean, re-profiled (still dominated by Eigen's own GEMM kernel, now
+   operating on `float` - no unexpected new hotspot).
 5. Update dependency docs, changelog entry (`2.0.0-beta.4` or
    whatever's next, per `RELEASING.md`'s established prerelease
    convention). Dependency docs (`INSTALL`, CI workflows, `vcpkg.json`)

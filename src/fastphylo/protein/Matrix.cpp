@@ -257,19 +257,39 @@ MatrixExpm::MatrixExpm(const Matrix &Q)
     m_eigenvectors = solver.eigenvectors().real();
     m_eigenvectors_inv = m_eigenvectors.inverse();
     m_eigenvalues_real = solver.eigenvalues().real();
+
+    // float copy for likelihood_slope_curv()'s per-iteration hot path
+    // - the decomposition itself stays double-only above (a one-time
+    // cost, and the more numerically sensitive step); Q*Q is computed
+    // here in double for accuracy before casting down, though it's a
+    // one-time cost either way. See the class comment in Matrix.hpp.
+    m_eigenvectors_f = m_eigenvectors.cast<float>();
+    m_eigenvectors_inv_f = m_eigenvectors_inv.cast<float>();
+    m_eigenvalues_real_f = m_eigenvalues_real.cast<float>();
+    m_Q_f = m_Q.cast<float>();
+    m_Q2_f = (m_Q * m_Q).cast<float>();
 }
 
 /*!
  *  Evaluates exp(Q*t) = T*diag(exp(eigenvalues*t))*T^-1 using the
  *  cached decomposition, as a fixed-size Eigen matrix - no
- *  decomposition, no heap allocation, no external BLAS dispatch. The
- *  fast path for likelihood_slope_curv()'s per-Newton-iteration hot
- *  loop (MaximumLikelihood.cpp).
+ *  decomposition, no heap allocation, no external BLAS dispatch.
  */
 Eigen::Matrix<double, 20, 20> MatrixExpm::at_eigen(double t) const
 {
     Eigen::Matrix<double, 20, 1> scale = (m_eigenvalues_real * t).array().exp();
     return m_eigenvectors * scale.asDiagonal() * m_eigenvectors_inv;
+}
+
+/*!
+ *  Evaluates exp(Q*t) using the cached float-precision decomposition -
+ *  the fast path for likelihood_slope_curv()'s per-Newton-iteration
+ *  hot loop (MaximumLikelihood.cpp).
+ */
+Eigen::Matrix<float, 20, 20> MatrixExpm::at_eigen_f(float t) const
+{
+    Eigen::Matrix<float, 20, 1> scale = (m_eigenvalues_real_f * t).array().exp();
+    return m_eigenvectors_f * scale.asDiagonal() * m_eigenvectors_inv_f;
 }
 
 /*!

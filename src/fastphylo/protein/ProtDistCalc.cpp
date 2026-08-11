@@ -230,11 +230,11 @@ void calculate_ml_dists(const SeqVec &sv, StrDblMatrix &dm, model_type mt)
 {
     Matrix Q = get_model_matrix(mt);
     // Q is the same rate matrix for every pair below; decomposing it is
-    // the expensive part of evaluating exp(Q*t) (LAPACK eigendecomposition
-    // + matrix inversion), so do it once here instead of once per Newton-
-    // Raphson iteration per pair inside likelihood_calc()/
-    // likelihood_deriv() - see Matrix.hpp's MatrixExpm and
-    // phase0_audit.md's "ML speedup round" for the profiling behind this.
+    // the expensive part of evaluating exp(Q*t), so do it once here
+    // instead of once per Newton-Raphson iteration per pair inside
+    // likelihood_calc()/likelihood_slope_curv() - see Matrix.hpp's
+    // MatrixExpm and phase0_audit.md's "ML speedup round" for the
+    // profiling behind this.
     MatrixExpm Qdecomp(Q);
     dm.resize(sv.size());
     std::vector<std::vector<std::uint8_t>> encoded = encode_all(sv);
@@ -244,7 +244,7 @@ void calculate_ml_dists(const SeqVec &sv, StrDblMatrix &dm, model_type mt)
         for (int j = i + 1; j < sv.size(); j++)
         {
             Matrix N = replacement_tally(encoded[i], encoded[j]);
-            double distance = 0.01 * likelihood_calc(N, Q, Qdecomp);
+            double distance = 0.01 * likelihood_calc(N, Qdecomp);
             dm.setDistance(i, j, distance);
         }
     }
