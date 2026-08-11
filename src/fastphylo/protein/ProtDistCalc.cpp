@@ -61,6 +61,24 @@ Matrix tally_to_matrix(const std::vector<std::size_t> &tally)
     return m;
 }
 
+// Same conversion as tally_to_matrix() above, but straight to the
+// fixed-size Eigen form likelihood_calc()/likelihood_slope_curv()
+// need (MaximumLikelihood.hpp) - used only by calculate_ml_dists()
+// below, so the ML path never constructs an intermediate Matrix (heap
+// allocation + bounds-checked writes) for N at all.
+Eigen::Matrix<float, 20, 20> tally_to_eigen(const std::vector<std::size_t> &tally)
+{
+    Eigen::Matrix<float, 20, 20> m;
+    for (std::size_t a = 0; a < ProtSeqCode::NUM_CANONICAL_AA; a++)
+    {
+        for (std::size_t b = 0; b < ProtSeqCode::NUM_CANONICAL_AA; b++)
+        {
+            m(a, b) = static_cast<float>(tally[(a * ProtSeqCode::NUM_CANONICAL_AA) + b]);
+        }
+    }
+    return m;
+}
+
 Matrix replacement_tally(const std::vector<std::uint8_t> &e1, const std::vector<std::uint8_t> &e2)
 {
     return tally_to_matrix(ProtSeqCode::count_replacement_tally(e1.data(), e1.size(), e2.data(), e2.size()));
@@ -90,13 +108,18 @@ void calculate_distances(const SeqVec &sv, StrDblMatrix &dm, prot_sequence_trans
         break;
     case wag:
     case day:
-    case arve:
     case jtt:
     case mvr:
     case lg:
         if (t_model.ml)
         {
-            calculate_ml_dists(sv, dm, t_model.model);
+            // One-shot convenience path: builds and discards its own
+            // decomposition. Callers computing ML distances more than
+            // once for the same model (bootstrap replicates, etc.)
+            // should call build_ml_decomposition() once themselves and
+            // use calculate_ml_dists(sv, dm, Qdecomp) directly instead
+            // - see both functions' doc comments (ProtDistCalc.hpp).
+            calculate_ml_dists(sv, dm, build_ml_decomposition(t_model.model));
         }
         else
         {
@@ -130,13 +153,18 @@ void calculate_distances(const SeqVec &sv, StrDblMatrix &dm, prot_sequence_trans
         break;
     case wag:
     case day:
-    case arve:
     case jtt:
     case lg:
     case mvr:
         if (t_model.ml)
         {
-            calculate_ml_dists(sv, dm, t_model.model);
+            // One-shot convenience path: builds and discards its own
+            // decomposition. Callers computing ML distances more than
+            // once for the same model (bootstrap replicates, etc.)
+            // should call build_ml_decomposition() once themselves and
+            // use calculate_ml_dists(sv, dm, Qdecomp) directly instead
+            // - see both functions' doc comments (ProtDistCalc.hpp).
+            calculate_ml_dists(sv, dm, build_ml_decomposition(t_model.model));
         }
         else
         {
@@ -220,24 +248,52 @@ void calculate_ed_dists_with_sd(const SeqVec &sv, StrDblMatrix &dm, StrDblMatrix
     }
 }
 /*
- * Calculates the maximum likelihood distance.
- *
- * Notice the rescaling with a factor 100. The Q matrices have a funny scaling due a bad decision years ago!
- *
- * @param sv Vector with protein sequences
- * @param dm Distance matrix where the results is saved
- * @param mt Specifies which model to use for the calculations
+ * Builds the one-time decomposition calculate_ml_dists() needs - see
+ * its own doc comment (ProtDistCalc.hpp) for why this is a separate,
+ * explicitly-called function rather than something calculate_ml_dists()
+ * does for itself.
  */
-void calculate_ml_dists(const SeqVec &sv, StrDblMatrix &dm, model_type mt)
+MatrixExpm build_ml_decomposition(model_type mt)
 {
     Matrix Q = get_model_matrix(mt);
-    // Q is the same rate matrix for every pair below; decomposing it is
-    // the expensive part of evaluating exp(Q*t) (LAPACK eigendecomposition
-    // + matrix inversion), so do it once here instead of once per Newton-
-    // Raphson iteration per pair inside likelihood_calc()/
-    // likelihood_deriv() - see Matrix.hpp's MatrixExpm and
-    // phase0_audit.md's "ML speedup round" for the profiling behind this.
-    MatrixExpm Qdecomp(Q);
+    // Rate matrices from different sources aren't published at a
+    // consistent scale - e.g. WAG/JTT/Dayhoff/MVR are all calibrated
+    // to a mean substitution rate of ~100 (the historical "PAM"
+    // convention), but LG is already published normalized to a mean
+    // rate of 1 (found 2026-08-11 by cross-checking against
+    // IQ-TREE2's source - a fixed conversion factor that happened to
+    // work for the first 4 models was silently wrong for LG, giving
+    // ML distances off by roughly two orders of magnitude for it
+    // specifically). Dividing by Q's own mean_substitution_rate()
+    // (ModelMatrix.hpp) instead of a hardcoded constant makes `t`
+    // mean the same thing - expected substitutions/site - for every
+    // model uniformly, regardless of which convention it happened to
+    // be published in, including any added later.
+    DblVec eq = get_model_vec(mt);
+    double time_unit_scale = 1.0 / mean_substitution_rate(Q, eq);
+    // Q is the same rate matrix for every pair calculate_ml_dists()
+    // processes; decomposing it is the expensive part of evaluating
+    // exp(Q*t), so it happens here, once, rather than once per
+    // Newton-Raphson iteration per pair inside
+    // likelihood_calc()/likelihood_slope_curv() - see Matrix.hpp's
+    // MatrixExpm and phase0_audit.md's "ML speedup round" for the
+    // profiling behind this, and this function's own doc comment for
+    // why it's also called only once per model even across many
+    // calculate_ml_dists() calls (bootstrap replicates, or repeated
+    // calls from a long-lived caller like fastphylo-py bindings), not
+    // once per call.
+    return MatrixExpm(Q, eq, time_unit_scale);
+}
+
+/*
+ * Calculates the maximum likelihood distance for every pair in sv.
+ * @param sv Vector with protein sequences
+ * @param dm Distance matrix where the results is saved
+ * @param Qdecomp The model's decomposition - build once via
+ * build_ml_decomposition() and reuse across calls for the same model.
+ */
+void calculate_ml_dists(const SeqVec &sv, StrDblMatrix &dm, const MatrixExpm &Qdecomp)
+{
     dm.resize(sv.size());
     std::vector<std::vector<std::uint8_t>> encoded = encode_all(sv);
 
@@ -245,9 +301,9 @@ void calculate_ml_dists(const SeqVec &sv, StrDblMatrix &dm, model_type mt)
     {
         for (int j = i + 1; j < sv.size(); j++)
         {
-            Matrix N = replacement_tally(encoded[i], encoded[j]);
-            double distance = 0.01 * likelihood_calc(N, Q, Qdecomp);
-            dm.setDistance(i, j, distance);
+            Eigen::Matrix<float, 20, 20> N = tally_to_eigen(ProtSeqCode::count_replacement_tally(
+                encoded[i].data(), encoded[i].size(), encoded[j].data(), encoded[j].size()));
+            dm.setDistance(i, j, likelihood_calc(N, Qdecomp));
         }
     }
 }

@@ -82,18 +82,19 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake libxml2-dev liblapack-dev libblas-dev
+          sudo apt-get install -y cmake libxml2-dev liblapack-dev libblas-dev libeigen3-dev
 
       # BLAS/LAPACK (Accelerate) and libxml2 are both part of the OS on
       # macOS already - no install needed for either (see
       # github_actions_release_builds_plan.md's dependency-gap
-      # analysis). simde is the one real gap: GitHub's macos-latest
+      # analysis). simde and eigen are real gaps: GitHub's macos-latest
       # runner has been Apple Silicon (arm64) since the macos-14
-      # default switch, and DNA_b128/sse2_wrapper.h needs it on any
-      # non-x86 CPU.
+      # default switch (DNA_b128/sse2_wrapper.h needs simde on any
+      # non-x86 CPU), and Eigen (fastprot_ml_speedup_implementation_
+      # plan.md) is header-only, never part of the OS on any platform.
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install cmake simde
+        run: brew install cmake simde eigen
 
       # Ninja for the single-config generator (see cmake_extra_args
       # above); the MSVC dev-environment action puts cl.exe/link.exe on

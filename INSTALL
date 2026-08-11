@@ -6,6 +6,10 @@ Requirements for fastphylo:
   maximum-likelihood code). On Linux: e.g. "apt install libblas-dev
   liblapack-dev". On macOS: none needed, Apple's Accelerate framework
   is found automatically.
+* Eigen3 (required - used by fastprot's maximum-likelihood code for
+  its dense 20x20 matrix operations). Header-only. On Linux: e.g.
+  "apt install libeigen3-dev". On macOS: "brew install eigen". Via
+  vcpkg: already listed in vcpkg.json as "eigen3".
 * libxml2 development libraries (optional - enables XML input/output
   in fastprot/fastdist/fnj). On Linux: e.g. "apt install libxml2-dev".
   On macOS: none needed, the system's own libxml2 is found

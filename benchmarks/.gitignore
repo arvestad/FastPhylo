@@ -1,1 +1,14 @@
 data/
+bench_matrix_backend
+bench_ml_solver
+bench_decomposition_cost
+bench_ml_hotpath
+measure_N_sparsity
+dump_model_matrices
+bench_unrolling_default
+bench_unrolling_unrolled
+check_lg_scale
+analyze_convergence
+bench_decomp_share
+bench_symmetric_decomp
+bench_bootstrap_rng

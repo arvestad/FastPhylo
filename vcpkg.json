@@ -3,6 +3,7 @@
   "version-string": "1.0.3",
   "description": "Fast tools for phylogenetics: distance estimation, neighbor joining, and more.",
   "dependencies": [
-    "lapack-reference"
+    "lapack-reference",
+    "eigen3"
   ]
 }

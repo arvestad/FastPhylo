@@ -87,6 +87,7 @@ ${FASTPHYLO_CORE_DIR}/InitAndPrintOn_utils.cpp
 ${FASTPHYLO_CORE_DIR}/Sequence.cpp
 ${FASTPHYLO_CORE_DIR}/SequenceTree.cpp
 ${FASTPHYLO_CORE_DIR}/file_utils.cpp
+${FASTPHYLO_CORE_DIR}/random_utils.cpp
 ${FASTPHYLO_DNA_DIR}/DNA_b128_String.cpp
 ${FASTPHYLO_DNA_DIR}/Sequences2DistanceMatrix.cpp
 ${FASTPHYLO_DNA_DIR}/NeighborJoining.cpp
@@ -251,6 +252,50 @@ endforeach(i)
 # surviving content moved into include/fastphylo/dna/ in
 # project_layout_plan.md, and the rest was confirmed-dead and deleted
 # in lint_plan.md's Phase 0.)
+# Matrix.cpp/MaximumLikelihood.cpp use Eigen::Matrix<double,20,20> for
+# the ML hot path's dense 20x20 operations (planning/
+# fastprot_ml_speedup_implementation_plan.md) - header-only, so unlike
+# BLAS/LAPACK (extern "C" declarations, no header needed until final
+# link) this needs to be on fastphylo's own include path at compile
+# time, not deferred to fastprot's target further down.
+# No version pin (was "3.4 REQUIRED", the version available when this
+# dependency was added): Homebrew's eigen formula has since moved its
+# default/stable version to 5.0.1, and find_package(Eigen3 3.4)'s
+# SameMajorVersion compatibility check rejects that outright (CI
+# failure, 2026-08-11 - the first time this dependency was ever
+# actually exercised on a real macOS runner, since pushes to this
+# branch never triggered the workflow, only this PR did). Verified
+# directly (full rebuild + ctest 6/6) against the Eigen 5.0.1 bottle:
+# the small, stable subset used here (fixed-size Matrix, EigenSolver,
+# SelfAdjointEigenSolver, basic array ops) is unaffected by whatever
+# changed 3.4->5.0 - Eigen switched to semantic versioning at 5.0 and
+# explicitly kept "WORLD"=3 "for posterity" (their CHANGELOG.md), so
+# 3.4.0 -> 5.0.0 is a continuation/renumbering of the same Eigen 3.x
+# line, not a rewrite; none of 5.0's documented breaking changes touch
+# what this project uses. No genuine technical floor is needed - these
+# APIs have been stable since Eigen 3.0 (2010) - so accepting whatever
+# Eigen3 a platform's package manager currently provides (3.4.x via
+# Ubuntu's libeigen3-dev/vcpkg, 5.0.1 via current Homebrew) is more
+# robust than re-pinning to today's latest and hitting this again next
+# time a package manager moves on.
+#
+# Do NOT upgrade to 5.0.1 locally expecting a speed win, despite its
+# release notes advertising broad performance improvements (including
+# to GEMM/product kernels, which is exactly this project's ML hot
+# path). Measured directly (2026-08-11, interleaved fastprot builds
+# against the two versions' actual Eigen3::Eigen CMake targets, same
+# toolchain/arm64/AppleClang): Eigen 5.0.1 was ~16-18% SLOWER than
+# 3.4.0 on the GEMM-heavy per-pair Newton loop, and ~13% slower even
+# on a decomposition-dominated (SelfAdjointEigenSolver) workload -
+# reproducible with run order reversed, not a linking artifact (no
+# INTERFACE_COMPILE_DEFINITIONS difference between the two targets).
+# Root cause not identified (broader codegen difference on this
+# toolchain for small fixed-size matrices, not one call site) - kept
+# unresolved rather than guessed at. If re-checking this on a
+# different platform/compiler, measure again rather than trusting
+# either this note or Eigen's own release notes.
+find_package(Eigen3 REQUIRED)
+
 add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS} ${FASTPHYLO_IO_SRCS} ${FASTPHYLO_IO_XML_SRCS} ${FASTPHYLO_PROTEIN_SRCS})
 # Modernization Phase B (project_layout_plan.md): the public API lives
 # under include/fastphylo/{core,dna,io,protein}/ now, consumed as
@@ -267,6 +312,13 @@ target_include_directories(fastphylo PUBLIC
 # already separately link ${FASTPHYLO_XML_LIBS} themselves) get it
 # transitively too rather than needing to know to add it twice.
 target_link_libraries(fastphylo PUBLIC ${FASTPHYLO_XML_LIBS})
+# MatrixExpm's private members (Matrix.hpp) are Eigen types now - the
+# public Matrix class and MatrixExpm's own public methods are
+# unchanged (still Matrix in, Matrix out), but Matrix.hpp itself
+# #includes <Eigen/Dense> to declare that private state, so anything
+# that #includes Matrix.hpp needs Eigen's include path too - PUBLIC,
+# same reasoning as the XML libs above.
+target_link_libraries(fastphylo PUBLIC Eigen3::Eigen)
 
 find_package(Threads REQUIRED)
 
@@ -386,6 +438,14 @@ add_executable(MaximumLikelihood_test ${FASTPHYLO_TESTS_DIR}/MaximumLikelihood_t
 target_link_libraries(MaximumLikelihood_test PRIVATE fastphylo BLAS::BLAS LAPACK::LAPACK)
 target_compile_definitions(MaximumLikelihood_test PRIVATE GLOBIN_FIXTURE_PATH="${CMAKE_SOURCE_DIR}/examples/globin_family.fasta")
 add_test(NAME MaximumLikelihood_test COMMAND MaximumLikelihood_test)
+
+# Model data sanity check (row-sums-to-zero, frequencies-sum-to-one) -
+# added after finding JTT's Q(0,0) was hardcoded 100x too large, a
+# data-entry bug MaximumLikelihood_test's solver-self-consistency check
+# couldn't catch (see ModelMatrix_test.cpp's header comment).
+add_executable(ModelMatrix_test ${FASTPHYLO_TESTS_DIR}/ModelMatrix_test.cpp)
+target_link_libraries(ModelMatrix_test PRIVATE fastphylo BLAS::BLAS LAPACK::LAPACK)
+add_test(NAME ModelMatrix_test COMMAND ModelMatrix_test)
 
 # Phase 5 performance benchmark (plan.md). Not an add_test() - it prints
 # timing data, not a pass/fail result; see benchmarks/run_benchmarks.sh

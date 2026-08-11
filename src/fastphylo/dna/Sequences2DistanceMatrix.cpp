@@ -18,6 +18,7 @@
 #include <vector>
 #include "fastphylo/core/stl_utils.hpp"
 #include "fastphylo/core/log_utils.hpp"
+#include "fastphylo/core/random_utils.hpp"
 #include "fastphylo/core/file_utils.hpp"
 #include <cfloat>
 #include <cstdio>
@@ -158,14 +159,14 @@ void bootstrapSequences(const std::vector<Sequence> &seqs, std::vector<DNA_b128_
 
     // Was two near-identical branches keyed on `32 < seqlen`: one doing
     // this same fill in stride-32 chunks (an apparent unrolling
-    // attempt that, since rand() is an inherently serial call, visits
-    // positions 0..seqlen-1 in the same order and calls rand() the
+    // attempt that, since the RNG draw is an inherently serial call,
+    // visits positions 0..seqlen-1 in the same order and draws the
     // same number of times as the plain loop below - chunking it
     // changed nothing observable), the other this plain loop, used
     // only for seqlen<=32. Proven equivalent and unified into one path.
     for (pos = 0; pos < seqlen; pos++)
     {
-        samplePositions[pos] = static_cast<int>(seqlen * 1.0 * rand() / (RAND_MAX + 1.0));
+        samplePositions[pos] = uniform_random_index(seqlen);
     }
 
     // Same merge for the sampled-sequence-copy step below: BUFFSIZE is

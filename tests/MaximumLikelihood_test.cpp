@@ -29,15 +29,17 @@
 #include "fastphylo/protein/MaximumLikelihood.hpp"
 #include "fastphylo/protein/Matrix.hpp"
 #include "fastphylo/protein/ModelMatrix.hpp"
+#include "fastphylo/protein/ProtDistCalc.hpp"
 #include "fastphylo/protein/ProtSeqCode.hpp"
 #include "fastphylo/protein/ProtSeqCompare.hpp"
 
 namespace
 {
 
-constexpr double MAX_DISTANCE = 500;
-constexpr double MIN_DISTANCE = 1;
-constexpr double CONVERGENCE_TOL = 0.001;
+// Mirrors MaximumLikelihood.cpp's own constants (substitutions/site).
+constexpr double MAX_DISTANCE = 5.0;
+constexpr double MIN_DISTANCE = 0.001;
+constexpr double CONVERGENCE_TOL = 0.1;
 // A returned t is accepted as "at" a boundary if it's within this of
 // it - likelihood_calc() returns MIN_DISTANCE/MAX_DISTANCE exactly
 // today, but this test's job is to check the invariant, not pin down
@@ -84,33 +86,33 @@ std::vector<std::string> read_fasta(const std::string &path)
     return seqs;
 }
 
-// Mirrors ProtDistCalc.cpp's anonymous-namespace tally_to_matrix() -
+// Mirrors ProtDistCalc.cpp's anonymous-namespace tally_to_eigen() -
 // duplicated here rather than exporting it from production code just
 // for this test, same reasoning as ProtSeqCompare_test.cpp's oracle.
-Matrix tally_to_matrix(const std::vector<std::size_t> &tally)
+Eigen::Matrix<float, 20, 20> tally_to_eigen(const std::vector<std::size_t> &tally)
 {
-    Matrix m(ProtSeqCode::NUM_CANONICAL_AA, ProtSeqCode::NUM_CANONICAL_AA);
+    Eigen::Matrix<float, 20, 20> m;
     for (std::size_t a = 0; a < ProtSeqCode::NUM_CANONICAL_AA; a++)
     {
         for (std::size_t b = 0; b < ProtSeqCode::NUM_CANONICAL_AA; b++)
         {
-            m(a, b) = static_cast<double>(tally[(a * ProtSeqCode::NUM_CANONICAL_AA) + b]);
+            m(a, b) = static_cast<float>(tally[(a * ProtSeqCode::NUM_CANONICAL_AA) + b]);
         }
     }
     return m;
 }
 
-Matrix replacement_tally(const std::vector<std::uint8_t> &e1, const std::vector<std::uint8_t> &e2)
+Eigen::Matrix<float, 20, 20> replacement_tally(const std::vector<std::uint8_t> &e1, const std::vector<std::uint8_t> &e2)
 {
-    return tally_to_matrix(ProtSeqCode::count_replacement_tally(e1.data(), e1.size(), e2.data(), e2.size()));
+    return tally_to_eigen(ProtSeqCode::count_replacement_tally(e1.data(), e1.size(), e2.data(), e2.size()));
 }
 
 // The property under test, isolated so both the "does it hold" check
 // and its failure message are in one place.
-void assert_verified_answer(const Matrix &N, const Matrix &Q, const MatrixExpm &Qdecomp, double t,
-                             const char *model_name, std::size_t i, std::size_t j)
+void assert_verified_answer(const Eigen::Matrix<float, 20, 20> &N, const MatrixExpm &Qdecomp, double t,
+                            const char *model_name, std::size_t i, std::size_t j)
 {
-    if (N.sum() - N.sum_diag() < DBL_EPSILON)
+    if (N.sum() - N.trace() < DBL_EPSILON)
     {
         assert(t == 0 && "identical sequences must return distance 0");
         return;
@@ -121,11 +123,11 @@ void assert_verified_answer(const Matrix &N, const Matrix &Q, const MatrixExpm &
     {
         return; // a legitimate, disclosed boundary clamp - not a silent guess
     }
-    LikelihoodDerivatives d = likelihood_slope_curv(N, Q, Qdecomp, t);
+    LikelihoodDerivatives d = likelihood_slope_curv(N, Qdecomp, t);
     if (std::fabs(d.slope) >= CONVERGENCE_TOL)
     {
-        std::cerr << "FAIL: model=" << model_name << " pair=(" << i << "," << j << ") t=" << t
-                  << " slope=" << d.slope << " (expected |slope| < " << CONVERGENCE_TOL
+        std::cerr << "FAIL: model=" << model_name << " pair=(" << i << "," << j << ") t=" << t << " slope=" << d.slope
+                  << " (expected |slope| < " << CONVERGENCE_TOL
                   << ", or t at a boundary) - likelihood_calc() returned an unverified answer\n";
         assert(false);
     }
@@ -151,16 +153,15 @@ void test_globin_family_all_models()
 
     for (auto &m : models)
     {
-        Matrix Q = get_model_matrix(m.type);
-        MatrixExpm Qdecomp(Q);
+        MatrixExpm Qdecomp = build_ml_decomposition(m.type);
         std::size_t checked = 0;
         for (std::size_t i = 0; i < seqs.size(); i++)
         {
             for (std::size_t j = i + 1; j < seqs.size(); j++)
             {
-                Matrix N = replacement_tally(encoded[i], encoded[j]);
-                double t = likelihood_calc(N, Q, Qdecomp);
-                assert_verified_answer(N, Q, Qdecomp, t, m.name, i, j);
+                Eigen::Matrix<float, 20, 20> N = replacement_tally(encoded[i], encoded[j]);
+                double t = likelihood_calc(N, Qdecomp);
+                assert_verified_answer(N, Qdecomp, t, m.name, i, j);
                 checked++;
             }
         }
@@ -172,14 +173,13 @@ void test_globin_family_all_models()
 // identical-sequence short-circuit, independent of fixture data.
 void test_identical_sequences_give_zero_distance()
 {
-    Matrix Q = get_model_matrix(wag);
-    MatrixExpm Qdecomp(Q);
-    Matrix N(ProtSeqCode::NUM_CANONICAL_AA, ProtSeqCode::NUM_CANONICAL_AA);
+    MatrixExpm Qdecomp = build_ml_decomposition(wag);
+    Eigen::Matrix<float, 20, 20> N = Eigen::Matrix<float, 20, 20>::Zero();
     for (std::size_t a = 0; a < ProtSeqCode::NUM_CANONICAL_AA; a++)
     {
         N(a, a) = 42; // every position matches, no replacements observed
     }
-    assert(likelihood_calc(N, Q, Qdecomp) == 0);
+    assert(likelihood_calc(N, Qdecomp) == 0);
 }
 
 } // namespace

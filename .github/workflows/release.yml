@@ -65,11 +65,11 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake libxml2-dev liblapack-dev libblas-dev
+          sudo apt-get install -y cmake libxml2-dev liblapack-dev libblas-dev libeigen3-dev
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install cmake simde
+        run: brew install cmake simde eigen
 
       - name: Set up MSVC dev environment (Windows)
         if: runner.os == 'Windows'
