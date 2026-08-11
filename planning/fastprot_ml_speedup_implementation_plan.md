@@ -101,6 +101,21 @@ specifically (the `double` step is worth doing regardless, given the
 naive-loop/MKL alternatives are already ruled out and `double` costs
 nothing in accuracy).
 
+**Done (2026-08-11)**, `benchmarks/bench_ml_hotpath.cpp`: measured
+directly against the real, current `likelihood_slope_curv()`, all 5
+models, real data (`examples/globin_family.fasta`). Confirms the
+extrapolation's direction, a bit more conservative in magnitude:
+**`double` ~1.20-1.24x, `float` ~2.06-2.13x**, consistent across all 5
+models. Correctness: `double` agrees with the current LAPACK-based
+result to 1e-13 to 1e-16 (machine precision); `float` to 1e-6 to 1e-8
+in raw slope/curv units - three to five orders of magnitude inside
+the solver's own `CONVERGENCE_TOL` (0.001), so `float`'s numerical
+error is far too small to change which `t` the safeguarded-Newton
+search converges to. Both steps confirmed worth building; proceeding
+with `double` first per the sequencing below, `float` immediately
+after given the margin here is comfortable enough not to need a
+separate go/no-go pause.
+
 ### Steps
 
 1. **Re-baseline microbenchmark** (above) - confirm the combined

@@ -2,3 +2,4 @@ data/
 bench_matrix_backend
 bench_ml_solver
 bench_decomposition_cost
+bench_ml_hotpath
