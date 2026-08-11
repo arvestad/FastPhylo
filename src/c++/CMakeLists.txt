@@ -258,7 +258,23 @@ endforeach(i)
 # BLAS/LAPACK (extern "C" declarations, no header needed until final
 # link) this needs to be on fastphylo's own include path at compile
 # time, not deferred to fastprot's target further down.
-find_package(Eigen3 3.4 REQUIRED)
+# No version pin (was "3.4 REQUIRED", the version available when this
+# dependency was added): Homebrew's eigen formula has since moved its
+# default/stable version to 5.0.1, and find_package(Eigen3 3.4)'s
+# SameMajorVersion compatibility check rejects that outright (CI
+# failure, 2026-08-11 - the first time this dependency was ever
+# actually exercised on a real macOS runner, since pushes to this
+# branch never triggered the workflow, only this PR did). Verified
+# directly (full rebuild + ctest 6/6) against the Eigen 5.0.1 bottle:
+# the small, stable subset used here (fixed-size Matrix, EigenSolver,
+# SelfAdjointEigenSolver, basic array ops) is unaffected by whatever
+# changed 3.4->5.0. No genuine technical floor is needed - these APIs
+# have been stable since Eigen 3.0 (2010) - so accepting whatever
+# Eigen3 a platform's package manager currently provides (3.4.x via
+# Ubuntu's libeigen3-dev/vcpkg, 5.0.1 via current Homebrew) is more
+# robust than re-pinning to today's latest and hitting this again next
+# time a package manager moves on.
+find_package(Eigen3 REQUIRED)
 
 add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS} ${FASTPHYLO_IO_SRCS} ${FASTPHYLO_IO_XML_SRCS} ${FASTPHYLO_PROTEIN_SRCS})
 # Modernization Phase B (project_layout_plan.md): the public API lives

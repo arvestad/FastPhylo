@@ -152,7 +152,7 @@ int main(int argc, char **argv)
 
         double decomp_share_pct = 100.0 * decomp_us / (decomp_us + total_us);
         std::cout << m.name << "," << decomp_us << "," << Ns.size() << "," << per_pair_us << "," << total_us << ","
-                   << decomp_share_pct << "\n";
+                  << decomp_share_pct << "\n";
         if (sink == -1)
             std::cerr << ""; // prevent optimizing away
     }

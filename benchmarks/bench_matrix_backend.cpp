@@ -88,7 +88,7 @@ template <typename Fn> Stats time_calls(Fn fn, int warmup, int reps)
 void report(const std::string &name, const Stats &old_s, const Stats &new_s)
 {
     std::cout << name << "," << old_s.median_us << "," << old_s.q1_us << "," << old_s.q3_us << "," << new_s.median_us
-               << "," << new_s.q1_us << "," << new_s.q3_us << "," << (old_s.median_us / new_s.median_us) << "\n";
+              << "," << new_s.q1_us << "," << new_s.q3_us << "," << (old_s.median_us / new_s.median_us) << "\n";
 }
 
 // Mirrors MatrixExpm's constructor (Matrix.cpp) exactly - decomposes
@@ -214,7 +214,7 @@ Matrix naive_mult(const Matrix &a, const Matrix &b)
 
 // Mirrors MatrixExpm::at() exactly (Matrix.cpp).
 Matrix expm_at_current(const Matrix &eigenvectors, const Matrix &eigenvectors_inv, const DblVec &eigenvalues_real,
-                        double t)
+                       double t)
 {
     Matrix left(N, N);
     for (std::size_t col = 0; col < N; col++)
@@ -230,7 +230,7 @@ Matrix expm_at_current(const Matrix &eigenvectors, const Matrix &eigenvectors_in
 
 template <typename Scalar>
 EMat<Scalar> expm_at_eigen(const EMat<Scalar> &eigenvectors, const EMat<Scalar> &eigenvectors_inv,
-                            const Eigen::Matrix<Scalar, N, 1> &eigenvalues_real, Scalar t)
+                           const Eigen::Matrix<Scalar, N, 1> &eigenvalues_real, Scalar t)
 {
     Eigen::Matrix<Scalar, N, 1> scale = (eigenvalues_real * t).array().exp();
     EMat<Scalar> left = eigenvectors * scale.asDiagonal();
@@ -288,8 +288,7 @@ int main()
     std::cerr << "#   Eigen float:  " << diff_float << (diff_float < 5e-4 ? "  OK (<5e-4)" : "  FAIL") << "\n";
 
     // --- Timing ---
-    std::cout
-        << "operation,current_median_us,current_q1_us,current_q3_us,new_median_us,new_q1_us,new_q3_us,speedup\n";
+    std::cout << "operation,current_median_us,current_q1_us,current_q3_us,new_median_us,new_q1_us,new_q3_us,speedup\n";
 
     volatile double sink = 0;
 

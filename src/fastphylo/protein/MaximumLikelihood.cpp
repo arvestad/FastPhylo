@@ -123,8 +123,7 @@ double kimura_distance(double n_sum, double n_sum_diag)
  * @param t The distance
  * @return The log-likelihood's slope and curvature at t
  */
-LikelihoodDerivatives likelihood_slope_curv(const Eigen::Matrix<float, 20, 20> &N, const MatrixExpm &Qdecomp,
-                                             double t)
+LikelihoodDerivatives likelihood_slope_curv(const Eigen::Matrix<float, 20, 20> &N, const MatrixExpm &Qdecomp, double t)
 {
     float tf = static_cast<float>(t);
     Eigen::Matrix<float, 20, 20> pt = Qdecomp.at_eigen_f(tf);

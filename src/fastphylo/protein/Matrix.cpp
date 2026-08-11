@@ -247,7 +247,7 @@ void check_20x20(const Matrix &Q)
         // every real caller passes a 20x20 protein rate matrix (see
         // the class comment in Matrix.hpp).
         throw std::out_of_range("MatrixExpm only supports 20x20 matrices (the protein rate matrices it was built "
-                                 "for)");
+                                "for)");
     }
 }
 } // namespace

@@ -60,9 +60,8 @@ int main(int argc, char **argv)
     {
         for (std::size_t j = i + 1; j < seqs.size(); j++)
         {
-            std::vector<std::size_t> tally =
-                ProtSeqCode::count_replacement_tally(encoded[i].data(), encoded[i].size(), encoded[j].data(),
-                                                       encoded[j].size());
+            std::vector<std::size_t> tally = ProtSeqCode::count_replacement_tally(encoded[i].data(), encoded[i].size(),
+                                                                                  encoded[j].data(), encoded[j].size());
             int nnz = 0;
             std::vector<bool> row_active(20, false);
             for (std::size_t a = 0; a < 20; a++)

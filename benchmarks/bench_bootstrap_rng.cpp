@@ -35,7 +35,7 @@ using namespace std::chrono;
 
 namespace
 {
-constexpr int N = 300;       // matches ml_bench_2x300.fasta's seqlen
+constexpr int N = 300; // matches ml_bench_2x300.fasta's seqlen
 constexpr long REPS = 50'000'000;
 
 double median_of(std::vector<double> v)

@@ -136,7 +136,7 @@ int main()
         double gen_us = median_of(general_samples);
         double sym_us = median_of(sym_samples);
         std::cout << m.name << "," << gen_us << "," << sym_us << "," << (gen_us / sym_us) << "," << max_abs_diff
-                   << "\n";
+                  << "\n";
     }
 
     return 0;

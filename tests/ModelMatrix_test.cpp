@@ -76,8 +76,7 @@ void test_equilibrium_frequencies_sum_to_one()
         double sum = std::accumulate(eq.begin(), eq.end(), 0.0);
         if (std::fabs(sum - 1.0) >= 1e-2)
         {
-            std::cerr << "FAIL: model=" << m.name << " equilibrium frequencies sum to " << sum
-                      << " (expected ~1)\n";
+            std::cerr << "FAIL: model=" << m.name << " equilibrium frequencies sum to " << sum << " (expected ~1)\n";
             assert(false);
         }
     }

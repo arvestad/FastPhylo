@@ -102,8 +102,7 @@ Eigen::Matrix<float, 20, 20> tally_to_eigen(const std::vector<std::size_t> &tall
     return m;
 }
 
-Eigen::Matrix<float, 20, 20> replacement_tally(const std::vector<std::uint8_t> &e1,
-                                                const std::vector<std::uint8_t> &e2)
+Eigen::Matrix<float, 20, 20> replacement_tally(const std::vector<std::uint8_t> &e1, const std::vector<std::uint8_t> &e2)
 {
     return tally_to_eigen(ProtSeqCode::count_replacement_tally(e1.data(), e1.size(), e2.data(), e2.size()));
 }
@@ -111,7 +110,7 @@ Eigen::Matrix<float, 20, 20> replacement_tally(const std::vector<std::uint8_t> &
 // The property under test, isolated so both the "does it hold" check
 // and its failure message are in one place.
 void assert_verified_answer(const Eigen::Matrix<float, 20, 20> &N, const MatrixExpm &Qdecomp, double t,
-                             const char *model_name, std::size_t i, std::size_t j)
+                            const char *model_name, std::size_t i, std::size_t j)
 {
     if (N.sum() - N.trace() < DBL_EPSILON)
     {
@@ -127,8 +126,8 @@ void assert_verified_answer(const Eigen::Matrix<float, 20, 20> &N, const MatrixE
     LikelihoodDerivatives d = likelihood_slope_curv(N, Qdecomp, t);
     if (std::fabs(d.slope) >= CONVERGENCE_TOL)
     {
-        std::cerr << "FAIL: model=" << model_name << " pair=(" << i << "," << j << ") t=" << t
-                  << " slope=" << d.slope << " (expected |slope| < " << CONVERGENCE_TOL
+        std::cerr << "FAIL: model=" << model_name << " pair=(" << i << "," << j << ") t=" << t << " slope=" << d.slope
+                  << " (expected |slope| < " << CONVERGENCE_TOL
                   << ", or t at a boundary) - likelihood_calc() returned an unverified answer\n";
         assert(false);
     }

@@ -175,8 +175,8 @@ template <typename T> void print_stats(std::vector<T> v, const char *name)
     std::sort(v.begin(), v.end());
     double mean = std::accumulate(v.begin(), v.end(), 0.0) / v.size();
     std::cout << "  " << name << ": n=" << v.size() << " min=" << v.front() << " median=" << v[v.size() / 2]
-               << " mean=" << mean << " p90=" << v[static_cast<std::size_t>(v.size() * 0.9)] << " max=" << v.back()
-               << "\n";
+              << " mean=" << mean << " p90=" << v[static_cast<std::size_t>(v.size() * 0.9)] << " max=" << v.back()
+              << "\n";
 }
 
 } // namespace
@@ -215,9 +215,8 @@ int main(int argc, char **argv)
         {
             for (std::size_t j = i + 1; j < seqs.size(); j++)
             {
-                Eigen::Matrix<float, 20, 20> N =
-                    tally_to_eigen(ProtSeqCode::count_replacement_tally(encoded[i].data(), encoded[i].size(),
-                                                                         encoded[j].data(), encoded[j].size()));
+                Eigen::Matrix<float, 20, 20> N = tally_to_eigen(ProtSeqCode::count_replacement_tally(
+                    encoded[i].data(), encoded[i].size(), encoded[j].data(), encoded[j].size()));
                 pairs++;
                 Result r = likelihood_calc_instrumented(N, Qdecomp);
                 if (r.iterations == 0)
@@ -247,9 +246,9 @@ int main(int argc, char **argv)
 
         std::cout << "=== " << m.name << " (" << pairs << " pairs, " << n_identical << " identical) ===\n";
         std::cout << "  converged=" << n_converged << " (" << (100.0 * n_converged / pairs) << "%)"
-                   << "  hit_min=" << n_hit_min << " (" << (100.0 * n_hit_min / pairs) << "%)"
-                   << "  hit_max=" << n_hit_max << " (" << (100.0 * n_hit_max / pairs) << "%)"
-                   << "  exhausted=" << n_exhausted << " (" << (100.0 * n_exhausted / pairs) << "%)\n";
+                  << "  hit_min=" << n_hit_min << " (" << (100.0 * n_hit_min / pairs) << "%)"
+                  << "  hit_max=" << n_hit_max << " (" << (100.0 * n_hit_max / pairs) << "%)"
+                  << "  exhausted=" << n_exhausted << " (" << (100.0 * n_exhausted / pairs) << "%)\n";
         print_stats(iterations, "iterations (all exit reasons)");
         print_stats(precisions, "precision estimate |slope/curv| at converged t (substitutions/site)");
     }

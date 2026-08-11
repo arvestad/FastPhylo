@@ -380,14 +380,13 @@ int main(int argc, char **argv)
     std::cout << "newton_total_wall_us," << sum_wall_newton_us << "\n";
     std::cout << "brent_total_wall_us," << sum_wall_brent_us << "\n";
     std::cout << "max_abs_distance_diff," << max_abs_diff
-               << (max_abs_diff < 5e-4 ? "  OK (<5e-4, 3-decimal tolerance)" : "  EXCEEDS TOLERANCE") << "\n";
+              << (max_abs_diff < 5e-4 ? "  OK (<5e-4, 3-decimal tolerance)" : "  EXCEEDS TOLERANCE") << "\n";
     std::cout << "newton_exit_reasons:\n";
     const char *names[] = {"converged", "hit_lower_bound(t<1)", "hit_upper_bound(t>500)", "deriv_growing(bailout)",
-                            "maxit_exhausted"};
+                           "maxit_exhausted"};
     for (auto &[exit, count] : newton_exit_counts)
     {
-        std::cout << "  " << names[static_cast<int>(exit)] << "," << count << " (" << (100.0 * count / pairs)
-                   << "%)\n";
+        std::cout << "  " << names[static_cast<int>(exit)] << "," << count << " (" << (100.0 * count / pairs) << "%)\n";
     }
 
     // Diagnostic: re-solve and dump the likelihood_deriv(t) curve for
@@ -397,16 +396,16 @@ int main(int argc, char **argv)
     // given a badly-conditioned or non-monotonic derivative.
     if (worst_N.get_rows() > 1)
     {
-        std::cout << "\n# worst-disagreement pair: seq[" << worst_i << "] vs seq[" << worst_j << "], diff="
-                   << max_abs_diff << "\n";
+        std::cout << "\n# worst-disagreement pair: seq[" << worst_i << "] vs seq[" << worst_j
+                  << "], diff=" << max_abs_diff << "\n";
         std::cout << "# N.sum()=" << worst_N.sum() << " N.sum_diag()=" << worst_N.sum_diag()
-                   << " (observed substitution fraction=" << (1.0 - worst_N.sum_diag() / worst_N.sum()) << ")\n";
+                  << " (observed substitution fraction=" << (1.0 - worst_N.sum_diag() / worst_N.sum()) << ")\n";
         CountingDeriv fn{worst_N, Q, Qdecomp};
         NewtonResult nr = newton_solve(fn, worst_N.sum(), worst_N.sum_diag());
         CountingDeriv fb{worst_N, Q, Qdecomp};
         BrentResult br = brent_solve(fb, 1.0, 500.0, 0.001, 100);
         std::cout << "# newton: t=" << nr.t << " exit=" << names[static_cast<int>(nr.exit)] << " evals=" << nr.evals
-                   << "\n";
+                  << "\n";
         std::cout << "# brent:  t=" << br.t << " evals=" << br.evals << " iterations=" << br.iterations << "\n";
         std::cout << "# likelihood_deriv(t) grid:\n";
         std::cout << "t,likelihood_deriv\n";

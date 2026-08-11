@@ -43,5 +43,4 @@ double likelihood_calc(const Eigen::Matrix<float, 20, 20> &N, const MatrixExpm &
 //! computed from the cached decomposition's float-precision copy (see
 //! Matrix.hpp's MatrixExpm - planning/fastprot_ml_speedup_
 //! implementation_plan.md).
-LikelihoodDerivatives likelihood_slope_curv(const Eigen::Matrix<float, 20, 20> &N, const MatrixExpm &Qdecomp,
-                                             double t);
+LikelihoodDerivatives likelihood_slope_curv(const Eigen::Matrix<float, 20, 20> &N, const MatrixExpm &Qdecomp, double t);

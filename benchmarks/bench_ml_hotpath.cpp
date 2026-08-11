@@ -83,7 +83,7 @@ template <typename Fn> Stats time_calls(Fn fn, int warmup, int reps)
 void report(const std::string &name, const Stats &old_s, const Stats &new_s)
 {
     std::cout << name << "," << old_s.median_us << "," << old_s.q1_us << "," << old_s.q3_us << "," << new_s.median_us
-               << "," << new_s.q1_us << "," << new_s.q3_us << "," << (old_s.median_us / new_s.median_us) << "\n";
+              << "," << new_s.q1_us << "," << new_s.q3_us << "," << (old_s.median_us / new_s.median_us) << "\n";
 }
 
 EMat<double> to_eigen(const Matrix &m)
@@ -105,8 +105,8 @@ EMat<double> to_eigen(const Matrix &m)
 // Eigen::Matrix<Scalar,20,20> internally instead of Matrix/dgemm_.
 template <typename Scalar>
 LikelihoodDerivatives eigen_slope_curv(const Matrix &N, const EMat<Scalar> &eigenvectors,
-                                        const EMat<Scalar> &eigenvectors_inv, const EVec<Scalar> &eigenvalues,
-                                        const EMat<Scalar> &Q_eigen, Scalar t)
+                                       const EMat<Scalar> &eigenvectors_inv, const EVec<Scalar> &eigenvalues,
+                                       const EMat<Scalar> &Q_eigen, Scalar t)
 {
     EVec<Scalar> scale = (eigenvalues * t).array().exp();
     EMat<Scalar> pt = eigenvectors * scale.asDiagonal() * eigenvectors_inv;
@@ -233,8 +233,8 @@ int main(int argc, char **argv)
         // Correctness check against the production (LAPACK-based) result.
         LikelihoodDerivatives current = likelihood_slope_curv(N, Q, Qdecomp, t);
         LikelihoodDerivatives eig_d = eigen_slope_curv<double>(N, eigvec_d, eigvec_inv_d, eigval_d, Q_eigen_d, t);
-        LikelihoodDerivatives eig_f = eigen_slope_curv<float>(N, eigvec_f, eigvec_inv_f, eigval_f, Q_eigen_f,
-                                                               static_cast<float>(t));
+        LikelihoodDerivatives eig_f =
+            eigen_slope_curv<float>(N, eigvec_f, eigvec_inv_f, eigval_f, Q_eigen_f, static_cast<float>(t));
         double diff_d = std::max(std::fabs(current.slope - eig_d.slope), std::fabs(current.curv - eig_d.curv));
         double diff_f = std::max(std::fabs(current.slope - eig_f.slope), std::fabs(current.curv - eig_f.curv));
 
@@ -253,8 +253,8 @@ int main(int argc, char **argv)
             WARMUP, REPS);
         Stats eig_f_stats = time_calls(
             [&]() {
-                LikelihoodDerivatives d = eigen_slope_curv<float>(N, eigvec_f, eigvec_inv_f, eigval_f, Q_eigen_f,
-                                                                   static_cast<float>(t));
+                LikelihoodDerivatives d =
+                    eigen_slope_curv<float>(N, eigvec_f, eigvec_inv_f, eigval_f, Q_eigen_f, static_cast<float>(t));
                 sink += d.slope;
             },
             WARMUP, REPS);

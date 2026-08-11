@@ -301,9 +301,8 @@ void calculate_ml_dists(const SeqVec &sv, StrDblMatrix &dm, const MatrixExpm &Qd
     {
         for (int j = i + 1; j < sv.size(); j++)
         {
-            Eigen::Matrix<float, 20, 20> N = tally_to_eigen(
-                ProtSeqCode::count_replacement_tally(encoded[i].data(), encoded[i].size(), encoded[j].data(),
-                                                       encoded[j].size()));
+            Eigen::Matrix<float, 20, 20> N = tally_to_eigen(ProtSeqCode::count_replacement_tally(
+                encoded[i].data(), encoded[i].size(), encoded[j].data(), encoded[j].size()));
             dm.setDistance(i, j, likelihood_calc(N, Qdecomp));
         }
     }
