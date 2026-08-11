@@ -306,6 +306,83 @@ naturally from work this plan is already doing for other reasons.
    done as part of step 2. Changelog entry and version bump: not done
    yet, pending PR review/merge.
 
+## Side finding (2026-08-11): a real JTT data bug, found by benchmarking against PHYLIP
+
+Lasse asked for a wall-clock comparison against PHYLIP's `protdist`
+(built from the real 3.65 source - the same mirror used earlier this
+engagement to study `makedists()`'s algorithm). Results, all JTT
+model, same alignments, interleaved:
+
+| N sequences | `protdist` | `fastprot` | speedup |
+|---|---|---|---|
+| 25 (real, `globin_family.fasta`) | 0.092s | 0.034s | 2.7x |
+| 100 | 2.130s | 0.062s | 34.2x |
+| 300 | 19.048s | 0.292s | 65.2x |
+| 600 | 76.714s | 1.072s | 71.6x |
+
+Real, but not solely a credit to this plan's work - `protdist` is
+unoptimized reference C from 1993-2004, not a tuned implementation, so
+a large gap is expected on its own. Worth having the number anyway,
+since it's the standard tool people actually compare against.
+
+**A spot-check of the actual distances (not just timing) found a real
+bug**, not just a modeling-convention difference: JTT distances
+between `fastprot` and `protdist` on the same pair differed by
+~30-40%, non-uniformly across pairs (not a constant scale factor,
+which would suggest a units/convention difference rather than a data
+error). Traced to `ModelMatrix.cpp`'s `get_jtt()`: `Q(0,0)` was
+hardcoded as `-1.24783051471057305` - **exactly 100x** the correct
+value. Confirmed precisely: the sum of row 0's 19 off-diagonal entries
+is `0.01247830514710573`, matching the stored (wrong) value divided
+by 100 to 13 significant figures - a decimal-point transcription
+error, not a modeling choice. This broke the fundamental "rows sum to
+zero" invariant every valid continuous-time Markov rate matrix must
+satisfy, corrupting `JTT`'s eigendecomposition (one spurious dominant
+eigenvalue, -1.248, vs. everything else clustered around -0.001 to
+-0.02) and therefore every JTT maximum-likelihood distance `fastprot`
+has ever computed. `benchmarks/check_row_sums`-style sweep (see
+`tests/ModelMatrix_test.cpp` below) confirmed this was an **isolated,
+single-cell bug** - no other row of JTT, and no row of any other
+model (`WAG`/`Dayhoff`/`MVR`/`LG`), had the same problem.
+
+Fixed in both the main library (`src/fastphylo/protein/ModelMatrix.cpp`)
+and `fastprot_mpi`'s mirrored, unbuildable-here copy (same reasoning
+as the `ARVE` removal - a trivial, low-risk, mechanically-verifiable
+data fix, worth keeping in sync even though the performance work isn't
+mirrored there). After the fix, `fastprot`'s JTT distances agree with
+`protdist`'s to within 0.41% (down from ~30-40%) - consistent with two
+independent, correct implementations differing only in minor
+precision/convergence details, not a real disagreement.
+
+**Follow-up requested and done**: cross-validate all embedded model
+matrices against IQ-TREE2's source (`model/modelprotein.cpp`, embedded
+NEXUS-format lower-triangular exchangeability matrices + frequency
+vectors, fetched and parsed - see `benchmarks/compare_to_iqtree2.py`
+and `benchmarks/dump_model_matrices.cpp`). Built `Q_ref(i,j) =
+R(i,j)*pi(j)` from IQ-TREE2's data, compared element-by-element
+against `fastprot`'s matrices after solving for a single global scale
+factor per model (empirical rate matrices are only defined up to an
+arbitrary time-unit, so a per-model constant multiplier is expected
+and fine - a per-*element* scale difference would not be, and is
+exactly the kind of thing this check would catch). Result: **`WAG`,
+`JTT` (post-fix), `Dayhoff`, and `LG` all agree with IQ-TREE2 to
+0-0.003% (floating-point rounding of independently-transcribed
+literals, not a real difference)**. `MVR` (Müller-Vingron) isn't in
+IQ-TREE2's model catalog - no reference available there, but its rows
+already passed the sum-to-zero check.
+
+**Permanent regression coverage added**: `tests/ModelMatrix_test.cpp`
+- checks every model's `Q` matrix rows sum to zero and equilibrium
+frequencies sum to ~1, for all 5 models. This is the check that would
+have caught the JTT bug immediately, with no external dependency -
+`tests/MaximumLikelihood_test.cpp`'s existing check (does the solver's
+returned answer satisfy its own convergence criterion) could not have
+caught it, since a corrupted-but-still-valid-looking optimization
+problem converges to *an* answer, just the wrong one; nothing checks
+that answer against an external ground truth. No existing
+`RunExamples.sh` fixture exercised JTT with `-m` at all, which is also
+why the byte-identical-output checks never caught this.
+
 ## Explicitly out of scope (carried over from the investigation plan)
 
 - `fastprot_mpi`'s separate, unsynced `Matrix`/`MaximumLikelihood`/

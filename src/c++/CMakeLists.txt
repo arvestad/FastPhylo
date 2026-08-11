@@ -402,6 +402,14 @@ target_link_libraries(MaximumLikelihood_test PRIVATE fastphylo BLAS::BLAS LAPACK
 target_compile_definitions(MaximumLikelihood_test PRIVATE GLOBIN_FIXTURE_PATH="${CMAKE_SOURCE_DIR}/examples/globin_family.fasta")
 add_test(NAME MaximumLikelihood_test COMMAND MaximumLikelihood_test)
 
+# Model data sanity check (row-sums-to-zero, frequencies-sum-to-one) -
+# added after finding JTT's Q(0,0) was hardcoded 100x too large, a
+# data-entry bug MaximumLikelihood_test's solver-self-consistency check
+# couldn't catch (see ModelMatrix_test.cpp's header comment).
+add_executable(ModelMatrix_test ${FASTPHYLO_TESTS_DIR}/ModelMatrix_test.cpp)
+target_link_libraries(ModelMatrix_test PRIVATE fastphylo BLAS::BLAS LAPACK::LAPACK)
+add_test(NAME ModelMatrix_test COMMAND ModelMatrix_test)
+
 # Phase 5 performance benchmark (plan.md). Not an add_test() - it prints
 # timing data, not a pass/fail result; see benchmarks/run_benchmarks.sh
 # for the reproducible one-command entry point.
