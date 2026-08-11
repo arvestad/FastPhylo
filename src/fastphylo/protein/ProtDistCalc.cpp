@@ -61,6 +61,24 @@ Matrix tally_to_matrix(const std::vector<std::size_t> &tally)
     return m;
 }
 
+// Same conversion as tally_to_matrix() above, but straight to the
+// fixed-size Eigen form likelihood_calc()/likelihood_slope_curv()
+// need (MaximumLikelihood.hpp) - used only by calculate_ml_dists()
+// below, so the ML path never constructs an intermediate Matrix (heap
+// allocation + bounds-checked writes) for N at all.
+Eigen::Matrix<float, 20, 20> tally_to_eigen(const std::vector<std::size_t> &tally)
+{
+    Eigen::Matrix<float, 20, 20> m;
+    for (std::size_t a = 0; a < ProtSeqCode::NUM_CANONICAL_AA; a++)
+    {
+        for (std::size_t b = 0; b < ProtSeqCode::NUM_CANONICAL_AA; b++)
+        {
+            m(a, b) = static_cast<float>(tally[(a * ProtSeqCode::NUM_CANONICAL_AA) + b]);
+        }
+    }
+    return m;
+}
+
 Matrix replacement_tally(const std::vector<std::uint8_t> &e1, const std::vector<std::uint8_t> &e2)
 {
     return tally_to_matrix(ProtSeqCode::count_replacement_tally(e1.data(), e1.size(), e2.data(), e2.size()));
@@ -243,7 +261,9 @@ void calculate_ml_dists(const SeqVec &sv, StrDblMatrix &dm, model_type mt)
     {
         for (int j = i + 1; j < sv.size(); j++)
         {
-            Matrix N = replacement_tally(encoded[i], encoded[j]);
+            Eigen::Matrix<float, 20, 20> N = tally_to_eigen(
+                ProtSeqCode::count_replacement_tally(encoded[i].data(), encoded[i].size(), encoded[j].data(),
+                                                       encoded[j].size()));
             double distance = 0.01 * likelihood_calc(N, Qdecomp);
             dm.setDistance(i, j, distance);
         }

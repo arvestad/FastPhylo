@@ -84,49 +84,34 @@ std::vector<std::string> read_fasta(const std::string &path)
     return seqs;
 }
 
-// Mirrors ProtDistCalc.cpp's anonymous-namespace tally_to_matrix() -
+// Mirrors ProtDistCalc.cpp's anonymous-namespace tally_to_eigen() -
 // duplicated here rather than exporting it from production code just
 // for this test, same reasoning as ProtSeqCompare_test.cpp's oracle.
-Matrix tally_to_matrix(const std::vector<std::size_t> &tally)
+Eigen::Matrix<float, 20, 20> tally_to_eigen(const std::vector<std::size_t> &tally)
 {
-    Matrix m(ProtSeqCode::NUM_CANONICAL_AA, ProtSeqCode::NUM_CANONICAL_AA);
+    Eigen::Matrix<float, 20, 20> m;
     for (std::size_t a = 0; a < ProtSeqCode::NUM_CANONICAL_AA; a++)
     {
         for (std::size_t b = 0; b < ProtSeqCode::NUM_CANONICAL_AA; b++)
         {
-            m(a, b) = static_cast<double>(tally[(a * ProtSeqCode::NUM_CANONICAL_AA) + b]);
+            m(a, b) = static_cast<float>(tally[(a * ProtSeqCode::NUM_CANONICAL_AA) + b]);
         }
     }
     return m;
 }
 
-Matrix replacement_tally(const std::vector<std::uint8_t> &e1, const std::vector<std::uint8_t> &e2)
+Eigen::Matrix<float, 20, 20> replacement_tally(const std::vector<std::uint8_t> &e1,
+                                                const std::vector<std::uint8_t> &e2)
 {
-    return tally_to_matrix(ProtSeqCode::count_replacement_tally(e1.data(), e1.size(), e2.data(), e2.size()));
-}
-
-// Mirrors likelihood_calc()'s own once-per-pair conversion
-// (MaximumLikelihood.cpp) - likelihood_slope_curv() takes N in this
-// form now, not a Matrix.
-Eigen::Matrix<float, 20, 20> to_eigen_f(const Matrix &N)
-{
-    Eigen::Matrix<float, 20, 20> e;
-    for (int row = 0; row < 20; row++)
-    {
-        for (int col = 0; col < 20; col++)
-        {
-            e(row, col) = static_cast<float>(N(row, col));
-        }
-    }
-    return e;
+    return tally_to_eigen(ProtSeqCode::count_replacement_tally(e1.data(), e1.size(), e2.data(), e2.size()));
 }
 
 // The property under test, isolated so both the "does it hold" check
 // and its failure message are in one place.
-void assert_verified_answer(const Matrix &N, const MatrixExpm &Qdecomp, double t, const char *model_name,
-                             std::size_t i, std::size_t j)
+void assert_verified_answer(const Eigen::Matrix<float, 20, 20> &N, const MatrixExpm &Qdecomp, double t,
+                             const char *model_name, std::size_t i, std::size_t j)
 {
-    if (N.sum() - N.sum_diag() < DBL_EPSILON)
+    if (N.sum() - N.trace() < DBL_EPSILON)
     {
         assert(t == 0 && "identical sequences must return distance 0");
         return;
@@ -137,7 +122,7 @@ void assert_verified_answer(const Matrix &N, const MatrixExpm &Qdecomp, double t
     {
         return; // a legitimate, disclosed boundary clamp - not a silent guess
     }
-    LikelihoodDerivatives d = likelihood_slope_curv(to_eigen_f(N), Qdecomp, t);
+    LikelihoodDerivatives d = likelihood_slope_curv(N, Qdecomp, t);
     if (std::fabs(d.slope) >= CONVERGENCE_TOL)
     {
         std::cerr << "FAIL: model=" << model_name << " pair=(" << i << "," << j << ") t=" << t
@@ -174,7 +159,7 @@ void test_globin_family_all_models()
         {
             for (std::size_t j = i + 1; j < seqs.size(); j++)
             {
-                Matrix N = replacement_tally(encoded[i], encoded[j]);
+                Eigen::Matrix<float, 20, 20> N = replacement_tally(encoded[i], encoded[j]);
                 double t = likelihood_calc(N, Qdecomp);
                 assert_verified_answer(N, Qdecomp, t, m.name, i, j);
                 checked++;
@@ -190,7 +175,7 @@ void test_identical_sequences_give_zero_distance()
 {
     Matrix Q = get_model_matrix(wag);
     MatrixExpm Qdecomp(Q);
-    Matrix N(ProtSeqCode::NUM_CANONICAL_AA, ProtSeqCode::NUM_CANONICAL_AA);
+    Eigen::Matrix<float, 20, 20> N = Eigen::Matrix<float, 20, 20>::Zero();
     for (std::size_t a = 0; a < ProtSeqCode::NUM_CANONICAL_AA; a++)
     {
         N(a, a) = 42; // every position matches, no replacements observed

@@ -31,15 +31,18 @@ void warn_protein_too_diverged()
 
 /*!
  * Kimura distance, not corrected, used as a starting value for the
- * Newton search in likelihood_calc()
- * @param N The replacement count matrix, N(i,j) contains the number of actual
- *            replacements from amino acid i to amino acid j
- * @return The kimura distance in PAMs for the matrix N
+ * Newton search in likelihood_calc(). Takes n_sum/n_sum_diag rather
+ * than the replacement-count matrix itself - likelihood_calc() always
+ * computes both first for its own early-exit check, so recomputing
+ * them here from N again (a former version of this function did) was
+ * pure duplicated work, once per pair.
+ * @param n_sum Sum of all entries of the replacement count matrix N
+ * @param n_sum_diag Sum of N's diagonal entries
+ * @return The kimura distance in PAMs
  */
-double kimura_distance(const Matrix &N)
+double kimura_distance(double n_sum, double n_sum_diag)
 {
-    double n_sum = N.sum();
-    double d = (n_sum - N.sum_diag()) / n_sum;
+    double d = (n_sum - n_sum_diag) / n_sum;
 
     double adjusted = d + (0.2 * pow(d, 2));
     adjusted = std::min(adjusted, 0.854); // Infinite distance
@@ -145,31 +148,27 @@ LikelihoodDerivatives likelihood_slope_curv(const Eigen::Matrix<float, 20, 20> &
  * No step is ever trusted without evaluating the function there on
  * the next iteration - there is no "one unverified step and stop"
  * exit.
- * @param N The replacement count matrix, N(i,j) contains the number of actual
- *            replacements from amino acid i to amino acid j
+ * @param N The replacement count matrix, already in the fixed 20x20
+ *            Eigen form likelihood_slope_curv() needs - callers build
+ *            it directly in this form (see ProtDistCalc.cpp's
+ *            tally_to_eigen()), so no Matrix round-trip happens
+ *            anywhere in the ML path for N.
  * @return The distance with the maximum likelihood
  */
-double likelihood_calc(const Matrix &N, const MatrixExpm &Qdecomp)
+double likelihood_calc(const Eigen::Matrix<float, 20, 20> &N, const MatrixExpm &Qdecomp)
 {
-    if (N.sum() - N.sum_diag() < DBL_EPSILON)
+    // Eigen's own reductions (unchecked, no bounds-checking overhead)
+    // - computed once and reused for both the early-exit check here
+    // and kimura_distance()'s starting value, rather than each
+    // recomputing them from N separately (a former version did).
+    double n_sum = N.sum();
+    double n_sum_diag = N.trace();
+    if (n_sum - n_sum_diag < DBL_EPSILON)
     {
         return 0;
     }
 
-    // Converted once here, not inside likelihood_slope_curv() - N
-    // doesn't change across the Newton loop below, so re-reading it
-    // via Matrix's bounds-checked accessor on every iteration (as a
-    // previous version of this function did) was pure overhead.
-    Eigen::Matrix<float, 20, 20> N_eigen;
-    for (int row = 0; row < 20; row++)
-    {
-        for (int col = 0; col < 20; col++)
-        {
-            N_eigen(row, col) = static_cast<float>(N(row, col));
-        }
-    }
-
-    double t = kimura_distance(N);
+    double t = kimura_distance(n_sum, n_sum_diag);
     if (t <= 0)
     {
         t = 1;
@@ -178,7 +177,7 @@ double likelihood_calc(const Matrix &N, const MatrixExpm &Qdecomp)
 
     for (int i = 0; i < MAX_ITERATIONS; i++)
     {
-        LikelihoodDerivatives d = likelihood_slope_curv(N_eigen, Qdecomp, t);
+        LikelihoodDerivatives d = likelihood_slope_curv(N, Qdecomp, t);
 
         if (fabs(d.slope) < CONVERGENCE_TOL)
         {

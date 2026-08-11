@@ -383,6 +383,84 @@ that answer against an external ground truth. No existing
 `RunExamples.sh` fixture exercised JTT with `-m` at all, which is also
 why the byte-identical-output checks never caught this.
 
+## Follow-up (2026-08-11): closing the loop on "are we done"
+
+Lasse pushed back on two points before treating this as finished -
+both real gaps, not just process:
+
+1. **The JTT speedup number was measured against the buggy matrix on
+   the "old" side of the comparison** (`master` never got the data
+   fix, only this branch did) - meaning part of the measured
+   difference could have been the *data* changing, not just the code.
+   Isolated properly (patched *only* the one-line JTT fix onto
+   `master`, nothing else, so both sides solve the identical
+   mathematical problem): **2.14x**, matching the originally-reported
+   2.05x (measured against the buggy matrix) closely enough that the
+   bug hadn't meaningfully distorted the headline number - but this
+   should have been checked before reporting it, not after being
+   asked.
+2. **The bug also corrupted the non-ML (`ED`, no `-m`) path**, not
+   just maximum likelihood - both call the same `get_jtt()`. Confirmed
+   directly (same pair, `examples/globin_family.fasta`, JTT, no `-m`):
+   `1.473649` (buggy, several entries pinned to a `0.001667` floor
+   value - a clear sign of a badly broken optimization) vs. `2.047919`
+   (fixed). Both now correct from the same single fix; noted here
+   since it broadens the bug's real-world impact beyond what the
+   original writeup described.
+
+A fresh profile at this point (JTT, 1000 sequences) surfaced one more
+thing worth fixing: `likelihood_calc()`'s early-exit check computes
+`N.sum() - N.sum_diag()`, and `kimura_distance(N)` right below it
+computes the *same* two aggregates over the *same* `N` again - 8.5% of
+sampled time in a `Matrix::sum()`/`sum_diag()` call that only exists
+because of this duplication. Lasse asked for three things in response:
+fix the redundancy, reconsider whether `N`'s `Matrix` round-trip
+conversion (`Matrix` in `ProtDistCalc.cpp` -> `Eigen` in
+`likelihood_calc()`) is doing more work than it needs to, and actually
+test raising `EIGEN_UNROLLING_LIMIT`.
+
+**Redundancy + `N` conversion, done together** (they turned out to be
+the same fix): `kimura_distance()`'s signature changed from taking `N`
+to taking the two aggregates directly (`n_sum`, `n_sum_diag`) -
+`likelihood_calc()` now computes them once (via Eigen's own
+unchecked `.sum()`/`.trace()`, not `Matrix::sum()`/`sum_diag()`) and
+reuses them for both the early-exit check and the starting value.
+Separately, `N` itself no longer round-trips through the general
+`Matrix` class at all for the ML path: `ProtDistCalc.cpp` gained
+`tally_to_eigen()` (parallel to the existing `tally_to_matrix()`,
+which the `ED` path still uses), converting `ProtSeqCode::
+count_replacement_tally()`'s flat output directly into
+`Eigen::Matrix<float,20,20>` - one conversion loop (no heap
+allocation, no bounds-checked writes) instead of two (raw tally ->
+`Matrix`, heap-allocated and bounds-checked, then `Matrix` -> `Eigen`,
+bounds-checked reads, which is what `likelihood_calc()` used to do
+internally on every call). `likelihood_calc()`/`likelihood_slope_curv()`
+both now take `Eigen::Matrix<float,20,20>` directly - `Matrix` no
+longer appears anywhere in `MaximumLikelihood.hpp` at all.
+
+Measured (interleaved, byte-distinct binaries verified): **a further
+1.16x-1.17x**, consistent across the two models checked (WAG, JTT).
+Re-profiled after: the `Matrix::sum`/`sum_diag` bucket is gone from
+the profile entirely (0 samples, down from 8.5%), confirming the fix
+landed where expected.
+
+**`EIGEN_UNROLLING_LIMIT` experiment** (`benchmarks/bench_unrolling.cpp`):
+built as two separate standalone binaries (default limit 110 vs. a
+raised 20000, comfortably above the ~8000 multiply-adds a 20x20x20
+product costs) - two full binaries, not two code paths in one, since
+mixing different values of this macro across translation units linked
+into a single binary would be an ODR violation (the same template
+instantiation would have two different bodies). **Result: no benefit.**
+The isolated 20x20 multiply's median time was identical (0.333us) at
+both settings - raising the macro didn't change the generated code for
+this operation at all. Not adopted; kept the benchmark as a documented
+record of a genuinely negative result, so this doesn't get re-tried
+from scratch later.
+
+Verified (all of the above): full rebuild + `ctest` 6/6 on Clang
+Release and real GCC 14, `RunExamples.sh`/`RunCliChecks.sh` clean (no
+fixture changed - this round was a pure refactor, output unchanged).
+
 ## Explicitly out of scope (carried over from the investigation plan)
 
 - `fastprot_mpi`'s separate, unsynced `Matrix`/`MaximumLikelihood`/

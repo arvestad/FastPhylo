@@ -5,3 +5,5 @@ bench_decomposition_cost
 bench_ml_hotpath
 measure_N_sparsity
 dump_model_matrices
+bench_unrolling_default
+bench_unrolling_unrolled
