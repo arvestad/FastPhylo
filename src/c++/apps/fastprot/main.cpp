@@ -13,6 +13,7 @@
 #include "fastphylo/protein/ProtDistCalc.hpp"
 #include "fastphylo/protein/ProtSeqUtils.hpp"
 #include "fastphylo/core/DistanceMatrix.hpp"
+#include "fastphylo/core/random_utils.hpp"
 #include <memory>
 #include <optional>
 #include <string>
@@ -463,13 +464,14 @@ int main(int argc, char **argv)
         }
         if (opts.seed_given)
         {
-            srand(static_cast<unsigned int>(opts.seed));
+            seed_rng(static_cast<unsigned int>(opts.seed));
         }
         else
         {
-            // NOLINTNEXTLINE(bugprone-random-generator-seed) - bootstrap resampling, not a security context;
-            // time-seeding when no explicit --seed is the intended default.
-            srand(static_cast<unsigned int>(time(nullptr)));
+            // Not a security context - bootstrap resampling just needs
+            // an arbitrary starting point when the user hasn't asked
+            // for a reproducible one via --seed.
+            seed_rng(static_cast<unsigned int>(time(nullptr)));
         }
         std::unique_ptr<DataInputStream> istream = buildInputStream(opts);
         std::unique_ptr<DataOutputStream> ostream = buildOutputStream(opts);

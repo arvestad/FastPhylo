@@ -11,3 +11,4 @@ check_lg_scale
 analyze_convergence
 bench_decomp_share
 bench_symmetric_decomp
+bench_bootstrap_rng

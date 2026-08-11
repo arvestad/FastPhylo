@@ -2,6 +2,7 @@
 #include <string>
 #include <set>
 #include "fastphylo/core/Sequence.hpp"
+#include "fastphylo/core/random_utils.hpp"
 
 /*
  * Saves the positions for all indels in the given sequences and
@@ -69,7 +70,7 @@ void bootstrap_sequences(const std::vector<Sequence> &seqs, std::vector<Sequence
     // too.
     for (pos = 0; pos < seqlen; pos++)
     {
-        samplePositions[pos] = static_cast<int>(seqlen * 1.0 * rand() / (RAND_MAX + 1.0));
+        samplePositions[pos] = uniform_random_index(seqlen);
     }
 
     for (size_t seq = 0; seq < seqs.size(); seq++)

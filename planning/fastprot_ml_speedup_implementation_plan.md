@@ -684,6 +684,77 @@ deferred): multithreading the pairwise loop - real, but a different
 kind of change (thread-safety, opt-in flag design) the user wanted to
 set aside in favor of single-threaded cleverness first.
 
+## Follow-up profiling round: replacing rand() (2026-08-11)
+
+Asked for a fresh `sample`-based profile after the decomposition fix
+above, two runs: a large-N (1000 sequences) steady-state case, and a
+small-N/huge-`-b` stress case built specifically to confirm the
+decomposition fix under a profiler, not just wall-clock timing (it
+did - no `EigenSolver` symbols appear at all in the stress-case
+profile). The large-N profile found nothing further worth chasing -
+~95%+ of samples are inside legitimate Eigen GEMM work or the
+necessary tally-counting to build `N`. But the stress-case profile
+surfaced a new, previously-hidden cost: `bootstrap_sequences()`
+(`ProtSeqUtils.cpp`, pre-existing, untouched this session) calls
+libc's `rand()` once per sequence-column per replicate - combined with
+its own loop overhead, resampling was **~31% of total time** in that
+extreme (N=2, `-b 200000`) workload. Invisible before only because the
+much larger decomposition cost was masking it.
+
+The same `seqlen * 1.0 * rand() / (RAND_MAX + 1.0)` pattern turned out
+to be duplicated identically in 3 places - `ProtSeqUtils.cpp`
+(fastprot, protein), `Sequence.cpp` and `Sequences2DistanceMatrix.cpp`
+(both DNA, used by fastdist) - all fixed together for consistency
+rather than just the one profiled.
+
+**First attempt was a real, measured regression, not an improvement**:
+`std::mt19937` + `std::uniform_int_distribution` (the obvious "modern
+`<random>`" swap) measured **2.45x slower per call** than `rand()`
+(17.6ns vs 7.2ns, `benchmarks/bench_bootstrap_rng.cpp`) - confirmed
+end-to-end too (0.41s -> 0.57s on the `-b 50000` stress test).
+`uniform_int_distribution`'s bias-avoidance machinery costs more than
+`rand()`'s external-call overhead it was meant to save. Caught by
+re-measuring rather than trusting the assumption that any `<random>`
+engine trivially beats `rand()`.
+
+**Root-caused and fixed properly**: the actual old code already used
+its own float-scaling trick (`n * draw() / (max+1.0)`) to get a
+uniform value from `rand()`'s range - the fix that actually works is
+keeping that same trick, just feeding it `std::mt19937` instead of
+`rand()`, skipping `uniform_int_distribution` entirely. Measured
+**3.71ns/call, 1.94x faster than `rand()`**, standard-library only, no
+custom code. A hand-rolled `xorshift32` measured faster still
+(2.04ns/call, 3.52x) but was deliberately not adopted after being
+asked for a reference - Marsaglia's base 3-shift xorshift family is
+linear over GF(2) and has documented weaknesses (fails binary-rank/
+linear-complexity tests), which is specifically why later variants
+(xorshift+, xoshiro) add a scrambling step; standard, well-vetted
+`mt19937` was preferred over a faster but weaker non-standard engine.
+New shared `fastphylo/core/random_utils.hpp/.cpp`
+(`seed_rng()`/`uniform_random_index()`) replaces `srand()`/`rand()` at
+all 3 call sites plus their 2 seeding sites (`fastprot`/`fastdist`
+`main.cpp`).
+
+Measured end-to-end (interleaved, fixed `--seed`): a real but modest
+~7-8% improvement on the extreme `-b 50000` stress case (0.41s ->
+0.38s user time) - smaller than the isolated 1.94x per-call number
+since the RNG draw was never the *only* cost even in that extreme
+case (Eigen GEMM, `bootstrap_sequences()`'s own loop overhead, and
+per-replicate sequence re-encoding all still contribute).
+
+Verified: `ctest` 6/6 on Clang Release and real GCC 14;
+`RunExamples.sh`/`RunCliChecks.sh` clean, including example 19's
+bootstrap-through-`fnj` pipe (matches byte-for-byte despite the RNG
+change - the fixture checks tree *topology*, not raw distances, and
+this small 4-taxon dataset's phylogenetic signal is strong enough that
+every bootstrap replicate converges to the same topology regardless of
+which RNG produced the resampling, confirmed to be the reason, not a
+coincidence); direct `--seed` reproducibility check (same `--seed`
+twice gives byte-identical output, just a different resampling
+sequence than the pre-change `rand()`-based code would have produced -
+a real, disclosed break in cross-version reproducibility for anyone
+relying on exact `--seed` output, not a bug).
+
 ## Explicitly out of scope (carried over from the investigation plan)
 
 - `fastprot_mpi`'s separate, unsynced `Matrix`/`MaximumLikelihood`/

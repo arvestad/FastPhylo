@@ -39,6 +39,7 @@ static void setStdoutBinaryMode()
 
 #include "config.h"
 #include "fastphylo/core/file_utils.hpp"
+#include "fastphylo/core/random_utils.hpp"
 #include <iomanip>
 #include "fastphylo/core/log_utils.hpp"
 #include "fastphylo/io/BinaryDmOutputStream.hpp"
@@ -301,19 +302,18 @@ static sequence_translation_model buildTranslationModel(const FastdistOptions &o
     return trans_model;
 }
 
-// srand()'s seed: an explicit --seed for reproducibility, or the current
-// time by default (bootstrap resampling, not a security context).
+// The bootstrap-resampling RNG's seed: an explicit --seed for
+// reproducibility, or the current time by default (not a security
+// context).
 static void seedRandom(const FastdistOptions &opts)
 {
     if (opts.seed_given)
     {
-        srand(static_cast<unsigned int>(opts.seed));
+        seed_rng(static_cast<unsigned int>(opts.seed));
     }
     else
     {
-        // NOLINTNEXTLINE(bugprone-random-generator-seed) - bootstrap resampling, not a security context; time-seeding
-        // when no explicit --seed is the intended default.
-        srand(static_cast<unsigned int>(time(nullptr)));
+        seed_rng(static_cast<unsigned int>(time(nullptr)));
     }
 }
 

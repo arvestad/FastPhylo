@@ -87,6 +87,7 @@ ${FASTPHYLO_CORE_DIR}/InitAndPrintOn_utils.cpp
 ${FASTPHYLO_CORE_DIR}/Sequence.cpp
 ${FASTPHYLO_CORE_DIR}/SequenceTree.cpp
 ${FASTPHYLO_CORE_DIR}/file_utils.cpp
+${FASTPHYLO_CORE_DIR}/random_utils.cpp
 ${FASTPHYLO_DNA_DIR}/DNA_b128_String.cpp
 ${FASTPHYLO_DNA_DIR}/Sequences2DistanceMatrix.cpp
 ${FASTPHYLO_DNA_DIR}/NeighborJoining.cpp

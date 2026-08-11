@@ -10,6 +10,7 @@
 #include "fastphylo/core/Sequence.hpp"
 #include "fastphylo/core/Exception.hpp"
 #include "fastphylo/core/phylip_interleaved_reader.hpp"
+#include "fastphylo/core/random_utils.hpp"
 #include <array>
 #include <iomanip>
 #include <string>
@@ -349,14 +350,14 @@ void Sequence::bootstrapSequences(std::vector<Sequence> &seqs, std::vector<Seque
     // Was two near-identical branches keyed on `32 < seqlen`, each
     // doing this same fill (and, below, the same sampled-copy step) in
     // stride-32 chunks vs a plain loop - an apparent unrolling attempt
-    // that changed nothing observable (rand() is a serial call, and
-    // plain array indexing has no dependency on iteration order
+    // that changed nothing observable (the RNG draw is a serial call,
+    // and plain array indexing has no dependency on iteration order
     // either), verified and unified into one path - same finding as
     // Sequences2DistanceMatrix.cpp's bootstrapSequences() (see that
     // file's before/after for the fuller explanation).
     for (pos = 0; pos < seqlen; pos++)
     {
-        samplePositions[pos] = static_cast<int>(seqlen * 1.0 * rand() / (RAND_MAX + 1.0));
+        samplePositions[pos] = uniform_random_index(seqlen);
     }
 
     for (size_t seq = 0; seq < seqs.size(); seq++)
