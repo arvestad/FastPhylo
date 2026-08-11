@@ -268,12 +268,32 @@ endforeach(i)
 # directly (full rebuild + ctest 6/6) against the Eigen 5.0.1 bottle:
 # the small, stable subset used here (fixed-size Matrix, EigenSolver,
 # SelfAdjointEigenSolver, basic array ops) is unaffected by whatever
-# changed 3.4->5.0. No genuine technical floor is needed - these APIs
-# have been stable since Eigen 3.0 (2010) - so accepting whatever
+# changed 3.4->5.0 - Eigen switched to semantic versioning at 5.0 and
+# explicitly kept "WORLD"=3 "for posterity" (their CHANGELOG.md), so
+# 3.4.0 -> 5.0.0 is a continuation/renumbering of the same Eigen 3.x
+# line, not a rewrite; none of 5.0's documented breaking changes touch
+# what this project uses. No genuine technical floor is needed - these
+# APIs have been stable since Eigen 3.0 (2010) - so accepting whatever
 # Eigen3 a platform's package manager currently provides (3.4.x via
 # Ubuntu's libeigen3-dev/vcpkg, 5.0.1 via current Homebrew) is more
 # robust than re-pinning to today's latest and hitting this again next
 # time a package manager moves on.
+#
+# Do NOT upgrade to 5.0.1 locally expecting a speed win, despite its
+# release notes advertising broad performance improvements (including
+# to GEMM/product kernels, which is exactly this project's ML hot
+# path). Measured directly (2026-08-11, interleaved fastprot builds
+# against the two versions' actual Eigen3::Eigen CMake targets, same
+# toolchain/arm64/AppleClang): Eigen 5.0.1 was ~16-18% SLOWER than
+# 3.4.0 on the GEMM-heavy per-pair Newton loop, and ~13% slower even
+# on a decomposition-dominated (SelfAdjointEigenSolver) workload -
+# reproducible with run order reversed, not a linking artifact (no
+# INTERFACE_COMPILE_DEFINITIONS difference between the two targets).
+# Root cause not identified (broader codegen difference on this
+# toolchain for small fixed-size matrices, not one call site) - kept
+# unresolved rather than guessed at. If re-checking this on a
+# different platform/compiler, measure again rather than trusting
+# either this note or Eigen's own release notes.
 find_package(Eigen3 REQUIRED)
 
 add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS} ${FASTPHYLO_IO_SRCS} ${FASTPHYLO_IO_XML_SRCS} ${FASTPHYLO_PROTEIN_SRCS})
