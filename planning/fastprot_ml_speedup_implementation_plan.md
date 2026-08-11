@@ -206,14 +206,42 @@ naturally from work this plan is already doing for other reasons.
 ## Sequencing
 
 1. Re-baseline microbenchmark (cheap, answers the go/no-go on `float`
-   before committing to it).
+   before committing to it). **Done** - see above.
 2. `double` Eigen swap (steps 2-5 above) - the actual work, verified
-   change, real measured win.
-3. Re-profile, confirm.
-4. Decide on `float` with real numbers in hand.
+   change, real measured win. **Done** (`eigen-ml-matrix-backend`
+   branch, off `master`): `MatrixExpm`'s internals and
+   `likelihood_slope_curv()`'s three matrix operations now use
+   `Eigen::Matrix<double,20,20>`; `MatrixExpm`'s public API unchanged
+   (`Matrix` in/out via `at()`, used by the ED path); a new
+   `at_eigen()`/`Q_eigen()` pair is the fast path
+   `likelihood_slope_curv()` uses directly. `Eigen3` added to
+   `vcpkg.json`/CI/`INSTALL` (`PUBLIC` link, since `Matrix.hpp` itself
+   now needs Eigen's headers to declare `MatrixExpm`'s private state).
+3. Re-profile, confirm. **Done** - macOS `sample`, 1000-sequence
+   dataset: zero `DGEMM`/`DGEEV`/`libBLAS.dylib` samples (Phase 1's
+   45.1% bottleneck is gone), replaced by Eigen's own GEMM kernels
+   inlined into `fastprot` directly. **Real end-to-end wall-clock
+   measurement** (`fastprot -D WAG -m`, interleaved reps, pre- vs.
+   post-swap binaries, byte-distinct verified): **1.23x at 100
+   sequences, 1.32x at 300, 1.35x at 600 and 1000** - increasing
+   toward the larger, stated-hard-case sizes as expected (more of the
+   run's wall time is inside the sped-up function as `N` grows),
+   consistent with the microbenchmark's ~1.2x isolated-function
+   prediction. Verified via full rebuild + `ctest` 5/5 on Clang
+   Release and real GCC 14 (byte-identical `fastprot` output between
+   compilers, all 5 models, real data), `-DWITH_LIBXML=OFF`,
+   `RunExamples.sh` byte-identical on every fixture including the ML
+   one, `RunCliChecks.sh` clean.
+4. Decide on `float` with real numbers in hand. **Not done yet** -
+   the `double` step alone already delivers a real, verified win;
+   `float` is a further, separately-decided step per the re-baseline
+   numbers above (a further ~2x on top of `double`), not bundled into
+   this round.
 5. Update dependency docs, changelog entry (`2.0.0-beta.4` or
    whatever's next, per `RELEASING.md`'s established prerelease
-   convention).
+   convention). Dependency docs (`INSTALL`, CI workflows, `vcpkg.json`)
+   done as part of step 2. Changelog entry and version bump: not done
+   yet, pending PR review/merge.
 
 ## Explicitly out of scope (carried over from the investigation plan)
 
