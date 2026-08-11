@@ -584,7 +584,12 @@ confounded by the LG bug):
 
 `fastprot_mpi`'s separate `ModelMatrix.cpp` copy was NOT updated with
 `mean_substitution_rate()` (unlike the earlier JTT data fix, which was
-mirrored there) - flagged as an open question, not yet decided.
+mirrored there). Decided (2026-08-11): leave it - unlike the JTT fix
+(a trivial, mechanically-verifiable one-line data correction), this
+one touches three files and can't be verified at all here (no MPI
+available, performance work already paused there per the
+2.0.0-beta.1 changelog). Deferred alongside the JTT-adjacent gaps
+already tracked in "Explicitly out of scope" below.
 
 Verified: full rebuild + `ctest` 6/6 on Clang Release and real GCC 14;
 `RunExamples.sh` clean after regenerating `ex18.out` (the `-D WAG -m`
@@ -598,8 +603,10 @@ unchanged (`2.008679`, exact match - JTT's true rate was already
 
 - `fastprot_mpi`'s separate, unsynced `Matrix`/`MaximumLikelihood`/
   `ModelMatrix` copies - performance work paused per the 2.0.0-beta.1
-  changelog; also now missing PR #2's correctness fix (a known,
-  disclosed gap, not silently forgotten).
+  changelog; also now missing PR #2's correctness fix and the LG
+  mean-substitution-rate fix above (known, disclosed gaps, not
+  silently forgotten - the JTT data fix *was* mirrored there earlier,
+  as the one trivial, low-risk exception).
 - `ExpectedDistance.cpp`'s `posterior_probability()` - a structurally
   similar allocation-churn problem, deliberately not folded in here;
   its own investigation if/when it becomes a priority.
