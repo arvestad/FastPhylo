@@ -30,7 +30,6 @@ void calculate_distances(const SeqVec &sv, StrDblMatrix &dm, prot_sequence_trans
         break;
     case wag:
     case day:
-    case arve:
     case jtt:
     case mvr:
     case lg:

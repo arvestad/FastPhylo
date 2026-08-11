@@ -154,12 +154,12 @@ static FastprotOptions parseArgs(int argc, char **argv)
     CLI::Option *seed_opt =
         app.add_option("-R,--seed", opts.seed, "Random seed. If not specified the current timestamp will be used");
 
-    static const std::map<std::string, model_type> distance_function_map{
-        {"ID", id},   {"JC", jc},   {"JCK", jck},   {"JCSS", jcss}, {"WAG", wag},
-        {"JTT", jtt}, {"DAY", day}, {"ARVE", arve}, {"MVR", mvr},   {"LG", lg}};
+    static const std::map<std::string, model_type> distance_function_map{{"ID", id},     {"JC", jc},   {"JCK", jck},
+                                                                         {"JCSS", jcss}, {"WAG", wag}, {"JTT", jtt},
+                                                                         {"DAY", day},   {"MVR", mvr}, {"LG", lg}};
     app.add_option("-D,--distance-function", opts.distance_function,
                    "Distance function (possible values: ID, JC, JCK, JCSS, WAG, JTT, DAY, "
-                   "ARVE, MVR, LG; default: WAG)")
+                   "MVR, LG; default: WAG)")
         ->transform(CLI::CheckedTransformer(distance_function_map).description(""));
 
     CLI::Option *model_file_opt = app.add_option("-F,--model-file", opts.model_file,

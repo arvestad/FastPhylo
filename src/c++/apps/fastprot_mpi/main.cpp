@@ -56,7 +56,7 @@ static void setStdoutBinaryMode()
 // were first, Phases B/C/D). Same FastprotOptions-shaped struct as
 // fastprot's - fastprot_mpi's .ggo is a near-duplicate of fastprot's,
 // minus --sd (never had it) and with a smaller --distance-function
-// choice set (WAG/JTT/DAY/ARVE/MVR/LG only, no ID/JC/JCK/JCSS).
+// choice set (WAG/JTT/DAY/MVR/LG only, no ID/JC/JCK/JCSS).
 //
 // UNVERIFIED: this file can't be built or run in the environment this
 // migration was done in - BUILD_WITH_MPI defaults OFF and no MPI
@@ -163,10 +163,10 @@ static FastprotMpiOptions parseArgs(int argc, char **argv)
     CLI::Option *seed_opt =
         app.add_option("-R,--seed", opts.seed, "Random seed. If not specified the current timestamp will be used");
 
-    static const std::map<std::string, model_type> distance_function_map{{"WAG", wag},   {"JTT", jtt}, {"DAY", day},
-                                                                         {"ARVE", arve}, {"MVR", mvr}, {"LG", lg}};
+    static const std::map<std::string, model_type> distance_function_map{
+        {"WAG", wag}, {"JTT", jtt}, {"DAY", day}, {"MVR", mvr}, {"LG", lg}};
     app.add_option("-D,--distance-function", opts.distance_function,
-                   "Distance function (possible values: WAG, JTT, DAY, ARVE, MVR, LG; "
+                   "Distance function (possible values: WAG, JTT, DAY, MVR, LG; "
                    "default: WAG)")
         ->transform(CLI::CheckedTransformer(distance_function_map).description(""));
 
