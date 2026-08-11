@@ -251,6 +251,14 @@ endforeach(i)
 # surviving content moved into include/fastphylo/dna/ in
 # project_layout_plan.md, and the rest was confirmed-dead and deleted
 # in lint_plan.md's Phase 0.)
+# Matrix.cpp/MaximumLikelihood.cpp use Eigen::Matrix<double,20,20> for
+# the ML hot path's dense 20x20 operations (planning/
+# fastprot_ml_speedup_implementation_plan.md) - header-only, so unlike
+# BLAS/LAPACK (extern "C" declarations, no header needed until final
+# link) this needs to be on fastphylo's own include path at compile
+# time, not deferred to fastprot's target further down.
+find_package(Eigen3 3.4 REQUIRED)
+
 add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS} ${FASTPHYLO_IO_SRCS} ${FASTPHYLO_IO_XML_SRCS} ${FASTPHYLO_PROTEIN_SRCS})
 # Modernization Phase B (project_layout_plan.md): the public API lives
 # under include/fastphylo/{core,dna,io,protein}/ now, consumed as
@@ -267,6 +275,11 @@ target_include_directories(fastphylo PUBLIC
 # already separately link ${FASTPHYLO_XML_LIBS} themselves) get it
 # transitively too rather than needing to know to add it twice.
 target_link_libraries(fastphylo PUBLIC ${FASTPHYLO_XML_LIBS})
+# Eigen stays an implementation detail of Matrix.cpp/MaximumLikelihood.cpp
+# - Matrix.hpp's public API is unchanged (still plain double*/
+# std::vector-based) - so PRIVATE, unlike the XML libs above: no
+# consumer needs Eigen on its own include path just for linking fastphylo.
+target_link_libraries(fastphylo PRIVATE Eigen3::Eigen)
 
 find_package(Threads REQUIRED)
 
