@@ -4,6 +4,7 @@
   "description": "Fast tools for phylogenetics: distance estimation, neighbor joining, and more.",
   "dependencies": [
     "lapack-reference",
-    "eigen3"
+    "eigen3",
+    "libxml2"
   ]
 }

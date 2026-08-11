@@ -15,7 +15,21 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-enable_testing() # code_tests/ProtSeqCode_test and ProtSeqCompare_test as of speed2026a
+# CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR: this repo's own
+# CMake floor is 3.18, no PROJECT_IS_TOP_LEVEL (added 3.21) - this is
+# the portable equivalent, used here and again further down to guard
+# enable_testing(), the docs subdirectory, and the CPack block: all
+# only make sense when FastPhylo itself is the project being
+# configured, not when it's pulled in as a subdirectory dependency
+# (fastphylo-py's planned git-submodule consumption of just the
+# fastphylo library target - see planning/ for that integration
+# plan). PACKAGE_VERSION derivation just below stays unconditional -
+# config.h.cmake's substitution (src/c++/CMakeLists.txt) needs it
+# either way, since that's part of the fastphylo library target
+# itself, not just the apps/packaging.
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  enable_testing() # code_tests/ProtSeqCode_test and ProtSeqCompare_test as of speed2026a
+endif()
 
 # github_actions_release_builds_plan.md's Phase A/E: the tag drives the
 # version, not the other way round - no checked-in number to keep in
@@ -34,10 +48,10 @@ enable_testing() # code_tests/ProtSeqCode_test and ProtSeqCompare_test as of spe
 #    with no git history at all to describe.
 if(NOT DEFINED PACKAGE_VERSION)
   find_package(Git QUIET)
-  if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
+  if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     execute_process(
       COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
       OUTPUT_VARIABLE PACKAGE_VERSION
       OUTPUT_STRIP_TRAILING_WHITESPACE
       RESULT_VARIABLE GIT_DESCRIBE_RESULT
@@ -65,6 +79,9 @@ option(WITH_LIBXML "Build xml functionality. This adds a dependeny for libxml" O
 
 
 add_subdirectory(src/c++)
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+
 add_subdirectory(docs)
 
 
@@ -99,3 +116,5 @@ set(CPACK_RPM_PACKAGE_RELEASE "1")
 
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${PACKAGE_VERSION}")
 include(CPack)
+
+endif()
