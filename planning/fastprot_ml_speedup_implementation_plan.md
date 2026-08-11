@@ -523,6 +523,77 @@ PHYLIP's `protdist` on the same JTT pair gave the *exact* pre-refactor
 value (`2.008679`), confirming this is a pure internal-representation
 change with the real behavior unchanged.
 
+## Fixed a second, independent scale bug: LG's rate matrix (2026-08-11)
+
+While reviewing Dayhoff's matrix (its many zero entries are correct -
+a known artifact of the small 1978 training dataset, and exactly why
+JTT/WAG/LG were developed later; confirmed against IQ-TREE2's own
+published Dayhoff matrix, same zeros), Lasse asked whether aligning
+with IQ-TREE2's model data could sidestep any remaining scale
+questions. That prompted computing each model's actual "mean
+substitution rate" (`-sum(eq[i] * Q(i,i))`, the standard
+IQ-TREE/RAxML/PAML convention for what a branch length of 1 means)
+directly from IQ-TREE2's raw, unmodified `model/modelprotein.cpp`
+data: WAG=95.28, JTT=100.64, Dayhoff=100.58, MVR has no IQ-TREE2
+reference, but **LG=1.000001**.
+
+This is a real, pre-existing bug, independent of the PAM-unit-removal
+work above: the fixed `PAM_TO_SUBSTITUTIONS_PER_SITE = 100.0` constant
+that `calculate_ml_dists()` used as `MatrixExpm`'s `time_unit_scale`
+assumed every model's rate matrix was calibrated to the historical
+"PAM" convention (mean rate ~100 - "100 expected substitutions per 100
+residues" per unit time). That's true for WAG/JTT/Dayhoff/MVR, but LG
+is published already normalized to a mean rate of 1 (the modern,
+direct substitutions/site convention) - so scaling it by 100.0 dividing
+gave `Qdecomp` calibrated 100x too coarse a time unit, producing ML
+distances roughly two orders of magnitude too small for LG specifically
+(caught via `benchmarks/analyze_convergence.cpp`: LG was the only model
+hitting `MIN_DISTANCE` on 21-43% of real pairs, with far worse
+convergence precision than the other four).
+
+Fix: replaced the fixed constant with a new `mean_substitution_rate(Q,
+eq)` function (`ModelMatrix.hpp`/`.cpp`) that computes a model's *own*
+true mean rate from its data, so `calculate_ml_dists()` now passes
+`1.0 / mean_substitution_rate(Q, eq)` as `time_unit_scale` - this
+self-corrects for whatever convention a given model happens to be
+published in (including any added later) rather than assuming one
+fixed factor works for all of them. Also more numerically precise for
+WAG (true rate ~95.3, not exactly 100) and MVR (true rate unknown but
+not exactly 100 either) even though those two were never as badly
+wrong as LG.
+
+Re-ran `analyze_convergence.cpp` post-fix on both the globin family
+(300 pairs) and the synthetic 300x300 benchmark (44,850 pairs), all 5
+models: **100% converged, 0% hit either boundary, max 5 Newton
+iterations, precision estimates (`|slope/curv|` at the converged
+point) in the 1e-7 to 1e-3 substitutions/site range** - LG now
+indistinguishable from the other four. This also finally answers
+Lasse's original three convergence questions cleanly (previously
+confounded by the LG bug):
+- `MAX_ITERATIONS=50` is never approached (observed max: 5) - large
+  headroom, cheap insurance, no change needed.
+- `CONVERGENCE_TOL=0.1` is not too loose - achieved distance precision
+  is consistently tiny (median ~1e-5, worst case ~1e-3) relative to
+  typical distances (0.1-2).
+- `MIN_DISTANCE`: tightened `0.01` -> `0.001` per Lasse's suggestion.
+  Real data (both datasets, post-fix) never actually hits the floor at
+  either value, so this isn't evidenced as a correctness fix, but
+  0.001 is closer to PHYLIP protdist's own floor (0.00001) and gives
+  closely-related pairs more room before clamping - low-risk
+  precaution, not a bug fix.
+
+`fastprot_mpi`'s separate `ModelMatrix.cpp` copy was NOT updated with
+`mean_substitution_rate()` (unlike the earlier JTT data fix, which was
+mirrored there) - flagged as an open question, not yet decided.
+
+Verified: full rebuild + `ctest` 6/6 on Clang Release and real GCC 14;
+`RunExamples.sh` clean after regenerating `ex18.out` (the `-D WAG -m`
+example - WAG's mean rate is 95.28, not the old flat 100, so its
+distances shift by the expected small amount); `RunCliChecks.sh`
+clean; direct re-check against PHYLIP's `protdist` confirmed JTT
+unchanged (`2.008679`, exact match - JTT's true rate was already
+~100.6, close enough that this fix barely moves it).
+
 ## Explicitly out of scope (carried over from the investigation plan)
 
 - `fastprot_mpi`'s separate, unsynced `Matrix`/`MaximumLikelihood`/

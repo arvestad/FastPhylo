@@ -7,3 +7,5 @@ measure_N_sparsity
 dump_model_matrices
 bench_unrolling_default
 bench_unrolling_unrolled
+check_lg_scale
+analyze_convergence

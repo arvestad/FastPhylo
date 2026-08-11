@@ -64,6 +64,24 @@ DblVec get_model_vec(model_type model)
     return vec;
 }
 
+/*!
+ * The mean substitution rate Q implies at its own, as-published
+ * scale - see the header comment for why this isn't assumed to be a
+ * fixed constant across models.
+ * @param Q The rate matrix
+ * @param eq Q's equilibrium distribution
+ * @return -sum(eq[i] * Q(i,i))
+ */
+double mean_substitution_rate(const Matrix &Q, const DblVec &eq)
+{
+    double rate = 0.0;
+    for (std::size_t i = 0; i < eq.size(); i++)
+    {
+        rate -= eq[i] * Q(i, i);
+    }
+    return rate;
+}
+
 /*
  * The Müller-Vingron rate matrix
  * @return The Müller-Vingron matrix

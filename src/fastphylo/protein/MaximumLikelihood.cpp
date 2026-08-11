@@ -18,19 +18,24 @@ namespace
 // every constant along the way (kimura_distance()'s starting value,
 // the two bounds below, the convergence tolerance) harder to reason
 // about for no remaining benefit - removed per direct request.
-// calculate_ml_dists() now passes PAM_TO_SUBSTITUTIONS_PER_SITE to
-// MatrixExpm's constructor instead (Matrix.hpp), so every `t` value
-// flowing through this file already means the same thing
-// calculate_ml_dists() returns, with nothing left to rescale after
-// the fact.
+// calculate_ml_dists() now passes a per-model time_unit_scale
+// (1.0 / mean_substitution_rate(Q, eq), ModelMatrix.hpp) to
+// MatrixExpm's constructor instead, so every `t` value flowing
+// through this file already means the same thing calculate_ml_dists()
+// returns, with nothing left to rescale after the fact.
 //
-// "5 is infinity"/"0.01 is the smallest possible distance" are this
-// codebase's pre-existing conventions (kimura_distance() below always
-// predates this file), just re-expressed in substitutions/site
-// (was 500/1 in PAM units) - named here rather than left as magic
-// numbers now that the loop that uses them is more than a few lines.
+// "5 is infinity" is this codebase's pre-existing convention
+// (kimura_distance() below always predates this file), just
+// re-expressed in substitutions/site (was 500 in PAM units) - named
+// here rather than left as a magic number now that the loop that uses
+// it is more than a few lines. MIN_DISTANCE=0.001 (tightened from the
+// PAM-era 0.01 substitutions/site equivalent on 2026-08-11 - real data
+// checked with benchmarks/analyze_convergence.cpp never actually hits
+// this floor, so there's no evidence either value is "more correct",
+// but 0.001 is closer to PHYLIP protdist's own floor of 0.00001 and
+// gives closely-related sequence pairs more room before clamping).
 constexpr double MAX_DISTANCE = 5.0;
-constexpr double MIN_DISTANCE = 0.01;
+constexpr double MIN_DISTANCE = 0.001;
 // Was 0.001 in PAM units - this is a threshold on the log-likelihood's
 // *slope* (1/distance-units), not a distance itself, so it scales the
 // opposite way MAX_DISTANCE/MIN_DISTANCE do when the distance unit

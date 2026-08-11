@@ -32,20 +32,6 @@
 // is in scope for this change.
 namespace
 {
-// The published WAG/JTT/Dayhoff/MVR/LG rate matrices (ModelMatrix.cpp)
-// are calibrated in "PAM" units - expected substitutions per 100
-// residues, the historical convention these matrices were originally
-// estimated in - not the substitutions-per-site units fastprot's
-// output (and PHYLIP's) uses. Passed to MatrixExpm's constructor
-// below so every `t` value likelihood_calc()/likelihood_slope_curv()
-// work with is already in substitutions/site directly; previously
-// this file computed in PAM units internally and rescaled the result
-// by 0.01 at this function's own output boundary instead - removed
-// per direct request (2026-08-11), since the two-scale split made
-// every constant along the way in MaximumLikelihood.cpp harder to
-// reason about for no remaining benefit.
-constexpr double PAM_TO_SUBSTITUTIONS_PER_SITE = 100.0;
-
 // Encodes every sequence in sv once (ProtSeqCode.hpp), so the per-pair
 // cost in the loops below doesn't include re-encoding.
 std::vector<std::vector<std::uint8_t>> encode_all(const SeqVec &sv)
@@ -261,15 +247,28 @@ void calculate_ed_dists_with_sd(const SeqVec &sv, StrDblMatrix &dm, StrDblMatrix
 void calculate_ml_dists(const SeqVec &sv, StrDblMatrix &dm, model_type mt)
 {
     Matrix Q = get_model_matrix(mt);
+    // Rate matrices from different sources aren't published at a
+    // consistent scale - e.g. WAG/JTT/Dayhoff/MVR are all calibrated
+    // to a mean substitution rate of ~100 (the historical "PAM"
+    // convention), but LG is already published normalized to a mean
+    // rate of 1 (found 2026-08-11 by cross-checking against
+    // IQ-TREE2's source - a fixed conversion factor that happened to
+    // work for the first 4 models was silently wrong for LG, giving
+    // ML distances off by roughly two orders of magnitude for it
+    // specifically). Dividing by Q's own mean_substitution_rate()
+    // (ModelMatrix.hpp) instead of a hardcoded constant makes `t`
+    // mean the same thing - expected substitutions/site - for every
+    // model uniformly, regardless of which convention it happened to
+    // be published in, including any added later.
+    DblVec eq = get_model_vec(mt);
+    double time_unit_scale = 1.0 / mean_substitution_rate(Q, eq);
     // Q is the same rate matrix for every pair below; decomposing it is
     // the expensive part of evaluating exp(Q*t), so do it once here
     // instead of once per Newton-Raphson iteration per pair inside
     // likelihood_calc()/likelihood_slope_curv() - see Matrix.hpp's
     // MatrixExpm and phase0_audit.md's "ML speedup round" for the
-    // profiling behind this. PAM_TO_SUBSTITUTIONS_PER_SITE rescales Q
-    // so every distance likelihood_calc() returns below is already in
-    // substitutions/site - see that constant's comment above.
-    MatrixExpm Qdecomp(Q, PAM_TO_SUBSTITUTIONS_PER_SITE);
+    // profiling behind this.
+    MatrixExpm Qdecomp(Q, time_unit_scale);
     dm.resize(sv.size());
     std::vector<std::vector<std::uint8_t>> encoded = encode_all(sv);
 

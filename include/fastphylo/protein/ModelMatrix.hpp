@@ -25,6 +25,21 @@ enum model_type
 Matrix get_model_matrix(model_type model);
 //! Gets the equilibrium distribution for the specified model
 DblVec get_model_vec(model_type model);
+//! The mean substitution rate -sum(eq[i] * Q(i,i)) implied by Q at its
+//! own, as-published scale, given its equilibrium distribution eq.
+//! Rate matrices from different sources aren't necessarily published
+//! at a consistent scale - e.g. WAG/JTT/Dayhoff/MVR are all ~100
+//! (the historical "PAM" convention - expected substitutions per 100
+//! residues), but LG is already published normalized to 1 (found via
+//! cross-checking against IQ-TREE2's source, 2026-08-11: computed
+//! directly from IQ-TREE2's own raw model/modelprotein.cpp data,
+//! WAG/JTT/Dayhoff came out ~95-101, LG came out 1.000001). Dividing Q
+//! by this value (see calculate_ml_dists(), ProtDistCalc.cpp) makes
+//! `t` mean the same thing - expected substitutions/site - for every
+//! model uniformly, regardless of which convention it was originally
+//! published in, rather than assuming one fixed factor works for all
+//! of them (it doesn't, for LG).
+double mean_substitution_rate(const Matrix &Q, const DblVec &eq);
 //! The JTT rate matrix
 Matrix get_jtt();
 //! The JTT equilibrium distribution
