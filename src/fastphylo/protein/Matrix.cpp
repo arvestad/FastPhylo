@@ -1,41 +1,25 @@
 #include "fastphylo/protein/Matrix.hpp"
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <iostream>
 #include <numeric>
 #include <cstdio>
 
-// LAPACK/BLAS functions
+// LAPACK/BLAS functions - just dgemm_ now. MatrixExpm's decomposition
+// (dgeev_/dgetrf_/dgetri_ previously) moved to Eigen's EigenSolver -
+// see the MatrixExpm implementation below and
+// planning/fastprot_ml_speedup_implementation_plan.md. Matrix::mult()
+// (below) is unrelated to that change and keeps using dgemm_ - it has
+// other, non-hot-path callers (ExpectedDistance.cpp, etc.) this plan
+// deliberately didn't touch.
 extern "C"
 {
-
-    /*!
-     * SUBROUTINE DGEEV( JOBVL, JOBVR, N, A, LDA, WR, WI, VL, LDVL, VR,
-     *               LDVR, WORK, LWORK, INFO )
-     *   for info, see: http://www.netlib.org/lapack/double/dgeev.f
-     */
-    void dgeev_(char *jobvl, char *jobvr, int *n, double *a, int *lda, double *wr, double *wi, double *vl, int *ldvl,
-                double *vr, int *ldvr, double *work, int *lwork, int *info);
-
     /*!
      * SUBROUTINE DGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
      *   for info, see: http://www.netlib.org/blas/dgemm.f
      */
     void dgemm_(char *transa, char *transb, int *m, int *n, int *k, double *alpha, double *a, int *lda, double *b,
                 int *ldb, double *beta, double *c, int *ldc);
-
-    /*!
-     *  SUBROUTINE DGETRI( N, A, LDA, IPIV, WORK, LWORK, INFO )
-     *  for info, see http://www.netlib.org/lapack/double/dgetri.f
-     */
-    void dgetri_(int *n, double *a, int *lda, int *ipiv, double *work, int *lwork, int *info);
-
-    /*!
-     * SUBROUTINE DGETRF( M, N, A, LDA, IPIV, INFO )
-     * for info, see http://www.netlib.org/lapack/double/dgetrf.f
-     */
-    void dgetrf_(int *m, int *n, double *a, int *lda, int *ipiv, int *info);
 }
 /*!
  *  Default constructor, constructs a matrix with size (0,0)
@@ -230,92 +214,82 @@ MatVec Matrix::expm(const DblVec &s) const
     return result;
 }
 
+namespace
+{
+Eigen::Matrix<double, 20, 20> to_eigen20(const Matrix &m)
+{
+    Eigen::Matrix<double, 20, 20> e;
+    for (int r = 0; r < 20; r++)
+    {
+        for (int c = 0; c < 20; c++)
+        {
+            e(r, c) = m(r, c);
+        }
+    }
+    return e;
+}
+} // namespace
+
 /*!
- *  Decomposes Q = T*diag(eigenvalues)*T^-1 once (the expensive LAPACK
- *  part of expm()), so at() can evaluate exp(Q*t) for many t values
+ *  Decomposes Q = T*diag(eigenvalues)*T^-1 once (the expensive part of
+ *  expm()), so at()/at_eigen() can evaluate exp(Q*t) for many t values
  *  cheaply. See the class comment in Matrix.hpp.
  */
 MatrixExpm::MatrixExpm(const Matrix &Q)
 {
-    // Can only calculate eigenvalues and vectors of square matrices
     if (Q.get_rows() != Q.get_cols())
     {
         throw std::out_of_range("Matrix needs to be square");
     }
+    if (Q.get_rows() != 20)
+    {
+        // Eigen::Matrix<double,20,20>'s fixed size means this class no
+        // longer supports arbitrary sizes the way the LAPACK-based
+        // version did - confirmed by grep before this change that
+        // every real caller passes a 20x20 protein rate matrix (see
+        // the class comment in Matrix.hpp).
+        throw std::out_of_range("MatrixExpm only supports 20x20 matrices (the protein rate matrices it was built "
+                                 "for)");
+    }
 
-    int size = Q.get_rows();
-    eigenvalues_real.assign(size, 0); // Real part of eigenvalues
-    DblVec eg_val_im(size, 0);        // Imaginary part of eigenvalues
-                                      // should be zero
-    std::array<double, 1> dummy{};
-    int dummy_size = 1;
-    std::array<int, 1> info{};
-    char n = 'N'; // Do not want to use this argument
-    char v = 'V'; // Want to use this argument
-    std::array<double, 1> workspace_size{};
-    int w_query = -1;
-
-    // Need to make a copy of the data in Q to send into dgeev_ because
-    // the data sent in is overwritten
-    DblVec data(Q.m_data);
-
-    // Matrix for the eigenvectors
-    eigenvectors = Matrix(size, size);
-
-    // workspace-query
-    //  SUBROUTINE DGEEV( JOBVL, JOBVR, N, A, LDA, WR, WI, VL, LDVL, VR,
-    //                LDVR, WORK, LWORK, INFO )
-    dgeev_(&n, &v, &size, data.data(), &size, eigenvalues_real.data(), eg_val_im.data(), dummy.data(), &dummy_size,
-           eigenvectors.m_data.data(), &size, workspace_size.data(), &w_query, info.data());
-
-    DblVec workspace_vec(static_cast<int>(workspace_size[0]), 0);
-    int w_size = workspace_size[0];
-
-    // Real calculation of eigenvalues and eigenvectors for Q
-    dgeev_(&n, &v, &size, data.data(), &size, eigenvalues_real.data(), eg_val_im.data(), dummy.data(), &dummy_size,
-           eigenvectors.m_data.data(), &size, workspace_vec.data(), &w_size, info.data());
-
-    // Calculating inverse of matrix with eigenvectors
-    eigenvectors_inv = Matrix(eigenvectors);
-    std::vector<int> ipiv(size);
-
-    // LU factorization, eigenvectors_inv.m_data is overwritten with the LU factorization
-    dgetrf_(&size, &size, eigenvectors_inv.m_data.data(), &size, ipiv.data(), info.data());
-
-    // workspace-query, nothing happens with eigenvectors_inv.m_data
-    dgetri_(&size, eigenvectors_inv.m_data.data(), &size, ipiv.data(), workspace_size.data(), &w_query, info.data());
-
-    DblVec workspace_vec2(static_cast<int>(workspace_size[0]));
-    w_size = workspace_size[0];
-
-    // Inverse calculation from LU values, the inverse is stored in eigenvectors_inv.m_data
-    dgetri_(&size, eigenvectors_inv.m_data.data(), &size, ipiv.data(), workspace_vec2.data(), &w_size, info.data());
+    m_Q = to_eigen20(Q);
+    Eigen::EigenSolver<Eigen::Matrix<double, 20, 20>> solver(m_Q);
+    m_eigenvectors = solver.eigenvectors().real();
+    m_eigenvectors_inv = m_eigenvectors.inverse();
+    m_eigenvalues_real = solver.eigenvalues().real();
 }
 
 /*!
  *  Evaluates exp(Q*t) = T*diag(exp(eigenvalues*t))*T^-1 using the
- *  cached decomposition - no LAPACK calls, just two matrix multiplies.
+ *  cached decomposition, as a fixed-size Eigen matrix - no
+ *  decomposition, no heap allocation, no external BLAS dispatch. The
+ *  fast path for likelihood_slope_curv()'s per-Newton-iteration hot
+ *  loop (MaximumLikelihood.cpp).
+ */
+Eigen::Matrix<double, 20, 20> MatrixExpm::at_eigen(double t) const
+{
+    Eigen::Matrix<double, 20, 1> scale = (m_eigenvalues_real * t).array().exp();
+    return m_eigenvectors * scale.asDiagonal() * m_eigenvectors_inv;
+}
+
+/*!
+ *  Evaluates exp(Q*t) as a Matrix - used by Matrix::expm() (the ED
+ *  path via ExpectedDistance.cpp, not the ML hot path this class was
+ *  optimized for and not performance-critical, see
+ *  planning/fastprot_ml_speedup_investigation_plan.md's scope notes).
  */
 Matrix MatrixExpm::at(double t) const
 {
-    std::size_t size = eigenvalues_real.size();
-    // T * diag(exp(eigenvalues*t)): for a diagonal right-hand factor,
-    // (A*D)(row,col) = A(row,col)*D(col,col) - scaling each column of T
-    // directly is mathematically identical to going through
-    // Matrix::mult() with a materialized diagonal matrix (as this used
-    // to), but skips building a 20x20 matrix that's 95% zeros just to
-    // represent a 20-element diagonal, and the dense multiply LAPACK
-    // would otherwise do to apply it.
-    Matrix left(size, size);
-    for (std::size_t col = 0; col < size; col++)
+    Eigen::Matrix<double, 20, 20> result = at_eigen(t);
+    Matrix m(20, 20);
+    for (int r = 0; r < 20; r++)
     {
-        double scale = exp(eigenvalues_real[col] * t);
-        for (std::size_t row = 0; row < size; row++)
+        for (int c = 0; c < 20; c++)
         {
-            left(row, col) = eigenvectors(row, col) * scale;
+            m(r, c) = result(r, c);
         }
     }
-    return Matrix::mult(left, eigenvectors_inv);
+    return m;
 }
 
 /*!

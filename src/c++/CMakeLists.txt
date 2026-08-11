@@ -275,11 +275,13 @@ target_include_directories(fastphylo PUBLIC
 # already separately link ${FASTPHYLO_XML_LIBS} themselves) get it
 # transitively too rather than needing to know to add it twice.
 target_link_libraries(fastphylo PUBLIC ${FASTPHYLO_XML_LIBS})
-# Eigen stays an implementation detail of Matrix.cpp/MaximumLikelihood.cpp
-# - Matrix.hpp's public API is unchanged (still plain double*/
-# std::vector-based) - so PRIVATE, unlike the XML libs above: no
-# consumer needs Eigen on its own include path just for linking fastphylo.
-target_link_libraries(fastphylo PRIVATE Eigen3::Eigen)
+# MatrixExpm's private members (Matrix.hpp) are Eigen types now - the
+# public Matrix class and MatrixExpm's own public methods are
+# unchanged (still Matrix in, Matrix out), but Matrix.hpp itself
+# #includes <Eigen/Dense> to declare that private state, so anything
+# that #includes Matrix.hpp needs Eigen's include path too - PUBLIC,
+# same reasoning as the XML libs above.
+target_link_libraries(fastphylo PUBLIC Eigen3::Eigen)
 
 find_package(Threads REQUIRED)
 

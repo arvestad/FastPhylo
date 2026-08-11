@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <vector>
+#include <Eigen/Dense>
 
 /*
  * Class for handling matrices.
@@ -74,39 +75,71 @@ class Matrix
     std::size_t nr_rows;
     //! The columns
     std::size_t nr_cols;
-
-    friend class MatrixExpm;
 };
 
 /*!
  * A cached eigendecomposition of a square matrix Q, letting exp(Q*t) be
  * evaluated for many different t values without re-decomposing Q each
  * time: Q = T*diag(eigenvalues)*T^-1, so exp(Q*t) =
- * T*diag(exp(eigenvalues*t))*T^-1 - only this last, cheap step (two
- * matrix multiplies) depends on t. The decomposition itself (dgeev_
- * for eigenvalues/eigenvectors, dgetrf_/dgetri_ to invert the
- * eigenvector matrix - the expensive LAPACK calls) is done once, in
- * the constructor.
+ * T*diag(exp(eigenvalues*t))*T^-1 - only this last, cheap step depends
+ * on t. The decomposition itself (Eigen's EigenSolver) is done once,
+ * in the constructor.
  *
- * Added because likelihood_deriv() (MaximumLikelihood.cpp) evaluates
- * exp(Q*t) at a new t on every Newton-Raphson iteration, for the same
- * Q, for every pair in a run - see phase0_audit.md's "ML speedup
- * round" for the profiling behind this.
+ * Internally uses Eigen::Matrix<double,20,20> (fixed-size, stack-
+ * allocated, no external BLAS dispatch) rather than the general
+ * Matrix/LAPACK-dgemm_ path Matrix's other operations use - a 20x20
+ * dense multiply through a general-purpose BLAS was found to be the
+ * single largest cost in fastprot's maximum-likelihood pipeline
+ * (planning/fastprot_ml_speedup_investigation_plan.md's Phase 1
+ * profiling), and Eigen's fixed-size type avoids that dispatch
+ * overhead entirely (planning/fastprot_ml_speedup_implementation_
+ * plan.md). 20 is hardcoded (not the general N the rest of this file
+ * supports) because every real caller passes a 20-amino-acid protein
+ * rate matrix - confirmed by grep before this change, no other caller
+ * exists; the constructor throws if given anything else.
+ *
+ * Also caches Q itself (Q_eigen()), in the same Eigen form, since
+ * likelihood_slope_curv() (MaximumLikelihood.cpp) needs it on every
+ * Newton-Raphson iteration for P'(t)/P''(t) and shouldn't have to
+ * re-convert it from Matrix each call.
+ *
+ * Added because likelihood_slope_curv() (MaximumLikelihood.cpp)
+ * evaluates exp(Q*t) at a new t on every Newton-Raphson iteration, for
+ * the same Q, for every pair in a run - see phase0_audit.md's "ML
+ * speedup round" for the profiling behind the once-per-run caching,
+ * and the two planning docs above for the Eigen backend.
  */
 class MatrixExpm
 {
   public:
     //! Decomposes Q. Imaginary parts of Q's eigenvalues are discarded,
     //! matching expm()'s existing behavior (valid for the real,
-    //! diagonalizable rate matrices this is used for).
+    //! diagonalizable rate matrices this is used for). Q must be
+    //! 20x20 (see class comment).
     explicit MatrixExpm(const Matrix &Q);
-    //! Evaluates exp(Q*t) using the cached decomposition.
+    //! Evaluates exp(Q*t) using the cached decomposition, as a Matrix
+    //! - used by Matrix::expm() (the ED path, not the ML hot path
+    //! this class was optimized for and not performance-critical -
+    //! see planning/fastprot_ml_speedup_investigation_plan.md's scope
+    //! notes on ExpectedDistance.cpp).
     Matrix at(double t) const;
+    //! Evaluates exp(Q*t) using the cached decomposition, as a fixed-
+    //! size Eigen matrix directly - the fast path for
+    //! likelihood_slope_curv()'s per-Newton-iteration hot loop, no
+    //! Matrix round-trip.
+    Eigen::Matrix<double, 20, 20> at_eigen(double t) const;
+    //! Q, cached in the same Eigen form used internally - avoids
+    //! likelihood_slope_curv() re-converting it from Matrix every call.
+    const Eigen::Matrix<double, 20, 20> &Q_eigen() const
+    {
+        return m_Q;
+    }
 
   private:
-    Matrix eigenvectors;     // T
-    Matrix eigenvectors_inv; // T^-1
-    DblVec eigenvalues_real; // real part of Q's eigenvalues
+    Eigen::Matrix<double, 20, 20> m_eigenvectors;     // T
+    Eigen::Matrix<double, 20, 20> m_eigenvectors_inv; // T^-1
+    Eigen::Matrix<double, 20, 1> m_eigenvalues_real;  // real part of Q's eigenvalues
+    Eigen::Matrix<double, 20, 20> m_Q;
 };
 
 // Non-member functions

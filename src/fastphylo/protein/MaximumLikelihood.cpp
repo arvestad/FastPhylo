@@ -56,9 +56,9 @@ double kimura_distance(const Matrix &N)
  *   slope  = d/dt   log L(t) = sum N .* P'(t)  ./ P(t)
  *   curv   = d^2/dt^2 log L(t) = sum N .* (P''(t) ./ P(t) - (P'(t) ./ P(t))^2)
  * Both derivatives are obtained from the same cached decomposition
- * (Qdecomp.at(t)) with no finite differencing - P''(t) costs one more
- * matrix multiply reusing P'(t), which slope alone already computed.
- * This replaces the previous version that only returned slope,
+ * (Qdecomp.at_eigen(t)) with no finite differencing - P''(t) costs one
+ * more matrix multiply reusing P'(t), which slope alone already
+ * computed. This replaces a version that only returned slope,
  * requiring likelihood_calc() to approximate curv by finite-
  * differencing slope at a fixed, tiny step - noise-dominated wherever
  * the true derivative is locally flat, which real diverged sequence
@@ -66,18 +66,34 @@ double kimura_distance(const Matrix &N)
  * plan.md's "Q3 results" for the real-data cases this was found on,
  * and PHYLIP's protdist.c (makedists()) for the reference approach
  * this follows.
+ *
+ * Computed via Eigen::Matrix<double,20,20> (Qdecomp.at_eigen()/
+ * Q_eigen()), not the general Matrix/LAPACK-dgemm_ path - a 20x20
+ * dense multiply through a general-purpose BLAS was found to be the
+ * single largest cost in this function (planning/
+ * fastprot_ml_speedup_investigation_plan.md's Phase 1 profiling), and
+ * this is called every Newton-Raphson iteration, for every pair, in
+ * calculate_ml_dists(). See planning/fastprot_ml_speedup_
+ * implementation_plan.md for the measured win (benchmarks/
+ * bench_ml_hotpath.cpp: ~1.2x, all 5 models, correctness within
+ * machine precision of the previous LAPACK-based result).
  * @param N The replacement count matrix, N(i,j) contains the number of actual
  *            replacements from amino acid i to amino acid j
- * @param Q Rate matrix for replacements from one amino acid to another
+ * @param Q Rate matrix for replacements from one amino acid to another -
+ *            unused directly (Qdecomp.Q_eigen() is the same matrix,
+ *            already in the form this function needs); kept for
+ *            signature stability, since likelihood_calc() and callers
+ *            elsewhere already have Q at hand.
  * @param Qdecomp Cached eigendecomposition of Q (see Matrix.hpp)
  * @param t The distance
  * @return The log-likelihood's slope and curvature at t
  */
-LikelihoodDerivatives likelihood_slope_curv(const Matrix &N, const Matrix &Q, const MatrixExpm &Qdecomp, double t)
+LikelihoodDerivatives likelihood_slope_curv(const Matrix &N, const Matrix & /*Q*/, const MatrixExpm &Qdecomp,
+                                             double t)
 {
-    Matrix pt = Qdecomp.at(t);
-    Matrix p1t = Matrix::mult(pt, Q);
-    Matrix p2t = Matrix::mult(p1t, Q);
+    Eigen::Matrix<double, 20, 20> pt = Qdecomp.at_eigen(t);
+    Eigen::Matrix<double, 20, 20> p1t = pt * Qdecomp.Q_eigen();
+    Eigen::Matrix<double, 20, 20> p2t = p1t * Qdecomp.Q_eigen();
 
     // Fused into one pass instead of elem_mult()/elem_div() (each
     // allocating a full temporary Matrix just to be summed and
@@ -85,25 +101,28 @@ LikelihoodDerivatives likelihood_slope_curv(const Matrix &N, const Matrix &Q, co
     // transcription of the formulas above.
     double slope = 0.0;
     double curv = 0.0;
-    std::size_t n = N.get_rows() * N.get_cols();
-    for (std::size_t k = 0; k < n; k++)
+    for (int row = 0; row < 20; row++)
     {
-        double n_k = N(k);
-        if (n_k == 0.0)
+        for (int col = 0; col < 20; col++)
         {
-            continue; // contributes 0 to both sums either way - skip the division
+            double n_k = N(row, col);
+            if (n_k == 0.0)
+            {
+                continue; // contributes 0 to both sums either way - skip the division
+            }
+            // P(t) is a transition-probability matrix for a rate
+            // matrix with strictly positive off-diagonal rates (every
+            // model this is used with), so p > 0 for all t > 0
+            // mathematically; floor it defensively against floating-
+            // point underflow at extreme t rather than letting a
+            // division produce inf/nan.
+            double p = std::max(pt(row, col), DBL_MIN);
+            double dp = p1t(row, col);
+            double d2p = p2t(row, col);
+            double ratio = dp / p;
+            slope += n_k * ratio;
+            curv += n_k * (d2p / p - (ratio * ratio));
         }
-        // P(t) is a transition-probability matrix for a rate matrix
-        // with strictly positive off-diagonal rates (every model this
-        // is used with), so p > 0 for all t > 0 mathematically; floor
-        // it defensively against floating-point underflow at extreme
-        // t rather than letting a division produce inf/nan.
-        double p = std::max(pt(k), DBL_MIN);
-        double dp = p1t(k);
-        double d2p = p2t(k);
-        double ratio = dp / p;
-        slope += n_k * ratio;
-        curv += n_k * (d2p / p - (ratio * ratio));
     }
     return {slope, curv};
 }

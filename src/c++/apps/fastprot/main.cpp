@@ -283,7 +283,12 @@ static prot_sequence_translation_model buildTranslationModel(const FastprotOptio
     trans_model.step_size = opts.speed;
     if (opts.pfam)
     {
-        trans_model.tp = norm;
+        // Explicit ::norm (not std::norm, ambiguous here since this
+        // file's `using namespace std;` plus Eigen pulling in
+        // <complex> transitively via Matrix.hpp makes the unqualified
+        // name ambiguous) - this is ExpectedDistance.hpp's type_prior
+        // enum value, unrelated to std::norm's complex-number meaning.
+        trans_model.tp = ::norm;
     }
     else
     {
