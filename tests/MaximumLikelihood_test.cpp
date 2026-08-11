@@ -149,7 +149,21 @@ void test_globin_family_all_models()
     {
         model_type type;
         const char *name;
-    } models[] = {{wag, "wag"}, {jtt, "jtt"}, {day, "day"}, {mvr, "mvr"}, {lg, "lg"}};
+    } models[] = {{wag, "wag"},
+                  {jtt, "jtt"},
+                  {day, "day"},
+                  {mvr, "mvr"},
+                  {lg, "lg"},
+                  {jtt_dcmut, "jtt_dcmut"},
+                  {vt, "vt"},
+                  {hivb, "hivb"},
+                  {hivw, "hivw"},
+                  {cprev, "cprev"},
+                  {blosum62, "blosum62"},
+                  {dcmut, "dcmut"},
+                  {mtrev, "mtrev"},
+                  {rtrev, "rtrev"},
+                  {pmb, "pmb"}};
 
     for (auto &m : models)
     {
