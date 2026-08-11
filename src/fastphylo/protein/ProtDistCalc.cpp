@@ -32,6 +32,20 @@
 // is in scope for this change.
 namespace
 {
+// The published WAG/JTT/Dayhoff/MVR/LG rate matrices (ModelMatrix.cpp)
+// are calibrated in "PAM" units - expected substitutions per 100
+// residues, the historical convention these matrices were originally
+// estimated in - not the substitutions-per-site units fastprot's
+// output (and PHYLIP's) uses. Passed to MatrixExpm's constructor
+// below so every `t` value likelihood_calc()/likelihood_slope_curv()
+// work with is already in substitutions/site directly; previously
+// this file computed in PAM units internally and rescaled the result
+// by 0.01 at this function's own output boundary instead - removed
+// per direct request (2026-08-11), since the two-scale split made
+// every constant along the way in MaximumLikelihood.cpp harder to
+// reason about for no remaining benefit.
+constexpr double PAM_TO_SUBSTITUTIONS_PER_SITE = 100.0;
+
 // Encodes every sequence in sv once (ProtSeqCode.hpp), so the per-pair
 // cost in the loops below doesn't include re-encoding.
 std::vector<std::vector<std::uint8_t>> encode_all(const SeqVec &sv)
@@ -252,8 +266,10 @@ void calculate_ml_dists(const SeqVec &sv, StrDblMatrix &dm, model_type mt)
     // instead of once per Newton-Raphson iteration per pair inside
     // likelihood_calc()/likelihood_slope_curv() - see Matrix.hpp's
     // MatrixExpm and phase0_audit.md's "ML speedup round" for the
-    // profiling behind this.
-    MatrixExpm Qdecomp(Q);
+    // profiling behind this. PAM_TO_SUBSTITUTIONS_PER_SITE rescales Q
+    // so every distance likelihood_calc() returns below is already in
+    // substitutions/site - see that constant's comment above.
+    MatrixExpm Qdecomp(Q, PAM_TO_SUBSTITUTIONS_PER_SITE);
     dm.resize(sv.size());
     std::vector<std::vector<std::uint8_t>> encoded = encode_all(sv);
 
@@ -264,8 +280,7 @@ void calculate_ml_dists(const SeqVec &sv, StrDblMatrix &dm, model_type mt)
             Eigen::Matrix<float, 20, 20> N = tally_to_eigen(
                 ProtSeqCode::count_replacement_tally(encoded[i].data(), encoded[i].size(), encoded[j].data(),
                                                        encoded[j].size()));
-            double distance = 0.01 * likelihood_calc(N, Qdecomp);
-            dm.setDistance(i, j, distance);
+            dm.setDistance(i, j, likelihood_calc(N, Qdecomp));
         }
     }
 }

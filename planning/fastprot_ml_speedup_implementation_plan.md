@@ -461,6 +461,68 @@ Verified (all of the above): full rebuild + `ctest` 6/6 on Clang
 Release and real GCC 14, `RunExamples.sh`/`RunCliChecks.sh` clean (no
 fixture changed - this round was a pure refactor, output unchanged).
 
+## Removed the internal "PAM" unit split (2026-08-11)
+
+Lasse noticed the `100`/`0.01` split directly: `kimura_distance()`
+computed in "PAM" units (`-100 * log(...)`, the historical convention
+the published WAG/JTT/Dayhoff/MVR/LG matrices are calibrated in -
+expected substitutions per 100 residues), and `calculate_ml_dists()`
+(`ProtDistCalc.cpp`) rescaled the result by `0.01` at the very end to
+get the substitutions-per-site units fastprot actually outputs (and
+PHYLIP uses natively, with no internal PAM step at all). Preference:
+drop the internal PAM representation entirely and work directly in
+substitutions/site throughout, matching PHYLIP's own convention -
+"an old idea that should go away."
+
+The two scales aren't just a relabeling - `Q`'s eigenvalues are
+calibrated for the *old* `t` (PAM units), so simply renaming `t`
+without rescaling `Q` would silently break `e^{Qt}`'s meaning as a
+transition-probability matrix. Rather than rescaling `Q` itself
+(`ModelMatrix.cpp` - shared with the `ED`/non-`-m` path, which does
+its *own*, separate `0.01 *` scaling and was deliberately left alone,
+out of scope), `MatrixExpm`'s constructor gained an optional
+`time_unit_scale` parameter (default 1.0, so every other caller -
+`Matrix::expm()`/the `ED` path, tests using the default - is
+unaffected): `m_Q = to_eigen20(Q) * time_unit_scale`, computed before
+anything else, so the decomposition, its `float` copy, and `Q²` are
+all automatically correct for the rescaled time unit with no further
+special-casing. `calculate_ml_dists()` now constructs `MatrixExpm
+Qdecomp(Q, PAM_TO_SUBSTITUTIONS_PER_SITE)` (`= 100.0`, named and
+commented at its one call site) instead of the bare `MatrixExpm(Q)` -
+every `t` flowing through `MaximumLikelihood.cpp` from that point on
+is already in substitutions/site, with nothing left to rescale at the
+output boundary (`ProtDistCalc.cpp`'s `0.01 * likelihood_calc(...)`
+became a plain `likelihood_calc(...)`).
+
+Every constant that depended on the old unit needed re-deriving, not
+just dividing by 100 uniformly - `MAX_DISTANCE`/`MIN_DISTANCE` are
+*distances* (500/1 -> 5.0/0.01, straightforward), but
+`CONVERGENCE_TOL` is a threshold on the log-likelihood's *slope*
+(1/distance-units): since `d(logL)/d(t/100) = 100 * d(logL)/dt`, the
+equivalent threshold in the new units is **100x the old value**
+(0.001 -> 0.1), not 100x smaller - the Newton step formula itself
+(`t -= slope/curv`) turned out to need no special-casing at all, since
+`curv` (a second derivative, 1/distance² units) rescales by 100² and
+the ratio `slope/curv` naturally comes out in the right units either
+way. `kimura_distance()`'s own `-100 * log(1 - adjusted)` became
+`-log(1 - adjusted)` (the `t <= 0` fallback, previously the bare
+literal `1`, now explicitly reads `MIN_DISTANCE` - was silently
+assuming a value equal to a constant it never referenced).
+
+One-line side benefit: the "too diverged" warning now prints the
+*actual* clamped value (`distance=5`) instead of the old
+internal-units number (`distance=500`, meaningless without knowing
+about the `0.01` conversion that used to happen afterward) - verified
+directly on a synthetic maximally-diverged pair.
+
+Verified: full rebuild + `ctest` 6/6 on Clang Release and real GCC 14;
+`RunExamples.sh` clean after regenerating `ex18.out` (shifted by
+~1e-6, the same float-reordering-noise magnitude already characterized
+for the `float` hot path - not a scaling bug); direct re-check against
+PHYLIP's `protdist` on the same JTT pair gave the *exact* pre-refactor
+value (`2.008679`), confirming this is a pure internal-representation
+change with the real behavior unchanged.
+
 ## Explicitly out of scope (carried over from the investigation plan)
 
 - `fastprot_mpi`'s separate, unsynced `Matrix`/`MaximumLikelihood`/

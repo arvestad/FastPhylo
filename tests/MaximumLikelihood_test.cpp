@@ -35,9 +35,14 @@
 namespace
 {
 
-constexpr double MAX_DISTANCE = 500;
-constexpr double MIN_DISTANCE = 1;
-constexpr double CONVERGENCE_TOL = 0.001;
+// Mirrors MaximumLikelihood.cpp's own constants (substitutions/site,
+// not the older "PAM" convention - see that file's comment on
+// PAM_TO_SUBSTITUTIONS_PER_SITE for why).
+constexpr double MAX_DISTANCE = 5.0;
+constexpr double MIN_DISTANCE = 0.01;
+constexpr double CONVERGENCE_TOL = 0.1;
+// Mirrors ProtDistCalc.cpp's own constant of the same name.
+constexpr double PAM_TO_SUBSTITUTIONS_PER_SITE = 100.0;
 // A returned t is accepted as "at" a boundary if it's within this of
 // it - likelihood_calc() returns MIN_DISTANCE/MAX_DISTANCE exactly
 // today, but this test's job is to check the invariant, not pin down
@@ -153,7 +158,7 @@ void test_globin_family_all_models()
     for (auto &m : models)
     {
         Matrix Q = get_model_matrix(m.type);
-        MatrixExpm Qdecomp(Q);
+        MatrixExpm Qdecomp(Q, PAM_TO_SUBSTITUTIONS_PER_SITE);
         std::size_t checked = 0;
         for (std::size_t i = 0; i < seqs.size(); i++)
         {
@@ -174,7 +179,7 @@ void test_globin_family_all_models()
 void test_identical_sequences_give_zero_distance()
 {
     Matrix Q = get_model_matrix(wag);
-    MatrixExpm Qdecomp(Q);
+    MatrixExpm Qdecomp(Q, PAM_TO_SUBSTITUTIONS_PER_SITE);
     Eigen::Matrix<float, 20, 20> N = Eigen::Matrix<float, 20, 20>::Zero();
     for (std::size_t a = 0; a < ProtSeqCode::NUM_CANONICAL_AA; a++)
     {

@@ -8,13 +8,35 @@
 
 namespace
 {
-// "500 is infinity"/"1 is the smallest possible distance" are this
+// Distances here are in substitutions/site directly (matching
+// fastprot's actual output, and PHYLIP's own convention) - not the
+// older "PAM" convention (expected substitutions per 100 residues,
+// the units the published WAG/JTT/Dayhoff/MVR/LG rate matrices are
+// calibrated in) this file used internally until 2026-08-11, with a
+// separate `0.01 *` rescaling applied at calculate_ml_dists()'s
+// output boundary (ProtDistCalc.cpp). That split was legacy and made
+// every constant along the way (kimura_distance()'s starting value,
+// the two bounds below, the convergence tolerance) harder to reason
+// about for no remaining benefit - removed per direct request.
+// calculate_ml_dists() now passes PAM_TO_SUBSTITUTIONS_PER_SITE to
+// MatrixExpm's constructor instead (Matrix.hpp), so every `t` value
+// flowing through this file already means the same thing
+// calculate_ml_dists() returns, with nothing left to rescale after
+// the fact.
+//
+// "5 is infinity"/"0.01 is the smallest possible distance" are this
 // codebase's pre-existing conventions (kimura_distance() below always
-// predates this file); named here rather than left as magic numbers
-// now that the loop that uses them is more than a few lines.
-constexpr double MAX_DISTANCE = 500;
-constexpr double MIN_DISTANCE = 1;
-constexpr double CONVERGENCE_TOL = 0.001;
+// predates this file), just re-expressed in substitutions/site
+// (was 500/1 in PAM units) - named here rather than left as magic
+// numbers now that the loop that uses them is more than a few lines.
+constexpr double MAX_DISTANCE = 5.0;
+constexpr double MIN_DISTANCE = 0.01;
+// Was 0.001 in PAM units - this is a threshold on the log-likelihood's
+// *slope* (1/distance-units), not a distance itself, so it scales the
+// opposite way MAX_DISTANCE/MIN_DISTANCE do when the distance unit
+// changes: d(logL)/d(t/100) = 100 * d(logL)/dt, so the equivalent
+// threshold in the new units is 100x the old one, not 100x smaller.
+constexpr double CONVERGENCE_TOL = 0.1;
 constexpr int MAX_ITERATIONS = 50;
 
 // Mirrors dna_pairwise_sequence_likelihood.hpp's warnTooDiverged() -
@@ -38,7 +60,7 @@ void warn_protein_too_diverged()
  * pure duplicated work, once per pair.
  * @param n_sum Sum of all entries of the replacement count matrix N
  * @param n_sum_diag Sum of N's diagonal entries
- * @return The kimura distance in PAMs
+ * @return The kimura distance, in substitutions/site
  */
 double kimura_distance(double n_sum, double n_sum_diag)
 {
@@ -47,7 +69,7 @@ double kimura_distance(double n_sum, double n_sum_diag)
     double adjusted = d + (0.2 * pow(d, 2));
     adjusted = std::min(adjusted, 0.854); // Infinite distance
 
-    adjusted = -100 * log(1 - adjusted);
+    adjusted = -log(1 - adjusted);
     return adjusted;
 }
 
@@ -171,7 +193,7 @@ double likelihood_calc(const Eigen::Matrix<float, 20, 20> &N, const MatrixExpm &
     double t = kimura_distance(n_sum, n_sum_diag);
     if (t <= 0)
     {
-        t = 1;
+        t = MIN_DISTANCE;
     }
     double delta = t / 2.0;
 

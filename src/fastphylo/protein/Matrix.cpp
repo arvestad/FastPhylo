@@ -231,11 +231,12 @@ Eigen::Matrix<double, 20, 20> to_eigen20(const Matrix &m)
 } // namespace
 
 /*!
- *  Decomposes Q = T*diag(eigenvalues)*T^-1 once (the expensive part of
- *  expm()), so at()/at_eigen() can evaluate exp(Q*t) for many t values
- *  cheaply. See the class comment in Matrix.hpp.
+ *  Decomposes Q*time_unit_scale = T*diag(eigenvalues)*T^-1 once (the
+ *  expensive part of expm()), so at()/at_eigen() can evaluate
+ *  exp(Q*time_unit_scale*t) for many t values cheaply. See the class
+ *  comment in Matrix.hpp.
  */
-MatrixExpm::MatrixExpm(const Matrix &Q)
+MatrixExpm::MatrixExpm(const Matrix &Q, double time_unit_scale)
 {
     if (Q.get_rows() != Q.get_cols())
     {
@@ -252,7 +253,11 @@ MatrixExpm::MatrixExpm(const Matrix &Q)
                                  "for)");
     }
 
-    m_Q = to_eigen20(Q);
+    // Scaling Q here, before anything else, means every downstream
+    // value (the decomposition, the float copies, Q2) is automatically
+    // correct for the rescaled time unit with no further special-
+    // casing needed anywhere else in this constructor.
+    m_Q = to_eigen20(Q) * time_unit_scale;
     Eigen::EigenSolver<Eigen::Matrix<double, 20, 20>> solver(m_Q);
     m_eigenvectors = solver.eigenvectors().real();
     m_eigenvectors_inv = m_eigenvectors.inverse();

@@ -130,11 +130,19 @@ class Matrix
 class MatrixExpm
 {
   public:
-    //! Decomposes Q. Imaginary parts of Q's eigenvalues are discarded,
-    //! matching expm()'s existing behavior (valid for the real,
-    //! diagonalizable rate matrices this is used for). Q must be
-    //! 20x20 (see class comment).
-    explicit MatrixExpm(const Matrix &Q);
+    //! Decomposes Q*time_unit_scale. Imaginary parts of Q's
+    //! eigenvalues are discarded, matching expm()'s existing behavior
+    //! (valid for the real, diagonalizable rate matrices this is used
+    //! for). Q must be 20x20 (see class comment). time_unit_scale
+    //! rescales Q before decomposing (default 1, i.e. no rescaling) -
+    //! lets a caller change what one unit of the `t` it later passes
+    //! to at()/at_eigen()/at_eigen_f() means, without needing a
+    //! separate rescaling step at every call site that uses the
+    //! result (see MaximumLikelihood.cpp's calculate_ml_dists() call
+    //! site for why: the published rate matrices are calibrated in
+    //! "PAM" units, not the substitutions-per-site units fastprot's
+    //! output uses).
+    explicit MatrixExpm(const Matrix &Q, double time_unit_scale = 1.0);
     //! Evaluates exp(Q*t) using the cached decomposition, as a Matrix
     //! - used by Matrix::expm() (the ED path, not the ML hot path
     //! this class was optimized for and not performance-critical -
