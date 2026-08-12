@@ -1,6 +1,116 @@
 # Changelog
 
-## 2.0.0-beta.3 (Unreleased)
+## 2.0.0-beta.4
+
+Continues stabilizing the modernization work from beta.1-3. This
+cycle's focus: a real correctness fix for `fastprot`'s maximum-
+likelihood solver (and an Eigen-backed speedup for it), 10 new protein
+substitution models, and two independent bugs in `fastdist`'s default
+K2P/TN93 behavior.
+
+### Added
+
+- 10 new protein substitution models, available via `fastprot -D`
+  alongside the existing 5 (`WAG`, `Dayhoff`, `JTT`, `MVR`, `LG`):
+  `JTT-DCMUT`, `VT`, `HIVb`, `HIVw`, `cpREV`, `BLOSUM62`, `DCMUT`,
+  `MtREV`, `RtREV`, `PMB` - 15 total. Cross-validated against
+  IQ-TREE2's published model data: 9 of 10 matched exactly; VT's
+  numbers differ from IQ-TREE2's by a few percent in a way that isn't a
+  simple scale factor, so this project's own (self-consistent) data was
+  kept and the discrepancy is disclosed here rather than silently
+  reconciled either way.
+
+### Changed
+
+- **`fastdist -D K2P`/`-D TN93` (the default, no flags needed) now
+  estimate the transition/transversion ratio per pair**, instead of
+  assuming a fixed ratio of 2.0. The old default silently biased
+  distances relative to the standard Kimura/Tamura-Nei formulas, growing
+  with divergence (up to ~8% in one real downstream comparison) - found
+  via cross-validation against three independent implementations that
+  all agreed with each other and disagreed with `fastdist`'s old
+  default alone. `--tstvratio`/`--pyrtvratio` now mean "use a fixed
+  ratio instead" (an explicit opt-in, using the given value); `--no-
+  tstvratio` is unchanged in meaning and kept for scripts that already
+  pass it (a no-op against the new default), and now conflicts
+  (rejected, nonzero exit) if combined with `--tstvratio`/
+  `--pyrtvratio`.
+- `fastprot`/`fastdist` bootstrap resampling now uses `std::mt19937`
+  instead of libc's `rand()`/`srand()`. `--seed` reproducibility still
+  works, but the same seed now produces a different (still
+  deterministic) resampling sequence than before older versions did.
+- Eigen3 is no longer version-pinned (`find_package(Eigen3 3.4)` ->
+  `find_package(Eigen3)`) - the pin rejected newer Eigen releases (e.g.
+  Homebrew's current default, 5.0.1) despite no actual API
+  incompatibility for what this project uses. Note: Eigen 5.0.1
+  measured ~16-18% *slower* than 3.4.0 on this project's own ML hot
+  path (one platform/toolchain tested) - upgrading a local Eigen
+  install isn't a free performance win, measure first.
+- The non-standard `arve` protein model (`-D ARVE`) has been removed.
+- The core `fastphylo` library can now be consumed as a real external
+  dependency (e.g. via `add_subdirectory()`/a git submodule): it
+  declares its own BLAS/LAPACK/Threads link dependencies instead of
+  relying on every consumer to redeclare them, builds with
+  `POSITION_INDEPENDENT_CODE`, and gained `FASTPHYLO_BUILD_APPS`/
+  `FASTPHYLO_BUILD_TESTS` CMake options (both default `ON`, no change
+  to this project's own build) to skip the CLI tools/test executables
+  when only the library itself is wanted.
+
+### Performance
+
+- `fastprot`'s maximum-likelihood protein distance solver (`-m`) now
+  uses Eigen instead of LAPACK's `dgemm_` for its per-pair matrix
+  operations, with a build-once eigendecomposition reused across every
+  distance call instead of being recomputed per pair. Measured
+  end-to-end: **1.23x-1.35x faster**, increasing with dataset size (100
+  to 1000+ sequences).
+- Bootstrap resampling (`fastprot`/`fastdist -b`): ~7-8% faster
+  end-to-end on a stress workload (`-b 50000`), after the ML
+  decomposition fix above made it visible as a new bottleneck (~31% of
+  total time on a small-N/huge-bootstrap-count case) that was
+  previously masked by the larger cost it was hiding behind.
+
+### Fixed
+
+- **`fastprot`'s maximum-likelihood solver could silently return badly
+  wrong distances** on real data: a bail-out heuristic in its
+  finite-difference Newton-Raphson approximation could accept a single,
+  unverified step as final while the derivative was still far from
+  converged - firing on 35.7%-94.3% of pairs (depending on model) on
+  this project's own `examples/globin_family.fasta`, with disagreements
+  up to 0.616 distance units against a correct root-finder. Replaced
+  with a safeguarded Newton-Raphson using analytic (not
+  finite-differenced) first and second derivatives, following the
+  approach in PHYLIP's `protdist.c`.
+- **The JTT protein model matrix had a hardcoded diagonal value 100x
+  too large** (`Q(0,0)`), silently distorting every JTT-model distance.
+  Found via cross-validation against IQ-TREE2's published model data.
+- **The LG protein model was scaled incorrectly**: LG is published
+  normalized to a mean substitution rate of 1, unlike WAG/JTT/Dayhoff/
+  MVR's shared ~100 ("PAM") convention - a single hardcoded conversion
+  factor that worked for those four was silently wrong for LG
+  specifically, giving maximum-likelihood distances off by roughly two
+  orders of magnitude. Fixed by deriving the scale from each model's
+  own data instead of assuming one fixed factor for all of them.
+- **`fastdist`'s K2P computation could silently return wildly wrong
+  distances**, independent of the default-ratio issue above: its
+  fixed-ratio solver's numerical search had no bound on its step size,
+  and could overshoot far enough to overflow - sometimes crashing to
+  `nan`, but in one found case landing exactly where the resulting
+  floating-point overflow made the search wrongly believe it had
+  converged, silently returning a distance of ~56 instead of the
+  correct ~0.18. The search is now bounded, falling back to the same
+  "too diverged" convention every other distance formula in that file
+  already uses.
+
+### Known limitations
+
+- `fastprot_mpi` still only has the original 5 protein models (not the
+  10 new ones above) and does not have the LG scale fix above - its
+  own, separately-maintained model data was out of scope for this
+  round (see beta.1's note: not covered by CI, best-effort only).
+
+## 2.0.0-beta.3
 
 ### Changed
 
