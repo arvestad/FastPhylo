@@ -89,6 +89,17 @@ check_app fastdist outfile input-format memory-efficient \
     tstvratio pyrtvratio no-tstvratio fixfactor number-of-runs \
     print-relaxng-input print-relaxng-output
 
+# planning/k2p.md: --tstvratio/--pyrtvratio now opt K2P/TN93 into the
+# fixed-ratio method (the per-pair-estimated formula is the default);
+# --no-tstvratio is kept for backward compatibility but now conflicts
+# with them, since both already mean "use a fixed ratio" is off.
+if ! fastdist -N -T 2 </dev/null >/dev/null 2>&1; then
+    echo "  OK: fastdist -N -T 2 (conflicting flags) is rejected (nonzero exit)"
+else
+    echo "  FAIL: fastdist -N -T 2 was accepted"
+    failures=$((failures + 1))
+fi
+
 check_app fastprot outfile input-format memory-efficient \
     output-format bootstraps no-incl-orig seed distance-function model-file \
     remove-indels maximum-likelihood sd pfam speed print-relaxng-input \

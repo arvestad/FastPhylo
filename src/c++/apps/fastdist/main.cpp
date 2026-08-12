@@ -117,8 +117,11 @@ struct FastdistOptions
     bool no_transprob = false;
     AmbiguityFreqModel ambiguity_frequency_model = AmbiguityFreqModel::Uni;
     float tstvratio = 2.0F;
+    bool tstvratio_given = false;
     float pyrtvratio = 2.0F;
+    bool pyrtvratio_given = false;
     bool no_tstvratio = false;
+    bool no_tstvratio_given = false;
     float fixfactor = 1.0F;
     bool fixfactor_given = false;
     int number_of_runs = 1;
@@ -191,13 +194,35 @@ static FastdistOptions parseArgs(int argc, char **argv)
                    "Ambiguity frequency model (possible values: UNI, BASE; default: UNI)")
         ->transform(CLI::CheckedTransformer(ambiguity_freq_map).description(""));
 
-    app.add_option("-T,--tstvratio", opts.tstvratio,
-                   "Transition/transvertion ratio for purine transitions (for the TN model)");
+    // planning/k2p.md: K2P/TN93 (-D K2P / -D TN93) default to
+    // *estimating* the transition/transversion ratio per pair (the
+    // textbook/"classical" Kimura formula) - passing --tstvratio and/or
+    // --pyrtvratio explicitly is what opts into the alternative fixed-
+    // ratio maximum-likelihood method, using the given value(s). This
+    // is the reverse of this CLI's old default (fixed-ratio at 2.0
+    // unless --no-tstvratio was passed): a real, external, downstream
+    // cross-validation (three independent K2P implementations agreeing
+    // exactly against each other and disagreeing, by a bias growing
+    // with divergence, against fastdist's old default) found that old
+    // default silently produced systematically inflated "K2P" distances
+    // for anyone who didn't know to pass --no-tstvratio.
+    CLI::Option *tstvratio_opt =
+        app.add_option("-T,--tstvratio", opts.tstvratio,
+                       "Transition/transversion ratio (K2P) or purine transitions' ratio (TN93). "
+                       "Passing this switches to the fixed-ratio maximum-likelihood method "
+                       "instead of estimating the ratio per pair (the default) - see --no-tstvratio.");
 
-    app.add_option("-P,--pyrtvratio", opts.pyrtvratio,
-                   "Transition/transvertion ratio for  pyrimidines transitions (for the TN model)");
+    CLI::Option *pyrtvratio_opt =
+        app.add_option("-P,--pyrtvratio", opts.pyrtvratio,
+                       "Transition/transversion ratio for pyrimidine transitions (TN93 only). "
+                       "Passing this switches TN93 to the fixed-ratio method, same as --tstvratio.");
 
-    app.add_flag("-N,--no-tstvratio", opts.no_tstvratio, "If given fixed ts/tv ratios will not be used");
+    CLI::Option *no_tstvratio_opt =
+        app.add_flag("-N,--no-tstvratio", opts.no_tstvratio,
+                     "Estimate the transition/transversion ratio per pair (K2P, TN93) instead of using "
+                     "a fixed one. This is the default; kept for backward compatibility with scripts "
+                     "that already pass it. Conflicts with --tstvratio/--pyrtvratio (those already "
+                     "mean 'use a fixed ratio').");
 
     CLI::Option *fixfactor_opt =
         app.add_option("-F,--fixfactor", opts.fixfactor,
@@ -237,6 +262,9 @@ static FastdistOptions parseArgs(int argc, char **argv)
     opts.fixfactor_given = fixfactor_opt->count() > 0;
     opts.number_of_runs_given = runs_opt->count() > 0;
     opts.inputfile_given = input_opt->count() > 0;
+    opts.tstvratio_given = tstvratio_opt->count() > 0;
+    opts.pyrtvratio_given = pyrtvratio_opt->count() > 0;
+    opts.no_tstvratio_given = no_tstvratio_opt->count() > 0;
     return opts;
 }
 
@@ -279,6 +307,14 @@ static void handleEarlyExitFlags(const FastdistOptions &opts)
         cerr << "error: --number-of-runs can only be used together with --input-format=phylip " << endl;
         exit(EXIT_FAILURE);
     }
+
+    if (opts.no_tstvratio_given && (opts.tstvratio_given || opts.pyrtvratio_given))
+    {
+        cerr << "error: --no-tstvratio conflicts with --tstvratio/--pyrtvratio "
+                "(those already mean 'use a fixed ratio')"
+             << endl;
+        exit(EXIT_FAILURE);
+    }
 }
 
 // Builds the sequence_translation_model from opts: evolutionary
@@ -289,7 +325,10 @@ static sequence_translation_model buildTranslationModel(const FastdistOptions &o
 
     trans_model.model = opts.distance_function;
 
-    trans_model.no_tstvratio = opts.no_tstvratio;
+    // See parseArgs()'s --tstvratio/--no-tstvratio help text for the
+    // rationale: fixed-ratio mode is now opt-in (via an explicitly
+    // given --tstvratio/--pyrtvratio), not the default.
+    trans_model.no_tstvratio = !(opts.tstvratio_given || opts.pyrtvratio_given);
     trans_model.tstvratio = opts.tstvratio;
     trans_model.pyrtvratio = opts.pyrtvratio;
 
