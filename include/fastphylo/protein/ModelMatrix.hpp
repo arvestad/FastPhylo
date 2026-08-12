@@ -7,7 +7,14 @@ class Matrix;
 
 using DblVec = std::vector<double>;
 
-//! Enum that specifies the wanted model
+//! Enum that specifies the wanted model. The 10 models jtt_dcmut..pmb
+//! were added 2026-08-11 to match fastphylo-py's own model catalog
+//! (github.com/arvestad/fastphylo-py's src/fastphylo/protein.py) - see
+//! ModelMatrix.cpp's table-driven get_model_matrix()/get_model_vec()
+//! for how they're stored (differently from the original 5 - R +
+//! equilibrium frequencies, not a literal precomputed Q, see that
+//! file's comment for why). Appended, not alphabetized, so existing
+//! enum integer values never shift.
 enum model_type
 {
     id,
@@ -18,7 +25,17 @@ enum model_type
     day,
     jtt,
     mvr,
-    lg
+    lg,
+    jtt_dcmut,
+    vt,
+    hivb,
+    hivw,
+    cprev,
+    blosum62,
+    dcmut,
+    mtrev,
+    rtrev,
+    pmb
 };
 
 //! Gets the rate matrix for the specified model

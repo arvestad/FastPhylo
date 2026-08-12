@@ -111,6 +111,16 @@ void calculate_distances(const SeqVec &sv, StrDblMatrix &dm, prot_sequence_trans
     case jtt:
     case mvr:
     case lg:
+    case jtt_dcmut:
+    case vt:
+    case hivb:
+    case hivw:
+    case cprev:
+    case blosum62:
+    case dcmut:
+    case mtrev:
+    case rtrev:
+    case pmb:
         if (t_model.ml)
         {
             // One-shot convenience path: builds and discards its own
@@ -156,6 +166,16 @@ void calculate_distances(const SeqVec &sv, StrDblMatrix &dm, prot_sequence_trans
     case jtt:
     case lg:
     case mvr:
+    case jtt_dcmut:
+    case vt:
+    case hivb:
+    case hivw:
+    case cprev:
+    case blosum62:
+    case dcmut:
+    case mtrev:
+    case rtrev:
+    case pmb:
         if (t_model.ml)
         {
             // One-shot convenience path: builds and discards its own

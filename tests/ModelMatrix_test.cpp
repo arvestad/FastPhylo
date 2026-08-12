@@ -33,7 +33,21 @@ void test_rows_sum_to_zero()
     {
         model_type type;
         const char *name;
-    } models[] = {{wag, "WAG"}, {jtt, "JTT"}, {day, "Dayhoff"}, {mvr, "MVR"}, {lg, "LG"}};
+    } models[] = {{wag, "WAG"},
+                  {jtt, "JTT"},
+                  {day, "Dayhoff"},
+                  {mvr, "MVR"},
+                  {lg, "LG"},
+                  {jtt_dcmut, "JTT-DCMUT"},
+                  {vt, "VT"},
+                  {hivb, "HIVb"},
+                  {hivw, "HIVw"},
+                  {cprev, "cpREV"},
+                  {blosum62, "BLOSUM62"},
+                  {dcmut, "DCMUT"},
+                  {mtrev, "MtREV"},
+                  {rtrev, "RtREV"},
+                  {pmb, "PMB"}};
 
     for (auto &m : models)
     {
@@ -67,7 +81,21 @@ void test_equilibrium_frequencies_sum_to_one()
     {
         model_type type;
         const char *name;
-    } models[] = {{wag, "WAG"}, {jtt, "JTT"}, {day, "Dayhoff"}, {mvr, "MVR"}, {lg, "LG"}};
+    } models[] = {{wag, "WAG"},
+                  {jtt, "JTT"},
+                  {day, "Dayhoff"},
+                  {mvr, "MVR"},
+                  {lg, "LG"},
+                  {jtt_dcmut, "JTT-DCMUT"},
+                  {vt, "VT"},
+                  {hivb, "HIVb"},
+                  {hivw, "HIVw"},
+                  {cprev, "cpREV"},
+                  {blosum62, "BLOSUM62"},
+                  {dcmut, "DCMUT"},
+                  {mtrev, "MtREV"},
+                  {rtrev, "RtREV"},
+                  {pmb, "PMB"}};
 
     for (auto &m : models)
     {

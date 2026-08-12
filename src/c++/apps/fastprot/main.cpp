@@ -156,12 +156,18 @@ static FastprotOptions parseArgs(int argc, char **argv)
     CLI::Option *seed_opt =
         app.add_option("-R,--seed", opts.seed, "Random seed. If not specified the current timestamp will be used");
 
-    static const std::map<std::string, model_type> distance_function_map{{"ID", id},     {"JC", jc},   {"JCK", jck},
-                                                                         {"JCSS", jcss}, {"WAG", wag}, {"JTT", jtt},
-                                                                         {"DAY", day},   {"MVR", mvr}, {"LG", lg}};
+    // The 10 models JTT-DCMUT..PMB were added 2026-08-11 to match
+    // fastphylo-py's model catalog (ModelMatrix.hpp) - exposed here too
+    // since the data now exists in ModelMatrix.cpp either way.
+    static const std::map<std::string, model_type> distance_function_map{
+        {"ID", id},       {"JC", jc},       {"JCK", jck},     {"JCSS", jcss},   {"WAG", wag},
+        {"JTT", jtt},     {"DAY", day},     {"MVR", mvr},     {"LG", lg},       {"JTT-DCMUT", jtt_dcmut},
+        {"VT", vt},       {"HIVB", hivb},   {"HIVW", hivw},   {"CPREV", cprev}, {"BLOSUM62", blosum62},
+        {"DCMUT", dcmut}, {"MTREV", mtrev}, {"RTREV", rtrev}, {"PMB", pmb}};
     app.add_option("-D,--distance-function", opts.distance_function,
                    "Distance function (possible values: ID, JC, JCK, JCSS, WAG, JTT, DAY, "
-                   "MVR, LG; default: WAG)")
+                   "MVR, LG, JTT-DCMUT, VT, HIVB, HIVW, CPREV, BLOSUM62, DCMUT, MTREV, "
+                   "RTREV, PMB; default: WAG)")
         ->transform(CLI::CheckedTransformer(distance_function_map).description(""));
 
     CLI::Option *model_file_opt = app.add_option("-F,--model-file", opts.model_file,

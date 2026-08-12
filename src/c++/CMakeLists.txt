@@ -78,8 +78,8 @@ endif()
 # include/fastphylo/{core,dna}/ - see that plan doc for the rationale
 # (a discoverable public API, and a step toward de-duplicating the I/O
 # stream classes still living per-program under apps/).
-set(FASTPHYLO_CORE_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/core)
-set(FASTPHYLO_DNA_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/dna)
+set(FASTPHYLO_CORE_DIR ${PROJECT_SOURCE_DIR}/src/fastphylo/core)
+set(FASTPHYLO_DNA_DIR ${PROJECT_SOURCE_DIR}/src/fastphylo/dna)
 
 set(FASTPHYLO_SRCS
 ${FASTPHYLO_CORE_DIR}/BitVector.cpp
@@ -123,7 +123,7 @@ ${FASTPHYLO_DNA_DIR}/computeDistance_DNA_b128_String.cpp)
 # apps/fnj/ - fnj writes trees built from a distance matrix, not a
 # distance matrix itself, a genuinely different shape, not just naming
 # drift.
-set(FASTPHYLO_IO_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/io)
+set(FASTPHYLO_IO_DIR ${PROJECT_SOURCE_DIR}/src/fastphylo/io)
 set(FASTPHYLO_IO_SRCS
 ${FASTPHYLO_IO_DIR}/DataOutputStream.cpp
 ${FASTPHYLO_IO_DIR}/PhylipDmOutputStream.cpp
@@ -176,7 +176,7 @@ endif(WITH_LIBXML)
 # central library, not duplicated per-program). fastprot_mpi has its own
 # separate, untouched copies of these files (out of this plan's scope,
 # deferred - see that plan doc's "Deferred: fastprot_mpi" section).
-set(FASTPHYLO_PROTEIN_DIR ${CMAKE_SOURCE_DIR}/src/fastphylo/protein)
+set(FASTPHYLO_PROTEIN_DIR ${PROJECT_SOURCE_DIR}/src/fastphylo/protein)
 set(FASTPHYLO_PROTEIN_SRCS
 ${FASTPHYLO_PROTEIN_DIR}/ProtDistCalc.cpp
 ${FASTPHYLO_PROTEIN_DIR}/ModelMatrix.cpp
@@ -258,6 +258,30 @@ endforeach(i)
 # BLAS/LAPACK (extern "C" declarations, no header needed until final
 # link) this needs to be on fastphylo's own include path at compile
 # time, not deferred to fastprot's target further down.
+#
+# BLAS/LAPACK/Threads/libm found here too (moved up from just before
+# fastprot's own add_executable, further down) and linked PUBLIC onto
+# fastphylo itself, below - Matrix.cpp (part of fastphylo's own
+# sources) calls LAPACK directly, but until 2026-08-11 only the
+# executable targets (fastprot/fastprot_mpi/the two ML test
+# executables) declared these as their own link dependency, never
+# fastphylo. Every existing consumer happened to redeclare them
+# itself, masking the gap - a new consumer linking only the fastphylo
+# target (a future pybind11 extension module, see
+# planning/ - fastphylo-py integration plan) would hit undefined-
+# symbol link errors without this fix.
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
+find_package(Threads REQUIRED)
+# libm is a separate library needing explicit linking on Unix (sin/cos/
+# sqrt/etc historically lived outside libc there); on Windows every
+# math function is already part of the standard CRT and there is no
+# "m.lib" to link against at all - target_link_libraries(... m ...)
+# there fails at link time with "cannot open input file 'm.lib'".
+if(UNIX)
+  set(FASTPHYLO_MATH_LIB m)
+endif()
+
 # No version pin (was "3.4 REQUIRED", the version available when this
 # dependency was added): Homebrew's eigen formula has since moved its
 # default/stable version to 5.0.1, and find_package(Eigen3 3.4)'s
@@ -297,6 +321,12 @@ endforeach(i)
 find_package(Eigen3 REQUIRED)
 
 add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS} ${FASTPHYLO_IO_SRCS} ${FASTPHYLO_IO_XML_SRCS} ${FASTPHYLO_PROTEIN_SRCS})
+# A pybind11 extension module (fastphylo-py's future _fastphylo) is
+# itself a shared object; linking a non-PIC static archive into one
+# fails at link time on Linux (unsafe/unsupported on macOS). No cost
+# to the existing executable consumers (fastdist/fnj/fastprot), so
+# unconditional rather than gated behind a new option.
+set_target_properties(fastphylo PROPERTIES POSITION_INDEPENDENT_CODE ON)
 # Modernization Phase B (project_layout_plan.md): the public API lives
 # under include/fastphylo/{core,dna,io,protein}/ now, consumed as
 # #include "fastphylo/<bucket>/X.hpp" - this is the one include root
@@ -304,7 +334,7 @@ add_library(fastphylo STATIC ${FASTPHYLO_SRCS} ${FASTPHYLO_SPECIAL_SRCS} ${FASTP
 # scattered src/c++-relative directories this used to list.
 target_include_directories(fastphylo PUBLIC
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_SOURCE_DIR}/include
+  ${PROJECT_SOURCE_DIR}/include
   ${FASTPHYLO_EXTRA_INCLUDE_DIRS}
 )
 # fastphylo's own XmlInputStream.cpp (when WITH_LIBXML) needs libxml2's
@@ -319,23 +349,27 @@ target_link_libraries(fastphylo PUBLIC ${FASTPHYLO_XML_LIBS})
 # that #includes Matrix.hpp needs Eigen's include path too - PUBLIC,
 # same reasoning as the XML libs above.
 target_link_libraries(fastphylo PUBLIC Eigen3::Eigen)
+# BLAS/LAPACK/Threads/libm: see the long comment above find_package
+# (BLAS REQUIRED) further up this file for why this is PUBLIC and why
+# it moved here from being only the executable targets' problem.
+target_link_libraries(fastphylo PUBLIC BLAS::BLAS LAPACK::LAPACK Threads::Threads ${FASTPHYLO_MATH_LIB})
 
-find_package(Threads REQUIRED)
+# Both default ON, preserving this repo's own native build/release
+# behavior unchanged - an external consumer embedding just the
+# fastphylo library (e.g. fastphylo-py's future pybind11 extension,
+# via add_subdirectory()) sets both OFF first, so it doesn't
+# needlessly build 3 CLI apps and 5 test executables it will never
+# run on every one of its own per-platform wheel builds.
+option(FASTPHYLO_BUILD_APPS "Build the fastdist/fnj/fastprot CLI executables" ON)
+option(FASTPHYLO_BUILD_TESTS "Build tests/ and bench_primitives" ON)
 
-# libm is a separate library needing explicit linking on Unix (sin/cos/
-# sqrt/etc historically lived outside libc there); on Windows every
-# math function is already part of the standard CRT and there is no
-# "m.lib" to link against at all - target_link_libraries(... m ...)
-# there fails at link time with "cannot open input file 'm.lib'".
-if(UNIX)
-  set(FASTPHYLO_MATH_LIB m)
-endif()
+if(FASTPHYLO_BUILD_APPS)
 
 add_executable(fastdist ${FASTDIST_SRCS} ${FASTDIST_XML_SRCS})
 target_include_directories(fastdist PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastdist
   ${CMAKE_CURRENT_SOURCE_DIR}/apps
-  ${CMAKE_SOURCE_DIR}/third_party
+  ${PROJECT_SOURCE_DIR}/third_party
 )
 target_link_libraries(fastdist PRIVATE fastphylo ${FASTPHYLO_MATH_LIB} ${FASTPHYLO_XML_LIBS})
 
@@ -343,18 +377,16 @@ add_executable(fnj ${FNJ_SRCS} ${FNJ_XML_SRCS})
 target_include_directories(fnj PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/fnj
   ${CMAKE_CURRENT_SOURCE_DIR}/apps
-  ${CMAKE_SOURCE_DIR}/third_party
+  ${PROJECT_SOURCE_DIR}/third_party
 )
 target_link_libraries(fnj PRIVATE fastphylo ${FASTPHYLO_MATH_LIB} ${FASTPHYLO_XML_LIBS})
 
 
-find_package(BLAS REQUIRED)
-find_package(LAPACK REQUIRED)
 add_executable(fastprot ${FASTPROT_SRCS} ${FASTPROT_XML_SRCS})
 target_include_directories(fastprot PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot
   ${CMAKE_CURRENT_SOURCE_DIR}/apps
-  ${CMAKE_SOURCE_DIR}/third_party
+  ${PROJECT_SOURCE_DIR}/third_party
 )
 target_link_libraries(fastprot PRIVATE fastphylo ${FASTPHYLO_MATH_LIB} ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK Threads::Threads)
 
@@ -364,7 +396,7 @@ if(BUILD_WITH_MPI)
   target_include_directories(fastprot_mpi PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/apps/fastprot_mpi
     ${CMAKE_CURRENT_SOURCE_DIR}/apps
-    ${CMAKE_SOURCE_DIR}/third_party
+    ${PROJECT_SOURCE_DIR}/third_party
   )
   target_link_libraries(fastprot_mpi PRIVATE fastphylo ${FASTPHYLO_MATH_LIB} ${FASTPHYLO_XML_LIBS} BLAS::BLAS LAPACK::LAPACK Threads::Threads MPI::MPI_CXX)
 endif(BUILD_WITH_MPI)
@@ -377,6 +409,10 @@ if(BUILD_WITH_MPI)
   install(TARGETS fastprot_mpi DESTINATION bin)
 endif(BUILD_WITH_MPI)
 
+endif(FASTPHYLO_BUILD_APPS)
+
+if(FASTPHYLO_BUILD_TESTS)
+
 # Correctness tests for the speed2026a protein-code speedup (plan.md).
 # tests/ (top-level, Layout Phase E - was src/c++/code_tests/) as a
 # whole isn't wired into this build (see phase0_audit.md); these two
@@ -384,20 +420,20 @@ endif(BUILD_WITH_MPI)
 # rather than expanding scope to the rest of tests/.
 enable_testing()
 
-set(FASTPHYLO_TESTS_DIR ${CMAKE_SOURCE_DIR}/tests)
+set(FASTPHYLO_TESTS_DIR ${PROJECT_SOURCE_DIR}/tests)
 
 # ProtSeqCompare.cpp needs FASTPHYLO_EXTRA_INCLUDE_DIRS (simde) directly:
 # these three targets compile it as a plain extra source rather than
 # linking the fastphylo library target, so they don't inherit it via
 # fastphylo's PUBLIC target_include_directories. Likewise need
-# ${CMAKE_SOURCE_DIR}/include directly (Layout Phase C2) now that
+# ${PROJECT_SOURCE_DIR}/include directly (Layout Phase C2) now that
 # ProtSeqCode.hpp/ProtSeqCompare.hpp live under include/fastphylo/protein/.
 add_executable(ProtSeqCode_test ${FASTPHYLO_TESTS_DIR}/ProtSeqCode_test.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp)
-target_include_directories(ProtSeqCode_test PRIVATE ${CMAKE_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
+target_include_directories(ProtSeqCode_test PRIVATE ${PROJECT_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
 add_test(NAME ProtSeqCode_test COMMAND ProtSeqCode_test)
 
 add_executable(ProtSeqCompare_test ${FASTPHYLO_TESTS_DIR}/ProtSeqCompare_test.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCompare.cpp)
-target_include_directories(ProtSeqCompare_test PRIVATE ${CMAKE_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
+target_include_directories(ProtSeqCompare_test PRIVATE ${PROJECT_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
 add_test(NAME ProtSeqCompare_test COMMAND ProtSeqCompare_test)
 
 # phylip_reader_consolidation_plan.md, Phase C: SequenceTree::
@@ -436,7 +472,7 @@ add_test(NAME BinaryDmIO_test COMMAND BinaryDmIO_test)
 # ProtSeqCode together) rather than hand-picking sources.
 add_executable(MaximumLikelihood_test ${FASTPHYLO_TESTS_DIR}/MaximumLikelihood_test.cpp)
 target_link_libraries(MaximumLikelihood_test PRIVATE fastphylo BLAS::BLAS LAPACK::LAPACK)
-target_compile_definitions(MaximumLikelihood_test PRIVATE GLOBIN_FIXTURE_PATH="${CMAKE_SOURCE_DIR}/examples/globin_family.fasta")
+target_compile_definitions(MaximumLikelihood_test PRIVATE GLOBIN_FIXTURE_PATH="${PROJECT_SOURCE_DIR}/examples/globin_family.fasta")
 add_test(NAME MaximumLikelihood_test COMMAND MaximumLikelihood_test)
 
 # Model data sanity check (row-sums-to-zero, frequencies-sum-to-one) -
@@ -451,4 +487,6 @@ add_test(NAME ModelMatrix_test COMMAND ModelMatrix_test)
 # timing data, not a pass/fail result; see benchmarks/run_benchmarks.sh
 # for the reproducible one-command entry point.
 add_executable(bench_primitives ../../benchmarks/bench_primitives.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCode.cpp ${FASTPHYLO_PROTEIN_DIR}/ProtSeqCompare.cpp)
-target_include_directories(bench_primitives PRIVATE ${CMAKE_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
+target_include_directories(bench_primitives PRIVATE ${PROJECT_SOURCE_DIR}/include ${FASTPHYLO_EXTRA_INCLUDE_DIRS})
+
+endif(FASTPHYLO_BUILD_TESTS)
