@@ -195,11 +195,178 @@ changed to use 3 taxa (also a more realistic scenario) to complete
 Phase 1's checkpoint. Flagged here so it isn't lost; fix separately
 when prioritized.
 
-## Remaining phases (not started)
+## Phase 2 - Consumption mechanism, fastphylo-py side (DONE 2026-08-12)
 
-See the session record for the full remaining plan (Phase 2: consumption
-mechanism/submodule wiring on the fastphylo-py side; Phase 3: pybind11
-bindings redesign; Phase 4: pure-Python fallback; Phase 5: sequencing;
-Phase 6: verification including the required speed benchmarks) - these
-all require access to the fastphylo-py repository, which this session
-did not have a local checkout of.
+FastPhylo added as a git submodule at `extern/fastphylo`. **Pinned to
+this branch's own commit (`182e303`) for now, not a tag** - PR #3
+(this branch, `eigen-ml-matrix-backend`) hasn't merged to `master` yet,
+so no released tag actually contains Phase 0/1's model-porting/CMake
+work. Needs repinning to a real tag once PR #3 merges and a new one is
+cut (`RELEASING.md`) - flagged, not silently worked around.
+
+fastphylo-py's `CMakeLists.txt` rewritten: `FASTPHYLO_BUILD_APPS`/
+`FASTPHYLO_BUILD_TESTS` set `OFF` before `add_subdirectory(extern/
+fastphylo)`; `_fastphylo` now links the `fastphylo` target directly
+instead of compiling its own copy of 22 vendored source files - no
+manual include paths needed, `fastphylo`'s `PUBLIC`
+`target_include_directories` (Phase 1) propagate automatically.
+`cmake_minimum_required` bumped 3.15 -> 3.18 to match FastPhylo's own
+floor (documented, not silently raised).
+
+**Checkpoint**: `pip install -e .` (scikit-build-core, Python 3.12 -
+3.14 has no `numpy<2.3` wheels yet, unrelated to this work) configures
+and builds clean on the first real attempt after Phase 3's binding
+rewrite (see below) - BLAS/LAPACK resolve via Accelerate.framework,
+libxml2 via the Xcode SDK, no manual environment setup needed on this
+machine.
+
+## Phase 3 - pybind11 bindings redesign (DONE 2026-08-12)
+
+`bindings.cpp` rewritten against real, current FastPhylo headers
+(`fastphylo/core/...`, `fastphylo/dna/...`, `fastphylo/protein/...` -
+confirmed by direct reading, not assumed, since the vendored fork's
+bare-filename `#include`s and the real API had already diverged in
+several ways):
+
+- `extract_tree()`: the old fork's `NAME(n)`/`EDGE(n)` macros no
+  longer exist - modernization replaced them with `nodeName(node)`/
+  `nodeEdge(node)` free function templates (`SequenceTree.hpp`).
+  Updated call sites accordingly.
+- `newick()`: `SequenceTree::printOn()` no longer exists either -
+  replaced by a free `operator<<`, exactly as the approved plan's own
+  sketch anticipated (`Tree.hpp:539`, ADL-found). `oss << tree;`.
+- **Protein ML**: the from-scratch Brent's-method optimizer
+  (`neg_log_likelihood`/`protein_count_matrix`/`brent_minimize`/the
+  old `compute_protein_distances_cpp`, ~160 lines) deleted outright.
+  Replaced by a small `PROTEIN_MODEL_NAMES` table (model-name string
+  -> `model_type`) plus one function that builds a `SeqVec`, calls
+  `build_ml_decomposition(mt)` once and `calculate_ml_dists(sv, dm,
+  decomp)` - libfastphylo's real safeguarded Newton-Raphson solver,
+  every one of the 15 models now uniformly.
+- Model-name strings deliberately use fastphylo-py's own spelling
+  (`protein.py`'s `RateMatrix` subclass `__name__`s - `"WAG"`,
+  `"JTT_DCMut"`, etc.), not FastPhylo's own `fastprot -D` spelling
+  (`"JTT-DCMUT"`) - this is what makes the swap zero-Python-API-change
+  at `distance_matrix()`'s call sites (confirmed by directly reading
+  `distances.py`/`trees.py`/`protein.py` from the real checkout - both
+  needed **zero changes**, only `protein.py`'s `compute_protein_
+  distances()` internals changed).
+- Closed-form protein paths (id/jc/kimura/storm-sonnhammer) from the
+  approved plan's binding sketch were **not** added - direct reading
+  of the real `distances.py`/`protein.py` found fastphylo-py's
+  `kimura_protein_distance()` is already pure Python (used by the
+  expected-distance grid's coarse pass) and nothing currently calls a
+  C++ closed-form protein path at all, so adding one now would be new
+  functionality, not a preserved behavior. Left for a future request.
+
+**Checkpoint**: real `pip install -e .` build succeeds; manual smoke
+test (DNA k2p/NJ/FNJ/BioNJ, protein WAG ML) against real sequence data
+all produce sane values through the real Python API.
+
+## Phase 4 - Pure-Python fallback (DONE 2026-08-12)
+
+`protein.py`'s `compute_protein_distances()` now branches on
+`FASTPHYLO_FORCE_PYTHON_ML` (env var - matches Phase 4's own checkpoint
+text, "an env var/import hook forcing HAS_CPP=False", not literal
+absence of the compiled extension, which `DistMatrix`/DNA/tree
+functionality still requires regardless). The fallback
+(`_compute_protein_distances_python()`) reuses `RateMatrix`'s existing
+`numpy.linalg.eigh` decomposition and `get_replacement_probs(t)`
+unchanged, with `scipy.optimize.minimize_scalar(method="bounded")`
+replacing the deleted C++ Brent optimizer - genuinely the small,
+easy piece the approved plan anticipated.
+
+**Checkpoint**: manually verified against real protein data - fallback
+distances agree with the compiled path's Newton-Raphson solver to
+~0.1-1% on non-saturated pairs (e.g. 0.03268 vs 0.03290 on one real
+test pair), consistent with two different numerical solvers on the
+same likelihood surface, not a bug. A **dedicated, CI-wired**
+fallback-only test job (Phase 4's own stated checkpoint) is not yet
+built - flagged below, not silently skipped: running the existing
+suite wholesale under `FASTPHYLO_FORCE_PYTHON_ML=1` fails 3 tests that
+are inherently compiled-path-specific (they cross-validate against the
+compiled solver's own saturation cap), which is expected, not a bug -
+but isn't the same thing as a real fallback-path test job.
+
+### Test-suite updates (fastphylo-py's real, pre-existing tests, not new coverage)
+
+Running fastphylo-py's own `tests/` against the rebuilt extension
+surfaced 5 failures, all traced to real, legitimate behavior
+differences between the stale vendored fork and current FastPhylo (not
+bugs in this port):
+
+1. K2P on a fully-saturated (100% transversion) pair: the vendored
+   fork let this reach `nan`; real FastPhylo's `Kimura2parameter.cpp`
+   has since gained a safeguard (fixed sentinel 10.0 + a warning) -
+   an improvement made independently of this plan, discovered because
+   this plan finally exercises that code path via a real caller.
+2. Protein ML on a highly-diverged pair: the old from-scratch Brent
+   optimizer had no per-model-independent saturation cap; libfastphylo's
+   real safeguarded Newton-Raphson solver does (fixed sentinel 5.0,
+   uniform across all 3 diverged pairs in the fixture and both models
+   tested) - by design, the whole reason that solver was called
+   "safeguarded" earlier on this branch.
+3. Unknown-model error wording: the compiled path's model lookup now
+   lives in `bindings.cpp` (Phase 0 made every model native, so it no
+   longer needs `RateMatrix.instantiate()`'s Python-side lookup at
+   all) - matched the exact wording so `pytest.raises(ValueError,
+   match="Unknown protein model")` still holds regardless of which
+   layer raises it.
+
+All 5 tests updated to assert the new, correct behavior (not
+loosened/skipped) - documented inline in `tests/test_distances.py`
+with the reasoning above. Full suite: 57 passed, 1 skipped
+(unrelated - `pyfamsa` optional dependency not installed), both with
+the compiled path and manually with `FASTPHYLO_FORCE_PYTHON_ML=1`.
+
+## Phase 5 - Sequencing (partially done 2026-08-12)
+
+Steps 1-4 (DNA/tree path, protein closed-form n/a per Phase 3 above,
+protein ML compiled path, protein ML pure-Python fallback) verified
+via the checkpoints above - real build, real test suite, manual
+smoke tests, all green. Step 5 (cleanup): the stale vendored
+`src/cpp/fastphylo/` (52 files) deleted - confirmed via grep first
+that nothing outside `CMakeLists.txt`'s own explanatory comments still
+referenced it. Rebuilt and re-ran the full test suite after deletion
+to confirm nothing broke (57 passed, 1 skipped, unchanged).
+
+## Phase 6 - Verification: speed benchmarks (DONE 2026-08-12)
+
+Reproducible Python-API-level benchmark (`benchmarks/generate_data.py`/
+`bench_one.py`/`run_benchmarks.py` in fastphylo-py) comparing the old
+vendored build (commit `d9d8671`) against the new libfastphylo-backed
+build, interleaved at the process level (old/new/old/new x5 rounds x15
+in-process reps = 75 timed samples/side/dataset). Results (full data
+and methodology in fastphylo-py's `benchmarks/results.md`):
+
+- **Protein ML: ~2.1-2.4x faster**, growing slightly with taxon count
+  (10 taxa: 2.14x; 30: 2.35x; 60: 2.39x) - the expected larger win.
+- **DNA/tree: no meaningful change** (0.97x-1.04x, i.e. noise) -
+  expected, same algorithm, just linked from a shared library instead
+  of a duplicate compiled copy.
+
+Committed and pushed to fastphylo-py's `main`
+(`0bcb84a` the backend swap, `cd22cb1` CHANGELOG + benchmarks).
+fastphylo-py also gained a `CHANGELOG.md` (didn't have one before)
+documenting the backend swap and these numbers.
+
+## Remaining (not started)
+
+A dedicated fallback-only CI test job (Phase 4's own checkpoint,
+distinct from the ad hoc whole-suite-under-the-env-var check already
+done); fastphylo-py's own `.github/workflows/` changes (submodule
+checkout, differential-test job, speed-benchmark job); resolving the
+sdist/`git archive --recurse-submodules` packaging question flagged as
+still-open in the approved plan.
+
+**Submodule still pinned to a commit, not a tag** (`182e303`) -
+PR #3 merged to `master` via GitHub's UI, but using a stale snapshot of
+`eigen-ml-matrix-backend` that was missing this plan's own Phase 0/1
+commits (`c275a86`, `182e303`) - completed locally via a follow-up
+merge of `origin/eigen-ml-matrix-backend` into `master`
+(2026-08-12) before this could be tagged. Repin fastphylo-py's
+submodule once a new tag is cut.
+
+**A bug in fastdist's K2P was flagged by Lasse as needing a fix before
+cutting a new tag** (2026-08-12) - see the session record / a future
+plan doc once triaged; not yet investigated as of this note.
