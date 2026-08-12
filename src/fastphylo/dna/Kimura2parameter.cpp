@@ -9,6 +9,8 @@
 
 #include "fastphylo/dna/dna_pairwise_sequence_likelihood.hpp"
 #include <algorithm>
+#include <cmath>
+#include <optional>
 #include <string>
 #include <iostream>
 #include <cassert>
@@ -51,11 +53,31 @@ static float partof_derivative_likelihood(float x,
     return VAL;
 }
 
-static float secant_search(float K, // fix ratio
-                           float a, // observed transitions
-                           float b, // observed transversions
-                           float n)
+// Secant search for the zero of partof_derivative_likelihood(). Bounded
+// to [0, MAX_BT_PROB] on every step - found 2026-08-12 via a real,
+// reproducible bug (fastdist -T <ratio far from what the data actually
+// supports> silently returned wildly wrong distances, e.g. ~56 instead
+// of ~0.1, or nan): with no bound, a secant step can overshoot far
+// enough that exp(2*x*K) overflows, either propagating to nan (usually
+// caught downstream) or - worse - landing at a point where the
+// resulting inf-vs-inf cancellation makes VAL evaluate to exactly 0,
+// which the convergence check mistakes for a true root even though
+// it's a floating-point artifact, not a solution. Clamping every step
+// keeps exp(2*x*K) bounded (<= exp(2*K*MAX_BT_PROB) = exp(2*TOO_DIVERGED_DISTANCE),
+// independent of K) so this overflow can no longer occur at all.
+// Returns nullopt if the search pins against the bound or the
+// likelihood surface itself is non-finite anywhere visited - both mean
+// no valid root exists in a sane range, i.e. the pair really is too
+// diverged for this fixed-ratio model, the same conclusion every other
+// distance formula in this file already reaches via TOO_DIVERGED_DISTANCE/
+// warnTooDiverged() for its own degenerate cases.
+static std::optional<float> secant_search(float K, // fix ratio
+                                          float a, // observed transitions
+                                          float b, // observed transversions
+                                          float n)
 {
+    const float MAX_BT_PROB = static_cast<float>(TOO_DIVERGED_DISTANCE) / (K + 2.0F);
+
     float x0 = ((a / K) + (b / 2)) / n;
     float fx0 = partof_derivative_likelihood(x0, K, a, b, n);
     float x1;
@@ -67,31 +89,34 @@ static float secant_search(float K, // fix ratio
     {
         x1 = x0 * 3 / 2;
     }
+    x1 = std::clamp<float>(x1, 0.0F, MAX_BT_PROB);
 
-    // cout << "fx0 " << fx0 << "   x0 " << x0 << endl;
     int i = 0;
     while (i < 20 && fabs(x1 - x0) > 0.00001)
     {
         float tmp = x1;
         float tmpf = partof_derivative_likelihood(x1, K, a, b, n);
+        if (!std::isfinite(tmpf))
+        {
+            return std::nullopt;
+        }
 
-        //    cerr << "x1 = " << x1  << " \tx0 = " << x0 << " \tfx0 = " << fx0 <<endl;
-        x1 = x1 - ((x1 - x0) / (tmpf - fx0) * tmpf);
-        x1 = std::max<float>(x1, 0);
+        float step = (x1 - x0) / (tmpf - fx0) * tmpf;
+        if (!std::isfinite(step))
+        {
+            return std::nullopt;
+        }
+        x1 = std::clamp<float>(x1 - step, 0.0F, MAX_BT_PROB);
+
         fx0 = tmpf;
         x0 = tmp;
         i++;
     }
 
-    //   if ( i > maxiter ){
-    //     maxiter = i;
-    //     cout << "max " << i << endl;
-    //   }
-    //   total++;
-    //   if ( i > 15 ){
-    //     numabove++;
-    //     cout << "iter " << i << "  " << ((float)numabove)/total << endl;
-    //   }
+    if (!std::isfinite(x1) || x1 >= MAX_BT_PROB)
+    {
+        return std::nullopt;
+    }
 
     return x1;
 }
@@ -131,11 +156,26 @@ ML_string_distance compute_K2P_fixratio(int strlen, simple_string_distance sd, f
     else
     {
         // float bt_prob = _binary_search(K,a,b,n);
-        bt_prob = secant_search(K, a, b, n); // about 45% of the computation time is spent here
+        std::optional<float> found = secant_search(K, a, b, n); // about 45% of the computation time is spent here
         // float bt_prob = _NEWTON_RAPHSON(K,a,b,n);
-        // the distance
-        tp.distance = (K + 2) * bt_prob;
-        at_prob = bt_prob * K;
+        if (!found)
+        {
+            warnTooDiverged("Kimura (fixed ratio)");
+            tp.distance = TOO_DIVERGED_DISTANCE;
+            // Bounded, not raw a/n,b/n: keeps the replacement-probability
+            // fields below consistent with the fixed-ratio model
+            // (at_prob = K*bt_prob) at the same boundary tp.distance reports,
+            // rather than switching to an unrelated derivation.
+            bt_prob = static_cast<float>(TOO_DIVERGED_DISTANCE) / (K + 2.0F);
+            at_prob = bt_prob * K;
+        }
+        else
+        {
+            bt_prob = *found;
+            // the distance
+            tp.distance = (K + 2) * bt_prob;
+            at_prob = bt_prob * K;
+        }
     }
 
     // FIX THE CHANGE PROBABILITIES

@@ -483,6 +483,15 @@ add_executable(ModelMatrix_test ${FASTPHYLO_TESTS_DIR}/ModelMatrix_test.cpp)
 target_link_libraries(ModelMatrix_test PRIVATE fastphylo BLAS::BLAS LAPACK::LAPACK)
 add_test(NAME ModelMatrix_test COMMAND ModelMatrix_test)
 
+# Regression test for a real, reproducible bug in fastdist's default K2P
+# distance (fixed-ratio secant search could overflow to nan or - worse -
+# falsely "converge" to a wildly wrong finite value) - see
+# Kimura2parameter_test.cpp's header comment and Kimura2parameter.cpp's
+# secant_search() for the fix.
+add_executable(Kimura2parameter_test ${FASTPHYLO_TESTS_DIR}/Kimura2parameter_test.cpp)
+target_link_libraries(Kimura2parameter_test PRIVATE fastphylo)
+add_test(NAME Kimura2parameter_test COMMAND Kimura2parameter_test)
+
 # Phase 5 performance benchmark (plan.md). Not an add_test() - it prints
 # timing data, not a pass/fail result; see benchmarks/run_benchmarks.sh
 # for the reproducible one-command entry point.
